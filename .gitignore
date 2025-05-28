@@ -1,4 +1,6 @@
-/node_modules
-/public
-public
-.env
+# Hugo cache and generated files
+/public/
+/resources/
+
+# Node or other tooling
+node_modules/
