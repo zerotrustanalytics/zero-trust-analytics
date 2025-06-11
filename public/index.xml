@@ -1,11 +1,32 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Index Title Page on My New Hugo Site</title>
+    <title>Index Title Page on </title>
     <link>http://localhost:1313/</link>
-    <description>Recent content in Index Title Page on My New Hugo Site</description>
+    <description>Recent content in Index Title Page on </description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Accessibility Statement | Policies</title>
+      <link>http://localhost:1313/accessibility-statement/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/accessibility-statement/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Privacy Policy | Policies</title>
+      <link>http://localhost:1313/privacy-policy/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/privacy-policy/</guid>
+      <description>&lt;section id=&#34;inner-page-hero-section&#34;&gt;&#xD;&#xA;  &lt;div class=&#34;site-container-1340&#34;&gt;&#xD;&#xA;    &lt;div class=&#34;row&#34;&gt;&#xD;&#xA;      &lt;div class=&#34;col-12&#34;&gt;&#xD;&#xA;        &lt;h4&gt;Policies&lt;/h4&gt;&#xD;&#xA;        &lt;h1&gt;Privacy Policy&lt;/h1&gt;&#xD;&#xA;      &lt;/div&gt;&#xD;&#xA;    &lt;/div&gt;&#xD;&#xA;  &lt;/div&gt;&#xD;&#xA;&lt;/section&gt;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&lt;section id=&#34;policies-main-section&#34;&gt;&#xD;&#xA;  &lt;div class=&#34;site-container-1340&#34;&gt;&#xD;&#xA;    &lt;div class=&#34;row justify-content-center&#34;&gt;&#xD;&#xA;      &lt;div class=&#34;col-12 col-lg-9&#34;&gt;&#xD;&#xA;            &lt;div align=&#34;left&#34;&gt;&#xD;&#xA;                &lt;p&gt;InterWest Insurance Services, LLC is committed to protecting your privacy and developing technology that gives you the most powerful and safe online experience. This Statement of Privacy applies to InterWest Insurance Services, LLC site and governs data collection and usage. By using InterWest Insurance Services, LLC site, you consent to the data practices described in this statement.&lt;/p&gt;&#xD;&#xA;      &#xD;&#xA;                &lt;p class=&#34;mb-0&#34;&gt;&lt;span class=&#34;SubHead&#34;&gt;Collection of your Personal Information&lt;/span&gt;&lt;/p&gt;&#xD;&#xA;      &#xD;&#xA;                &lt;p&gt;InterWest Insurance Services, LLC collects personally identifiable information, such as your email address, name, home or work address or telephone number. InterWest Insurance Services, LLC also collects anonymous demographic information, which is not unique to you, such as your ZIP code, age, gender, preferences, interests and favorites.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Terms of Use | Policies</title>
+      <link>http://localhost:1313/terms-of-use/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/terms-of-use/</guid>
+      <description>&lt;section id=&#34;inner-page-hero-section&#34;&gt;&#xD;&#xA;  &lt;div class=&#34;site-container-1340&#34;&gt;&#xD;&#xA;    &lt;div class=&#34;row&#34;&gt;&#xD;&#xA;      &lt;div class=&#34;col-12&#34;&gt;&#xD;&#xA;        &lt;h4&gt;Policies&lt;/h4&gt;&#xD;&#xA;        &lt;h1&gt;Terms of Use&lt;/h1&gt;&#xD;&#xA;      &lt;/div&gt;&#xD;&#xA;    &lt;/div&gt;&#xD;&#xA;  &lt;/div&gt;&#xD;&#xA;&lt;/section&gt;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&lt;section id=&#34;policies-main-section&#34;&gt;&#xD;&#xA;  &lt;div class=&#34;site-container-1340&#34;&gt;&#xD;&#xA;    &lt;div class=&#34;row justify-content-center&#34;&gt;&#xD;&#xA;      &lt;div class=&#34;col-12 col-lg-9&#34;&gt;&#xD;&#xA;        &lt;div align=&#34;left&#34;&gt;&#xD;&#xA;              &lt;p&gt;&lt;span class=&#34;SubHead&#34;&gt;AGREEMENT BETWEEN USER AND InterWest Insurance Services, LLC&lt;/span&gt;&lt;/p&gt;&#xD;&#xA;  &#xD;&#xA;              &lt;p&gt;InterWest Insurance Services, LLC Web Site is comprised of various Web pages operated by InterWest Insurance Services, LLC.&lt;/p&gt;&#xD;&#xA;  &#xD;&#xA;              &lt;p&gt;InterWest Insurance Services, LLC Web Site is offered to you conditioned on your acceptance without modification of the terms, conditions, and notices contained herein. Your use of InterWest Insurance Services, LLC Web Site constitutes your agreement to all such terms, conditions, and notices.&lt;/p&gt;</description>
+    </item>
   </channel>
 </rss>
