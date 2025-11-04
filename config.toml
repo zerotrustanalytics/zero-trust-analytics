@@ -1,7 +1,0 @@
-baseURL = "http://localhost:1313/"
-repoName = "GitRepoName"
-environment = "prod"
-languageCode = "en-us"
-
-[params]
-  CompanyName = "My Hugo Site"
