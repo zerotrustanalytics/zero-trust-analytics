@@ -1,17 +1,27 @@
-
-<div>
- {{ if or (not (isset .Params "cta")) .Params.cta }}
-      {{ partial "cta" . }}
-  {{ end }}
-
-
-  <footer>
-    <h1>footer</h1>
-  </footer>
- 
-</div>
-
-
-
-
-
+<footer class="bg-dark text-light py-5 mt-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <h5>Zero Trust Analytics</h5>
+        <p class="text-muted">Privacy-focused analytics that respects your users. No cookies, no tracking, just insights.</p>
+      </div>
+      <div class="col-md-4">
+        <h5>Links</h5>
+        <ul class="list-unstyled">
+          <li><a href="/#features" class="text-muted">Features</a></li>
+          <li><a href="/#pricing" class="text-muted">Pricing</a></li>
+          <li><a href="/dashboard/" class="text-muted">Dashboard</a></li>
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <h5>Legal</h5>
+        <ul class="list-unstyled">
+          <li><a href="/privacy/" class="text-muted">Privacy Policy</a></li>
+          <li><a href="/terms/" class="text-muted">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-4">
+    <p class="text-center text-muted mb-0">&copy; {{ now.Year }} Zero Trust Analytics. All rights reserved.</p>
+  </div>
+</footer>

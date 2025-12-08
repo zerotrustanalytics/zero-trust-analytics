@@ -1,12 +1,38 @@
+// Zero Trust Analytics - Home Page Styles
+
 @mixin blade-padding {
-    padding: 25px 0;
-  
-    @media (min-width: 768px) {
-        padding: 50px 0;
-    }
+  padding: 25px 0;
+
+  @media (min-width: 768px) {
+    padding: 50px 0;
+  }
 }
 
-#index-hero-section {
-    @include blade-padding;
-    background-color: green;
+// Hero Section
+.hero {
+  @include blade-padding;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+// Feature Icons
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+// Step Numbers
+.step-number {
+  font-size: 1.25rem;
+}
+
+// Card Hover Effects
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
 }

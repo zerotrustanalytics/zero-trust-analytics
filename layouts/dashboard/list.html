@@ -1,0 +1,146 @@
+{{ define "main" }}
+<div class="dashboard-container">
+  <div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <p class="text-muted mb-0" id="current-site-domain">Select a site to view analytics</p>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSiteModal">
+          <i class="fas fa-plus me-2"></i>Add Site
+        </button>
+      </div>
+    </div>
+
+    <!-- Site Selector & Period -->
+    <div class="d-flex flex-wrap gap-3 mb-4">
+      <div class="site-selector">
+        <select class="form-select" id="site-selector" onchange="loadStats()">
+          <option value="">Select a site...</option>
+        </select>
+      </div>
+      <div class="period-selector btn-group" role="group">
+        <button type="button" class="btn btn-outline-secondary" onclick="setPeriod('24h')">24h</button>
+        <button type="button" class="btn btn-outline-secondary active" onclick="setPeriod('7d')">7 days</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="setPeriod('30d')">30 days</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="setPeriod('90d')">90 days</button>
+      </div>
+    </div>
+
+    <!-- Empty State (shown when no sites) -->
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <h3>No sites yet</h3>
+      <p>Add your first website to start tracking anonymous analytics.</p>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSiteModal">
+        <i class="fas fa-plus me-2"></i>Add Your First Site
+      </button>
+    </div>
+
+    <!-- Stats Content (hidden until site selected) -->
+    <div id="stats-content" style="display: none;">
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="unique-visitors">-</div>
+          <div class="stat-label">Unique Visitors</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="page-views">-</div>
+          <div class="stat-label">Page Views</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="top-page">-</div>
+          <div class="stat-label">Top Page</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="top-referrer">-</div>
+          <div class="stat-label">Top Referrer</div>
+        </div>
+      </div>
+
+      <!-- Top Pages Table -->
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Top Pages</h5>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th class="text-end">Views</th>
+                </tr>
+              </thead>
+              <tbody id="top-pages-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-md-6 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Top Referrers</h5>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Referrer</th>
+                  <th class="text-end">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="top-referrers-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Embed Code -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Embed Code</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Add this script to your website's <code>&lt;head&gt;</code> tag:</p>
+          <div class="embed-code">
+            <code id="embed-code">&lt;script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"&gt;&lt;/script&gt;</code>
+          </div>
+          <button class="btn btn-sm btn-outline-primary mt-2" onclick="copyEmbedCode()">
+            <i class="fas fa-copy me-1"></i>Copy Code
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Site Modal -->
+<div class="modal fade" id="addSiteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Site</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="add-site-form" onsubmit="handleAddSite(event)">
+          <div class="mb-3">
+            <label for="site-domain" class="form-label">Website Domain</label>
+            <input type="text" class="form-control" id="site-domain" placeholder="example.com" required>
+            <div class="form-text">Enter your domain without https://</div>
+          </div>
+          <div class="alert alert-danger d-none" id="add-site-error"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="add-site-form" class="btn btn-primary">Add Site</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}
