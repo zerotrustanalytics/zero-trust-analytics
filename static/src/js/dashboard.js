@@ -7,6 +7,7 @@ let currentPeriod = '7d';
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
   if (!requireAuth()) return;
+  checkCheckoutStatus();
   loadSites();
 });
 
@@ -195,4 +196,66 @@ function populateTable(tableId, data, emptyLabel = '-') {
       <td class="text-end">${formatNumber(count)}</td>
     </tr>
   `).join('');
+}
+
+// === STRIPE BILLING ===
+
+// Start checkout for subscription
+async function startCheckout() {
+  try {
+    const res = await fetch(`${API_BASE}/stripe/checkout`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    // Redirect to Stripe checkout
+    window.location.href = data.url;
+  } catch (err) {
+    console.error('Checkout error:', err);
+    alert('Failed to start checkout: ' + err.message);
+  }
+}
+
+// Open billing portal
+async function openBillingPortal() {
+  try {
+    const res = await fetch(`${API_BASE}/stripe/portal`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    // Redirect to Stripe portal
+    window.location.href = data.url;
+  } catch (err) {
+    console.error('Portal error:', err);
+    alert('Failed to open billing portal: ' + err.message);
+  }
+}
+
+// Check URL params for checkout status
+function checkCheckoutStatus() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('success') === 'true') {
+    alert('Payment successful! Your subscription is now active.');
+    // Clean URL
+    window.history.replaceState({}, document.title, '/dashboard/');
+  }
+
+  if (params.get('canceled') === 'true') {
+    alert('Checkout was canceled. You can try again when ready.');
+    window.history.replaceState({}, document.title, '/dashboard/');
+  }
 }
