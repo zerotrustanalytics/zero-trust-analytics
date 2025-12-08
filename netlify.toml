@@ -1,7 +1,30 @@
 [build]
   publish = "public"
-  command = "hugo --config config.toml --gc --minify"
+  command = "hugo --gc --minify"
+  functions = "netlify/functions"
 
 [context.production.environment]
   HUGO_VERSION = "0.147.4"
 
+[functions]
+  node_bundler = "esbuild"
+
+# API redirects
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# CORS for analytics script
+[[headers]]
+  for = "/js/analytics.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Site-ID"

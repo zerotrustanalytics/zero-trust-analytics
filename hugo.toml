@@ -1,14 +1,15 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://zero-trust-analytics.netlify.app/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = 'Zero Trust Analytics'
 
 [params]
-CompanyName = 'My Hugo Site'
-repoName = 'GitRepoName'
+CompanyName = 'Zero Trust Analytics'
+repoName = 'zero-trust-analytics'
+tagline = 'Privacy-focused analytics that respects your users'
+price = '$10/month'
 
 [environments.development]
 baseURL = 'http://localhost:1313/'
 
 [environments.production]
-baseURL = 'https://example.org/'
-
+baseURL = 'https://zero-trust-analytics.netlify.app/'
