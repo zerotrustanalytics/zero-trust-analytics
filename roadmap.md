@@ -88,6 +88,56 @@ Privacy-focused, anonymous analytics SaaS with Stripe billing.
 
 ---
 
+## Phase 9: Enhanced Tracking (Google Analytics Parity)
+
+### 9.1 Session & Engagement Metrics
+- [ ] Time on page (duration per page)
+- [ ] Session duration (total time across pages)
+- [ ] Landing pages (entry pages)
+- [ ] Exit pages (last page before leaving)
+- [ ] Bounce rate (single-page sessions)
+- [ ] Pages per session
+- [ ] New vs returning visitors
+
+### 9.2 Device & Browser Analytics
+- [ ] Device type (mobile/desktop/tablet)
+- [ ] Browser type & version
+- [ ] Operating system
+- [ ] Screen resolution
+- [ ] Viewport size
+- [ ] Browser language
+
+### 9.3 Traffic Sources & Campaigns
+- [ ] Traffic source categorization (direct/organic/referral/social)
+- [ ] UTM parameter tracking (source, medium, campaign, term, content)
+- [ ] Search engine detection
+- [ ] Social network detection
+
+### 9.4 Geographic Data
+- [ ] Country detection (from IP geolocation)
+- [ ] Region/state detection
+- [ ] City detection (approximate)
+
+### 9.5 User Behavior Tracking
+- [ ] Scroll depth tracking (25%, 50%, 75%, 100%)
+- [ ] Outbound link clicks
+- [ ] File download tracking
+- [ ] Custom event tracking
+- [ ] Form submission tracking
+
+### 9.6 Real-Time Analytics
+- [ ] Current active visitors
+- [ ] Real-time page views
+- [ ] Real-time traffic sources
+
+### 9.7 Dashboard Enhancements
+- [ ] Date range picker
+- [ ] Data export (CSV/JSON)
+- [ ] Comparison periods (vs previous period)
+- [ ] Chart visualizations (line, bar, pie)
+
+---
+
 ## Tech Stack
 
 | Component | Technology |
