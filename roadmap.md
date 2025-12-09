@@ -203,3 +203,29 @@ Privacy-focused, anonymous analytics SaaS with Stripe billing.
 **Live URLs:**
 - Production: https://zerotrustanalytics.com
 - Netlify: https://zerotrustanalytics.netlify.app
+
+
+
+2. Add a “What we DON’T collect” section
+
+This instantly boosts trust.
+
+3. Add a screenshot of your dashboard
+
+Only takes 2 minutes.
+
+4. Add /api/health endpoint
+
+Monitors + uptime.
+
+5. Add page load time collection (no user fingerprinting needed)
+
+Just performance.now() — anonymized.
+
+6. Add “bot filtering lite”
+
+Basic: ignore user-agents containing “bot”, “crawl”, “spider”.
+
+7. Add script defer snippet example
+
+More dev friendliness.
