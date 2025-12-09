@@ -6,3 +6,7 @@
 
 <script defer src="{{ "src/js/bootstrap/popper.min.js" | relURL }}"></script>
 <script defer src="{{ "src/js/bootstrap/bootstrap.min.js" | relURL }}"></script>
+
+{{ if eq .Section "dashboard" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{{ end }}

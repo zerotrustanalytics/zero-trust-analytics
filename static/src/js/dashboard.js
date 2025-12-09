@@ -4,6 +4,8 @@
 let currentSiteId = null;
 let currentPeriod = '7d';
 let realtimeInterval = null;
+let visitorsChart = null;
+let sourcesChart = null;
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
@@ -52,7 +54,9 @@ async function loadSites() {
       data.sites.forEach(site => {
         const option = document.createElement('option');
         option.value = site.id;
-        option.textContent = site.domain;
+        option.textContent = site.nickname || site.domain;
+        option.dataset.domain = site.domain;
+        option.dataset.nickname = site.nickname || '';
         selector.appendChild(option);
       });
 
@@ -75,13 +79,17 @@ async function loadStats() {
   const selector = document.getElementById('site-selector');
   currentSiteId = selector.value;
 
+  const settingsBtn = document.getElementById('site-settings-btn');
+
   if (!currentSiteId) {
     document.getElementById('stats-content').style.display = 'none';
+    if (settingsBtn) settingsBtn.style.display = 'none';
     stopRealtimeUpdates();
     return;
   }
 
   document.getElementById('stats-content').style.display = 'block';
+  if (settingsBtn) settingsBtn.style.display = 'inline-block';
   document.getElementById('current-site-domain').textContent = selector.options[selector.selectedIndex].text;
 
   // Update embed code
@@ -196,10 +204,12 @@ function updateDashboard(data) {
   const campaigns = Object.entries(data.campaigns || {}).sort((a, b) => b[1] - a[1]);
   populateTable('campaigns-table', campaigns);
 
-  // Events
+  // Events with enhanced display
   document.getElementById('total-events').textContent = formatNumber(data.totalEvents || 0);
-  const events = Object.entries(data.events || {}).map(([key, val]) => [key, val.count]).sort((a, b) => b[1] - a[1]);
-  populateTable('events-table', events);
+  populateEventsTable('events-table', data.events || {});
+
+  // Update charts
+  updateCharts(data);
 }
 
 // Set period and reload
@@ -405,6 +415,267 @@ function populatePagesTable(tableId, data, timeOnPage) {
       </tr>
     `;
   }).join('');
+}
+
+// === CHARTS ===
+
+function updateCharts(data) {
+  if (typeof Chart === 'undefined') return;
+
+  updateVisitorsChart(data.daily || []);
+  updateSourcesChart(data.trafficSources || {});
+}
+
+function updateVisitorsChart(dailyData) {
+  const ctx = document.getElementById('visitors-chart');
+  if (!ctx) return;
+
+  // Destroy existing chart
+  if (visitorsChart) {
+    visitorsChart.destroy();
+  }
+
+  // Prepare data - last N days
+  const labels = dailyData.map(d => {
+    const date = new Date(d.date);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+  const visitors = dailyData.map(d => d.uniqueVisitors || 0);
+  const pageviews = dailyData.map(d => d.pageviews || 0);
+
+  visitorsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Visitors',
+          data: visitors,
+          borderColor: '#0d6efd',
+          backgroundColor: 'rgba(13, 110, 253, 0.1)',
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Pageviews',
+          data: pageviews,
+          borderColor: '#6c757d',
+          backgroundColor: 'transparent',
+          borderDash: [5, 5],
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateSourcesChart(sources) {
+  const ctx = document.getElementById('sources-chart');
+  if (!ctx) return;
+
+  // Destroy existing chart
+  if (sourcesChart) {
+    sourcesChart.destroy();
+  }
+
+  const sortedSources = Object.entries(sources).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const labels = sortedSources.map(([name]) => name.charAt(0).toUpperCase() + name.slice(1));
+  const values = sortedSources.map(([, count]) => count);
+
+  const colors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d'];
+
+  sourcesChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.slice(0, labels.length),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 12,
+            padding: 10
+          }
+        }
+      }
+    }
+  });
+}
+
+// Helper: Populate events table with details
+function populateEventsTable(tableId, events) {
+  const tbody = document.getElementById(tableId);
+  const valueTotalEl = document.getElementById('events-value-total');
+
+  if (!events || Object.keys(events).length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No data yet</td></tr>`;
+    if (valueTotalEl) valueTotalEl.style.display = 'none';
+    return;
+  }
+
+  // Sort by count
+  const sortedEvents = Object.entries(events).sort((a, b) => b[1].count - a[1].count);
+  let totalValue = 0;
+
+  tbody.innerHTML = sortedEvents.slice(0, 15).map(([key, data]) => {
+    // Parse event key (category:action)
+    const [category, action] = key.split(':');
+    const eventName = action || category;
+
+    // Get top labels as details
+    const labels = Object.entries(data.labels || {}).sort((a, b) => b[1] - a[1]);
+    const topLabels = labels.slice(0, 3).map(([label]) => label).join(', ');
+
+    // Format value
+    const value = data.totalValue || 0;
+    totalValue += value;
+    const valueStr = value > 0 ? `$${formatNumber(value.toFixed(2))}` : '-';
+
+    return `
+      <tr>
+        <td>
+          <span class="badge bg-secondary me-1">${truncate(category, 10)}</span>
+          <strong>${truncate(eventName, 15)}</strong>
+        </td>
+        <td class="text-muted small">${topLabels || '-'}</td>
+        <td class="text-end">${formatNumber(data.count)}</td>
+        <td class="text-end">${valueStr}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Show total value if any
+  if (valueTotalEl) {
+    if (totalValue > 0) {
+      valueTotalEl.textContent = `$${formatNumber(totalValue.toFixed(2))}`;
+      valueTotalEl.style.display = 'inline';
+    } else {
+      valueTotalEl.style.display = 'none';
+    }
+  }
+}
+
+// === SITE MANAGEMENT ===
+
+let currentSiteData = null;
+
+// Open site settings modal
+function openSiteSettings() {
+  if (!currentSiteId) return;
+
+  const selector = document.getElementById('site-selector');
+  const selectedOption = selector.options[selector.selectedIndex];
+
+  document.getElementById('settings-site-id').value = currentSiteId;
+  document.getElementById('settings-domain').value = selectedOption.dataset.domain || selectedOption.textContent;
+  document.getElementById('settings-nickname').value = selectedOption.dataset.nickname || '';
+  document.getElementById('site-settings-error').classList.add('d-none');
+
+  const modal = new bootstrap.Modal(document.getElementById('siteSettingsModal'));
+  modal.show();
+}
+
+// Handle site update
+async function handleUpdateSite(event) {
+  event.preventDefault();
+
+  const siteId = document.getElementById('settings-site-id').value;
+  const domain = document.getElementById('settings-domain').value.trim();
+  const nickname = document.getElementById('settings-nickname').value.trim();
+  const errorEl = document.getElementById('site-settings-error');
+
+  errorEl.classList.add('d-none');
+
+  try {
+    const res = await fetch(`${API_BASE}/sites/update`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ siteId, domain, nickname })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to update site');
+    }
+
+    // Close modal and reload
+    const modal = bootstrap.Modal.getInstance(document.getElementById('siteSettingsModal'));
+    modal.hide();
+    await loadSites();
+
+    // Re-select the site
+    document.getElementById('site-selector').value = siteId;
+    loadStats();
+
+  } catch (err) {
+    console.error('Update site error:', err);
+    errorEl.textContent = err.message;
+    errorEl.classList.remove('d-none');
+  }
+}
+
+// Confirm and delete site
+function confirmDeleteSite() {
+  const siteId = document.getElementById('settings-site-id').value;
+  const domain = document.getElementById('settings-domain').value;
+
+  if (confirm(`Are you sure you want to delete "${domain}"?\n\nThis will permanently remove all analytics data for this site. This action cannot be undone.`)) {
+    deleteSite(siteId);
+  }
+}
+
+// Delete site
+async function deleteSite(siteId) {
+  try {
+    const res = await fetch(`${API_BASE}/sites/delete`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ siteId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to delete site');
+    }
+
+    // Close modal and reload
+    const modal = bootstrap.Modal.getInstance(document.getElementById('siteSettingsModal'));
+    modal.hide();
+
+    alert('Site deleted successfully');
+    await loadSites();
+
+  } catch (err) {
+    console.error('Delete site error:', err);
+    alert('Failed to delete site: ' + err.message);
+  }
 }
 
 // === STRIPE BILLING ===
