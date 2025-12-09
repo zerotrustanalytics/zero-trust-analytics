@@ -49,7 +49,7 @@ const {
   recordEvent,
   recordHeartbeat,
   getActiveVisitors
-} = await import('../lib/storage.js');
+} = await import('../../netlify/functions/lib/storage.js');
 
 describe('Storage Module', () => {
   beforeEach(() => {

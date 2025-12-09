@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { getDailySalt, hashVisitor, generateSiteId, generateApiKey } from '../lib/hash.js';
+import { getDailySalt, hashVisitor, generateSiteId, generateApiKey } from '../../netlify/functions/lib/hash.js';
 
 describe('Hash Module', () => {
   const originalEnv = process.env;
