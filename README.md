@@ -573,20 +573,6 @@ Generate secrets with:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 4. Set Up Stripe
-
-1. Go to [Stripe Dashboard](https://dashboard.stripe.com/products)
-2. Create a product called "Zero Trust Analytics Pro"
-3. Add a recurring price: $10/month
-4. Copy the Price ID to `STRIPE_PRICE_ID`
-5. Go to Developers > Webhooks
-6. Add endpoint: `https://YOUR-SITE.netlify.app/api/stripe/webhook`
-7. Select events:
-   - `checkout.session.completed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_failed`
-8. Copy the signing secret to `STRIPE_WEBHOOK_SECRET`
 
 ### 5. Deploy
 
