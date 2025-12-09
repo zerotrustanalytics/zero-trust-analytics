@@ -410,14 +410,30 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
 }
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
 }
 .stats-grid-secondary {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+.stat-card {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.stat-card .stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  word-break: break-word;
 }
 .stat-card-sm .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
+}
+.stat-card .stat-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
 }
 .data-table {
   background: white;
@@ -427,10 +443,57 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
 }
 .data-table .table {
   margin-bottom: 0;
+  table-layout: fixed;
 }
 .data-table .table td, .data-table .table th {
   padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.data-table .table td:first-child {
+  max-width: 200px;
+}
+.embed-code {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+}
+.embed-code code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+/* Mobile fixes */
+@media (max-width: 576px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stats-grid-secondary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-card .stat-value {
+    font-size: 1.25rem;
+  }
+  .stat-card-sm .stat-value {
+    font-size: 1rem;
+  }
+  .d-flex.gap-2 {
+    flex-wrap: wrap;
+  }
+  .period-selector {
+    flex-wrap: wrap;
+  }
+  .period-selector .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .data-table .table td, .data-table .table th {
+    font-size: 0.7rem;
+    padding: 0.4rem;
+  }
 }
 </style>
 {{ end }}

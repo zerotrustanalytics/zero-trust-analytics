@@ -96,7 +96,7 @@ async function loadStats() {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error);
+      throw new Error(data.error || 'Failed to load stats');
     }
 
     updateDashboard(data);
@@ -281,7 +281,7 @@ async function handleAddSite(event) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error);
+      throw new Error(data.error || 'Failed to create site');
     }
 
     // Show embed code immediately
