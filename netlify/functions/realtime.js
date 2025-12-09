@@ -1,5 +1,5 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getStats, getSite, getUserSites } from './lib/storage.js';
+import { getActiveVisitors, getUserSites } from './lib/storage.js';
 
 export default async function handler(req, context) {
   // Handle CORS preflight
@@ -33,9 +33,6 @@ export default async function handler(req, context) {
   try {
     const url = new URL(req.url);
     const siteId = url.searchParams.get('siteId');
-    const period = url.searchParams.get('period') || '7d';
-    const customStart = url.searchParams.get('startDate');
-    const customEnd = url.searchParams.get('endDate');
 
     if (!siteId) {
       return new Response(JSON.stringify({ error: 'Site ID required' }), {
@@ -53,54 +50,30 @@ export default async function handler(req, context) {
       });
     }
 
-    // Calculate date range
-    let endDate, startDate;
+    // Get active visitors
+    const realtime = await getActiveVisitors(siteId);
 
-    if (customStart && customEnd) {
-      // Custom date range
-      startDate = new Date(customStart);
-      endDate = new Date(customEnd);
-    } else {
-      // Preset periods
-      endDate = new Date();
-      startDate = new Date();
-
-      switch (period) {
-        case '24h':
-          startDate.setDate(startDate.getDate() - 1);
-          break;
-        case '7d':
-          startDate.setDate(startDate.getDate() - 7);
-          break;
-        case '30d':
-          startDate.setDate(startDate.getDate() - 30);
-          break;
-        case '90d':
-          startDate.setDate(startDate.getDate() - 90);
-          break;
-        case '365d':
-          startDate.setDate(startDate.getDate() - 365);
-          break;
-        default:
-          startDate.setDate(startDate.getDate() - 7);
-      }
+    // Group visitors by page
+    const pageBreakdown = {};
+    for (const visitor of realtime.visitors) {
+      const path = visitor.path || '/';
+      pageBreakdown[path] = (pageBreakdown[path] || 0) + 1;
     }
 
-    const stats = await getStats(
-      siteId,
-      startDate.toISOString().split('T')[0],
-      endDate.toISOString().split('T')[0]
-    );
-
-    return new Response(JSON.stringify(stats), {
+    return new Response(JSON.stringify({
+      activeVisitors: realtime.count,
+      pageBreakdown,
+      timestamp: new Date().toISOString()
+    }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
       }
     });
   } catch (err) {
-    console.error('Stats error:', err);
+    console.error('Realtime error:', err);
     return new Response(JSON.stringify({ error: 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -109,5 +82,5 @@ export default async function handler(req, context) {
 }
 
 export const config = {
-  path: '/api/stats'
+  path: '/api/realtime'
 };
