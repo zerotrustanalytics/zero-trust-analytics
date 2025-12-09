@@ -85,6 +85,35 @@ export async function getSite(siteId) {
   return await sites.get(siteId, { type: 'json' });
 }
 
+export async function updateSite(siteId, updates) {
+  const sites = store(STORES.SITES);
+  const site = await getSite(siteId);
+  if (!site) return null;
+  const updated = { ...site, ...updates };
+  await sites.setJSON(siteId, updated);
+  return updated;
+}
+
+export async function deleteSite(siteId, userId) {
+  const sites = store(STORES.SITES);
+
+  // Delete the site
+  await sites.delete(siteId);
+
+  // Remove from user's site list
+  const userSitesKey = `user_sites_${userId}`;
+  let userSites = [];
+  try {
+    userSites = await sites.get(userSitesKey, { type: 'json' }) || [];
+  } catch (e) {
+    userSites = [];
+  }
+  userSites = userSites.filter(id => id !== siteId);
+  await sites.setJSON(userSitesKey, userSites);
+
+  return true;
+}
+
 export async function getUserSites(userId) {
   const sites = store(STORES.SITES);
   const userSitesKey = `user_sites_${userId}`;
