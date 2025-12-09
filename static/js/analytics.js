@@ -503,26 +503,20 @@
       return;
     }
 
-    // Use sendBeacon for reliability (works even on page unload)
-    if (navigator.sendBeacon) {
-      var blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-      var sent = navigator.sendBeacon(ZTA.config.endpoint, blob);
-      ZTA.log('Sent via beacon:', sent, data.type);
-    } else {
-      // Fallback to fetch
-      fetch(ZTA.config.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data),
-        keepalive: true
-      }).then(function() {
-        ZTA.log('Sent via fetch:', data.type);
-      }).catch(function(err) {
-        ZTA.log('Send error:', err);
-      });
-    }
+    // Use fetch with keepalive for cross-origin compatibility
+    // (sendBeacon has CORS issues with some browsers)
+    fetch(ZTA.config.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+      keepalive: true
+    }).then(function() {
+      ZTA.log('Sent:', data.type);
+    }).catch(function(err) {
+      ZTA.log('Send error:', err);
+    });
   };
 
   // SPA tracking setup
