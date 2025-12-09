@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { createHeaders } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -50,13 +51,12 @@ describe('Track Endpoint', () => {
 
   describe('CORS Handling', () => {
     it('should respond to OPTIONS preflight request', async () => {
-      const { default: handler } = await import('../track.js');
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'OPTIONS',
-        headers: new Map([['origin', 'https://example.com']])
+        headers: createHeaders({ origin: 'https://example.com' })
       };
-      req.headers.get = (key) => req.headers.get(key);
 
       const response = await handler(req, {});
 
@@ -65,16 +65,14 @@ describe('Track Endpoint', () => {
     });
 
     it('should allow requests from registered domain', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'pageview',
           siteId: 'site_test123',
@@ -88,16 +86,14 @@ describe('Track Endpoint', () => {
     });
 
     it('should block requests from unauthorized domain', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://malicious-site.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://malicious-site.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'pageview',
           siteId: 'site_test123',
@@ -113,16 +109,14 @@ describe('Track Endpoint', () => {
 
   describe('Pageview Tracking', () => {
     it('should track pageview successfully', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'pageview',
           siteId: 'site_test123',
@@ -140,16 +134,14 @@ describe('Track Endpoint', () => {
     });
 
     it('should reject requests without siteId', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'pageview',
           path: '/'
@@ -164,16 +156,14 @@ describe('Track Endpoint', () => {
     });
 
     it('should reject requests with invalid siteId', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'pageview',
           siteId: 'invalid_site_id',
@@ -191,16 +181,14 @@ describe('Track Endpoint', () => {
 
   describe('Event Tracking', () => {
     it('should track custom events', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'event',
           siteId: 'site_test123',
@@ -218,16 +206,14 @@ describe('Track Endpoint', () => {
     });
 
     it('should track event values', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'event',
           siteId: 'site_test123',
@@ -245,16 +231,14 @@ describe('Track Endpoint', () => {
 
   describe('Engagement Tracking', () => {
     it('should track engagement data', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'engagement',
           siteId: 'site_test123',
@@ -273,16 +257,14 @@ describe('Track Endpoint', () => {
 
   describe('Heartbeat Tracking', () => {
     it('should track heartbeat for realtime analytics', async () => {
-      const { default: handler } = await import('../track.js');
-
-      const headers = new Map([
-        ['origin', 'https://example.com'],
-        ['user-agent', 'Mozilla/5.0']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key) },
+        headers: createHeaders({
+          origin: 'https://example.com',
+          'user-agent': 'Mozilla/5.0'
+        }),
         json: async () => ({
           type: 'heartbeat',
           siteId: 'site_test123',
@@ -299,11 +281,11 @@ describe('Track Endpoint', () => {
 
   describe('HTTP Methods', () => {
     it('should reject GET requests', async () => {
-      const { default: handler } = await import('../track.js');
+      const { default: handler } = await import('../../netlify/functions/track.js');
 
       const req = {
         method: 'GET',
-        headers: { get: () => null }
+        headers: createHeaders({})
       };
 
       const response = await handler(req, {});

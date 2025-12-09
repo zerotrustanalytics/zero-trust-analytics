@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { createHeaders } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -36,7 +37,7 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   default: {
     verify: jest.fn((token) => {
       if (token === 'valid_token') {
-        return { email: 'user@example.com', userId: 'user_123' };
+        return { id: 'user_123', email: 'user@example.com' };
       }
       throw new Error('Invalid token');
     })
@@ -63,15 +64,11 @@ describe('Sites Endpoints', () => {
 
   describe('POST /api/sites/create', () => {
     it('should create a new site', async () => {
-      const { default: handler } = await import('../sites-create.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           domain: 'mynewsite.com'
         })
@@ -87,11 +84,11 @@ describe('Sites Endpoints', () => {
     });
 
     it('should reject requests without auth', async () => {
-      const { default: handler } = await import('../sites-create.js');
+      const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
       const req = {
         method: 'POST',
-        headers: { get: () => null },
+        headers: createHeaders({}),
         json: async () => ({
           domain: 'example.com'
         })
@@ -103,15 +100,11 @@ describe('Sites Endpoints', () => {
     });
 
     it('should reject requests without domain', async () => {
-      const { default: handler } = await import('../sites-create.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({})
       };
 
@@ -123,15 +116,11 @@ describe('Sites Endpoints', () => {
     });
 
     it('should normalize domain (remove protocol, trailing slash)', async () => {
-      const { default: handler } = await import('../sites-create.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
       const req = {
         method: 'POST',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           domain: 'https://example.com/'
         })
@@ -147,15 +136,11 @@ describe('Sites Endpoints', () => {
 
   describe('GET /api/sites/list', () => {
     it('should return empty array for user with no sites', async () => {
-      const { default: handler } = await import('../sites-list.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/sites-list.js');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) }
+        headers: createHeaders({ authorization: 'Bearer valid_token' })
       };
 
       const response = await handler(req, {});
@@ -167,28 +152,26 @@ describe('Sites Endpoints', () => {
 
     it('should return list of user sites', async () => {
       // First create a site
-      const { default: createHandler } = await import('../sites-create.js');
-      const { default: listHandler } = await import('../sites-list.js');
+      const { default: createHandler } = await import('../../netlify/functions/sites-create.js');
+      const { default: listHandler } = await import('../../netlify/functions/sites-list.js');
 
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const headers = createHeaders({ authorization: 'Bearer valid_token' });
 
       await createHandler({
         method: 'POST',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers,
         json: async () => ({ domain: 'site1.com' })
       }, {});
 
       await createHandler({
         method: 'POST',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers,
         json: async () => ({ domain: 'site2.com' })
       }, {});
 
       const response = await listHandler({
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) }
+        headers
       }, {});
 
       const data = await response.json();
@@ -198,11 +181,11 @@ describe('Sites Endpoints', () => {
     });
 
     it('should reject requests without auth', async () => {
-      const { default: handler } = await import('../sites-list.js');
+      const { default: handler } = await import('../../netlify/functions/sites-list.js');
 
       const req = {
         method: 'GET',
-        headers: { get: () => null }
+        headers: createHeaders({})
       };
 
       const response = await handler(req, {});

@@ -40,10 +40,16 @@ export default async function handler(req, context) {
       });
     }
 
+    // Normalize domain: remove protocol and trailing slash
+    const normalizedDomain = domain
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/\/$/, '');
+
     // Generate site ID and create
     const siteId = generateSiteId();
-    console.log('Creating site:', { userId: auth.user.id, siteId, domain });
-    const site = await createSite(auth.user.id, siteId, domain);
+    console.log('Creating site:', { userId: auth.user.id, siteId, domain: normalizedDomain });
+    const site = await createSite(auth.user.id, siteId, normalizedDomain);
     console.log('Site created:', site);
 
     return new Response(JSON.stringify({

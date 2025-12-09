@@ -140,11 +140,10 @@ export async function recordPageview(siteId, visitorHash, data) {
   let stats = await pageviews.get(statsKey, { type: 'json' });
   if (!stats) {
     stats = createEmptyDayStats(siteId, today);
-  } else {
-    // Convert arrays back to Sets for processing
-    stats.visitors = new Set(stats.visitors);
-    stats.sessions = new Set(stats.sessions);
   }
+  // Convert arrays to Sets for processing
+  stats.visitors = new Set(stats.visitors || []);
+  stats.sessions = new Set(stats.sessions || []);
 
   // Update basic stats
   stats.pageviews++;

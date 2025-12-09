@@ -62,7 +62,7 @@ describe('Auth Endpoints', () => {
 
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
-      const { default: handler } = await import('../auth-register.js');
+      const { default: handler } = await import('../../netlify/functions/auth-register.js');
 
       const req = {
         method: 'POST',
@@ -81,7 +81,7 @@ describe('Auth Endpoints', () => {
     });
 
     it('should reject registration with missing email', async () => {
-      const { default: handler } = await import('../auth-register.js');
+      const { default: handler } = await import('../../netlify/functions/auth-register.js');
 
       const req = {
         method: 'POST',
@@ -98,7 +98,7 @@ describe('Auth Endpoints', () => {
     });
 
     it('should reject registration with missing password', async () => {
-      const { default: handler } = await import('../auth-register.js');
+      const { default: handler } = await import('../../netlify/functions/auth-register.js');
 
       const req = {
         method: 'POST',
@@ -115,7 +115,7 @@ describe('Auth Endpoints', () => {
     });
 
     it('should reject duplicate email registration', async () => {
-      const { default: handler } = await import('../auth-register.js');
+      const { default: handler } = await import('../../netlify/functions/auth-register.js');
 
       const req1 = {
         method: 'POST',
@@ -138,12 +138,12 @@ describe('Auth Endpoints', () => {
       const response = await handler(req2, {});
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data.error).toContain('exists');
+      expect(response.status).toBe(409);  // 409 Conflict for duplicate
+      expect(data.error).toContain('registered');
     });
 
     it('should reject GET requests', async () => {
-      const { default: handler } = await import('../auth-register.js');
+      const { default: handler } = await import('../../netlify/functions/auth-register.js');
 
       const req = {
         method: 'GET',
@@ -158,8 +158,8 @@ describe('Auth Endpoints', () => {
   describe('POST /api/auth/login', () => {
     it('should login existing user successfully', async () => {
       // First register a user
-      const { default: registerHandler } = await import('../auth-register.js');
-      const { default: loginHandler } = await import('../auth-login.js');
+      const { default: registerHandler } = await import('../../netlify/functions/auth-register.js');
+      const { default: loginHandler } = await import('../../netlify/functions/auth-login.js');
 
       await registerHandler({
         method: 'POST',
@@ -185,8 +185,8 @@ describe('Auth Endpoints', () => {
     });
 
     it('should reject login with wrong password', async () => {
-      const { default: registerHandler } = await import('../auth-register.js');
-      const { default: loginHandler } = await import('../auth-login.js');
+      const { default: registerHandler } = await import('../../netlify/functions/auth-register.js');
+      const { default: loginHandler } = await import('../../netlify/functions/auth-login.js');
 
       await registerHandler({
         method: 'POST',
@@ -212,7 +212,7 @@ describe('Auth Endpoints', () => {
     });
 
     it('should reject login for non-existent user', async () => {
-      const { default: loginHandler } = await import('../auth-login.js');
+      const { default: loginHandler } = await import('../../netlify/functions/auth-login.js');
 
       const loginReq = {
         method: 'POST',

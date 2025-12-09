@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { createHeaders } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -36,7 +37,7 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   default: {
     verify: jest.fn((token) => {
       if (token === 'valid_token') {
-        return { email: 'user@example.com', userId: 'user_123' };
+        return { id: 'user_123', email: 'user@example.com' };
       }
       throw new Error('Invalid token');
     })
@@ -102,17 +103,13 @@ describe('Stats Endpoint', () => {
 
   describe('GET /api/stats', () => {
     it('should return stats for a valid site', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -125,17 +122,13 @@ describe('Stats Endpoint', () => {
     });
 
     it('should calculate bounce rate correctly', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -147,17 +140,13 @@ describe('Stats Endpoint', () => {
     });
 
     it('should return top pages', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -169,17 +158,13 @@ describe('Stats Endpoint', () => {
     });
 
     it('should return referrer data', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -191,17 +176,13 @@ describe('Stats Endpoint', () => {
     });
 
     it('should return device breakdown', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -214,17 +195,13 @@ describe('Stats Endpoint', () => {
     });
 
     it('should return geographic data', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -236,13 +213,13 @@ describe('Stats Endpoint', () => {
     });
 
     it('should reject requests without auth', async () => {
-      const { default: handler } = await import('../stats.js');
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: () => null },
+        headers: createHeaders({}),
         url: url.toString()
       };
 
@@ -252,17 +229,13 @@ describe('Stats Endpoint', () => {
     });
 
     it('should reject requests without siteId', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const url = new URL('https://example.com/api/stats?period=7d');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -274,18 +247,14 @@ describe('Stats Endpoint', () => {
     });
 
     it('should support custom date ranges', async () => {
-      const { default: handler } = await import('../stats.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/stats.js');
 
       const today = new Date().toISOString().split('T')[0];
       const url = new URL(`https://example.com/api/stats?siteId=site_test&startDate=${today}&endDate=${today}`);
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 

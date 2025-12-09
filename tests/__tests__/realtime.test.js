@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { createHeaders } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -36,7 +37,7 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   default: {
     verify: jest.fn((token) => {
       if (token === 'valid_token') {
-        return { email: 'user@example.com', userId: 'user_123' };
+        return { id: 'user_123', email: 'user@example.com' };
       }
       throw new Error('Invalid token');
     })
@@ -86,17 +87,13 @@ describe('Realtime Endpoint', () => {
 
   describe('GET /api/realtime', () => {
     it('should return active visitor count', async () => {
-      const { default: handler } = await import('../realtime.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/realtime.js');
 
       const url = new URL('https://example.com/api/realtime?siteId=site_test');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -108,7 +105,7 @@ describe('Realtime Endpoint', () => {
     });
 
     it('should return 0 for site with no activity', async () => {
-      const { default: handler } = await import('../realtime.js');
+      const { default: handler } = await import('../../netlify/functions/realtime.js');
 
       // Create another site with no activity
       const sitesStore = getStore({ name: 'sites' });
@@ -117,16 +114,14 @@ describe('Realtime Endpoint', () => {
         userId: 'user_123',
         domain: 'empty.com'
       });
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      // Add to user's site list for ownership check
+      await sitesStore.setJSON('user_sites_user_123', ['site_test', 'site_empty']);
 
       const url = new URL('https://example.com/api/realtime?siteId=site_empty');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
@@ -138,13 +133,13 @@ describe('Realtime Endpoint', () => {
     });
 
     it('should reject requests without auth', async () => {
-      const { default: handler } = await import('../realtime.js');
+      const { default: handler } = await import('../../netlify/functions/realtime.js');
 
       const url = new URL('https://example.com/api/realtime?siteId=site_test');
 
       const req = {
         method: 'GET',
-        headers: { get: () => null },
+        headers: createHeaders({}),
         url: url.toString()
       };
 
@@ -154,17 +149,13 @@ describe('Realtime Endpoint', () => {
     });
 
     it('should reject requests without siteId', async () => {
-      const { default: handler } = await import('../realtime.js');
-
-      const headers = new Map([
-        ['authorization', 'Bearer valid_token']
-      ]);
+      const { default: handler } = await import('../../netlify/functions/realtime.js');
 
       const url = new URL('https://example.com/api/realtime');
 
       const req = {
         method: 'GET',
-        headers: { get: (key) => headers.get(key.toLowerCase()) },
+        headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
       };
 
