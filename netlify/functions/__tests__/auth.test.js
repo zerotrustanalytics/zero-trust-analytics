@@ -1,0 +1,231 @@
+import { jest } from '@jest/globals';
+
+// Mock @netlify/blobs
+jest.unstable_mockModule('@netlify/blobs', () => {
+  const stores = new Map();
+
+  function createMockStore(name) {
+    if (!stores.has(name)) {
+      stores.set(name, new Map());
+    }
+    const data = stores.get(name);
+
+    return {
+      async get(key, options = {}) {
+        const value = data.get(key);
+        if (value === undefined) return null;
+        if (options.type === 'json') {
+          return JSON.parse(value);
+        }
+        return value;
+      },
+      async setJSON(key, value) {
+        data.set(key, JSON.stringify(value));
+      }
+    };
+  }
+
+  return {
+    getStore: ({ name }) => createMockStore(name),
+    __clearAllStores: () => stores.clear()
+  };
+});
+
+// Mock bcryptjs
+jest.unstable_mockModule('bcryptjs', () => ({
+  default: {
+    hash: jest.fn((password) => Promise.resolve(`hashed_${password}`)),
+    compare: jest.fn((password, hash) => Promise.resolve(hash === `hashed_${password}`))
+  }
+}));
+
+// Mock jsonwebtoken
+jest.unstable_mockModule('jsonwebtoken', () => ({
+  default: {
+    sign: jest.fn((payload) => `token_${payload.email}`),
+    verify: jest.fn((token) => {
+      if (token.startsWith('token_')) {
+        return { email: token.replace('token_', '') };
+      }
+      throw new Error('Invalid token');
+    })
+  }
+}));
+
+const { __clearAllStores } = await import('@netlify/blobs');
+
+describe('Auth Endpoints', () => {
+  beforeEach(() => {
+    __clearAllStores();
+    process.env.JWT_SECRET = 'test-jwt-secret';
+  });
+
+  describe('POST /api/auth/register', () => {
+    it('should register a new user successfully', async () => {
+      const { default: handler } = await import('../auth-register.js');
+
+      const req = {
+        method: 'POST',
+        json: async () => ({
+          email: 'newuser@example.com',
+          password: 'securePassword123'
+        })
+      };
+
+      const response = await handler(req, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(data.token).toBeDefined();
+      expect(data.user.email).toBe('newuser@example.com');
+    });
+
+    it('should reject registration with missing email', async () => {
+      const { default: handler } = await import('../auth-register.js');
+
+      const req = {
+        method: 'POST',
+        json: async () => ({
+          password: 'securePassword123'
+        })
+      };
+
+      const response = await handler(req, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('required');
+    });
+
+    it('should reject registration with missing password', async () => {
+      const { default: handler } = await import('../auth-register.js');
+
+      const req = {
+        method: 'POST',
+        json: async () => ({
+          email: 'user@example.com'
+        })
+      };
+
+      const response = await handler(req, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('required');
+    });
+
+    it('should reject duplicate email registration', async () => {
+      const { default: handler } = await import('../auth-register.js');
+
+      const req1 = {
+        method: 'POST',
+        json: async () => ({
+          email: 'duplicate@example.com',
+          password: 'password123'
+        })
+      };
+
+      await handler(req1, {});
+
+      const req2 = {
+        method: 'POST',
+        json: async () => ({
+          email: 'duplicate@example.com',
+          password: 'differentPassword'
+        })
+      };
+
+      const response = await handler(req2, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('exists');
+    });
+
+    it('should reject GET requests', async () => {
+      const { default: handler } = await import('../auth-register.js');
+
+      const req = {
+        method: 'GET',
+        json: async () => ({})
+      };
+
+      const response = await handler(req, {});
+      expect(response.status).toBe(405);
+    });
+  });
+
+  describe('POST /api/auth/login', () => {
+    it('should login existing user successfully', async () => {
+      // First register a user
+      const { default: registerHandler } = await import('../auth-register.js');
+      const { default: loginHandler } = await import('../auth-login.js');
+
+      await registerHandler({
+        method: 'POST',
+        json: async () => ({
+          email: 'login@example.com',
+          password: 'password123'
+        })
+      }, {});
+
+      const loginReq = {
+        method: 'POST',
+        json: async () => ({
+          email: 'login@example.com',
+          password: 'password123'
+        })
+      };
+
+      const response = await loginHandler(loginReq, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.token).toBeDefined();
+    });
+
+    it('should reject login with wrong password', async () => {
+      const { default: registerHandler } = await import('../auth-register.js');
+      const { default: loginHandler } = await import('../auth-login.js');
+
+      await registerHandler({
+        method: 'POST',
+        json: async () => ({
+          email: 'wrongpass@example.com',
+          password: 'correctPassword'
+        })
+      }, {});
+
+      const loginReq = {
+        method: 'POST',
+        json: async () => ({
+          email: 'wrongpass@example.com',
+          password: 'wrongPassword'
+        })
+      };
+
+      const response = await loginHandler(loginReq, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(data.error).toBeDefined();
+    });
+
+    it('should reject login for non-existent user', async () => {
+      const { default: loginHandler } = await import('../auth-login.js');
+
+      const loginReq = {
+        method: 'POST',
+        json: async () => ({
+          email: 'nonexistent@example.com',
+          password: 'password123'
+        })
+      };
+
+      const response = await loginHandler(loginReq, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(401);
+    });
+  });
+});
