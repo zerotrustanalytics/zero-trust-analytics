@@ -1,34 +1,46 @@
 {{ define "main" }}
 <div class="dashboard-container">
-  <div class="container">
+  <div class="container-fluid px-4">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
         <h1 class="h3 mb-1">Dashboard</h1>
         <p class="text-muted mb-0" id="current-site-domain">Select a site to view analytics</p>
       </div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline-secondary" onclick="openBillingPortal()">
-          <i class="fas fa-credit-card me-2"></i>Billing
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportData('json')">
+          <i class="fas fa-download me-1"></i>Export JSON
         </button>
-        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSiteModal">
-          <i class="fas fa-plus me-2"></i>Add Site
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportData('csv')">
+          <i class="fas fa-file-csv me-1"></i>Export CSV
+        </button>
+        <button class="btn btn-outline-secondary" onclick="openBillingPortal()">
+          <i class="fas fa-credit-card me-1"></i>Billing
+        </button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSiteModal">
+          <i class="fas fa-plus me-1"></i>Add Site
         </button>
       </div>
     </div>
 
-    <!-- Site Selector & Period -->
-    <div class="d-flex flex-wrap gap-3 mb-4">
+    <!-- Site Selector, Period & Date Range -->
+    <div class="d-flex flex-wrap gap-3 mb-4 align-items-center">
       <div class="site-selector">
         <select class="form-select" id="site-selector" onchange="loadStats()">
           <option value="">Select a site...</option>
         </select>
       </div>
       <div class="period-selector btn-group" role="group">
-        <button type="button" class="btn btn-outline-secondary" onclick="setPeriod('24h')">24h</button>
-        <button type="button" class="btn btn-outline-secondary active" onclick="setPeriod('7d')">7 days</button>
-        <button type="button" class="btn btn-outline-secondary" onclick="setPeriod('30d')">30 days</button>
-        <button type="button" class="btn btn-outline-secondary" onclick="setPeriod('90d')">90 days</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('24h')">24h</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm active" onclick="setPeriod('7d')">7d</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('30d')">30d</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('90d')">90d</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('365d')">1y</button>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <input type="date" class="form-control form-control-sm" id="start-date" onchange="loadStatsCustomRange()">
+        <span class="text-muted">to</span>
+        <input type="date" class="form-control form-control-sm" id="end-date" onchange="loadStatsCustomRange()">
       </div>
     </div>
 
@@ -46,8 +58,17 @@
 
     <!-- Stats Content (hidden until site selected) -->
     <div id="stats-content" style="display: none;">
-      <!-- Stats Grid -->
-      <div class="stats-grid">
+
+      <!-- Real-time Badge -->
+      <div class="mb-4">
+        <div class="d-inline-flex align-items-center bg-success text-white px-3 py-2 rounded">
+          <span class="pulse-dot me-2"></span>
+          <span id="active-visitors">0</span> active visitor(s) right now
+        </div>
+      </div>
+
+      <!-- Primary Stats Grid -->
+      <div class="stats-grid mb-4">
         <div class="stat-card">
           <div class="stat-value" id="unique-visitors">-</div>
           <div class="stat-label">Unique Visitors</div>
@@ -57,40 +78,70 @@
           <div class="stat-label">Page Views</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="top-page">-</div>
-          <div class="stat-label">Top Page</div>
+          <div class="stat-value" id="sessions">-</div>
+          <div class="stat-label">Sessions</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="top-referrer">-</div>
-          <div class="stat-label">Top Referrer</div>
+          <div class="stat-value" id="bounce-rate">-</div>
+          <div class="stat-label">Bounce Rate</div>
         </div>
       </div>
 
-      <!-- Top Pages Table -->
+      <!-- Secondary Stats Grid -->
+      <div class="stats-grid stats-grid-secondary mb-4">
+        <div class="stat-card stat-card-sm">
+          <div class="stat-value" id="avg-session-duration">-</div>
+          <div class="stat-label">Avg. Session Duration</div>
+        </div>
+        <div class="stat-card stat-card-sm">
+          <div class="stat-value" id="pages-per-session">-</div>
+          <div class="stat-label">Pages / Session</div>
+        </div>
+        <div class="stat-card stat-card-sm">
+          <div class="stat-value" id="avg-scroll-depth">-</div>
+          <div class="stat-label">Avg. Scroll Depth</div>
+        </div>
+        <div class="stat-card stat-card-sm">
+          <div class="stat-value" id="new-vs-returning">-</div>
+          <div class="stat-label">New / Returning</div>
+        </div>
+      </div>
+
+      <!-- Main Data Tables Row -->
       <div class="row">
-        <div class="col-md-6 mb-4">
+        <!-- Top Pages -->
+        <div class="col-lg-6 mb-4">
           <div class="data-table">
-            <h5 class="p-3 mb-0 bg-light">Top Pages</h5>
-            <table class="table">
+            <h5 class="p-3 mb-0 bg-light d-flex justify-content-between align-items-center">
+              Top Pages
+              <span class="badge bg-secondary" id="pages-count">0</span>
+            </h5>
+            <table class="table table-sm">
               <thead>
                 <tr>
                   <th>Page</th>
                   <th class="text-end">Views</th>
+                  <th class="text-end">Avg Time</th>
                 </tr>
               </thead>
               <tbody id="top-pages-table">
-                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+                <tr><td colspan="3" class="text-center text-muted">No data yet</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="col-md-6 mb-4">
+
+        <!-- Top Referrers -->
+        <div class="col-lg-6 mb-4">
           <div class="data-table">
-            <h5 class="p-3 mb-0 bg-light">Top Referrers</h5>
-            <table class="table">
+            <h5 class="p-3 mb-0 bg-light d-flex justify-content-between align-items-center">
+              Top Referrers
+              <span class="badge bg-secondary" id="referrers-count">0</span>
+            </h5>
+            <table class="table table-sm">
               <thead>
                 <tr>
-                  <th>Referrer</th>
+                  <th>Source</th>
                   <th class="text-end">Visits</th>
                 </tr>
               </thead>
@@ -102,19 +153,207 @@
         </div>
       </div>
 
+      <!-- Landing & Exit Pages Row -->
+      <div class="row">
+        <div class="col-lg-6 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Landing Pages</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th class="text-end">Entrances</th>
+                </tr>
+              </thead>
+              <tbody id="landing-pages-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Exit Pages</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th class="text-end">Exits</th>
+                </tr>
+              </thead>
+              <tbody id="exit-pages-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Traffic Sources & Devices Row -->
+      <div class="row">
+        <div class="col-lg-4 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Traffic Sources</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Source Type</th>
+                  <th class="text-end">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="traffic-sources-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Devices</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Device</th>
+                  <th class="text-end">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="devices-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Browsers</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Browser</th>
+                  <th class="text-end">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="browsers-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- OS & Countries Row -->
+      <div class="row">
+        <div class="col-lg-4 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Operating Systems</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>OS</th>
+                  <th class="text-end">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="os-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Countries</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th class="text-end">Visitors</th>
+                </tr>
+              </thead>
+              <tbody id="countries-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">Languages</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Language</th>
+                  <th class="text-end">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="languages-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaigns & Events Row -->
+      <div class="row">
+        <div class="col-lg-6 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">UTM Campaigns</h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Campaign</th>
+                  <th class="text-end">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="campaigns-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="data-table">
+            <h5 class="p-3 mb-0 bg-light">
+              Events
+              <small class="text-muted">(<span id="total-events">0</span> total)</small>
+            </h5>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th class="text-end">Count</th>
+                </tr>
+              </thead>
+              <tbody id="events-table">
+                <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Embed Code -->
-      <div class="card">
-        <div class="card-header">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0">Embed Code</h5>
+          <button class="btn btn-sm btn-outline-primary" onclick="copyEmbedCode()">
+            <i class="fas fa-copy me-1"></i>Copy
+          </button>
         </div>
         <div class="card-body">
-          <p class="text-muted">Add this script to your website's <code>&lt;head&gt;</code> tag:</p>
+          <p class="text-muted small mb-2">Add this script to your website's <code>&lt;head&gt;</code> tag:</p>
           <div class="embed-code">
             <code id="embed-code">&lt;script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"&gt;&lt;/script&gt;</code>
           </div>
-          <button class="btn btn-sm btn-outline-primary mt-2" onclick="copyEmbedCode()">
-            <i class="fas fa-copy me-1"></i>Copy Code
-          </button>
+          <div class="mt-3">
+            <p class="text-muted small mb-1">Optional attributes:</p>
+            <ul class="small text-muted mb-0">
+              <li><code>data-spa="true"</code> - Enable SPA route tracking</li>
+              <li><code>data-debug="true"</code> - Enable console logging</li>
+              <li><code>data-track-scroll="false"</code> - Disable scroll tracking</li>
+              <li><code>data-track-outbound="false"</code> - Disable outbound link tracking</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -146,4 +385,42 @@
     </div>
   </div>
 </div>
+
+<style>
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.stats-grid-secondary {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.stat-card-sm .stat-value {
+  font-size: 1.5rem;
+}
+.data-table {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.data-table .table {
+  margin-bottom: 0;
+}
+.data-table .table td, .data-table .table th {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+</style>
 {{ end }}
