@@ -35,7 +35,7 @@
   ZTA.init = function(siteId, options) {
     options = options || {};
     ZTA.config.siteId = siteId;
-    ZTA.config.endpoint = options.endpoint || 'https://zero-trust-analytics.netlify.app/api/track';
+    ZTA.config.endpoint = options.endpoint || 'https://zerotrustanalytics.netlify.app/api/track';
     ZTA.config.debug = options.debug || false;
     ZTA.config.trackScrollDepth = options.trackScrollDepth !== false;
     ZTA.config.trackOutboundLinks = options.trackOutboundLinks !== false;
