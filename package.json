@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "obfuscate": "npx javascript-obfuscator static/js/analytics.js --output static/js/analytics.min.js --compact true --control-flow-flattening true --dead-code-injection true --string-array true --string-array-encoding base64 --string-array-threshold 0.75",
+    "obfuscate": "npx javascript-obfuscator src/analytics.js --output static/js/analytics.js --compact true --control-flow-flattening true --dead-code-injection true --string-array true --string-array-encoding base64 --string-array-threshold 0.75",
     "build": "npm run obfuscate"
   },
   "repository": {
