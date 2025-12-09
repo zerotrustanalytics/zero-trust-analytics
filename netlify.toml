@@ -1,6 +1,6 @@
 [build]
   publish = "public"
-  command = "cd netlify/functions && npm install && cd ../.. && hugo --gc --minify"
+  command = "npm install && npm run obfuscate && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify"
   functions = "netlify/functions"
 
 [context.production.environment]
@@ -28,3 +28,9 @@
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, X-Site-ID"
+
+[[headers]]
+  for = "/js/analytics.min.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=3600"

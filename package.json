@@ -1,0 +1,29 @@
+{
+  "name": "zero-trust-analytics",
+  "version": "1.0.0",
+  "description": "Privacy-focused, anonymous website analytics. Track visitors without compromising their privacy.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "obfuscate": "npx javascript-obfuscator static/js/analytics.js --output static/js/analytics.min.js --compact true --control-flow-flattening true --dead-code-injection true --string-array true --string-array-encoding base64 --string-array-threshold 0.75",
+    "build": "npm run obfuscate"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasonsutter87/zero-trust-analytics.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jasonsutter87/zero-trust-analytics/issues"
+  },
+  "homepage": "https://github.com/jasonsutter87/zero-trust-analytics#readme",
+  "devDependencies": {
+    "javascript-obfuscator": "^5.0.1"
+  }
+}
