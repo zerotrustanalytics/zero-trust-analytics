@@ -1,0 +1,13 @@
+{
+    "host": "https://api.us-west-2.aws.tinybird.co",
+    "id": "393c9a01-a7c1-47d8-87c9-351ba142c346",
+    "name": "zta",
+    "scope": "user",
+    "token": "p.eyJ1IjogIjM5M2M5YTAxLWE3YzEtNDdkOC04N2M5LTM1MWJhMTQyYzM0NiIsICJpZCI6ICI1ODRjNDM0Ny0zMDE2LTQwNmItYTI1NS00ZjM5MzIyOTJmYzMiLCAiaG9zdCI6ICJhd3MtdXMtd2VzdC0yIn0.kgHgnQD7pibaC01vOUvapb3zwoIQeFT7s-3IpEn9ApY",
+    "tokens": {
+        "https://api.us-west-2.aws.tinybird.co": "p.eyJ1IjogIjM5M2M5YTAxLWE3YzEtNDdkOC04N2M5LTM1MWJhMTQyYzM0NiIsICJpZCI6ICI1ODRjNDM0Ny0zMDE2LTQwNmItYTI1NS00ZjM5MzIyOTJmYzMiLCAiaG9zdCI6ICJhd3MtdXMtd2VzdC0yIn0.kgHgnQD7pibaC01vOUvapb3zwoIQeFT7s-3IpEn9ApY"
+    },
+    "user_email": "jasonsutter87@gmail.com",
+    "user_id": "6345b54b-8002-4431-8c60-d47b74c3363b",
+    "version": "5.22.0"
+}
