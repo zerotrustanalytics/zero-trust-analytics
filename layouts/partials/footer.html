@@ -1,31 +1,162 @@
-<footer class="bg-dark text-light py-5 mt-5">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-4">
-        <h5>Zero Trust Analytics</h5>
-        <p class="text-muted">Privacy-focused analytics that respects your users. No cookies, no tracking, just insights.</p>
+<footer class="footer-main">
+  <div class="container py-5">
+    <div class="row g-4">
+      <!-- Brand Column -->
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h4 class="fw-bold text-white mb-3">Zero Trust Analytics</h4>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        <!-- Social Icons -->
+        <div class="footer-social d-flex gap-3">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Twitter">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="LinkedIn">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="GitHub">
+            <i class="fab fa-github"></i>
+          </a>
+        </div>
       </div>
-      <div class="col-md-4">
-        <h5>Links</h5>
-        <ul class="list-unstyled">
-          <li><a href="/#features" class="text-muted">Features</a></li>
-          <li><a href="/#pricing" class="text-muted">Pricing</a></li>
-          <li><a href="/dashboard/" class="text-muted">Dashboard</a></li>
+
+      <!-- Product Column -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6 class="footer-heading">Product</h6>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li><a href="/dashboard/">Dashboard</a></li>
+          <li><a href="/blog/">Blog</a></li>
         </ul>
       </div>
-      <div class="col-md-4">
-        <h5>Legal</h5>
-        <ul class="list-unstyled">
-          <li><a href="/privacy/" class="text-muted">Privacy Policy</a></li>
-          <li><a href="/terms/" class="text-muted">Terms of Service</a></li>
+
+      <!-- Resources Column -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6 class="footer-heading">Resources</h6>
+        <ul class="footer-links">
+          <li><a href="/blog/">Documentation</a></li>
+          <li><a href="/blog/">API Reference</a></li>
+          <li><a href="/blog/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
         </ul>
-        <h5 class="mt-4">Open Source</h5>
-        <ul class="list-unstyled">
-          <li><a href="https://github.com/jasonsutter87/zero-trust-analytics" class="text-muted" target="_blank" rel="noopener"><i class="fab fa-github me-2"></i>GitHub</a></li>
+      </div>
+
+      <!-- Compliance Column -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6 class="footer-heading">Compliance</h6>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </div>
+
+      <!-- Legal Column -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6 class="footer-heading">Legal</h6>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
         </ul>
       </div>
     </div>
-    <hr class="my-4">
-    <p class="text-center text-muted mb-0">&copy; {{ now.Year }} Zero Trust Analytics. All rights reserved.</p>
+
+    <!-- Bottom Bar -->
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; {{ now.Year }} Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #8892a0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #8892a0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
