@@ -1,0 +1,100 @@
+NODE stats_aggregation
+SQL >
+    %
+    SELECT
+        toDate(timestamp) as date,
+        count() as pageviews,
+        uniqExact(identity_hash) as unique_visitors,
+        countIf(meta_is_bounce = 1) as bounces,
+        round(avg(meta_duration), 0) as avg_duration
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+    GROUP BY date
+    ORDER BY date DESC
+
+NODE top_pages
+SQL >
+    %
+    SELECT
+        JSONExtractString(payload, 'page_path') as page,
+        count() as views,
+        uniqExact(identity_hash) as visitors
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+    GROUP BY page
+    ORDER BY views DESC
+    LIMIT 20
+
+NODE top_referrers
+SQL >
+    %
+    SELECT
+        JSONExtractString(payload, 'referrer_domain') as referrer,
+        count() as visits,
+        uniqExact(identity_hash) as visitors
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+        AND referrer != ''
+    GROUP BY referrer
+    ORDER BY visits DESC
+    LIMIT 20
+
+NODE device_breakdown
+SQL >
+    %
+    SELECT
+        context_device as device,
+        count() as count,
+        round(count() * 100.0 / sum(count()) OVER (), 1) as percentage
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+    GROUP BY device
+    ORDER BY count DESC
+
+NODE browser_breakdown
+SQL >
+    %
+    SELECT
+        context_browser as browser,
+        count() as count
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+    GROUP BY browser
+    ORDER BY count DESC
+
+NODE country_breakdown
+SQL >
+    %
+    SELECT
+        context_country as country,
+        count() as count,
+        uniqExact(identity_hash) as visitors
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+    GROUP BY country
+    ORDER BY count DESC
+    LIMIT 20

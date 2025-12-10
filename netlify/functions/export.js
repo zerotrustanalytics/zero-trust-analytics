@@ -1,5 +1,6 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getStats, getUserSites } from './lib/storage.js';
+import { getUserSites } from './lib/storage.js';
+import { exportData } from './lib/tinybird.js';
 
 export default async function handler(req, context) {
   // Handle CORS preflight
@@ -35,7 +36,8 @@ export default async function handler(req, context) {
     const siteId = url.searchParams.get('siteId');
     const format = url.searchParams.get('format') || 'json';
     const period = url.searchParams.get('period') || '30d';
-    const dataType = url.searchParams.get('type') || 'all';
+    const dataType = url.searchParams.get('type') || 'summary'; // pageviews, events, summary
+    const limit = parseInt(url.searchParams.get('limit') || '10000', 10);
 
     if (!siteId) {
       return new Response(JSON.stringify({ error: 'Site ID required' }), {
@@ -74,91 +76,64 @@ export default async function handler(req, context) {
         startDate.setDate(startDate.getDate() - 30);
     }
 
-    const stats = await getStats(
-      siteId,
-      startDate.toISOString().split('T')[0],
-      endDate.toISOString().split('T')[0]
-    );
+    // Format dates for Tinybird
+    const startStr = startDate.toISOString().replace('T', ' ').split('.')[0];
+    const endStr = endDate.toISOString().replace('T', ' ').split('.')[0];
 
-    // Filter data type if specified
-    let exportData = stats;
-    if (dataType !== 'all') {
-      exportData = {
-        period: { start: startDate.toISOString(), end: endDate.toISOString() },
-        [dataType]: stats[dataType]
-      };
-    }
+    // Query Tinybird for export data
+    const data = await exportData(siteId, startStr, endStr, dataType, limit);
+
+    const timestamp = new Date().toISOString().split('T')[0];
 
     if (format === 'csv') {
-      // Generate CSV based on data type
       let csv = '';
-      const timestamp = new Date().toISOString().split('T')[0];
 
       switch (dataType) {
-        case 'pages':
-          csv = 'Page,Views\n';
-          csv += objectToCSV(stats.pages);
-          break;
-        case 'referrers':
-          csv = 'Referrer,Count\n';
-          csv += objectToCSV(stats.referrers);
-          break;
-        case 'landingPages':
-          csv = 'Landing Page,Sessions\n';
-          csv += objectToCSV(stats.landingPages);
-          break;
-        case 'exitPages':
-          csv = 'Exit Page,Count\n';
-          csv += objectToCSV(stats.exitPages);
-          break;
-        case 'devices':
-          csv = 'Device Type,Count\n';
-          csv += objectToCSV(stats.devices);
-          break;
-        case 'browsers':
-          csv = 'Browser,Count\n';
-          csv += objectToCSV(stats.browsers);
-          break;
-        case 'countries':
-          csv = 'Country,Visitors\n';
-          csv += objectToCSV(stats.countries);
-          break;
-        case 'daily':
-          csv = 'Date,Pageviews,Unique Visitors,Sessions,Bounces\n';
-          for (const day of stats.daily) {
-            csv += `${day.date},${day.pageviews},${day.uniqueVisitors || 0},${day.uniqueSessions || 0},${day.bounces || 0}\n`;
+        case 'pageviews':
+          csv = 'Timestamp,Page,Referrer,UTM Source,UTM Medium,UTM Campaign,Device,Browser,OS,Country,Region,Time on Page,Is Bounce\n';
+          for (const row of data) {
+            csv += `"${row.timestamp}","${escapeCSV(row.page_path)}","${escapeCSV(row.referrer)}","${row.utm_source}","${row.utm_medium}","${row.utm_campaign}","${row.device}","${row.browser}","${row.os}","${row.country}","${row.region}",${row.time_on_page},${row.is_bounce}\n`;
           }
           break;
+
+        case 'events':
+          csv = 'Timestamp,Event Type,Event Name,Event Data,Page,Device,Country\n';
+          for (const row of data) {
+            csv += `"${row.timestamp}","${row.event_type}","${escapeCSV(row.event_name)}","${escapeCSV(row.event_data)}","${escapeCSV(row.page_path)}","${row.device}","${row.country}"\n`;
+          }
+          break;
+
+        case 'summary':
         default:
-          // Summary CSV
-          csv = 'Metric,Value\n';
-          csv += `Pageviews,${stats.pageviews}\n`;
-          csv += `Unique Visitors,${stats.uniqueVisitors}\n`;
-          csv += `Sessions,${stats.uniqueSessions}\n`;
-          csv += `Bounce Rate,${stats.bounceRate}%\n`;
-          csv += `Avg Session Duration,${formatDuration(stats.avgSessionDuration)}\n`;
-          csv += `Avg Pages/Session,${stats.avgPagesPerSession}\n`;
-          csv += `Avg Scroll Depth,${stats.avgScrollDepth}%\n`;
-          csv += `New Visitors,${stats.newVisitors}\n`;
-          csv += `Returning Visitors,${stats.returningVisitors}\n`;
+          csv = 'Date,Pageviews,Unique Visitors,Sessions,Bounces,Bounce Rate,Avg Time on Page\n';
+          for (const row of data) {
+            csv += `${row.date},${row.pageviews},${row.unique_visitors},${row.sessions},${row.bounces},${row.bounce_rate}%,${row.avg_time_on_page}s\n`;
+          }
+          break;
       }
 
       return new Response(csv, {
         status: 200,
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="analytics-${dataType}-${timestamp}.csv"`,
+          'Content-Disposition': `attachment; filename="zta-${dataType}-${timestamp}.csv"`,
           'Access-Control-Allow-Origin': '*'
         }
       });
     }
 
     // JSON format
-    return new Response(JSON.stringify(exportData, null, 2), {
+    return new Response(JSON.stringify({
+      site_id: siteId,
+      period: { start: startDate.toISOString(), end: endDate.toISOString() },
+      type: dataType,
+      count: data.length,
+      data
+    }, null, 2), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="analytics-${dataType}-${new Date().toISOString().split('T')[0]}.json"`,
+        'Content-Disposition': `attachment; filename="zta-${dataType}-${timestamp}.json"`,
         'Access-Control-Allow-Origin': '*'
       }
     });
@@ -171,22 +146,9 @@ export default async function handler(req, context) {
   }
 }
 
-function objectToCSV(obj) {
-  if (!obj) return '';
-  return Object.entries(obj)
-    .sort((a, b) => b[1] - a[1])
-    .map(([key, value]) => `"${key.replace(/"/g, '""')}",${value}`)
-    .join('\n');
-}
-
-function formatDuration(seconds) {
-  if (!seconds) return '0s';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  if (mins > 0) {
-    return `${mins}m ${secs}s`;
-  }
-  return `${secs}s`;
+function escapeCSV(str) {
+  if (!str) return '';
+  return str.replace(/"/g, '""');
 }
 
 export const config = {

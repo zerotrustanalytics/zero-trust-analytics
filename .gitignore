@@ -16,3 +16,6 @@ Thumbs.db
 .claude
 # Local Netlify folder
 .netlify
+
+# Lead scraping output (contains business data)
+/leads/

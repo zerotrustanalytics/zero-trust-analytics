@@ -1,5 +1,6 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getActiveVisitors, getUserSites } from './lib/storage.js';
+import { getUserSites } from './lib/storage.js';
+import { getRealtime } from './lib/tinybird.js';
 
 export default async function handler(req, context) {
   // Handle CORS preflight
@@ -50,19 +51,22 @@ export default async function handler(req, context) {
       });
     }
 
-    // Get active visitors
-    const realtime = await getActiveVisitors(siteId);
+    // Get realtime data from Tinybird
+    const realtime = await getRealtime(siteId);
 
-    // Group visitors by page
+    // Build page breakdown from recent pageviews
     const pageBreakdown = {};
-    for (const visitor of realtime.visitors) {
-      const path = visitor.path || '/';
+    for (const pv of realtime.recent_pageviews || []) {
+      const path = pv.page || '/';
       pageBreakdown[path] = (pageBreakdown[path] || 0) + 1;
     }
 
     return new Response(JSON.stringify({
-      activeVisitors: realtime.count,
+      activeVisitors: realtime.active_visitors,
+      pageviewsLast5Min: realtime.pageviews_last_5min,
       pageBreakdown,
+      recentPageviews: realtime.recent_pageviews,
+      visitorsPerMinute: realtime.visitors_per_minute,
       timestamp: new Date().toISOString()
     }), {
       status: 200,

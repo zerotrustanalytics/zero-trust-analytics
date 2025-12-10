@@ -1,0 +1,11 @@
+SCHEMA >
+    `timestamp` DateTime,
+    `site_id` String,
+    `visitor_hash` String,
+    `session_id` String,
+    `event_name` String,
+    `event_data` String,
+    `page_path` String
+
+ENGINE MergeTree
+ENGINE_SORTING_KEY site_id, timestamp

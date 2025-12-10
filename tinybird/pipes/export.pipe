@@ -1,0 +1,75 @@
+NODE export_pageviews
+DESCRIPTION >
+    Export raw pageview data for CSV/JSON download.
+    Note: Only aggregated/hashed data - no PII.
+
+SQL >
+    %
+    SELECT
+        timestamp,
+        JSONExtractString(payload, 'page_path') as page_path,
+        JSONExtractString(payload, 'referrer_domain') as referrer,
+        JSONExtractString(payload, 'utm_source') as utm_source,
+        JSONExtractString(payload, 'utm_medium') as utm_medium,
+        JSONExtractString(payload, 'utm_campaign') as utm_campaign,
+        context_device as device,
+        context_browser as browser,
+        context_os as os,
+        context_country as country,
+        context_region as region,
+        meta_duration as time_on_page,
+        meta_is_bounce as is_bounce
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+    ORDER BY timestamp DESC
+    LIMIT {{Int32(limit, 10000)}}
+
+NODE export_events
+DESCRIPTION >
+    Export custom events data.
+
+SQL >
+    %
+    SELECT
+        timestamp,
+        event_type,
+        JSONExtractString(payload, 'event_name') as event_name,
+        JSONExtractString(payload, 'event_data') as event_data,
+        JSONExtractString(payload, 'page_path') as page_path,
+        context_device as device,
+        context_country as country
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type != 'pageview'
+    ORDER BY timestamp DESC
+    LIMIT {{Int32(limit, 10000)}}
+
+NODE export_daily_summary
+DESCRIPTION >
+    Daily aggregated summary for reporting.
+
+SQL >
+    %
+    SELECT
+        toDate(timestamp) as date,
+        count() as pageviews,
+        uniqExact(identity_hash) as unique_visitors,
+        uniqExact(session_hash) as sessions,
+        countIf(meta_is_bounce = 1) as bounces,
+        round(countIf(meta_is_bounce = 1) * 100.0 / count(), 1) as bounce_rate,
+        round(avg(meta_duration), 0) as avg_time_on_page
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= {{DateTime(start_date, '2024-01-01 00:00:00')}}
+        AND timestamp <= {{DateTime(end_date, '2099-12-31 23:59:59')}}
+        AND event_type = 'pageview'
+    GROUP BY date
+    ORDER BY date DESC

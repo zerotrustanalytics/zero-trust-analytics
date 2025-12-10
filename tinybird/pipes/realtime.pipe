@@ -1,0 +1,53 @@
+NODE active_visitors
+DESCRIPTION >
+    Count unique visitors in the last 5 minutes.
+    Used for "X visitors online now" display.
+
+SQL >
+    %
+    SELECT
+        uniqExact(identity_hash) as active_visitors,
+        count() as pageviews_last_5min
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= now() - INTERVAL 5 MINUTE
+        AND event_type = 'pageview'
+
+NODE recent_pageviews
+DESCRIPTION >
+    Last 10 pageviews for live feed display.
+
+SQL >
+    %
+    SELECT
+        timestamp,
+        JSONExtractString(payload, 'page_path') as page,
+        context_country as country,
+        context_device as device
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= now() - INTERVAL 30 MINUTE
+        AND event_type = 'pageview'
+    ORDER BY timestamp DESC
+    LIMIT 10
+
+NODE visitors_per_minute
+DESCRIPTION >
+    Visitors per minute for last 30 minutes.
+    Used for real-time chart.
+
+SQL >
+    %
+    SELECT
+        toStartOfMinute(timestamp) as minute,
+        uniqExact(identity_hash) as visitors,
+        count() as pageviews
+    FROM pageviews
+    WHERE
+        site_id = {{String(site_id, '')}}
+        AND timestamp >= now() - INTERVAL 30 MINUTE
+        AND event_type = 'pageview'
+    GROUP BY minute
+    ORDER BY minute DESC

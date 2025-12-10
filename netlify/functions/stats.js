@@ -1,5 +1,6 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getStats, getSite, getUserSites } from './lib/storage.js';
+import { getUserSites } from './lib/storage.js';
+import { getStats } from './lib/tinybird.js';
 
 export default async function handler(req, context) {
   // Handle CORS preflight
@@ -57,11 +58,9 @@ export default async function handler(req, context) {
     let endDate, startDate;
 
     if (customStart && customEnd) {
-      // Custom date range
       startDate = new Date(customStart);
       endDate = new Date(customEnd);
     } else {
-      // Preset periods
       endDate = new Date();
       startDate = new Date();
 
@@ -86,11 +85,12 @@ export default async function handler(req, context) {
       }
     }
 
-    const stats = await getStats(
-      siteId,
-      startDate.toISOString().split('T')[0],
-      endDate.toISOString().split('T')[0]
-    );
+    // Format dates for Tinybird (DateTime format)
+    const startStr = startDate.toISOString().replace('T', ' ').split('.')[0];
+    const endStr = endDate.toISOString().replace('T', ' ').split('.')[0];
+
+    // Query Tinybird for stats
+    const stats = await getStats(siteId, startStr, endStr);
 
     return new Response(JSON.stringify(stats), {
       status: 200,

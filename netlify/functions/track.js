@@ -1,11 +1,6 @@
-import { hashVisitor } from './lib/hash.js';
-import {
-  recordPageview,
-  recordEngagement,
-  recordEvent,
-  recordHeartbeat,
-  getSite
-} from './lib/storage.js';
+import { createZTRecord, validateNoPII } from './lib/zero-trust-core.js';
+import { ingestEvents } from './lib/tinybird.js';
+import { getSite } from './lib/storage.js';
 
 // Basic bot detection - filters common bots/crawlers
 function isBot(userAgent) {
@@ -53,11 +48,21 @@ function getAllowedOrigin(origin, siteDomain) {
   return null;
 }
 
+// Extract referrer domain from full referrer URL
+function extractReferrerDomain(referrer) {
+  if (!referrer) return '';
+  try {
+    const url = new URL(referrer);
+    return url.hostname;
+  } catch {
+    return '';
+  }
+}
+
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
 
-  // Handle CORS preflight - allow all origins for preflight
-  // Actual validation happens on POST
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -87,7 +92,7 @@ export default async function handler(req, context) {
       });
     }
 
-    // Verify site exists
+    // Verify site exists (still using Netlify Blobs for site config)
     const site = await getSite(siteId);
     if (!site) {
       return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
@@ -96,7 +101,7 @@ export default async function handler(req, context) {
       });
     }
 
-    // CORS origin validation - only allow requests from the registered domain
+    // CORS origin validation
     const allowedOrigin = getAllowedOrigin(origin, site.domain);
     if (!allowedOrigin && origin) {
       console.log(`CORS blocked: origin=${origin}, expected domain=${site.domain}`);
@@ -109,11 +114,11 @@ export default async function handler(req, context) {
       });
     }
 
-    // Get client IP and user agent
+    // Get client info (will be hashed, never stored raw)
     const ip = context.ip || req.headers.get('x-forwarded-for') || 'unknown';
     const userAgent = req.headers.get('user-agent') || 'unknown';
 
-    // Filter out bots - silently accept but don't record
+    // Filter bots silently
     if (isBot(userAgent)) {
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
@@ -124,75 +129,98 @@ export default async function handler(req, context) {
       });
     }
 
-    // Hash visitor for anonymous tracking
-    const visitorHash = hashVisitor(ip, userAgent);
-
-    // Get approximate geolocation from Netlify context
-    const geo = context.geo || {};
-    const geoData = {
-      country: geo.country?.code || null,
-      region: geo.subdivision?.code || null,
-      city: geo.city || null
+    // Build headers object for geo extraction
+    const headers = {
+      'x-country': context.geo?.country?.code || '',
+      'x-nf-client-connection-region': context.geo?.subdivision?.code || ''
     };
 
-    // Handle different event types
+    // Determine event type for ZT record
+    let eventType = 'pageview';
+    let payload = {};
+    let meta = {};
+
     switch (type) {
       case 'pageview':
-        await recordPageview(siteId, visitorHash, {
-          path: data.path || '/',
-          url: data.url,
-          title: data.title,
-          referrer: data.referrer,
+        eventType = 'pageview';
+        payload = {
+          page_path: data.path || '/',
+          referrer_domain: extractReferrerDomain(data.referrer),
+          utm_source: data.utm?.source || '',
+          utm_medium: data.utm?.medium || '',
+          utm_campaign: data.utm?.campaign || '',
           sessionId: data.sessionId,
-          pageCount: data.pageCount,
           landingPage: data.landingPage,
           isNewVisitor: data.isNewVisitor,
-          isNewSession: data.isNewSession,
-          device: data.device,
-          trafficSource: data.trafficSource,
-          utm: data.utm,
-          geo: geoData
-        });
+          trafficSource: data.trafficSource
+        };
         break;
 
       case 'engagement':
-        await recordEngagement(siteId, visitorHash, {
-          sessionId: data.sessionId,
-          path: data.path,
-          timeOnPage: data.timeOnPage,
-          sessionDuration: data.sessionDuration,
-          maxScrollDepth: data.maxScrollDepth,
-          pageCount: data.pageCount,
-          isExitPage: data.isExitPage,
-          isBounce: data.isBounce
-        });
+        eventType = 'engagement';
+        payload = {
+          page_path: data.path || '/',
+          sessionId: data.sessionId
+        };
+        meta = {
+          isBounce: data.isBounce || false,
+          duration: data.timeOnPage || 0
+        };
         break;
 
       case 'event':
-        await recordEvent(siteId, visitorHash, {
-          sessionId: data.sessionId,
-          category: data.category,
-          action: data.action,
-          label: data.label,
-          value: data.value,
-          path: data.path
-        });
+        eventType = data.action || 'custom_event';
+        payload = {
+          page_path: data.path || '/',
+          event_name: data.action,
+          event_data: JSON.stringify({
+            category: data.category,
+            label: data.label,
+            value: data.value
+          }),
+          sessionId: data.sessionId
+        };
         break;
 
       case 'heartbeat':
-        await recordHeartbeat(siteId, visitorHash, {
-          sessionId: data.sessionId,
-          path: data.path
-        });
+        eventType = 'heartbeat';
+        payload = {
+          page_path: data.path || '/',
+          sessionId: data.sessionId
+        };
         break;
 
       default:
-        // Legacy support - treat as pageview
-        await recordPageview(siteId, visitorHash, {
-          path: data.path || '/',
-          referrer: data.referrer
-        });
+        eventType = 'pageview';
+        payload = {
+          page_path: data.path || '/',
+          referrer_domain: extractReferrerDomain(data.referrer)
+        };
     }
+
+    // Create ZT record using core library (reusable across products)
+    const record = createZTRecord({
+      siteId,
+      ip,
+      userAgent,
+      headers,
+      secret: process.env.HASH_SECRET || 'default-secret-change-me',
+      eventType,
+      payload,
+      meta
+    });
+
+    // Safety check - ensure no PII leaked into record
+    if (!validateNoPII(record)) {
+      console.error('PII detected in record, blocking storage');
+      return new Response(JSON.stringify({ error: 'Data validation failed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Send to Tinybird
+    await ingestEvents('pageviews', record);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
