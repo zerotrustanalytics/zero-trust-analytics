@@ -231,8 +231,8 @@ export default async function handler(req, context) {
       }
     });
   } catch (err) {
-    console.error('Track error:', err);
-    return new Response(JSON.stringify({ error: 'Internal error' }), {
+    console.error('Track error:', err.message, err.stack);
+    return new Response(JSON.stringify({ error: 'Internal error', debug: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
