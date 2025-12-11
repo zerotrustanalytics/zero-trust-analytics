@@ -82,6 +82,9 @@
       ZTA.setupFormTracking();
     }
 
+    // Setup declarative tracking (data-zta-track attributes)
+    ZTA.setupDeclarativeTracking();
+
     // Setup heartbeat for real-time
     ZTA.setupHeartbeat();
 
@@ -590,6 +593,30 @@
 
       ZTA.trackEvent('form', formType, formLabel);
       ZTA.log('Form submitted:', formType, formLabel);
+    });
+  };
+
+  // Setup declarative tracking via data attributes
+  // Usage: <button data-zta-track="event_name" data-zta-category="campaign" data-zta-label="summer_sale">
+  ZTA.setupDeclarativeTracking = function() {
+    document.addEventListener('click', function(e) {
+      var el = e.target.closest('[data-zta-track]');
+      if (!el) return;
+
+      var eventName = el.getAttribute('data-zta-track');
+      if (!eventName) return;
+
+      var properties = {};
+      var category = el.getAttribute('data-zta-category');
+      var label = el.getAttribute('data-zta-label');
+      var value = el.getAttribute('data-zta-value');
+
+      if (category) properties.category = category;
+      if (label) properties.label = label;
+      if (value) properties.value = parseFloat(value) || 0;
+
+      ZTA.track(eventName, properties);
+      ZTA.log('Declarative track:', eventName, properties);
     });
   };
 

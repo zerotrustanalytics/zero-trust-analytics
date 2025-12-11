@@ -36,7 +36,39 @@ zta.track('purchase', {
 | `label` | string | Descriptive label for the event |
 | `value` | number | Numeric value (e.g., purchase amount) |
 
-## Common Examples
+## Declarative Tracking (Recommended)
+
+Use data attributes for cleaner HTML - no JavaScript required:
+
+```html
+<button data-zta-track="cta_click" data-zta-label="hero_signup">
+  Get Started
+</button>
+```
+
+### Available Attributes
+
+| Attribute | Description |
+|-----------|-------------|
+| `data-zta-track` | Event name (required) |
+| `data-zta-category` | Event category |
+| `data-zta-label` | Event label |
+| `data-zta-value` | Numeric value |
+
+### Campaign Link Example
+
+```html
+<a href="/promo"
+   data-zta-track="campaign_click"
+   data-zta-category="campaign"
+   data-zta-label="summer_sale_2025">
+  Summer Sale - 20% Off
+</a>
+```
+
+## JavaScript Tracking
+
+For dynamic scenarios, use the JavaScript API:
 
 ### Button Click
 
