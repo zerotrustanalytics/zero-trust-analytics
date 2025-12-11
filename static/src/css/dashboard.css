@@ -1,3 +1,22 @@
+:root {
+  --zta-primary: #0d6efd;
+  --zta-primary-dark: #0a58ca;
+  --zta-success: #198754;
+  --zta-danger: #dc3545;
+  --zta-warning: #ffc107;
+  --zta-white: #fff;
+  --zta-gray-100: #f8f9fa;
+  --zta-gray-600: #6c757d;
+  --zta-gray-700: #495057;
+  --zta-gray-900: #212529;
+  --zta-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --zta-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --zta-shadow-lg: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+  --zta-radius: 0.5rem;
+  --zta-radius-lg: 1rem;
+  --zta-gradient-primary: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
 .dashboard-container {
   padding: 2rem 0;
   min-height: calc(100vh - 200px);
@@ -13,15 +32,15 @@
 .stat-card {
   background: #fff;
   border-radius: 1rem;
-  padding: 1.5rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  padding: 1.5rem;
   text-align: center;
 }
 .stat-card .stat-value {
   font-size: 2.5rem;
   font-weight: 700;
   color: #0d6efd;
-  line-height: 1;
+  line-height: 1.25;
 }
 .stat-card .stat-label {
   color: #6c757d;
@@ -46,8 +65,8 @@
   min-width: 250px;
   text-align: left;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .period-selector .btn-group .btn {
@@ -57,8 +76,8 @@
 .data-table {
   background: #fff;
   border-radius: 1rem;
-  overflow: hidden;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  overflow: hidden;
 }
 .data-table .table {
   margin-bottom: 0;
@@ -70,15 +89,15 @@
   padding: 1rem;
 }
 .data-table .table td {
-  padding: 0.875rem 1rem;
+  padding: 0.625rem 1rem;
   vertical-align: middle;
 }
 
 .chart-container {
   background: #fff;
   border-radius: 1rem;
-  padding: 1.5rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  padding: 1.5rem;
   margin-bottom: 2rem;
   min-height: 300px;
 }
@@ -129,6 +148,8 @@
 
 .add-site-form .form-control {
   padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
 }
-
-/*# sourceMappingURL=dashboard.css.map */
+.add-site-form .form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}/*# sourceMappingURL=dashboard.css.map */
