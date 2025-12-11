@@ -218,7 +218,7 @@ async function exportData(siteId, startDate, endDate, type = 'pageviews', limit 
   return queryPipe(pipeMap[type] || pipeMap.pageviews, params);
 }
 
-module.exports = {
+export {
   ingestEvents,
   queryPipe,
   queryMultipleNodes,

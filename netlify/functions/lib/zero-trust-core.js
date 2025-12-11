@@ -151,7 +151,7 @@ function validateNoPII(record) {
   return !piiPatterns.some(pattern => pattern.test(recordStr));
 }
 
-module.exports = {
+export {
   createIdentityHash,
   createSessionHash,
   parseContext,
