@@ -1,35 +1,18 @@
-SCHEMA >
-    `timestamp` DateTime,
-    `site_id` String,
-    `identity_hash` String,
-    `session_hash` String,
-    `event_type` String DEFAULT 'pageview',
-    `payload` String,
-    `context_device` String,
-    `context_browser` String,
-    `context_os` String,
-    `context_country` String,
-    `context_region` String,
-    `meta_is_bounce` UInt8,
-    `meta_duration` UInt16
+ SCHEMA >
+      `timestamp` DateTime `json:$.timestamp`,
+      `site_id` String `json:$.site_id`,
+      `identity_hash` String `json:$.identity_hash`,
+      `session_hash` String `json:$.session_hash`,
+      `event_type` String `json:$.event_type` DEFAULT 'pageview',
+      `payload` String `json:$.payload`,
+      `context_device` String `json:$.context_device`,
+      `context_browser` String `json:$.context_browser`,
+      `context_os` String `json:$.context_os`,
+      `context_country` String `json:$.context_country`,
+      `context_region` String `json:$.context_region`,
+      `meta_is_bounce` UInt8 `json:$.meta_is_bounce`,
+      `meta_duration` UInt16 `json:$.meta_duration`
 
-ENGINE MergeTree
-ENGINE_SORTING_KEY site_id, timestamp
-
-# ZERO TRUST ARCHITECTURE
-# =======================
-# This schema is designed for reusability across ZT products:
-#
-# | Field          | Analytics        | Voting           | Forms            |
-# |----------------|------------------|------------------|------------------|
-# | identity_hash  | visitor hash     | voter hash       | submitter hash   |
-# | session_hash   | session ID       | ballot ID        | submission ID    |
-# | event_type     | pageview/event   | vote/verify      | submit/validate  |
-# | payload        | page_path, utm   | encrypted ballot | encrypted fields |
-# | context_*      | device info      | device info      | device info      |
-# | meta_*         | bounce, duration | verified flag    | field count      |
-#
-# Key principles:
-# 1. identity_hash = Hash(IP + UA + daily_salt) - rotates daily, unlinkable
-# 2. payload = JSON string, product-specific data
-# 3. No PII ever stored - only hashes and aggregatable metadata
+  ENGINE "MergeTree"
+  ENGINE_PARTITION_KEY "toYear(timestamp)"
+  ENGINE_SORTING_KEY "site_id, timestamp"

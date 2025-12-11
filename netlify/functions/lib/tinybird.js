@@ -16,17 +16,36 @@ const TINYBIRD_TOKEN = process.env.TINYBIRD_TOKEN;
  */
 async function ingestEvents(datasource, events) {
   const eventsArray = Array.isArray(events) ? events : [events];
-  const ndjson = eventsArray.map(e => JSON.stringify(e)).join('\n');
+
+  // Use CSV format - doesn't require JSONPaths in datasource schema
+  const columns = [
+    'timestamp', 'site_id', 'identity_hash', 'session_hash', 'event_type',
+    'payload', 'context_device', 'context_browser', 'context_os',
+    'context_country', 'context_region', 'meta_is_bounce', 'meta_duration'
+  ];
+
+  const csvRows = eventsArray.map(e =>
+    columns.map(col => {
+      const val = e[col];
+      if (val === null || val === undefined) return '';
+      // Escape quotes and wrap strings in quotes
+      const str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }).join(',')
+  ).join('\n');
 
   const response = await fetch(
-    `https://${TINYBIRD_HOST}/v0/events?name=${datasource}&format=ndjson`,
+    `https://${TINYBIRD_HOST}/v0/datasources?name=${datasource}&mode=append&format=csv`,
     {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${TINYBIRD_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'text/csv'
       },
-      body: ndjson
+      body: csvRows
     }
   );
 
