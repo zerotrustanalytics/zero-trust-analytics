@@ -98,7 +98,7 @@ async function loadStats() {
   document.getElementById('current-site-domain').textContent = selector.options[selector.selectedIndex].text;
 
   // Update embed code
-  const embedCode = `<script src="https://zerotrustanalytics.netlify.app/js/analytics.js" data-site-id="${currentSiteId}"></script>`;
+  const embedCode = `<script src="https://ztas.io/js/analytics.js" data-site-id="${currentSiteId}"></script>`;
   document.getElementById('embed-code').textContent = embedCode;
 
   try {

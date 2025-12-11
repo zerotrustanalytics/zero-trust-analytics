@@ -103,9 +103,10 @@ export default async function handler(req, context) {
 
     // CORS origin validation
     const allowedOrigin = getAllowedOrigin(origin, site.domain);
+    console.log(`CORS check: origin=${origin}, siteDomain=${site.domain}, allowed=${allowedOrigin}`);
     if (!allowedOrigin && origin) {
       console.log(`CORS blocked: origin=${origin}, expected domain=${site.domain}`);
-      return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+      return new Response(JSON.stringify({ error: 'Origin not allowed', debug: { origin, expected: site.domain } }), {
         status: 403,
         headers: {
           'Content-Type': 'application/json',

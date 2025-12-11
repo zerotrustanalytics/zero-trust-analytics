@@ -55,7 +55,7 @@ export default async function handler(req, context) {
     return new Response(JSON.stringify({
       success: true,
       site,
-      embedCode: `<script src="https://zerotrustanalytics.netlify.app/js/analytics.js" data-site-id="${siteId}"></script>`
+      embedCode: `<script src="https://ztas.io/js/analytics.js" data-site-id="${siteId}"></script>`
     }), {
       status: 201,
       headers: {
