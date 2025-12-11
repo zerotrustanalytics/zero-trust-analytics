@@ -14,7 +14,7 @@ const TINYBIRD_TOKEN = process.env.TINYBIRD_TOKEN;
  * @param {object|array} events - Single event or array of events
  * @returns {Promise<object>}
  */
-async function ingestEvents(datasource, events) {
+async function ingestEvents(datasource, events, retries = 2) {
   const eventsArray = Array.isArray(events) ? events : [events];
 
   // Use CSV format - doesn't require JSONPaths in datasource schema
@@ -50,8 +50,16 @@ async function ingestEvents(datasource, events) {
   );
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Tinybird ingest failed: ${error}`);
+    const errorText = await response.text();
+
+    // Handle rate limiting with retry
+    if (response.status === 429 && retries > 0) {
+      const retryAfter = parseInt(errorText.match(/retry after (\d+)/)?.[1] || '2');
+      await new Promise(resolve => setTimeout(resolve, (retryAfter + 1) * 1000));
+      return ingestEvents(datasource, events, retries - 1);
+    }
+
+    throw new Error(`Tinybird ingest failed: ${errorText}`);
   }
 
   return response.json();

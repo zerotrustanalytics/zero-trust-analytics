@@ -13,7 +13,7 @@
     trackOutboundLinks: true,
     trackFileDownloads: true,
     trackFormSubmissions: true,
-    heartbeatInterval: 15000 // 15 seconds for real-time
+    heartbeatInterval: 60000 // 60 seconds for real-time (reduced to avoid rate limits)
   };
 
   // Session state
