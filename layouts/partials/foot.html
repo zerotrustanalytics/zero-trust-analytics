@@ -2,6 +2,10 @@
 <script defer src="{{ "src/js/bootstrap/popper.min.js" | relURL }}"></script>
 <script defer src="{{ "src/js/bootstrap/bootstrap.min.js" | relURL }}"></script>
 
+<!-- Shared utilities - load first, no defer to ensure ZTA namespace exists -->
+<script src="{{ "src/js/shared/utils.js" | relURL }}"></script>
+<script src="{{ "src/js/shared/auth-service.js" | relURL }}"></script>
+
 {{ if eq .Section "dashboard" }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 {{ end }}
