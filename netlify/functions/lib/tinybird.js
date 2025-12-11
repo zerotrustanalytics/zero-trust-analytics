@@ -19,12 +19,12 @@ async function ingestEvents(datasource, events) {
   const ndjson = eventsArray.map(e => JSON.stringify(e)).join('\n');
 
   const response = await fetch(
-    `https://${TINYBIRD_HOST}/v0/events?name=${datasource}`,
+    `https://${TINYBIRD_HOST}/v0/events?name=${datasource}&format=ndjson`,
     {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${TINYBIRD_TOKEN}`,
-        'Content-Type': 'application/x-ndjson'
+        'Content-Type': 'application/json'
       },
       body: ndjson
     }
