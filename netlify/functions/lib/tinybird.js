@@ -113,8 +113,11 @@ async function queryMultipleNodes(pipeName, nodes, params = {}) {
  * Run a raw SQL query against Tinybird
  */
 async function querySQL(sql) {
+  // Add FORMAT JSON to ensure JSON response
+  const sqlWithFormat = sql.trim().replace(/;?\s*$/, '') + ' FORMAT JSON';
+
   const response = await fetch(
-    `https://${TINYBIRD_HOST}/v0/sql?q=${encodeURIComponent(sql)}`,
+    `https://${TINYBIRD_HOST}/v0/sql?q=${encodeURIComponent(sqlWithFormat)}`,
     {
       headers: {
         'Authorization': `Bearer ${TINYBIRD_TOKEN}`
@@ -122,13 +125,24 @@ async function querySQL(sql) {
     }
   );
 
+  const responseText = await response.text();
+
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Tinybird SQL failed: ${error}`);
+    throw new Error(`Tinybird SQL failed: ${responseText}`);
   }
 
-  const data = await response.json();
-  return data.data || [];
+  // Handle empty responses
+  if (!responseText || responseText.trim() === '') {
+    return [];
+  }
+
+  try {
+    const data = JSON.parse(responseText);
+    return data.data || [];
+  } catch (e) {
+    console.error('Failed to parse Tinybird response:', responseText.substring(0, 200));
+    throw new Error(`Failed to parse Tinybird response: ${e.message}`);
+  }
 }
 
 /**
