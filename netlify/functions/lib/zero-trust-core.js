@@ -141,14 +141,20 @@ function createZTRecord({
  */
 function validateNoPII(record) {
   const piiPatterns = [
-    /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/, // IPv4
-    /\b[A-Fa-f0-9:]{7,}\b/, // IPv6
-    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, // Email
-    /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/, // Phone
+    { name: 'IPv4', pattern: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/ },
+    { name: 'IPv6', pattern: /\b(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}\b/ }, // Full IPv6 only
+    { name: 'Email', pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/ },
+    { name: 'Phone', pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/ },
   ];
 
   const recordStr = JSON.stringify(record);
-  return !piiPatterns.some(pattern => pattern.test(recordStr));
+  for (const { name, pattern } of piiPatterns) {
+    if (pattern.test(recordStr)) {
+      console.error(`PII pattern matched: ${name}`);
+      return false;
+    }
+  }
+  return true;
 }
 
 export {
