@@ -83,124 +83,73 @@ export default async function handler(req, context) {
 
   try {
     const data = await req.json();
-    const { type, siteId } = data;
+    const { siteId, batch, events } = data;
 
-    if (!siteId) {
-      return new Response(JSON.stringify({ error: 'Site ID required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // Handle batch requests
+    if (batch && Array.isArray(events)) {
+      return await handleBatch(req, context, origin, siteId, events);
     }
 
-    // Verify site exists (still using Netlify Blobs for site config)
-    const site = await getSite(siteId);
-    if (!site) {
-      return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    // Handle single event (legacy support)
+    return await handleSingleEvent(req, context, origin, data);
+  } catch (err) {
+    console.error('Track error:', err.message, err.stack);
+    return new Response(JSON.stringify({ error: 'Internal error', debug: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
 
-    // CORS origin validation
-    const allowedOrigin = getAllowedOrigin(origin, site.domain);
-    console.log(`CORS check: origin=${origin}, siteDomain=${site.domain}, allowed=${allowedOrigin}`);
-    if (!allowedOrigin && origin) {
-      console.log(`CORS blocked: origin=${origin}, expected domain=${site.domain}`);
-      return new Response(JSON.stringify({ error: 'Origin not allowed', debug: { origin, expected: site.domain } }), {
-        status: 403,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': 'null'
-        }
-      });
-    }
+// Handle batch of events (single API call to Tinybird)
+async function handleBatch(req, context, origin, siteId, events) {
+  if (!siteId) {
+    return new Response(JSON.stringify({ error: 'Site ID required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
-    // Get client info (will be hashed, never stored raw)
-    const ip = context.ip || req.headers.get('x-forwarded-for') || 'unknown';
-    const userAgent = req.headers.get('user-agent') || 'unknown';
+  // Verify site exists
+  const site = await getSite(siteId);
+  if (!site) {
+    return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
-    // Filter bots silently
-    if (isBot(userAgent)) {
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': allowedOrigin || '*'
-        }
-      });
-    }
+  // CORS origin validation
+  const allowedOrigin = getAllowedOrigin(origin, site.domain);
+  if (!allowedOrigin && origin) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'null' }
+    });
+  }
 
-    // Build headers object for geo extraction
-    const headers = {
-      'x-country': context.geo?.country?.code || '',
-      'x-nf-client-connection-region': context.geo?.subdivision?.code || ''
-    };
+  // Get client info
+  const ip = context.ip || req.headers.get('x-forwarded-for') || 'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
 
-    // Determine event type for ZT record
-    let eventType = 'pageview';
-    let payload = {};
-    let meta = {};
+  // Filter bots
+  if (isBot(userAgent)) {
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': allowedOrigin || '*' }
+    });
+  }
 
-    switch (type) {
-      case 'pageview':
-        eventType = 'pageview';
-        payload = {
-          page_path: data.path || '/',
-          referrer_domain: extractReferrerDomain(data.referrer),
-          utm_source: data.utm?.source || '',
-          utm_medium: data.utm?.medium || '',
-          utm_campaign: data.utm?.campaign || '',
-          sessionId: data.sessionId,
-          landingPage: data.landingPage,
-          isNewVisitor: data.isNewVisitor,
-          trafficSource: data.trafficSource
-        };
-        break;
+  // Build headers for geo extraction
+  const headers = {
+    'x-country': context.geo?.country?.code || '',
+    'x-nf-client-connection-region': context.geo?.subdivision?.code || ''
+  };
 
-      case 'engagement':
-        eventType = 'engagement';
-        payload = {
-          page_path: data.path || '/',
-          sessionId: data.sessionId
-        };
-        meta = {
-          isBounce: data.isBounce || false,
-          duration: data.timeOnPage || 0
-        };
-        break;
-
-      case 'event':
-        eventType = data.action || 'custom_event';
-        payload = {
-          page_path: data.path || '/',
-          event_name: data.action,
-          event_data: JSON.stringify({
-            category: data.category,
-            label: data.label,
-            value: data.value
-          }),
-          sessionId: data.sessionId
-        };
-        break;
-
-      case 'heartbeat':
-        eventType = 'heartbeat';
-        payload = {
-          page_path: data.path || '/',
-          sessionId: data.sessionId
-        };
-        break;
-
-      default:
-        eventType = 'pageview';
-        payload = {
-          page_path: data.path || '/',
-          referrer_domain: extractReferrerDomain(data.referrer)
-        };
-    }
-
-    // Create ZT record using core library (reusable across products)
-    const record = createZTRecord({
+  // Process all events into records
+  const records = events.map(event => {
+    const { eventType, payload, meta } = parseEvent(event);
+    return createZTRecord({
       siteId,
       ip,
       userAgent,
@@ -210,19 +159,128 @@ export default async function handler(req, context) {
       payload,
       meta
     });
+  }).filter(record => validateNoPII(record));
 
-    // Safety check - ensure no PII leaked into record
-    if (!validateNoPII(record)) {
-      console.error('PII detected in record, blocking storage');
-      return new Response(JSON.stringify({ error: 'Data validation failed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+  // Send all records to Tinybird in ONE request
+  if (records.length > 0) {
+    await ingestEvents('pageviews', records);
+    console.log(`Batch ingested ${records.length} events for site ${siteId}`);
+  }
 
-    // Send to Tinybird
-    await ingestEvents('pageviews', record);
+  return new Response(JSON.stringify({ success: true, count: records.length }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': allowedOrigin || '*' }
+  });
+}
 
+// Parse event data into eventType, payload, meta
+function parseEvent(data) {
+  const type = data.type;
+  let eventType = 'pageview';
+  let payload = {};
+  let meta = {};
+
+  switch (type) {
+    case 'pageview':
+      eventType = 'pageview';
+      payload = {
+        page_path: data.path || '/',
+        referrer_domain: extractReferrerDomain(data.referrer),
+        utm_source: data.utm?.source || '',
+        utm_medium: data.utm?.medium || '',
+        utm_campaign: data.utm?.campaign || '',
+        sessionId: data.sessionId,
+        landingPage: data.landingPage,
+        isNewVisitor: data.isNewVisitor,
+        trafficSource: data.trafficSource
+      };
+      break;
+
+    case 'engagement':
+      eventType = 'engagement';
+      payload = {
+        page_path: data.path || '/',
+        sessionId: data.sessionId
+      };
+      meta = {
+        isBounce: data.isBounce || false,
+        duration: data.timeOnPage || 0
+      };
+      break;
+
+    case 'event':
+      eventType = data.action || 'custom_event';
+      payload = {
+        page_path: data.path || '/',
+        event_name: data.action,
+        event_data: JSON.stringify({
+          category: data.category,
+          label: data.label,
+          value: data.value
+        }),
+        sessionId: data.sessionId
+      };
+      break;
+
+    case 'heartbeat':
+      eventType = 'heartbeat';
+      payload = {
+        page_path: data.path || '/',
+        sessionId: data.sessionId
+      };
+      break;
+
+    default:
+      eventType = 'pageview';
+      payload = {
+        page_path: data.path || '/',
+        referrer_domain: extractReferrerDomain(data.referrer)
+      };
+  }
+
+  return { eventType, payload, meta };
+}
+
+// Handle single event (legacy/fallback)
+async function handleSingleEvent(req, context, origin, data) {
+  const { type, siteId } = data;
+
+  if (!siteId) {
+    return new Response(JSON.stringify({ error: 'Site ID required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  // Verify site exists (still using Netlify Blobs for site config)
+  const site = await getSite(siteId);
+  if (!site) {
+    return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  // CORS origin validation
+  const allowedOrigin = getAllowedOrigin(origin, site.domain);
+  console.log(`CORS check: origin=${origin}, siteDomain=${site.domain}, allowed=${allowedOrigin}`);
+  if (!allowedOrigin && origin) {
+    console.log(`CORS blocked: origin=${origin}, expected domain=${site.domain}`);
+    return new Response(JSON.stringify({ error: 'Origin not allowed', debug: { origin, expected: site.domain } }), {
+      status: 403,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': 'null'
+      }
+    });
+  }
+
+  // Get client info (will be hashed, never stored raw)
+  const ip = context.ip || req.headers.get('x-forwarded-for') || 'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+
+  // Filter bots silently
+  if (isBot(userAgent)) {
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
@@ -230,13 +288,48 @@ export default async function handler(req, context) {
         'Access-Control-Allow-Origin': allowedOrigin || '*'
       }
     });
-  } catch (err) {
-    console.error('Track error:', err.message, err.stack);
-    return new Response(JSON.stringify({ error: 'Internal error', debug: err.message }), {
-      status: 500,
+  }
+
+  // Build headers object for geo extraction
+  const headers = {
+    'x-country': context.geo?.country?.code || '',
+    'x-nf-client-connection-region': context.geo?.subdivision?.code || ''
+  };
+
+  // Parse event
+  const { eventType, payload, meta } = parseEvent(data);
+
+  // Create ZT record using core library (reusable across products)
+  const record = createZTRecord({
+    siteId,
+    ip,
+    userAgent,
+    headers,
+    secret: process.env.HASH_SECRET || 'default-secret-change-me',
+    eventType,
+    payload,
+    meta
+  });
+
+  // Safety check - ensure no PII leaked into record
+  if (!validateNoPII(record)) {
+    console.error('PII detected in record, blocking storage');
+    return new Response(JSON.stringify({ error: 'Data validation failed' }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  // Send to Tinybird
+  await ingestEvents('pageviews', record);
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': allowedOrigin || '*'
+    }
+  });
 }
 
 export const config = {

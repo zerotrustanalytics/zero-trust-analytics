@@ -25,6 +25,14 @@
     landingPage: null
   };
 
+  // Event queue for batching
+  ZTA.queue = {
+    events: [],
+    timer: null,
+    maxSize: 10,       // Send when queue reaches this size
+    maxWait: 5000      // Or after 5 seconds, whichever comes first
+  };
+
   // Page state
   ZTA.page = {
     startTime: null,
@@ -90,7 +98,23 @@
     // TODO: Re-enable when on paid Tinybird plan
     // ZTA.setupHeartbeat();
 
+    // Flush queue on page unload to ensure no events are lost
+    ZTA.setupUnloadFlush();
+
     ZTA.log('Initialized with site ID:', siteId);
+  };
+
+  // Setup flush on page unload
+  ZTA.setupUnloadFlush = function() {
+    window.addEventListener('pagehide', function() {
+      ZTA.flushQueue();
+    });
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        ZTA.flushQueue();
+      }
+    });
   };
 
   // Initialize or restore session
@@ -638,26 +662,69 @@
     }, ZTA.config.heartbeatInterval);
   };
 
-  // Send data to server
+  // Queue event for batching (reduces API calls to avoid rate limits)
   ZTA.send = function(data) {
     if (!ZTA.config.siteId) {
       ZTA.log('Error: Site ID not set');
       return;
     }
 
-    // Use fetch with keepalive for cross-origin compatibility
-    // (sendBeacon has CORS issues with some browsers)
+    // Add to queue
+    ZTA.queue.events.push(data);
+    ZTA.log('Queued:', data.type, '(queue size:', ZTA.queue.events.length + ')');
+
+    // Send immediately if queue is full
+    if (ZTA.queue.events.length >= ZTA.queue.maxSize) {
+      ZTA.flushQueue();
+      return;
+    }
+
+    // Otherwise, set/reset timer to flush after maxWait
+    if (ZTA.queue.timer) {
+      clearTimeout(ZTA.queue.timer);
+    }
+    ZTA.queue.timer = setTimeout(function() {
+      ZTA.flushQueue();
+    }, ZTA.queue.maxWait);
+  };
+
+  // Flush the event queue - send all queued events in one request
+  ZTA.flushQueue = function() {
+    if (ZTA.queue.events.length === 0) return;
+
+    // Clear timer
+    if (ZTA.queue.timer) {
+      clearTimeout(ZTA.queue.timer);
+      ZTA.queue.timer = null;
+    }
+
+    // Grab events and clear queue
+    var events = ZTA.queue.events;
+    ZTA.queue.events = [];
+
+    ZTA.log('Flushing', events.length, 'events');
+
+    // Send batch
+    ZTA.sendBatch(events);
+  };
+
+  // Send a batch of events to the server
+  ZTA.sendBatch = function(events) {
     fetch(ZTA.config.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        batch: true,
+        siteId: ZTA.config.siteId,
+        events: events
+      }),
       keepalive: true
     }).then(function() {
-      ZTA.log('Sent:', data.type);
+      ZTA.log('Batch sent:', events.length, 'events');
     }).catch(function(err) {
-      ZTA.log('Send error:', err);
+      ZTA.log('Batch send error:', err);
     });
   };
 
