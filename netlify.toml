@@ -3,6 +3,12 @@
   command = "npm install && npm run obfuscate && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify"
   functions = "netlify/functions"
 
+[dev]
+  command = "hugo server -w"
+  targetPort = 1313
+  port = 8888
+  autoLaunch = false
+
 [context.production.environment]
   HUGO_VERSION = "0.147.4"
 

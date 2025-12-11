@@ -5,6 +5,7 @@ description: "View your website analytics"
 css:
   - "dashboard.css"
 js:
+  - "shared/modal.js"
   - "auth.js"
   - "dashboard.js"
 cta: false
