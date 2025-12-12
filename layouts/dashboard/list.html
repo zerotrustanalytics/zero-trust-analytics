@@ -36,6 +36,9 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="exportData('csv')" aria-label="Export data as CSV">
           <i class="fas fa-file-csv me-1" aria-hidden="true"></i>Export CSV
         </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportPDF()" aria-label="Export as PDF report">
+          <i class="fas fa-file-pdf me-1" aria-hidden="true"></i>Export PDF
+        </button>
         <button class="btn btn-outline-secondary" onclick="openBillingPortal()" aria-label="Open billing portal">
           <i class="fas fa-credit-card me-1" aria-hidden="true"></i>Billing
         </button>
@@ -113,6 +116,16 @@
 
     <!-- Stats Content (hidden until site selected) -->
     <div id="stats-content" style="display: none;">
+
+      <!-- Print Header (only visible when printing) -->
+      <div class="print-header">
+        <h1>Zero Trust Analytics Report</h1>
+        <div class="print-meta">
+          <span id="print-site-name"></span> &bull;
+          <span id="print-date-range"></span> &bull;
+          Generated <span id="print-timestamp"></span>
+        </div>
+      </div>
 
       <!-- Real-time Badge -->
       <div class="mb-4 d-flex flex-wrap gap-3 align-items-center">
@@ -1030,6 +1043,126 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
     flex: 1 1 calc(50% - 0.25rem);
     font-size: 0.75rem;
   }
+}
+
+/* Print styles for PDF export */
+@media print {
+  /* Hide non-essential elements */
+  header, footer, nav,
+  .navbar, .trial-banner, .expired-banner,
+  #site-settings-btn, #empty-state,
+  .period-selector, .date-range-picker,
+  .btn-group, .dropdown, .modal,
+  #loading-skeleton,
+  button:not(.print-include),
+  .btn:not(.print-include) {
+    display: none !important;
+  }
+
+  /* Reset colors for print */
+  body, .card, .stat-card {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
+
+  /* Print header */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #0d6efd;
+  }
+
+  .print-header h1 {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .print-header .print-meta {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.25rem;
+  }
+
+  /* Cards layout */
+  .stat-card {
+    break-inside: avoid;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .card {
+    break-inside: avoid;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+
+  /* Tables */
+  table {
+    font-size: 0.85rem;
+  }
+
+  /* Charts - ensure they print */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Show all tab content */
+  .tab-pane {
+    display: block !important;
+    opacity: 1 !important;
+  }
+
+  .nav-tabs {
+    display: none !important;
+  }
+
+  /* Grid adjustments */
+  .row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+  }
+
+  .col-md-3, .col-lg-3 {
+    width: 25% !important;
+    flex: 0 0 25% !important;
+  }
+
+  .col-md-6, .col-lg-6 {
+    width: 50% !important;
+    flex: 0 0 50% !important;
+  }
+
+  /* Footer */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #999;
+    border-top: 1px solid #ddd;
+    padding-top: 0.25rem;
+  }
+}
+
+/* Hidden print elements (shown only when printing) */
+.print-header, .print-footer {
+  display: none;
 }
 </style>
 {{ end }}

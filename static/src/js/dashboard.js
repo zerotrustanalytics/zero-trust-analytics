@@ -1211,6 +1211,7 @@ const KEYBOARD_SHORTCUTS = {
   '5': { action: 'period365d', description: 'Set period to 1 year' },
   'e': { action: 'exportJSON', description: 'Export data as JSON' },
   'c': { action: 'exportCSV', description: 'Export data as CSV' },
+  'p': { action: 'exportPDF', description: 'Export as PDF' },
   's': { action: 'focusSiteSelector', description: 'Focus site selector' },
   'Escape': { action: 'closeModals', description: 'Close open modals' }
 };
@@ -1268,6 +1269,9 @@ function handleKeyboardShortcut(e) {
     case 'exportCSV':
       if (currentSiteId) exportData('csv');
       break;
+    case 'exportPDF':
+      if (currentSiteId) exportPDF();
+      break;
     case 'focusSiteSelector':
       document.getElementById('site-selector')?.focus();
       break;
@@ -1307,6 +1311,30 @@ function closeAllModals() {
     const bsModal = bootstrap.Modal.getInstance(modal);
     if (bsModal) bsModal.hide();
   });
+}
+
+// === PDF EXPORT ===
+
+function exportPDF() {
+  if (!currentSiteId) {
+    alert('Please select a site first');
+    return;
+  }
+
+  // Update print header with current data
+  const siteName = document.getElementById('current-site-domain').textContent;
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
+  const timestamp = new Date().toLocaleString();
+
+  document.getElementById('print-site-name').textContent = siteName;
+  document.getElementById('print-date-range').textContent = `${startDate} to ${endDate}`;
+  document.getElementById('print-timestamp').textContent = timestamp;
+
+  // Small delay to ensure charts are rendered, then print
+  setTimeout(() => {
+    window.print();
+  }, 100);
 }
 
 function showKeyboardShortcutsHelp() {
@@ -1357,6 +1385,7 @@ function showKeyboardShortcutsHelp() {
                 <ul class="list-unstyled">
                   <li class="mb-2"><kbd>e</kbd> <span class="ms-2">Export JSON</span></li>
                   <li class="mb-2"><kbd>c</kbd> <span class="ms-2">Export CSV</span></li>
+                  <li class="mb-2"><kbd>p</kbd> <span class="ms-2">Export PDF</span></li>
                 </ul>
               </div>
               <div class="col-6">
