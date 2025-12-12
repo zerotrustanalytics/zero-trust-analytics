@@ -190,9 +190,39 @@ async function loadStats() {
     showLoading(false);
     startRealtimeUpdates();
 
+    // Load annotations for chart
+    loadAnnotationsForChart();
+
   } catch (err) {
     console.error('Failed to load stats:', err);
     showLoading(false);
+  }
+}
+
+// Load annotations silently for chart display
+async function loadAnnotationsForChart() {
+  if (!currentSiteId) return;
+
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
+
+  try {
+    let url = `${API_BASE}/annotations?siteId=${currentSiteId}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+
+    const res = await fetch(url, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      currentAnnotations = data.annotations || [];
+      updateAnnotationMarkers(currentAnnotations);
+    }
+  } catch (err) {
+    console.error('Failed to load annotations:', err);
   }
 }
 
@@ -2579,4 +2609,243 @@ function showKeyboardShortcutsHelp() {
 
   const bsModal = new bootstrap.Modal(modal);
   bsModal.show();
+}
+
+// === CHART ANNOTATIONS ===
+
+let currentAnnotations = [];
+
+function openAnnotationModal() {
+  if (!currentSiteId) {
+    alert('Please select a site first');
+    return;
+  }
+
+  // Reset form
+  document.getElementById('annotation-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('annotation-title').value = '';
+  document.getElementById('annotation-description').value = '';
+  document.getElementById('annotation-color').value = '#0d6efd';
+  document.querySelectorAll('.annotation-icon-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector('.annotation-icon-btn[data-icon="star"]')?.classList.add('active');
+
+  // Reset state
+  document.getElementById('annotations-loading').classList.remove('d-none');
+  document.getElementById('annotations-list').classList.add('d-none');
+  document.getElementById('annotations-empty').classList.add('d-none');
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('annotationModal'));
+  modal.show();
+
+  // Load existing annotations
+  loadAnnotations();
+}
+
+async function loadAnnotations() {
+  if (!currentSiteId) return;
+
+  const loadingEl = document.getElementById('annotations-loading');
+  const listEl = document.getElementById('annotations-list');
+  const emptyEl = document.getElementById('annotations-empty');
+
+  // Get date range from inputs
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
+
+  try {
+    let url = `${API_BASE}/annotations?siteId=${currentSiteId}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+
+    const res = await fetch(url, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    loadingEl.classList.add('d-none');
+    currentAnnotations = data.annotations || [];
+
+    if (currentAnnotations.length === 0) {
+      emptyEl.classList.remove('d-none');
+      updateAnnotationMarkers([]);
+      return;
+    }
+
+    listEl.classList.remove('d-none');
+    listEl.innerHTML = currentAnnotations.map(annotation => {
+      const date = new Date(annotation.date).toLocaleDateString();
+      const iconClass = getAnnotationIconClass(annotation.icon);
+
+      return `
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+          <div class="d-flex align-items-center">
+            <div class="me-3" style="color: ${annotation.color}; font-size: 1.25rem;">
+              <i class="bi ${iconClass}"></i>
+            </div>
+            <div>
+              <div class="fw-medium">${escapeHtml(annotation.title)}</div>
+              <div class="small text-muted">${date}</div>
+              ${annotation.description ? `<div class="small text-muted">${escapeHtml(annotation.description)}</div>` : ''}
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteAnnotation('${annotation.id}')" title="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    // Update chart markers
+    updateAnnotationMarkers(currentAnnotations);
+
+  } catch (err) {
+    console.error('Load annotations error:', err);
+    loadingEl.innerHTML = '<p class="text-danger">Failed to load annotations</p>';
+  }
+}
+
+async function createAnnotation() {
+  if (!currentSiteId) {
+    alert('Please select a site first');
+    return;
+  }
+
+  const date = document.getElementById('annotation-date').value;
+  const title = document.getElementById('annotation-title').value.trim();
+  const description = document.getElementById('annotation-description').value.trim();
+  const color = document.getElementById('annotation-color').value;
+  const activeIconBtn = document.querySelector('.annotation-icon-btn.active');
+  const icon = activeIconBtn ? activeIconBtn.dataset.icon : 'star';
+
+  if (!date) {
+    alert('Please select a date');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+  try {
+    const res = await fetch(`${API_BASE}/annotations`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        siteId: currentSiteId,
+        date,
+        title: title || 'Event',
+        description,
+        color,
+        icon
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create annotation');
+    }
+
+    // Reset form
+    document.getElementById('annotation-title').value = '';
+    document.getElementById('annotation-description').value = '';
+
+    // Reload annotations
+    loadAnnotations();
+
+  } catch (err) {
+    console.error('Create annotation error:', err);
+    alert('Failed to create annotation: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Add Annotation';
+  }
+}
+
+async function deleteAnnotation(annotationId) {
+  if (!confirm('Are you sure you want to delete this annotation?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/annotations?annotationId=${annotationId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete annotation');
+    }
+
+    // Reload annotations
+    loadAnnotations();
+
+  } catch (err) {
+    console.error('Delete annotation error:', err);
+    alert('Failed to delete annotation: ' + err.message);
+  }
+}
+
+function selectAnnotationIcon(btn) {
+  // Remove active from all
+  document.querySelectorAll('.annotation-icon-btn').forEach(b => b.classList.remove('active'));
+  // Add active to clicked
+  btn.classList.add('active');
+}
+
+function getAnnotationIconClass(icon) {
+  const icons = {
+    'star': 'bi-star-fill',
+    'flag': 'bi-flag-fill',
+    'rocket': 'bi-rocket-takeoff-fill',
+    'bug': 'bi-bug-fill',
+    'megaphone': 'bi-megaphone-fill',
+    'lightning': 'bi-lightning-fill',
+    'calendar': 'bi-calendar-event-fill',
+    'gear': 'bi-gear-fill'
+  };
+  return icons[icon] || 'bi-star-fill';
+}
+
+function updateAnnotationMarkers(annotations) {
+  const markersContainer = document.getElementById('annotation-markers');
+  if (!markersContainer) return;
+
+  if (!annotations || annotations.length === 0) {
+    markersContainer.innerHTML = '<span class="text-muted small">No annotations in this period</span>';
+    return;
+  }
+
+  // Sort by date
+  const sorted = [...annotations].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  markersContainer.innerHTML = sorted.map(annotation => {
+    const date = new Date(annotation.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const iconClass = getAnnotationIconClass(annotation.icon);
+
+    return `
+      <span class="badge me-2 mb-1" style="background-color: ${annotation.color}; cursor: help;"
+            title="${escapeHtml(annotation.title)} - ${date}${annotation.description ? '\n' + escapeHtml(annotation.description) : ''}">
+        <i class="bi ${iconClass} me-1"></i>${escapeHtml(annotation.title)}
+      </span>
+    `;
+  }).join('');
+
+  // Initialize tooltips on markers
+  markersContainer.querySelectorAll('[title]').forEach(el => {
+    new bootstrap.Tooltip(el, {
+      trigger: 'hover',
+      placement: 'top'
+    });
+  });
 }

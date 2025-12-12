@@ -15,7 +15,8 @@ const STORES = {
   API_KEYS: 'api_keys',
   ACTIVITY_LOG: 'activity_log',
   WEBHOOKS: 'webhooks',
-  ALERTS: 'alerts'
+  ALERTS: 'alerts',
+  ANNOTATIONS: 'annotations'
 };
 
 // Get a store instance
@@ -1434,4 +1435,100 @@ export async function getTrafficBaseline(siteId) {
     avgDaily: Math.round(avgDaily),
     daysWithData
   };
+}
+
+// === CHART ANNOTATIONS ===
+
+export async function createAnnotation(siteId, userId, config) {
+  const annotations = store(STORES.ANNOTATIONS);
+
+  const annotationId = 'ann_' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+
+  const annotation = {
+    id: annotationId,
+    siteId,
+    userId,
+    date: config.date, // YYYY-MM-DD format
+    title: config.title || 'Event',
+    description: config.description || '',
+    color: config.color || '#0d6efd', // Bootstrap primary blue
+    icon: config.icon || 'star', // star, rocket, megaphone, flag, bug, etc.
+    createdAt: new Date().toISOString()
+  };
+
+  await annotations.setJSON(annotationId, annotation);
+
+  // Add to site's annotation list
+  const siteAnnotationsKey = `site_annotations_${siteId}`;
+  let siteAnnotations = await annotations.get(siteAnnotationsKey, { type: 'json' }) || [];
+  siteAnnotations.push(annotationId);
+  await annotations.setJSON(siteAnnotationsKey, siteAnnotations);
+
+  return annotation;
+}
+
+export async function getAnnotation(annotationId) {
+  const annotations = store(STORES.ANNOTATIONS);
+  return await annotations.get(annotationId, { type: 'json' });
+}
+
+export async function getSiteAnnotations(siteId, startDate = null, endDate = null) {
+  const annotations = store(STORES.ANNOTATIONS);
+  const siteAnnotationsKey = `site_annotations_${siteId}`;
+  const annotationIds = await annotations.get(siteAnnotationsKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of annotationIds) {
+    const annotation = await annotations.get(id, { type: 'json' });
+    if (annotation) {
+      // Filter by date range if provided
+      if (startDate && annotation.date < startDate) continue;
+      if (endDate && annotation.date > endDate) continue;
+      result.push(annotation);
+    }
+  }
+
+  // Sort by date
+  result.sort((a, b) => a.date.localeCompare(b.date));
+
+  return result;
+}
+
+export async function updateAnnotation(annotationId, userId, updates) {
+  const annotations = store(STORES.ANNOTATIONS);
+  const annotation = await annotations.get(annotationId, { type: 'json' });
+
+  if (!annotation || annotation.userId !== userId) {
+    return null;
+  }
+
+  const allowedUpdates = ['title', 'description', 'color', 'icon', 'date'];
+  for (const key of allowedUpdates) {
+    if (updates[key] !== undefined) {
+      annotation[key] = updates[key];
+    }
+  }
+
+  await annotations.setJSON(annotationId, annotation);
+  return annotation;
+}
+
+export async function deleteAnnotation(annotationId, userId) {
+  const annotations = store(STORES.ANNOTATIONS);
+  const annotation = await annotations.get(annotationId, { type: 'json' });
+
+  if (!annotation || annotation.userId !== userId) {
+    return false;
+  }
+
+  // Remove from site's list
+  const siteAnnotationsKey = `site_annotations_${annotation.siteId}`;
+  let siteAnnotations = await annotations.get(siteAnnotationsKey, { type: 'json' }) || [];
+  siteAnnotations = siteAnnotations.filter(id => id !== annotationId);
+  await annotations.setJSON(siteAnnotationsKey, siteAnnotations);
+
+  // Delete the annotation
+  await annotations.delete(annotationId);
+
+  return true;
 }
