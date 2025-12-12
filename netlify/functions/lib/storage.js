@@ -19,7 +19,8 @@ const STORES = {
   ANNOTATIONS: 'annotations',
   TEAMS: 'teams',
   GOALS: 'goals',
-  FUNNELS: 'funnels'
+  FUNNELS: 'funnels',
+  HEATMAPS: 'heatmaps'
 };
 
 // Get a store instance
@@ -2343,4 +2344,284 @@ function matchesStep(value, step) {
     default:
       return value === target;
   }
+}
+
+// === HEATMAP DATA ===
+
+// Record click data for heatmaps
+export async function recordHeatmapClick(siteId, data) {
+  const heatmaps = store(STORES.HEATMAPS);
+
+  const today = new Date().toISOString().split('T')[0];
+  const path = data.path || '/';
+  const key = `${siteId}:clicks:${today}:${encodeURIComponent(path)}`;
+
+  // Get or create daily click data for this page
+  let clickData = await heatmaps.get(key, { type: 'json' });
+  if (!clickData) {
+    clickData = {
+      siteId,
+      path,
+      date: today,
+      clicks: [],
+      totalClicks: 0,
+      viewport: {} // Track viewport sizes
+    };
+  }
+
+  // Store click position as percentage of viewport
+  // This normalizes across different screen sizes
+  const click = {
+    x: Math.round(data.xPercent * 100) / 100, // Percentage from left (0-100)
+    y: Math.round(data.yPercent * 100) / 100, // Percentage from top (0-100)
+    element: data.element || null, // Optional element selector
+    timestamp: Date.now()
+  };
+
+  // Store viewport dimensions for analysis
+  const viewportKey = `${data.viewportWidth}x${data.viewportHeight}`;
+  clickData.viewport[viewportKey] = (clickData.viewport[viewportKey] || 0) + 1;
+
+  // Add click to array (limit to prevent excessive storage)
+  clickData.clicks.push(click);
+  if (clickData.clicks.length > 10000) {
+    // Keep most recent 10000 clicks
+    clickData.clicks = clickData.clicks.slice(-10000);
+  }
+  clickData.totalClicks++;
+
+  await heatmaps.setJSON(key, clickData);
+
+  return clickData;
+}
+
+// Record scroll depth data for heatmaps
+export async function recordHeatmapScroll(siteId, data) {
+  const heatmaps = store(STORES.HEATMAPS);
+
+  const today = new Date().toISOString().split('T')[0];
+  const path = data.path || '/';
+  const key = `${siteId}:scroll:${today}:${encodeURIComponent(path)}`;
+
+  // Get or create daily scroll data for this page
+  let scrollData = await heatmaps.get(key, { type: 'json' });
+  if (!scrollData) {
+    scrollData = {
+      siteId,
+      path,
+      date: today,
+      depths: {}, // Buckets: 0-10%, 10-20%, etc.
+      maxDepths: [], // Individual max scroll depths
+      totalSessions: 0,
+      avgFold: 0, // Average fold position
+      foldCount: 0
+    };
+  }
+
+  // Record max scroll depth
+  const maxDepth = Math.min(100, Math.max(0, Math.round(data.maxScrollDepth)));
+  scrollData.maxDepths.push(maxDepth);
+
+  // Limit stored depths
+  if (scrollData.maxDepths.length > 5000) {
+    scrollData.maxDepths = scrollData.maxDepths.slice(-5000);
+  }
+
+  // Bucket the depth (0-10, 10-20, etc.)
+  const bucket = Math.floor(maxDepth / 10) * 10;
+  const bucketKey = `${bucket}-${bucket + 10}`;
+  scrollData.depths[bucketKey] = (scrollData.depths[bucketKey] || 0) + 1;
+
+  scrollData.totalSessions++;
+
+  // Track fold position (where most users stop scrolling)
+  if (data.foldPosition) {
+    scrollData.avgFold = (scrollData.avgFold * scrollData.foldCount + data.foldPosition) / (scrollData.foldCount + 1);
+    scrollData.foldCount++;
+  }
+
+  await heatmaps.setJSON(key, scrollData);
+
+  return scrollData;
+}
+
+// Get heatmap click data for a page
+export async function getHeatmapClicks(siteId, path, startDate, endDate) {
+  const heatmaps = store(STORES.HEATMAPS);
+
+  // Generate date range
+  const dates = [];
+  const current = new Date(startDate);
+  const end = new Date(endDate);
+
+  while (current <= end) {
+    dates.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Aggregate clicks across dates
+  const aggregated = {
+    path,
+    clicks: [],
+    totalClicks: 0,
+    viewport: {},
+    dateRange: { startDate, endDate }
+  };
+
+  for (const date of dates) {
+    const key = `${siteId}:clicks:${date}:${encodeURIComponent(path)}`;
+    const dayData = await heatmaps.get(key, { type: 'json' });
+
+    if (dayData) {
+      aggregated.clicks = aggregated.clicks.concat(dayData.clicks);
+      aggregated.totalClicks += dayData.totalClicks;
+
+      // Merge viewport counts
+      for (const [vp, count] of Object.entries(dayData.viewport)) {
+        aggregated.viewport[vp] = (aggregated.viewport[vp] || 0) + count;
+      }
+    }
+  }
+
+  // Generate density grid for visualization (100x100 grid)
+  const gridSize = 100;
+  const density = Array(gridSize).fill(null).map(() => Array(gridSize).fill(0));
+
+  for (const click of aggregated.clicks) {
+    const gridX = Math.min(gridSize - 1, Math.floor(click.x));
+    const gridY = Math.min(gridSize - 1, Math.floor(click.y));
+    density[gridY][gridX]++;
+  }
+
+  // Find max density for normalization
+  let maxDensity = 0;
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      maxDensity = Math.max(maxDensity, density[y][x]);
+    }
+  }
+
+  // Normalize density to 0-1 range
+  if (maxDensity > 0) {
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        density[y][x] = Math.round((density[y][x] / maxDensity) * 100) / 100;
+      }
+    }
+  }
+
+  return {
+    ...aggregated,
+    density,
+    maxDensity
+  };
+}
+
+// Get scroll depth data for a page
+export async function getHeatmapScroll(siteId, path, startDate, endDate) {
+  const heatmaps = store(STORES.HEATMAPS);
+
+  // Generate date range
+  const dates = [];
+  const current = new Date(startDate);
+  const end = new Date(endDate);
+
+  while (current <= end) {
+    dates.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Aggregate scroll data across dates
+  const aggregated = {
+    path,
+    depths: {},
+    totalSessions: 0,
+    avgMaxDepth: 0,
+    avgFold: 0,
+    dateRange: { startDate, endDate }
+  };
+
+  let allDepths = [];
+
+  for (const date of dates) {
+    const key = `${siteId}:scroll:${date}:${encodeURIComponent(path)}`;
+    const dayData = await heatmaps.get(key, { type: 'json' });
+
+    if (dayData) {
+      allDepths = allDepths.concat(dayData.maxDepths || []);
+      aggregated.totalSessions += dayData.totalSessions;
+
+      // Merge depth buckets
+      for (const [bucket, count] of Object.entries(dayData.depths)) {
+        aggregated.depths[bucket] = (aggregated.depths[bucket] || 0) + count;
+      }
+
+      // Track average fold
+      if (dayData.avgFold && dayData.foldCount) {
+        aggregated.avgFold = (aggregated.avgFold * aggregated.totalSessions + dayData.avgFold * dayData.foldCount) / (aggregated.totalSessions + dayData.foldCount);
+      }
+    }
+  }
+
+  // Calculate average max depth
+  if (allDepths.length > 0) {
+    aggregated.avgMaxDepth = Math.round(allDepths.reduce((a, b) => a + b, 0) / allDepths.length);
+  }
+
+  // Calculate reach percentages (what % of users reached each depth)
+  const reach = {};
+  for (let depth = 10; depth <= 100; depth += 10) {
+    const reachedCount = allDepths.filter(d => d >= depth).length;
+    reach[depth] = allDepths.length > 0 ? Math.round((reachedCount / allDepths.length) * 100) : 0;
+  }
+
+  return {
+    ...aggregated,
+    reach
+  };
+}
+
+// Get list of pages with heatmap data for a site
+export async function getHeatmapPages(siteId, startDate, endDate) {
+  const heatmaps = store(STORES.HEATMAPS);
+
+  // Generate date range
+  const dates = [];
+  const current = new Date(startDate);
+  const end = new Date(endDate);
+
+  while (current <= end) {
+    dates.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Collect unique pages with data
+  const pages = new Map();
+
+  // List all keys in heatmaps store
+  const { blobs } = await heatmaps.list();
+
+  for (const blob of blobs) {
+    // Parse key format: siteId:type:date:path
+    const parts = blob.key.split(':');
+    if (parts.length >= 4 && parts[0] === siteId) {
+      const type = parts[1];
+      const date = parts[2];
+      const path = decodeURIComponent(parts.slice(3).join(':'));
+
+      if (dates.includes(date)) {
+        if (!pages.has(path)) {
+          pages.set(path, { path, hasClicks: false, hasScroll: false });
+        }
+
+        if (type === 'clicks') {
+          pages.get(path).hasClicks = true;
+        } else if (type === 'scroll') {
+          pages.get(path).hasScroll = true;
+        }
+      }
+    }
+  }
+
+  return Array.from(pages.values());
 }

@@ -66,6 +66,9 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="openFunnelsModal()" aria-label="Funnel analysis">
           <i class="fas fa-filter me-1" aria-hidden="true"></i>Funnels
         </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openHeatmapsModal()" aria-label="View heatmaps">
+          <i class="fas fa-fire me-1" aria-hidden="true"></i>Heatmaps
+        </button>
         <button class="btn btn-outline-secondary" onclick="openBillingPortal()" aria-label="Open billing portal">
           <i class="fas fa-credit-card me-1" aria-hidden="true"></i>Billing
         </button>
@@ -1058,6 +1061,169 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
           <i class="bi bi-funnel" style="font-size: 2rem;"></i>
           <p class="mt-2">No funnels created yet</p>
           <p class="small">Create your first funnel to start tracking conversions</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Heatmaps Modal -->
+<div class="modal fade" id="heatmapsModal" tabindex="-1" aria-labelledby="heatmapsModalTitle">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="heatmapsModalTitle">
+          <i class="bi bi-fire me-2"></i>Heatmaps
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Visualize where users click and how far they scroll on your pages.</p>
+
+        <!-- No Site Selected Warning -->
+        <div id="heatmaps-no-site" class="alert alert-info d-none">
+          <i class="bi bi-info-circle me-2"></i>Please select a site first to view heatmaps.
+        </div>
+
+        <!-- Heatmap Controls -->
+        <div class="card mb-4" id="heatmap-controls">
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-5">
+                <label class="form-label">Select Page</label>
+                <select class="form-select" id="heatmap-page-select" onchange="loadHeatmapData()">
+                  <option value="">Loading pages...</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">View Type</label>
+                <select class="form-select" id="heatmap-view-type" onchange="loadHeatmapData()">
+                  <option value="clicks">Click Heatmap</option>
+                  <option value="scroll">Scroll Depth</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Date Range</label>
+                <div class="input-group">
+                  <input type="date" class="form-control form-control-sm" id="heatmap-start-date">
+                  <span class="input-group-text">to</span>
+                  <input type="date" class="form-control form-control-sm" id="heatmap-end-date">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="heatmap-loading" class="text-center py-5 d-none">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2 text-muted">Loading heatmap data...</p>
+        </div>
+
+        <!-- Click Heatmap View -->
+        <div id="heatmap-clicks-view" class="d-none">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-cursor me-2"></i>Click Density</span>
+                  <span class="badge bg-primary" id="heatmap-total-clicks">0 clicks</span>
+                </div>
+                <div class="card-body p-0">
+                  <div id="heatmap-canvas-container" style="position: relative; background: #f8f9fa; min-height: 400px;">
+                    <canvas id="heatmap-canvas" width="800" height="600" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header"><i class="bi bi-display me-2"></i>Viewport Distribution</div>
+                <div class="card-body">
+                  <div id="heatmap-viewport-stats">
+                    <p class="text-muted small">Shows which screen sizes your visitors use</p>
+                    <div id="heatmap-viewports-list">
+                      <!-- Populated by JS -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card mt-3">
+                <div class="card-header"><i class="bi bi-palette me-2"></i>Legend</div>
+                <div class="card-body">
+                  <div class="d-flex align-items-center mb-2">
+                    <div style="width: 24px; height: 24px; background: linear-gradient(to right, blue, cyan, lime, yellow, red); border-radius: 4px;"></div>
+                    <span class="ms-2 small">Low to High Click Density</span>
+                  </div>
+                  <p class="text-muted small mb-0">Warmer colors indicate more clicks in that area.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scroll Depth View -->
+        <div id="heatmap-scroll-view" class="d-none">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-arrow-down-circle me-2"></i>Scroll Reach</span>
+                  <span class="badge bg-primary" id="heatmap-total-sessions">0 sessions</span>
+                </div>
+                <div class="card-body">
+                  <div id="scroll-depth-chart" style="min-height: 300px;">
+                    <!-- Scroll depth bars populated by JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Key Metrics</div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <div class="text-muted small">Average Max Scroll</div>
+                    <div class="h4 mb-0" id="heatmap-avg-scroll">--%</div>
+                  </div>
+                  <div class="mb-3">
+                    <div class="text-muted small">Reached 25%</div>
+                    <div class="h5 mb-0" id="heatmap-reach-25">--%</div>
+                  </div>
+                  <div class="mb-3">
+                    <div class="text-muted small">Reached 50%</div>
+                    <div class="h5 mb-0" id="heatmap-reach-50">--%</div>
+                  </div>
+                  <div class="mb-3">
+                    <div class="text-muted small">Reached 75%</div>
+                    <div class="h5 mb-0" id="heatmap-reach-75">--%</div>
+                  </div>
+                  <div>
+                    <div class="text-muted small">Reached 100%</div>
+                    <div class="h5 mb-0" id="heatmap-reach-100">--%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Data State -->
+        <div id="heatmap-no-data" class="d-none text-center py-5 text-muted">
+          <i class="bi bi-fire" style="font-size: 3rem;"></i>
+          <h5 class="mt-3">No heatmap data yet</h5>
+          <p>Heatmap data will appear here once visitors interact with your site.</p>
+          <p class="small">Make sure the tracking script is installed and includes heatmap tracking.</p>
+        </div>
+
+        <!-- No Pages State -->
+        <div id="heatmap-no-pages" class="d-none text-center py-5 text-muted">
+          <i class="bi bi-file-earmark" style="font-size: 3rem;"></i>
+          <h5 class="mt-3">No pages with heatmap data</h5>
+          <p>No pages have recorded heatmap data in the selected date range.</p>
         </div>
       </div>
       <div class="modal-footer">

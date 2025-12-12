@@ -3985,3 +3985,280 @@ async function deleteFunnel(funnelId) {
     alert('Failed to delete funnel: ' + err.message);
   }
 }
+
+// ============================================
+// HEATMAPS
+// ============================================
+
+let heatmapPages = [];
+
+function openHeatmapsModal() {
+  const modal = new bootstrap.Modal(document.getElementById('heatmapsModal'));
+  modal.show();
+
+  // Set default date range (last 7 days)
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 7);
+
+  document.getElementById('heatmap-start-date').value = startDate.toISOString().split('T')[0];
+  document.getElementById('heatmap-end-date').value = endDate.toISOString().split('T')[0];
+
+  // Check if site is selected
+  if (!currentSiteId) {
+    document.getElementById('heatmaps-no-site').classList.remove('d-none');
+    document.getElementById('heatmap-controls').classList.add('d-none');
+    hideAllHeatmapViews();
+    return;
+  }
+
+  document.getElementById('heatmaps-no-site').classList.add('d-none');
+  document.getElementById('heatmap-controls').classList.remove('d-none');
+
+  loadHeatmapPages();
+}
+
+function hideAllHeatmapViews() {
+  document.getElementById('heatmap-loading').classList.add('d-none');
+  document.getElementById('heatmap-clicks-view').classList.add('d-none');
+  document.getElementById('heatmap-scroll-view').classList.add('d-none');
+  document.getElementById('heatmap-no-data').classList.add('d-none');
+  document.getElementById('heatmap-no-pages').classList.add('d-none');
+}
+
+async function loadHeatmapPages() {
+  const select = document.getElementById('heatmap-page-select');
+  select.innerHTML = '<option value="">Loading pages...</option>';
+  hideAllHeatmapViews();
+
+  const startDate = document.getElementById('heatmap-start-date').value;
+  const endDate = document.getElementById('heatmap-end-date').value;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/heatmaps?siteId=${currentSiteId}&type=pages&startDate=${startDate}&endDate=${endDate}`,
+      { headers: getAuthHeaders() }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to load pages');
+    }
+
+    heatmapPages = data.pages || [];
+
+    if (heatmapPages.length === 0) {
+      select.innerHTML = '<option value="">No pages with data</option>';
+      document.getElementById('heatmap-no-pages').classList.remove('d-none');
+      return;
+    }
+
+    // Populate page select
+    select.innerHTML = '<option value="">Select a page...</option>';
+    heatmapPages.forEach(page => {
+      const opt = document.createElement('option');
+      opt.value = page.path;
+      opt.textContent = page.path;
+      select.appendChild(opt);
+    });
+
+    // Auto-select first page
+    if (heatmapPages.length > 0) {
+      select.value = heatmapPages[0].path;
+      loadHeatmapData();
+    }
+
+  } catch (err) {
+    console.error('Load heatmap pages error:', err);
+    select.innerHTML = '<option value="">Failed to load pages</option>';
+  }
+}
+
+async function loadHeatmapData() {
+  const path = document.getElementById('heatmap-page-select').value;
+  const viewType = document.getElementById('heatmap-view-type').value;
+  const startDate = document.getElementById('heatmap-start-date').value;
+  const endDate = document.getElementById('heatmap-end-date').value;
+
+  if (!path) {
+    hideAllHeatmapViews();
+    return;
+  }
+
+  hideAllHeatmapViews();
+  document.getElementById('heatmap-loading').classList.remove('d-none');
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/heatmaps?siteId=${currentSiteId}&type=${viewType}&path=${encodeURIComponent(path)}&startDate=${startDate}&endDate=${endDate}`,
+      { headers: getAuthHeaders() }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to load heatmap data');
+    }
+
+    document.getElementById('heatmap-loading').classList.add('d-none');
+
+    if (viewType === 'clicks') {
+      renderClickHeatmap(data);
+    } else {
+      renderScrollHeatmap(data);
+    }
+
+  } catch (err) {
+    console.error('Load heatmap data error:', err);
+    document.getElementById('heatmap-loading').classList.add('d-none');
+    document.getElementById('heatmap-no-data').classList.remove('d-none');
+  }
+}
+
+function renderClickHeatmap(data) {
+  const clicksView = document.getElementById('heatmap-clicks-view');
+  clicksView.classList.remove('d-none');
+
+  // Update total clicks
+  document.getElementById('heatmap-total-clicks').textContent = `${data.totalClicks.toLocaleString()} clicks`;
+
+  if (data.totalClicks === 0) {
+    clicksView.classList.add('d-none');
+    document.getElementById('heatmap-no-data').classList.remove('d-none');
+    return;
+  }
+
+  // Render viewport distribution
+  const viewportsList = document.getElementById('heatmap-viewports-list');
+  const viewportEntries = Object.entries(data.viewport || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const totalViewports = Object.values(data.viewport || {}).reduce((a, b) => a + b, 0);
+
+  if (viewportEntries.length > 0) {
+    viewportsList.innerHTML = viewportEntries.map(([vp, count]) => {
+      const pct = totalViewports > 0 ? Math.round((count / totalViewports) * 100) : 0;
+      return `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="small">${vp}</span>
+          <span class="badge bg-secondary">${pct}%</span>
+        </div>
+        <div class="progress mb-2" style="height: 4px;">
+          <div class="progress-bar" style="width: ${pct}%"></div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    viewportsList.innerHTML = '<p class="text-muted small">No viewport data</p>';
+  }
+
+  // Render heatmap on canvas
+  renderHeatmapCanvas(data.density, data.maxDensity);
+}
+
+function renderHeatmapCanvas(density, maxDensity) {
+  const canvas = document.getElementById('heatmap-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Clear canvas
+  ctx.fillStyle = '#f8f9fa';
+  ctx.fillRect(0, 0, width, height);
+
+  if (!density || maxDensity === 0) {
+    ctx.fillStyle = '#6c757d';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No click data to display', width / 2, height / 2);
+    return;
+  }
+
+  // Draw heatmap
+  const cellWidth = width / 100;
+  const cellHeight = height / 100;
+
+  for (let y = 0; y < 100; y++) {
+    for (let x = 0; x < 100; x++) {
+      const value = density[y][x];
+      if (value > 0) {
+        ctx.fillStyle = getHeatmapColor(value);
+        ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth + 1, cellHeight + 1);
+      }
+    }
+  }
+}
+
+function getHeatmapColor(value) {
+  // Value is 0-1, return color from blue -> cyan -> lime -> yellow -> red
+  const hue = (1 - value) * 240; // 240 (blue) to 0 (red)
+  const saturation = 100;
+  const lightness = 50;
+  return `hsla(${hue}, ${saturation}%, ${lightness}%, ${Math.max(0.3, value)})`;
+}
+
+function renderScrollHeatmap(data) {
+  const scrollView = document.getElementById('heatmap-scroll-view');
+  scrollView.classList.remove('d-none');
+
+  // Update total sessions
+  document.getElementById('heatmap-total-sessions').textContent = `${data.totalSessions.toLocaleString()} sessions`;
+
+  if (data.totalSessions === 0) {
+    scrollView.classList.add('d-none');
+    document.getElementById('heatmap-no-data').classList.remove('d-none');
+    return;
+  }
+
+  // Update metrics
+  document.getElementById('heatmap-avg-scroll').textContent = `${data.avgMaxDepth}%`;
+
+  const reach = data.reach || {};
+  document.getElementById('heatmap-reach-25').textContent = `${reach[30] || 0}%`;
+  document.getElementById('heatmap-reach-50').textContent = `${reach[50] || 0}%`;
+  document.getElementById('heatmap-reach-75').textContent = `${reach[80] || 0}%`;
+  document.getElementById('heatmap-reach-100').textContent = `${reach[100] || 0}%`;
+
+  // Render scroll depth chart
+  const chartContainer = document.getElementById('scroll-depth-chart');
+  const depths = data.depths || {};
+
+  // Create bars for each 10% bucket
+  const buckets = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100'];
+  const maxCount = Math.max(...Object.values(depths), 1);
+
+  chartContainer.innerHTML = `
+    <div class="scroll-depth-bars">
+      ${buckets.map((bucket, i) => {
+        const count = depths[bucket] || 0;
+        const pct = Math.round((count / data.totalSessions) * 100);
+        const barHeight = Math.max(5, (count / maxCount) * 100);
+        const depthPct = (i + 1) * 10;
+
+        // Color gradient from green to red as depth increases
+        const hue = 120 - (i * 12); // 120 (green) to 0 (red)
+
+        return `
+          <div class="scroll-bar-wrapper text-center" style="flex: 1;">
+            <div class="scroll-bar-container" style="height: 200px; display: flex; align-items: flex-end; justify-content: center;">
+              <div class="scroll-bar" style="
+                width: 80%;
+                height: ${barHeight}%;
+                background: hsl(${hue}, 70%, 50%);
+                border-radius: 4px 4px 0 0;
+                min-height: 5px;
+              "></div>
+            </div>
+            <div class="scroll-bar-label mt-2">
+              <div class="small fw-bold">${depthPct}%</div>
+              <div class="text-muted small">${pct}%</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div class="text-center mt-3 text-muted small">
+      Scroll Depth → (% of visitors reaching each depth)
+    </div>
+  `;
+}
