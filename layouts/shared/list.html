@@ -1,0 +1,385 @@
+{{ define "main" }}
+<main class="container py-5">
+  <!-- Loading State -->
+  <div id="shared-loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading shared dashboard...</p>
+  </div>
+
+  <!-- Error State -->
+  <div id="shared-error" class="d-none text-center py-5">
+    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+    <h2 class="mt-3">Invalid Share Link</h2>
+    <p class="text-muted">This share link is invalid, expired, or has been revoked.</p>
+    <a href="/" class="btn btn-primary mt-3">Go to Homepage</a>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div id="shared-content" class="d-none">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <h1 class="h3 mb-1">
+          <i class="bi bi-graph-up me-2"></i>
+          <span id="shared-site-name">Analytics Dashboard</span>
+        </h1>
+        <p class="text-muted mb-0">
+          <i class="bi bi-share me-1"></i>Shared view &bull;
+          <span id="shared-period-label">Last 7 days</span>
+        </p>
+      </div>
+      <div class="btn-group" role="group" id="shared-period-selector">
+        <!-- Period buttons populated by JS -->
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+      <div class="col-6 col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body text-center">
+            <h2 class="h4 mb-1" id="shared-visitors">-</h2>
+            <p class="text-muted mb-0 small">Unique Visitors</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body text-center">
+            <h2 class="h4 mb-1" id="shared-pageviews">-</h2>
+            <p class="text-muted mb-0 small">Page Views</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body text-center">
+            <h2 class="h4 mb-1" id="shared-bounce">-</h2>
+            <p class="text-muted mb-0 small">Bounce Rate</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body text-center">
+            <h2 class="h4 mb-1" id="shared-duration">-</h2>
+            <p class="text-muted mb-0 small">Avg. Session</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Visitors Over Time</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="shared-visitors-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Tables -->
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Top Pages</h5>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th class="text-end">Views</th>
+                </tr>
+              </thead>
+              <tbody id="shared-pages-table">
+                <tr><td colspan="2" class="text-center text-muted">No data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Top Referrers</h5>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th class="text-end">Visitors</th>
+                </tr>
+              </thead>
+              <tbody id="shared-referrers-table">
+                <tr><td colspan="2" class="text-center text-muted">No data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Devices</h5>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <tbody id="shared-devices-table">
+                <tr><td colspan="2" class="text-center text-muted">No data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Browsers</h5>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <tbody id="shared-browsers-table">
+                <tr><td colspan="2" class="text-center text-muted">No data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Countries</h5>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <tbody id="shared-countries-table">
+                <tr><td colspan="2" class="text-center text-muted">No data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-muted mt-4 pt-4 border-top">
+      <p class="mb-1">
+        <i class="bi bi-shield-check me-1"></i>
+        Powered by <a href="/" class="text-decoration-none">Zero Trust Analytics</a>
+      </p>
+      <p class="small">Privacy-first analytics without compromising insights</p>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const API_BASE = '/api';
+let shareToken = null;
+let currentPeriod = '7d';
+let sharedChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Extract token from URL path
+  const pathParts = window.location.pathname.split('/');
+  shareToken = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+
+  if (!shareToken || shareToken === 'shared') {
+    showError();
+    return;
+  }
+
+  loadSharedStats();
+});
+
+async function loadSharedStats() {
+  try {
+    const res = await fetch(`${API_BASE}/public/stats?token=${shareToken}&period=${currentPeriod}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    // Hide loading, show content
+    document.getElementById('shared-loading').classList.add('d-none');
+    document.getElementById('shared-content').classList.remove('d-none');
+
+    // Update header
+    document.getElementById('shared-site-name').textContent = data.site.domain;
+
+    // Build period selector
+    buildPeriodSelector(data.allowedPeriods || ['7d', '30d', '90d']);
+
+    // Update stats
+    document.getElementById('shared-visitors').textContent = formatNumber(data.uniqueVisitors || 0);
+    document.getElementById('shared-pageviews').textContent = formatNumber(data.pageviews || 0);
+    document.getElementById('shared-bounce').textContent = (data.bounceRate || 0) + '%';
+    document.getElementById('shared-duration').textContent = formatDuration(data.avgSessionDuration || 0);
+
+    // Update period label
+    const periodLabels = { '24h': 'Last 24 hours', '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', '365d': 'Last year' };
+    document.getElementById('shared-period-label').textContent = periodLabels[currentPeriod] || currentPeriod;
+
+    // Update tables
+    populateTable('shared-pages-table', data.pages || {});
+    populateTable('shared-referrers-table', data.referrers || {}, 'Direct');
+    populateTable('shared-devices-table', data.devices || {});
+    populateTable('shared-browsers-table', data.browsers || {});
+    populateTable('shared-countries-table', data.countries || {});
+
+    // Update chart
+    updateChart(data.daily || []);
+
+  } catch (err) {
+    console.error('Load shared stats error:', err);
+    showError();
+  }
+}
+
+function showError() {
+  document.getElementById('shared-loading').classList.add('d-none');
+  document.getElementById('shared-error').classList.remove('d-none');
+}
+
+function buildPeriodSelector(allowedPeriods) {
+  const container = document.getElementById('shared-period-selector');
+  const periodLabels = { '24h': '24h', '7d': '7d', '30d': '30d', '90d': '90d', '365d': '1y' };
+
+  container.innerHTML = allowedPeriods.map(period => `
+    <button type="button" class="btn btn-outline-secondary btn-sm ${period === currentPeriod ? 'active' : ''}"
+            onclick="setPeriod('${period}')">
+      ${periodLabels[period] || period}
+    </button>
+  `).join('');
+}
+
+function setPeriod(period) {
+  currentPeriod = period;
+
+  // Update button states
+  document.querySelectorAll('#shared-period-selector .btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+
+  loadSharedStats();
+}
+
+function populateTable(tableId, data, emptyLabel = '-') {
+  const tbody = document.getElementById(tableId);
+  const entries = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+  if (entries.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted">No data</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = entries.map(([name, count]) => `
+    <tr>
+      <td title="${name || emptyLabel}">${truncate(name || emptyLabel, 25)}</td>
+      <td class="text-end">${formatNumber(count)}</td>
+    </tr>
+  `).join('');
+}
+
+function updateChart(dailyData) {
+  const ctx = document.getElementById('shared-visitors-chart');
+  if (!ctx) return;
+
+  if (sharedChart) {
+    sharedChart.destroy();
+  }
+
+  const labels = dailyData.map(d => {
+    const date = new Date(d.date);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+
+  const visitors = dailyData.map(d => d.unique_visitors || 0);
+
+  sharedChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Visitors',
+        data: visitors,
+        borderColor: '#0d6efd',
+        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
+}
+
+// Helper functions
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+}
+
+function formatDuration(seconds) {
+  if (seconds < 60) return seconds + 's';
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return mins + 'm ' + secs + 's';
+}
+
+function truncate(str, len) {
+  if (!str) return '-';
+  return str.length > len ? str.substring(0, len) + '...' : str;
+}
+</script>
+
+<style>
+.stat-card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+.stat-card .card-body {
+  padding: 1.25rem;
+}
+.stat-card h2 {
+  color: #0d6efd;
+  font-weight: 700;
+}
+.table th {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #6c757d;
+  border-top: none;
+}
+.table td {
+  font-size: 0.9rem;
+}
+</style>
+{{ end }}

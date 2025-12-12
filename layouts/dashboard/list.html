@@ -39,6 +39,9 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="exportPDF()" aria-label="Export as PDF report">
           <i class="fas fa-file-pdf me-1" aria-hidden="true"></i>Export PDF
         </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openShareModal()" aria-label="Share dashboard">
+          <i class="fas fa-share-alt me-1" aria-hidden="true"></i>Share
+        </button>
         <button class="btn btn-outline-secondary" onclick="openBillingPortal()" aria-label="Open billing portal">
           <i class="fas fa-credit-card me-1" aria-hidden="true"></i>Billing
         </button>
@@ -563,6 +566,67 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
 </div>
 
 <!-- Add Site Modal -->
+<!-- Share Dashboard Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalTitle">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="shareModalTitle">
+          <i class="bi bi-share me-2"></i>Share Dashboard
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Create New Share -->
+        <div id="share-create-section">
+          <p class="text-muted mb-3">Create a public link to share your analytics dashboard with others.</p>
+
+          <div class="mb-3">
+            <label class="form-label">Link Expiration</label>
+            <select class="form-select" id="share-expiry">
+              <option value="">Never expires</option>
+              <option value="1d">1 day</option>
+              <option value="7d">7 days</option>
+              <option value="30d">30 days</option>
+              <option value="90d">90 days</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary w-100" onclick="createShareLink()">
+            <i class="bi bi-link-45deg me-1"></i>Generate Share Link
+          </button>
+        </div>
+
+        <!-- Share Link Result -->
+        <div id="share-result-section" class="d-none">
+          <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>Share link created!
+          </div>
+
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" id="share-url" readonly>
+            <button class="btn btn-outline-primary" onclick="copyShareLink()">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+
+          <button class="btn btn-outline-secondary w-100" onclick="showCreateShare()">
+            <i class="bi bi-plus me-1"></i>Create Another Link
+          </button>
+        </div>
+
+        <!-- Existing Shares -->
+        <div id="existing-shares-section" class="mt-4 pt-3 border-top">
+          <h6 class="text-muted mb-3">Active Share Links</h6>
+          <div id="shares-list">
+            <p class="text-muted small">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="addSiteModal" tabindex="-1" aria-labelledby="addSiteModalTitle" aria-describedby="addSiteModalDesc">
   <div class="modal-dialog">
     <div class="modal-content">

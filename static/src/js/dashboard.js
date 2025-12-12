@@ -1313,6 +1313,152 @@ function closeAllModals() {
   });
 }
 
+// === SHARE DASHBOARD ===
+
+function openShareModal() {
+  if (!currentSiteId) {
+    alert('Please select a site first');
+    return;
+  }
+
+  // Reset modal state
+  showCreateShare();
+  loadExistingShares();
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+  modal.show();
+}
+
+function showCreateShare() {
+  document.getElementById('share-create-section').classList.remove('d-none');
+  document.getElementById('share-result-section').classList.add('d-none');
+  document.getElementById('share-expiry').value = '';
+}
+
+async function createShareLink() {
+  if (!currentSiteId) return;
+
+  const expiry = document.getElementById('share-expiry').value;
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+  try {
+    const res = await fetch(`${API_BASE}/sites/share`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        siteId: currentSiteId,
+        expiresIn: expiry || null
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create share link');
+    }
+
+    // Show result
+    document.getElementById('share-url').value = data.shareUrl;
+    document.getElementById('share-create-section').classList.add('d-none');
+    document.getElementById('share-result-section').classList.remove('d-none');
+
+    // Reload shares list
+    loadExistingShares();
+
+  } catch (err) {
+    console.error('Create share error:', err);
+    alert('Failed to create share link: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-link-45deg me-1"></i>Generate Share Link';
+  }
+}
+
+function copyShareLink() {
+  const url = document.getElementById('share-url').value;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = event.target.closest('button');
+    btn.innerHTML = '<i class="bi bi-check"></i>';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+    }, 2000);
+  });
+}
+
+async function loadExistingShares() {
+  const container = document.getElementById('shares-list');
+
+  try {
+    const res = await fetch(`${API_BASE}/sites/share?siteId=${currentSiteId}`, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    if (!data.shares || data.shares.length === 0) {
+      container.innerHTML = '<p class="text-muted small">No active share links</p>';
+      return;
+    }
+
+    container.innerHTML = data.shares.map(share => {
+      const createdDate = new Date(share.createdAt).toLocaleDateString();
+      const expiresText = share.expiresAt
+        ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}`
+        : 'Never expires';
+
+      return `
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+          <div>
+            <code class="small">${share.token.substring(0, 12)}...</code>
+            <div class="small text-muted">${createdDate} &bull; ${expiresText}</div>
+          </div>
+          <button class="btn btn-sm btn-outline-danger" onclick="revokeShare('${share.token}')" title="Revoke">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Load shares error:', err);
+    container.innerHTML = '<p class="text-danger small">Failed to load shares</p>';
+  }
+}
+
+async function revokeShare(token) {
+  if (!confirm('Are you sure you want to revoke this share link? Anyone with this link will no longer be able to access the dashboard.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/sites/share?token=${token}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to revoke share');
+    }
+
+    loadExistingShares();
+
+  } catch (err) {
+    console.error('Revoke share error:', err);
+    alert('Failed to revoke share: ' + err.message);
+  }
+}
+
 // === DATE RANGE PRESETS ===
 
 function setDatePreset(preset) {

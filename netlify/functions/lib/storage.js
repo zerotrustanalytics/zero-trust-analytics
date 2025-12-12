@@ -9,7 +9,8 @@ const STORES = {
   ENGAGEMENT: 'engagement',
   EVENTS: 'events',
   REALTIME: 'realtime',
-  PASSWORD_RESET_TOKENS: 'password_reset_tokens'
+  PASSWORD_RESET_TOKENS: 'password_reset_tokens',
+  PUBLIC_SHARES: 'public_shares'
 };
 
 // Get a store instance
@@ -687,4 +688,86 @@ function aggregateObject(target, source) {
   for (const [key, value] of Object.entries(source)) {
     target[key] = (target[key] || 0) + value;
   }
+}
+
+// === PUBLIC SHARE OPERATIONS ===
+
+export async function createPublicShare(siteId, userId, options = {}) {
+  const shares = store(STORES.PUBLIC_SHARES);
+
+  // Generate unique share token
+  const shareToken = 'share_' + crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+
+  const share = {
+    token: shareToken,
+    siteId,
+    userId,
+    createdAt: new Date().toISOString(),
+    expiresAt: options.expiresAt || null, // null = never expires
+    password: options.password || null, // optional password protection
+    allowedPeriods: options.allowedPeriods || ['7d', '30d', '90d'], // limit date ranges
+    isActive: true
+  };
+
+  // Store by token for lookup
+  await shares.setJSON(shareToken, share);
+
+  // Store in site's share list
+  const siteSharesKey = `site_shares_${siteId}`;
+  let siteShares = await shares.get(siteSharesKey, { type: 'json' }) || [];
+  siteShares.push(shareToken);
+  await shares.setJSON(siteSharesKey, siteShares);
+
+  return share;
+}
+
+export async function getPublicShare(shareToken) {
+  const shares = store(STORES.PUBLIC_SHARES);
+  const share = await shares.get(shareToken, { type: 'json' });
+
+  if (!share) return null;
+
+  // Check if expired
+  if (share.expiresAt && new Date(share.expiresAt) < new Date()) {
+    return null;
+  }
+
+  // Check if active
+  if (!share.isActive) {
+    return null;
+  }
+
+  return share;
+}
+
+export async function getSiteShares(siteId) {
+  const shares = store(STORES.PUBLIC_SHARES);
+  const siteSharesKey = `site_shares_${siteId}`;
+  const shareTokens = await shares.get(siteSharesKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const token of shareTokens) {
+    const share = await shares.get(token, { type: 'json' });
+    if (share && share.isActive) {
+      result.push(share);
+    }
+  }
+
+  return result;
+}
+
+export async function deletePublicShare(shareToken, userId) {
+  const shares = store(STORES.PUBLIC_SHARES);
+  const share = await shares.get(shareToken, { type: 'json' });
+
+  if (!share || share.userId !== userId) {
+    return false;
+  }
+
+  // Mark as inactive instead of deleting (for audit trail)
+  share.isActive = false;
+  share.deletedAt = new Date().toISOString();
+  await shares.setJSON(shareToken, share);
+
+  return true;
 }
