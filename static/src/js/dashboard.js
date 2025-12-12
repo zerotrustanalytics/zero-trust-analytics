@@ -1874,6 +1874,225 @@ function maskIP(ip) {
   return ip.substring(0, 8) + '***';
 }
 
+// === TRAFFIC ALERTS ===
+
+function openAlertsModal() {
+  // Reset state
+  document.getElementById('alerts-loading').classList.remove('d-none');
+  document.getElementById('alerts-list').classList.add('d-none');
+  document.getElementById('alerts-empty').classList.add('d-none');
+  document.getElementById('alerts-no-site').classList.add('d-none');
+  document.getElementById('alerts-baseline').classList.add('d-none');
+  document.getElementById('alert-create-section').classList.remove('d-none');
+  document.getElementById('new-alert-name').value = '';
+  document.getElementById('new-alert-type').value = 'traffic_spike';
+  document.getElementById('new-alert-threshold').value = '200';
+  document.getElementById('new-alert-window').value = '60';
+  document.getElementById('new-alert-cooldown').value = '60';
+  document.getElementById('new-alert-email').checked = true;
+  document.getElementById('new-alert-webhook').checked = false;
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('alertsModal'));
+  modal.show();
+
+  // Check if site selected
+  if (!currentSiteId) {
+    document.getElementById('alerts-loading').classList.add('d-none');
+    document.getElementById('alerts-no-site').classList.remove('d-none');
+    document.getElementById('alert-create-section').classList.add('d-none');
+    return;
+  }
+
+  // Load alerts
+  loadAlerts();
+}
+
+async function loadAlerts() {
+  const loadingEl = document.getElementById('alerts-loading');
+  const listEl = document.getElementById('alerts-list');
+  const emptyEl = document.getElementById('alerts-empty');
+  const baselineEl = document.getElementById('alerts-baseline');
+
+  try {
+    const res = await fetch(`${API_BASE}/alerts?siteId=${currentSiteId}`, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    loadingEl.classList.add('d-none');
+
+    // Show baseline if available
+    if (data.baseline) {
+      document.getElementById('baseline-hourly').textContent = data.baseline.avgHourly;
+      document.getElementById('baseline-daily').textContent = data.baseline.avgDaily;
+      document.getElementById('baseline-days').textContent = data.baseline.daysWithData;
+      baselineEl.classList.remove('d-none');
+    }
+
+    if (!data.alerts || data.alerts.length === 0) {
+      emptyEl.classList.remove('d-none');
+      return;
+    }
+
+    listEl.classList.remove('d-none');
+    listEl.innerHTML = data.alerts.map(alert => {
+      const createdDate = new Date(alert.createdAt).toLocaleDateString();
+      const lastTriggered = alert.lastTriggeredAt ? formatRelativeTime(alert.lastTriggeredAt) : 'Never';
+      const typeLabel = alert.type === 'traffic_spike' ? 'Spike' : 'Low Traffic';
+      const statusBadge = alert.isActive
+        ? '<span class="badge bg-success">Active</span>'
+        : '<span class="badge bg-secondary">Paused</span>';
+
+      return `
+        <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+          <div class="d-flex align-items-center flex-grow-1">
+            <div class="me-3 text-muted" style="font-size: 1.5rem;">
+              <i class="bi ${alert.type === 'traffic_spike' ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'}"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-bold">${escapeHtml(alert.name)} ${statusBadge}</div>
+              <div class="small text-muted">
+                ${typeLabel} &bull; ${alert.threshold}% threshold &bull; ${alert.timeWindow}min window
+              </div>
+              <div class="small text-muted">
+                ${alert.notifyEmail ? '<i class="bi bi-envelope me-1"></i>' : ''}
+                ${alert.notifyWebhook ? '<i class="bi bi-lightning me-1"></i>' : ''}
+                Last triggered: ${lastTriggered} &bull; ${alert.triggerCount} total
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-${alert.isActive ? 'warning' : 'success'}"
+                    onclick="toggleAlert('${alert.id}', ${!alert.isActive})"
+                    title="${alert.isActive ? 'Pause' : 'Resume'}">
+              <i class="bi ${alert.isActive ? 'bi-pause' : 'bi-play'}"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteAlert('${alert.id}')" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Load alerts error:', err);
+    loadingEl.innerHTML = '<p class="text-danger">Failed to load alerts</p>';
+  }
+}
+
+async function createAlert() {
+  if (!currentSiteId) {
+    alert('Please select a site first');
+    return;
+  }
+
+  const name = document.getElementById('new-alert-name').value.trim() || 'Traffic Alert';
+  const type = document.getElementById('new-alert-type').value;
+  const threshold = document.getElementById('new-alert-threshold').value;
+  const timeWindow = document.getElementById('new-alert-window').value;
+  const cooldown = document.getElementById('new-alert-cooldown').value;
+  const notifyEmail = document.getElementById('new-alert-email').checked;
+  const notifyWebhook = document.getElementById('new-alert-webhook').checked;
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+  try {
+    const res = await fetch(`${API_BASE}/alerts`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        siteId: currentSiteId,
+        name,
+        type,
+        threshold: parseInt(threshold),
+        timeWindow: parseInt(timeWindow),
+        cooldown: parseInt(cooldown),
+        notifyEmail,
+        notifyWebhook
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create alert');
+    }
+
+    // Reset form
+    document.getElementById('new-alert-name').value = '';
+
+    // Reload alerts list
+    loadAlerts();
+
+  } catch (err) {
+    console.error('Create alert error:', err);
+    alert('Failed to create alert: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Alert';
+  }
+}
+
+async function toggleAlert(alertId, isActive) {
+  try {
+    const res = await fetch(`${API_BASE}/alerts`, {
+      method: 'PATCH',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ alertId, isActive })
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to update alert');
+    }
+
+    loadAlerts();
+
+  } catch (err) {
+    console.error('Toggle alert error:', err);
+    alert('Failed to update alert: ' + err.message);
+  }
+}
+
+async function deleteAlert(alertId) {
+  if (!confirm('Are you sure you want to delete this alert?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/alerts?alertId=${alertId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete alert');
+    }
+
+    loadAlerts();
+
+  } catch (err) {
+    console.error('Delete alert error:', err);
+    alert('Failed to delete alert: ' + err.message);
+  }
+}
+
 // === WEBHOOK MANAGEMENT ===
 
 function openWebhooksModal() {

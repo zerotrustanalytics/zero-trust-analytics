@@ -14,7 +14,8 @@ const STORES = {
   SESSIONS: 'sessions',
   API_KEYS: 'api_keys',
   ACTIVITY_LOG: 'activity_log',
-  WEBHOOKS: 'webhooks'
+  WEBHOOKS: 'webhooks',
+  ALERTS: 'alerts'
 };
 
 // Get a store instance
@@ -1285,4 +1286,152 @@ export async function getWebhooksForEvent(siteId, eventType) {
   }
 
   return result;
+}
+
+// === TRAFFIC SPIKE ALERTS ===
+
+export async function createAlert(siteId, userId, config) {
+  const alerts = store(STORES.ALERTS);
+
+  const alertId = 'alert_' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+
+  const alert = {
+    id: alertId,
+    siteId,
+    userId,
+    type: config.type || 'traffic_spike', // traffic_spike, low_traffic, goal_reached
+    name: config.name || 'Traffic Spike Alert',
+    threshold: config.threshold || 200, // % increase from baseline
+    timeWindow: config.timeWindow || 60, // minutes to check
+    cooldown: config.cooldown || 60, // minutes between alerts
+    notifyWebhook: config.notifyWebhook || false,
+    notifyEmail: config.notifyEmail || true,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    lastTriggeredAt: null,
+    triggerCount: 0
+  };
+
+  await alerts.setJSON(alertId, alert);
+
+  // Add to site's alert list
+  const siteAlertsKey = `site_alerts_${siteId}`;
+  let siteAlerts = await alerts.get(siteAlertsKey, { type: 'json' }) || [];
+  siteAlerts.push(alertId);
+  await alerts.setJSON(siteAlertsKey, siteAlerts);
+
+  return alert;
+}
+
+export async function getAlert(alertId) {
+  const alerts = store(STORES.ALERTS);
+  return await alerts.get(alertId, { type: 'json' });
+}
+
+export async function getSiteAlerts(siteId) {
+  const alerts = store(STORES.ALERTS);
+  const siteAlertsKey = `site_alerts_${siteId}`;
+  const alertIds = await alerts.get(siteAlertsKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of alertIds) {
+    const alert = await alerts.get(id, { type: 'json' });
+    if (alert && alert.isActive) {
+      result.push(alert);
+    }
+  }
+
+  return result;
+}
+
+export async function updateAlert(alertId, userId, updates) {
+  const alerts = store(STORES.ALERTS);
+  const alert = await alerts.get(alertId, { type: 'json' });
+
+  if (!alert || alert.userId !== userId) {
+    return null;
+  }
+
+  const allowedUpdates = ['name', 'threshold', 'timeWindow', 'cooldown', 'notifyWebhook', 'notifyEmail', 'isActive'];
+  for (const key of allowedUpdates) {
+    if (updates[key] !== undefined) {
+      alert[key] = updates[key];
+    }
+  }
+
+  await alerts.setJSON(alertId, alert);
+  return alert;
+}
+
+export async function deleteAlert(alertId, userId) {
+  const alerts = store(STORES.ALERTS);
+  const alert = await alerts.get(alertId, { type: 'json' });
+
+  if (!alert || alert.userId !== userId) {
+    return false;
+  }
+
+  alert.isActive = false;
+  alert.deletedAt = new Date().toISOString();
+  await alerts.setJSON(alertId, alert);
+
+  return true;
+}
+
+export async function recordAlertTrigger(alertId) {
+  const alerts = store(STORES.ALERTS);
+  const alert = await alerts.get(alertId, { type: 'json' });
+
+  if (!alert) return;
+
+  alert.lastTriggeredAt = new Date().toISOString();
+  alert.triggerCount++;
+  await alerts.setJSON(alertId, alert);
+}
+
+// Check if an alert should fire based on cooldown
+export function shouldAlertFire(alert) {
+  if (!alert.lastTriggeredAt) return true;
+
+  const lastTriggered = new Date(alert.lastTriggeredAt);
+  const cooldownMs = alert.cooldown * 60 * 1000;
+  const now = new Date();
+
+  return (now - lastTriggered) >= cooldownMs;
+}
+
+// Get baseline traffic for comparison (hourly average from last 7 days)
+export async function getTrafficBaseline(siteId) {
+  const pageviews = store(STORES.PAGEVIEWS);
+
+  // Get last 7 days of stats
+  const dates = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+
+  let totalPageviews = 0;
+  let daysWithData = 0;
+
+  for (const date of dates) {
+    const stats = await pageviews.get(`${siteId}:${date}`, { type: 'json' });
+    if (stats && stats.pageviews > 0) {
+      totalPageviews += stats.pageviews;
+      daysWithData++;
+    }
+  }
+
+  if (daysWithData === 0) return null;
+
+  // Calculate average hourly pageviews
+  const avgDaily = totalPageviews / daysWithData;
+  const avgHourly = avgDaily / 24;
+
+  return {
+    avgHourly: Math.round(avgHourly),
+    avgDaily: Math.round(avgDaily),
+    daysWithData
+  };
 }

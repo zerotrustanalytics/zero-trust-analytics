@@ -54,6 +54,9 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="openWebhooksModal()" aria-label="Manage webhooks">
           <i class="fas fa-bolt me-1" aria-hidden="true"></i>Webhooks
         </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openAlertsModal()" aria-label="Configure alerts">
+          <i class="fas fa-bell me-1" aria-hidden="true"></i>Alerts
+        </button>
         <button class="btn btn-outline-secondary" onclick="openBillingPortal()" aria-label="Open billing portal">
           <i class="fas fa-credit-card me-1" aria-hidden="true"></i>Billing
         </button>
@@ -572,6 +575,126 @@ ZTA.track('purchase', { amount: 99 });
 ZTA.track('download', { file: 'report.pdf' });</code></pre>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts Modal -->
+<div class="modal fade" id="alertsModal" tabindex="-1" aria-labelledby="alertsModalTitle">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="alertsModalTitle">
+          <i class="bi bi-bell me-2"></i>Traffic Alerts
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Get notified when your traffic spikes or drops significantly.</p>
+
+        <!-- No Site Selected Warning -->
+        <div id="alerts-no-site" class="alert alert-info d-none">
+          <i class="bi bi-info-circle me-2"></i>Please select a site first to configure alerts.
+        </div>
+
+        <!-- Traffic Baseline -->
+        <div id="alerts-baseline" class="alert alert-light mb-4 d-none">
+          <h6 class="alert-heading"><i class="bi bi-graph-up me-2"></i>Your Traffic Baseline</h6>
+          <div class="row text-center mt-3">
+            <div class="col-4">
+              <div class="h4 mb-0" id="baseline-hourly">-</div>
+              <small class="text-muted">Avg. Hourly</small>
+            </div>
+            <div class="col-4">
+              <div class="h4 mb-0" id="baseline-daily">-</div>
+              <small class="text-muted">Avg. Daily</small>
+            </div>
+            <div class="col-4">
+              <div class="h4 mb-0" id="baseline-days">-</div>
+              <small class="text-muted">Days of Data</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create New Alert -->
+        <div class="card mb-4" id="alert-create-section">
+          <div class="card-header">
+            <h6 class="mb-0">Create Traffic Alert</h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Alert Name</label>
+                <input type="text" class="form-control" id="new-alert-name" placeholder="e.g., Traffic Spike Alert">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Alert Type</label>
+                <select class="form-select" id="new-alert-type">
+                  <option value="traffic_spike">Traffic Spike (above baseline)</option>
+                  <option value="low_traffic">Low Traffic (below baseline)</option>
+                </select>
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-md-4">
+                <label class="form-label">Threshold</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="new-alert-threshold" value="200" min="50" max="1000">
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">e.g., 200% = 2x normal traffic</small>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Time Window</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="new-alert-window" value="60" min="15" max="1440">
+                  <span class="input-group-text">min</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Cooldown</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="new-alert-cooldown" value="60" min="15" max="1440">
+                  <span class="input-group-text">min</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">Notifications</label>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="new-alert-email" checked>
+                <label class="form-check-label" for="new-alert-email">Email notification</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="new-alert-webhook">
+                <label class="form-check-label" for="new-alert-webhook">Send to configured webhooks</label>
+              </div>
+            </div>
+            <button class="btn btn-primary mt-3" onclick="createAlert()">
+              <i class="bi bi-plus-lg me-1"></i>Create Alert
+            </button>
+          </div>
+        </div>
+
+        <!-- Existing Alerts -->
+        <h6 class="text-muted mb-3">Your Alerts</h6>
+        <div id="alerts-loading" class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+          <span class="ms-2">Loading alerts...</span>
+        </div>
+
+        <div id="alerts-list" class="d-none">
+          <!-- Alerts populated by JS -->
+        </div>
+
+        <div id="alerts-empty" class="d-none text-center py-4 text-muted">
+          <i class="bi bi-bell" style="font-size: 2rem;"></i>
+          <p class="mt-2">No alerts configured</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
