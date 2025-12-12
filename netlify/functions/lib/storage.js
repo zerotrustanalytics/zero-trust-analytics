@@ -10,7 +10,8 @@ const STORES = {
   EVENTS: 'events',
   REALTIME: 'realtime',
   PASSWORD_RESET_TOKENS: 'password_reset_tokens',
-  PUBLIC_SHARES: 'public_shares'
+  PUBLIC_SHARES: 'public_shares',
+  SESSIONS: 'sessions'
 };
 
 // Get a store instance
@@ -770,4 +771,130 @@ export async function deletePublicShare(shareToken, userId) {
   await shares.setJSON(shareToken, share);
 
   return true;
+}
+
+// === SESSION MANAGEMENT ===
+
+export async function createSession(userId, sessionInfo = {}) {
+  const sessions = store(STORES.SESSIONS);
+
+  const sessionId = 'sess_' + crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+
+  const session = {
+    id: sessionId,
+    userId,
+    createdAt: new Date().toISOString(),
+    lastActiveAt: new Date().toISOString(),
+    userAgent: sessionInfo.userAgent || 'Unknown',
+    ipAddress: sessionInfo.ipAddress || 'Unknown',
+    device: parseUserAgent(sessionInfo.userAgent),
+    isActive: true
+  };
+
+  // Store the session
+  await sessions.setJSON(sessionId, session);
+
+  // Add to user's session list
+  const userSessionsKey = `user_sessions_${userId}`;
+  let userSessions = await sessions.get(userSessionsKey, { type: 'json' }) || [];
+  userSessions.push(sessionId);
+  await sessions.setJSON(userSessionsKey, userSessions);
+
+  return session;
+}
+
+export async function getSession(sessionId) {
+  const sessions = store(STORES.SESSIONS);
+  return await sessions.get(sessionId, { type: 'json' });
+}
+
+export async function getUserSessions(userId) {
+  const sessions = store(STORES.SESSIONS);
+  const userSessionsKey = `user_sessions_${userId}`;
+  const sessionIds = await sessions.get(userSessionsKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of sessionIds) {
+    const session = await sessions.get(id, { type: 'json' });
+    if (session && session.isActive) {
+      result.push(session);
+    }
+  }
+
+  // Sort by last active (most recent first)
+  result.sort((a, b) => new Date(b.lastActiveAt) - new Date(a.lastActiveAt));
+
+  return result;
+}
+
+export async function updateSessionActivity(sessionId) {
+  const sessions = store(STORES.SESSIONS);
+  const session = await sessions.get(sessionId, { type: 'json' });
+
+  if (session) {
+    session.lastActiveAt = new Date().toISOString();
+    await sessions.setJSON(sessionId, session);
+  }
+
+  return session;
+}
+
+export async function revokeSession(sessionId, userId) {
+  const sessions = store(STORES.SESSIONS);
+  const session = await sessions.get(sessionId, { type: 'json' });
+
+  if (!session || session.userId !== userId) {
+    return false;
+  }
+
+  session.isActive = false;
+  session.revokedAt = new Date().toISOString();
+  await sessions.setJSON(sessionId, session);
+
+  return true;
+}
+
+export async function revokeAllSessions(userId, exceptSessionId = null) {
+  const sessions = store(STORES.SESSIONS);
+  const userSessionsKey = `user_sessions_${userId}`;
+  const sessionIds = await sessions.get(userSessionsKey, { type: 'json' }) || [];
+
+  let revokedCount = 0;
+  for (const id of sessionIds) {
+    if (id === exceptSessionId) continue;
+
+    const session = await sessions.get(id, { type: 'json' });
+    if (session && session.isActive) {
+      session.isActive = false;
+      session.revokedAt = new Date().toISOString();
+      await sessions.setJSON(id, session);
+      revokedCount++;
+    }
+  }
+
+  return revokedCount;
+}
+
+// Helper to parse user agent into device info
+function parseUserAgent(ua) {
+  if (!ua) return { type: 'Unknown', browser: 'Unknown', os: 'Unknown' };
+
+  let type = 'Desktop';
+  if (/mobile|android|iphone|ipad/i.test(ua)) type = 'Mobile';
+  if (/tablet|ipad/i.test(ua)) type = 'Tablet';
+
+  let browser = 'Unknown';
+  if (/chrome/i.test(ua) && !/edge|edg/i.test(ua)) browser = 'Chrome';
+  else if (/firefox/i.test(ua)) browser = 'Firefox';
+  else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Safari';
+  else if (/edge|edg/i.test(ua)) browser = 'Edge';
+
+  let os = 'Unknown';
+  if (/windows/i.test(ua)) os = 'Windows';
+  else if (/mac/i.test(ua)) os = 'macOS';
+  else if (/linux/i.test(ua)) os = 'Linux';
+  else if (/android/i.test(ua)) os = 'Android';
+  else if (/iphone|ipad/i.test(ua)) os = 'iOS';
+
+  return { type, browser, os };
 }

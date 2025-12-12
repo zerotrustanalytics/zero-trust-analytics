@@ -1313,6 +1313,161 @@ function closeAllModals() {
   });
 }
 
+// === SESSION MANAGEMENT ===
+
+function openSessionsModal() {
+  // Reset state
+  document.getElementById('sessions-loading').classList.remove('d-none');
+  document.getElementById('sessions-list').classList.add('d-none');
+  document.getElementById('sessions-empty').classList.add('d-none');
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('sessionsModal'));
+  modal.show();
+
+  // Load sessions
+  loadSessions();
+}
+
+async function loadSessions() {
+  const loadingEl = document.getElementById('sessions-loading');
+  const listEl = document.getElementById('sessions-list');
+  const emptyEl = document.getElementById('sessions-empty');
+
+  try {
+    const res = await fetch(`${API_BASE}/user/sessions`, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    loadingEl.classList.add('d-none');
+
+    if (!data.sessions || data.sessions.length === 0) {
+      emptyEl.classList.remove('d-none');
+      return;
+    }
+
+    listEl.classList.remove('d-none');
+    listEl.innerHTML = data.sessions.map(session => {
+      const createdDate = new Date(session.createdAt).toLocaleDateString();
+      const lastActive = formatRelativeTime(session.lastActiveAt);
+      const deviceIcon = getDeviceIcon(session.device?.type);
+
+      return `
+        <div class="d-flex justify-content-between align-items-center py-3 border-bottom ${session.isCurrent ? 'bg-light rounded px-3' : ''}">
+          <div class="d-flex align-items-center">
+            <div class="me-3 text-muted" style="font-size: 1.5rem;">
+              <i class="bi ${deviceIcon}"></i>
+            </div>
+            <div>
+              <div class="fw-bold">
+                ${session.device?.browser || 'Unknown'} on ${session.device?.os || 'Unknown'}
+                ${session.isCurrent ? '<span class="badge bg-success ms-2">Current</span>' : ''}
+              </div>
+              <div class="small text-muted">
+                ${session.device?.type || 'Unknown'} &bull; ${session.ipAddress} &bull; Active ${lastActive}
+              </div>
+              <div class="small text-muted">
+                Signed in ${createdDate}
+              </div>
+            </div>
+          </div>
+          ${!session.isCurrent ? `
+            <button class="btn btn-sm btn-outline-danger" onclick="revokeSession('${session.id}')" title="Sign out this device">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Load sessions error:', err);
+    loadingEl.innerHTML = '<p class="text-danger">Failed to load sessions</p>';
+  }
+}
+
+function getDeviceIcon(type) {
+  switch (type?.toLowerCase()) {
+    case 'mobile': return 'bi-phone';
+    case 'tablet': return 'bi-tablet';
+    default: return 'bi-laptop';
+  }
+}
+
+function formatRelativeTime(dateStr) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
+async function revokeSession(sessionId) {
+  if (!confirm('Sign out this device? They will need to log in again.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/user/sessions?sessionId=${sessionId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to revoke session');
+    }
+
+    // Reload sessions
+    loadSessions();
+
+  } catch (err) {
+    console.error('Revoke session error:', err);
+    alert('Failed to sign out device: ' + err.message);
+  }
+}
+
+async function revokeAllSessions() {
+  if (!confirm('Sign out all other devices? You will stay logged in on this device.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/user/sessions?all=true`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to revoke sessions');
+    }
+
+    alert(data.message || 'All other devices have been signed out');
+
+    // Reload sessions
+    loadSessions();
+
+  } catch (err) {
+    console.error('Revoke all sessions error:', err);
+    alert('Failed to sign out devices: ' + err.message);
+  }
+}
+
 // === SHARE DASHBOARD ===
 
 function openShareModal() {
