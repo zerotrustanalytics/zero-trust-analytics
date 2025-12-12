@@ -18,7 +18,8 @@ const STORES = {
   ALERTS: 'alerts',
   ANNOTATIONS: 'annotations',
   TEAMS: 'teams',
-  GOALS: 'goals'
+  GOALS: 'goals',
+  FUNNELS: 'funnels'
 };
 
 // Get a store instance
@@ -2159,4 +2160,187 @@ export function getGoalDateRange(period) {
     startDate: startDate.toISOString().split('T')[0],
     endDate: now.toISOString().split('T')[0]
   };
+}
+
+// === FUNNEL ANALYSIS ===
+
+export async function createFunnel(siteId, userId, config) {
+  const funnels = store(STORES.FUNNELS);
+
+  const funnelId = 'funnel_' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+
+  // Validate steps (minimum 2 steps)
+  const steps = config.steps || [];
+  if (steps.length < 2) {
+    return { error: 'A funnel requires at least 2 steps' };
+  }
+
+  const funnel = {
+    id: funnelId,
+    siteId,
+    userId,
+    name: config.name || 'New Funnel',
+    steps: steps.map((step, index) => ({
+      order: index + 1,
+      name: step.name || `Step ${index + 1}`,
+      type: step.type || 'page', // page, event
+      value: step.value || '/', // URL path or event name
+      operator: step.operator || 'equals' // equals, contains, starts_with, regex
+    })),
+    isActive: true,
+    createdAt: new Date().toISOString()
+  };
+
+  await funnels.setJSON(funnelId, funnel);
+
+  // Add to site's funnel list
+  const siteFunnelsKey = `site_funnels_${siteId}`;
+  let siteFunnels = await funnels.get(siteFunnelsKey, { type: 'json' }) || [];
+  siteFunnels.push(funnelId);
+  await funnels.setJSON(siteFunnelsKey, siteFunnels);
+
+  return { funnel };
+}
+
+export async function getFunnel(funnelId) {
+  const funnels = store(STORES.FUNNELS);
+  return await funnels.get(funnelId, { type: 'json' });
+}
+
+export async function getSiteFunnels(siteId) {
+  const funnels = store(STORES.FUNNELS);
+  const siteFunnelsKey = `site_funnels_${siteId}`;
+  const funnelIds = await funnels.get(siteFunnelsKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of funnelIds) {
+    const funnel = await funnels.get(id, { type: 'json' });
+    if (funnel && funnel.isActive) {
+      result.push(funnel);
+    }
+  }
+
+  // Sort by created date (newest first)
+  result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  return result;
+}
+
+export async function updateFunnel(funnelId, userId, updates) {
+  const funnels = store(STORES.FUNNELS);
+  const funnel = await funnels.get(funnelId, { type: 'json' });
+
+  if (!funnel || funnel.userId !== userId) {
+    return null;
+  }
+
+  const allowedUpdates = ['name', 'steps', 'isActive'];
+  for (const key of allowedUpdates) {
+    if (updates[key] !== undefined) {
+      funnel[key] = updates[key];
+    }
+  }
+
+  await funnels.setJSON(funnelId, funnel);
+  return funnel;
+}
+
+export async function deleteFunnel(funnelId, userId) {
+  const funnels = store(STORES.FUNNELS);
+  const funnel = await funnels.get(funnelId, { type: 'json' });
+
+  if (!funnel || funnel.userId !== userId) {
+    return false;
+  }
+
+  funnel.isActive = false;
+  funnel.deletedAt = new Date().toISOString();
+  await funnels.setJSON(funnelId, funnel);
+
+  return true;
+}
+
+// Calculate funnel metrics from stats
+export function calculateFunnelData(funnel, stats) {
+  const stepData = funnel.steps.map(step => {
+    let count = 0;
+
+    if (step.type === 'page') {
+      // Count pageviews matching the step
+      for (const [path, views] of Object.entries(stats.pages || {})) {
+        if (matchesStep(path, step)) {
+          count += views;
+        }
+      }
+    } else if (step.type === 'event') {
+      // Count events matching the step
+      for (const [key, data] of Object.entries(stats.events || {})) {
+        if (matchesStep(key, step)) {
+          count += data.count;
+        }
+      }
+    }
+
+    return {
+      ...step,
+      count
+    };
+  });
+
+  // Calculate conversion rates between steps
+  const funnelData = stepData.map((step, index) => {
+    const prevStep = index > 0 ? stepData[index - 1] : null;
+    const conversionRate = prevStep && prevStep.count > 0
+      ? Math.round((step.count / prevStep.count) * 100)
+      : 100;
+
+    const dropoff = prevStep
+      ? prevStep.count - step.count
+      : 0;
+
+    const dropoffRate = prevStep && prevStep.count > 0
+      ? Math.round((dropoff / prevStep.count) * 100)
+      : 0;
+
+    return {
+      ...step,
+      conversionRate,
+      dropoff,
+      dropoffRate
+    };
+  });
+
+  // Overall conversion rate (first to last step)
+  const overallConversion = stepData.length > 0 && stepData[0].count > 0
+    ? Math.round((stepData[stepData.length - 1].count / stepData[0].count) * 100)
+    : 0;
+
+  return {
+    steps: funnelData,
+    overallConversion,
+    totalEntered: stepData[0]?.count || 0,
+    totalCompleted: stepData[stepData.length - 1]?.count || 0
+  };
+}
+
+// Helper to match step criteria
+function matchesStep(value, step) {
+  const target = step.value || '';
+
+  switch (step.operator) {
+    case 'equals':
+      return value === target;
+    case 'contains':
+      return value.includes(target);
+    case 'starts_with':
+      return value.startsWith(target);
+    case 'regex':
+      try {
+        return new RegExp(target).test(value);
+      } catch (e) {
+        return false;
+      }
+    default:
+      return value === target;
+  }
 }

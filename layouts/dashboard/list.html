@@ -63,6 +63,9 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="openGoalsModal()" aria-label="Track goals">
           <i class="fas fa-bullseye me-1" aria-hidden="true"></i>Goals
         </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openFunnelsModal()" aria-label="Funnel analysis">
+          <i class="fas fa-filter me-1" aria-hidden="true"></i>Funnels
+        </button>
         <button class="btn btn-outline-secondary" onclick="openBillingPortal()" aria-label="Open billing portal">
           <i class="fas fa-credit-card me-1" aria-hidden="true"></i>Billing
         </button>
@@ -925,6 +928,136 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
           <i class="bi bi-bullseye" style="font-size: 2rem;"></i>
           <p class="mt-2">No goals set yet</p>
           <p class="small">Create your first goal above to start tracking progress</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Funnels Modal -->
+<div class="modal fade" id="funnelsModal" tabindex="-1" aria-labelledby="funnelsModalTitle">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="funnelsModalTitle">
+          <i class="bi bi-funnel me-2"></i>Conversion Funnels
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Track user journeys through your site and identify where visitors drop off.</p>
+
+        <!-- No Site Selected Warning -->
+        <div id="funnels-no-site" class="alert alert-info d-none">
+          <i class="bi bi-info-circle me-2"></i>Please select a site first to manage funnels.
+        </div>
+
+        <!-- Create New Funnel -->
+        <div class="card mb-4" id="funnel-create-section">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Funnel</h6>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#funnelCreateForm">
+              <i class="bi bi-chevron-down"></i>
+            </button>
+          </div>
+          <div class="collapse" id="funnelCreateForm">
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">Funnel Name</label>
+                <input type="text" class="form-control" id="new-funnel-name" placeholder="e.g., Checkout Flow">
+              </div>
+
+              <label class="form-label">Funnel Steps <span class="text-muted small">(minimum 2)</span></label>
+              <div id="funnel-steps-container">
+                <div class="funnel-step mb-2">
+                  <div class="row g-2">
+                    <div class="col-md-3">
+                      <input type="text" class="form-control form-control-sm" placeholder="Step name" data-field="name">
+                    </div>
+                    <div class="col-md-2">
+                      <select class="form-select form-select-sm" data-field="type">
+                        <option value="page">Page</option>
+                        <option value="event">Event</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <select class="form-select form-select-sm" data-field="operator">
+                        <option value="equals">Equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="starts_with">Starts with</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <input type="text" class="form-control form-control-sm" placeholder="e.g., /home or signup:click" data-field="value">
+                    </div>
+                    <div class="col-md-1">
+                      <button class="btn btn-sm btn-outline-danger" onclick="removeFunnelStep(this)" disabled>
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="funnel-step mb-2">
+                  <div class="row g-2">
+                    <div class="col-md-3">
+                      <input type="text" class="form-control form-control-sm" placeholder="Step name" data-field="name">
+                    </div>
+                    <div class="col-md-2">
+                      <select class="form-select form-select-sm" data-field="type">
+                        <option value="page">Page</option>
+                        <option value="event">Event</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <select class="form-select form-select-sm" data-field="operator">
+                        <option value="equals">Equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="starts_with">Starts with</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <input type="text" class="form-control form-control-sm" placeholder="e.g., /checkout" data-field="value">
+                    </div>
+                    <div class="col-md-1">
+                      <button class="btn btn-sm btn-outline-danger" onclick="removeFunnelStep(this)" disabled>
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mb-3">
+                <button class="btn btn-outline-secondary btn-sm" onclick="addFunnelStep()">
+                  <i class="bi bi-plus me-1"></i>Add Step
+                </button>
+              </div>
+
+              <button class="btn btn-primary" onclick="createFunnel()">
+                <i class="bi bi-plus-lg me-1"></i>Create Funnel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Existing Funnels -->
+        <h6 class="text-muted mb-3"><i class="bi bi-bar-chart me-2"></i>Your Funnels</h6>
+        <div id="funnels-loading" class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+          <span class="ms-2">Loading funnels...</span>
+        </div>
+
+        <div id="funnels-list" class="d-none">
+          <!-- Funnels populated by JS -->
+        </div>
+
+        <div id="funnels-empty" class="d-none text-center py-4 text-muted">
+          <i class="bi bi-funnel" style="font-size: 2rem;"></i>
+          <p class="mt-2">No funnels created yet</p>
+          <p class="small">Create your first funnel to start tracking conversions</p>
         </div>
       </div>
       <div class="modal-footer">

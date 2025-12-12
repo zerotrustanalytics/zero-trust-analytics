@@ -3627,3 +3627,361 @@ function formatMetricValue(value, metric) {
   }
   return value.toLocaleString();
 }
+
+// === FUNNEL ANALYSIS ===
+
+let currentFunnels = [];
+
+function openFunnelsModal() {
+  if (!currentSiteId) {
+    document.getElementById('funnels-no-site').classList.remove('d-none');
+    document.getElementById('funnel-create-section').classList.add('d-none');
+  } else {
+    document.getElementById('funnels-no-site').classList.add('d-none');
+    document.getElementById('funnel-create-section').classList.remove('d-none');
+  }
+
+  // Reset form
+  document.getElementById('new-funnel-name').value = '';
+  resetFunnelSteps();
+
+  // Reset state
+  document.getElementById('funnels-loading').classList.remove('d-none');
+  document.getElementById('funnels-list').classList.add('d-none');
+  document.getElementById('funnels-empty').classList.add('d-none');
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('funnelsModal'));
+  modal.show();
+
+  // Load existing funnels
+  if (currentSiteId) {
+    loadFunnels();
+  } else {
+    document.getElementById('funnels-loading').classList.add('d-none');
+  }
+}
+
+function resetFunnelSteps() {
+  const container = document.getElementById('funnel-steps-container');
+  container.innerHTML = `
+    <div class="funnel-step mb-2">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input type="text" class="form-control form-control-sm" placeholder="Step name" data-field="name">
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" data-field="type">
+            <option value="page">Page</option>
+            <option value="event">Event</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" data-field="operator">
+            <option value="equals">Equals</option>
+            <option value="contains">Contains</option>
+            <option value="starts_with">Starts with</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input type="text" class="form-control form-control-sm" placeholder="e.g., /home" data-field="value">
+        </div>
+        <div class="col-md-1">
+          <button class="btn btn-sm btn-outline-danger" onclick="removeFunnelStep(this)" disabled>
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="funnel-step mb-2">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input type="text" class="form-control form-control-sm" placeholder="Step name" data-field="name">
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" data-field="type">
+            <option value="page">Page</option>
+            <option value="event">Event</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" data-field="operator">
+            <option value="equals">Equals</option>
+            <option value="contains">Contains</option>
+            <option value="starts_with">Starts with</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input type="text" class="form-control form-control-sm" placeholder="e.g., /checkout" data-field="value">
+        </div>
+        <div class="col-md-1">
+          <button class="btn btn-sm btn-outline-danger" onclick="removeFunnelStep(this)" disabled>
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addFunnelStep() {
+  const container = document.getElementById('funnel-steps-container');
+  const stepCount = container.querySelectorAll('.funnel-step').length;
+
+  const stepHtml = `
+    <div class="funnel-step mb-2">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input type="text" class="form-control form-control-sm" placeholder="Step name" data-field="name">
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" data-field="type">
+            <option value="page">Page</option>
+            <option value="event">Event</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" data-field="operator">
+            <option value="equals">Equals</option>
+            <option value="contains">Contains</option>
+            <option value="starts_with">Starts with</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input type="text" class="form-control form-control-sm" placeholder="URL or event" data-field="value">
+        </div>
+        <div class="col-md-1">
+          <button class="btn btn-sm btn-outline-danger" onclick="removeFunnelStep(this)">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  container.insertAdjacentHTML('beforeend', stepHtml);
+  updateRemoveButtons();
+}
+
+function removeFunnelStep(btn) {
+  btn.closest('.funnel-step').remove();
+  updateRemoveButtons();
+}
+
+function updateRemoveButtons() {
+  const container = document.getElementById('funnel-steps-container');
+  const steps = container.querySelectorAll('.funnel-step');
+  const buttons = container.querySelectorAll('.btn-outline-danger');
+
+  buttons.forEach((btn, index) => {
+    btn.disabled = steps.length <= 2;
+  });
+}
+
+function getFunnelSteps() {
+  const container = document.getElementById('funnel-steps-container');
+  const stepElements = container.querySelectorAll('.funnel-step');
+  const steps = [];
+
+  stepElements.forEach((stepEl, index) => {
+    const name = stepEl.querySelector('[data-field="name"]').value.trim() || `Step ${index + 1}`;
+    const type = stepEl.querySelector('[data-field="type"]').value;
+    const operator = stepEl.querySelector('[data-field="operator"]').value;
+    const value = stepEl.querySelector('[data-field="value"]').value.trim();
+
+    if (value) {
+      steps.push({ name, type, operator, value });
+    }
+  });
+
+  return steps;
+}
+
+async function loadFunnels() {
+  if (!currentSiteId) return;
+
+  const loadingEl = document.getElementById('funnels-loading');
+  const listEl = document.getElementById('funnels-list');
+  const emptyEl = document.getElementById('funnels-empty');
+
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
+
+  try {
+    let url = `${API_BASE}/funnels?siteId=${currentSiteId}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+
+    const res = await fetch(url, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    loadingEl.classList.add('d-none');
+    currentFunnels = data.funnels || [];
+
+    if (currentFunnels.length === 0) {
+      emptyEl.classList.remove('d-none');
+      return;
+    }
+
+    listEl.classList.remove('d-none');
+    listEl.innerHTML = currentFunnels.map(funnel => {
+      const funnelData = funnel.data || {};
+      const steps = funnelData.steps || [];
+
+      return `
+        <div class="card mb-3">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">${escapeHtml(funnel.name)}</h6>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-primary">${funnelData.overallConversion || 0}% conversion</span>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteFunnel('${funnel.id}')" title="Delete funnel">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="funnel-visualization">
+              ${steps.map((step, index) => {
+                const isLast = index === steps.length - 1;
+                const widthPercent = steps[0].count > 0
+                  ? Math.max(20, Math.round((step.count / steps[0].count) * 100))
+                  : 100;
+
+                return `
+                  <div class="funnel-step-display mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="small fw-medium">${escapeHtml(step.name)}</span>
+                      <span class="small text-muted">${step.count.toLocaleString()} visitors</span>
+                    </div>
+                    <div class="progress" style="height: 24px;">
+                      <div class="progress-bar ${index === 0 ? 'bg-primary' : (isLast ? 'bg-success' : 'bg-info')}"
+                           role="progressbar" style="width: ${widthPercent}%">
+                        ${step.conversionRate}%
+                      </div>
+                    </div>
+                    ${!isLast ? `
+                      <div class="text-end small text-muted mt-1">
+                        <i class="bi bi-arrow-down me-1"></i>${step.dropoff.toLocaleString()} dropped (${step.dropoffRate}%)
+                      </div>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <div class="mt-3 pt-2 border-top">
+              <div class="row text-center small">
+                <div class="col">
+                  <div class="fw-bold">${(funnelData.totalEntered || 0).toLocaleString()}</div>
+                  <div class="text-muted">Entered</div>
+                </div>
+                <div class="col">
+                  <div class="fw-bold">${(funnelData.totalCompleted || 0).toLocaleString()}</div>
+                  <div class="text-muted">Completed</div>
+                </div>
+                <div class="col">
+                  <div class="fw-bold">${funnelData.overallConversion || 0}%</div>
+                  <div class="text-muted">Conversion</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Load funnels error:', err);
+    loadingEl.innerHTML = '<p class="text-danger">Failed to load funnels</p>';
+  }
+}
+
+async function createFunnel() {
+  if (!currentSiteId) {
+    alert('Please select a site first');
+    return;
+  }
+
+  const name = document.getElementById('new-funnel-name').value.trim();
+  const steps = getFunnelSteps();
+
+  if (steps.length < 2) {
+    alert('A funnel requires at least 2 steps with values');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+  try {
+    const res = await fetch(`${API_BASE}/funnels`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        siteId: currentSiteId,
+        name: name || 'New Funnel',
+        steps
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create funnel');
+    }
+
+    // Reset form
+    document.getElementById('new-funnel-name').value = '';
+    resetFunnelSteps();
+
+    // Collapse the create form
+    const collapseEl = document.getElementById('funnelCreateForm');
+    const bsCollapse = bootstrap.Collapse.getInstance(collapseEl);
+    if (bsCollapse) bsCollapse.hide();
+
+    // Reload funnels
+    loadFunnels();
+
+  } catch (err) {
+    console.error('Create funnel error:', err);
+    alert('Failed to create funnel: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Funnel';
+  }
+}
+
+async function deleteFunnel(funnelId) {
+  if (!confirm('Are you sure you want to delete this funnel?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/funnels?funnelId=${funnelId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete funnel');
+    }
+
+    // Reload funnels
+    loadFunnels();
+
+  } catch (err) {
+    console.error('Delete funnel error:', err);
+    alert('Failed to delete funnel: ' + err.message);
+  }
+}
