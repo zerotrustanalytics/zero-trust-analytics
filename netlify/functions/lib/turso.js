@@ -14,6 +14,20 @@ const turso = createClient({
 });
 
 /**
+ * Convert BigInt values to numbers in row objects
+ * libSQL returns BigInt for INTEGER columns which don't serialize to JSON
+ */
+function normalizeRows(rows) {
+  return rows.map(row => {
+    const normalized = {};
+    for (const [key, value] of Object.entries(row)) {
+      normalized[key] = typeof value === 'bigint' ? Number(value) : value;
+    }
+    return normalized;
+  });
+}
+
+/**
  * Initialize the database schema
  * Run this once to set up tables
  */
@@ -198,7 +212,7 @@ async function getStats(siteId, startDate, endDate) {
   ]);
 
   // Calculate totals from daily stats
-  const daily = dailyStats.rows;
+  const daily = normalizeRows(dailyStats.rows);
   const totals = daily.reduce(
     (acc, day) => ({
       pageviews: acc.pageviews + (day.pageviews || 0),
@@ -221,11 +235,11 @@ async function getStats(siteId, startDate, endDate) {
         : 0
     },
     daily,
-    pages: topPages.rows,
-    referrers: topReferrers.rows,
-    devices: devices.rows,
-    browsers: browsers.rows,
-    countries: countries.rows
+    pages: normalizeRows(topPages.rows),
+    referrers: normalizeRows(topReferrers.rows),
+    devices: normalizeRows(devices.rows),
+    browsers: normalizeRows(browsers.rows),
+    countries: normalizeRows(countries.rows)
   };
 }
 
@@ -273,12 +287,13 @@ async function getRealtime(siteId) {
       })
     ]);
 
-    const active = activeResult.rows[0] || {};
+    const activeRows = normalizeRows(activeResult.rows);
+    const active = activeRows[0] || {};
 
     return {
       active_visitors: active.active_visitors || 0,
       pageviews_last_5min: active.pageviews_last_5min || 0,
-      recent_pageviews: recentResult.rows,
+      recent_pageviews: normalizeRows(recentResult.rows),
       visitors_per_minute: [],
       traffic_sources: []
     };
@@ -367,7 +382,7 @@ async function exportData(siteId, startDate, endDate, type = 'pageviews', limit 
 
   const query = queries[type] || queries.pageviews;
   const result = await turso.execute(query);
-  return result.rows;
+  return normalizeRows(result.rows);
 }
 
 export {
