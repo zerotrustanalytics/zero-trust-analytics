@@ -13,7 +13,8 @@ const STORES = {
   PUBLIC_SHARES: 'public_shares',
   SESSIONS: 'sessions',
   API_KEYS: 'api_keys',
-  ACTIVITY_LOG: 'activity_log'
+  ACTIVITY_LOG: 'activity_log',
+  WEBHOOKS: 'webhooks'
 };
 
 // Get a store instance
@@ -1143,4 +1144,145 @@ export function formatActivityMessage(activity) {
   };
 
   return messages[activity.type] || activity.type;
+}
+
+// === WEBHOOK MANAGEMENT ===
+
+export const WebhookEvents = {
+  PAGEVIEW: 'pageview',
+  EVENT: 'event',
+  DAILY_SUMMARY: 'daily_summary',
+  TRAFFIC_SPIKE: 'traffic_spike',
+  GOAL_COMPLETED: 'goal_completed'
+};
+
+export async function createWebhook(siteId, userId, config) {
+  const webhooks = store(STORES.WEBHOOKS);
+
+  const webhookId = 'wh_' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+  const secret = 'whsec_' + crypto.randomUUID().replace(/-/g, '');
+
+  const webhook = {
+    id: webhookId,
+    siteId,
+    userId,
+    url: config.url,
+    secret, // Used for signature verification
+    events: config.events || [WebhookEvents.EVENT], // Which events to send
+    name: config.name || 'Unnamed Webhook',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    lastTriggeredAt: null,
+    failureCount: 0,
+    successCount: 0
+  };
+
+  await webhooks.setJSON(webhookId, webhook);
+
+  // Add to site's webhook list
+  const siteWebhooksKey = `site_webhooks_${siteId}`;
+  let siteWebhooks = await webhooks.get(siteWebhooksKey, { type: 'json' }) || [];
+  siteWebhooks.push(webhookId);
+  await webhooks.setJSON(siteWebhooksKey, siteWebhooks);
+
+  return webhook;
+}
+
+export async function getWebhook(webhookId) {
+  const webhooks = store(STORES.WEBHOOKS);
+  return await webhooks.get(webhookId, { type: 'json' });
+}
+
+export async function getSiteWebhooks(siteId) {
+  const webhooks = store(STORES.WEBHOOKS);
+  const siteWebhooksKey = `site_webhooks_${siteId}`;
+  const webhookIds = await webhooks.get(siteWebhooksKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of webhookIds) {
+    const webhook = await webhooks.get(id, { type: 'json' });
+    if (webhook && webhook.isActive) {
+      // Hide secret in listing
+      const { secret, ...safeWebhook } = webhook;
+      result.push(safeWebhook);
+    }
+  }
+
+  return result;
+}
+
+export async function updateWebhook(webhookId, userId, updates) {
+  const webhooks = store(STORES.WEBHOOKS);
+  const webhook = await webhooks.get(webhookId, { type: 'json' });
+
+  if (!webhook || webhook.userId !== userId) {
+    return null;
+  }
+
+  // Only allow updating certain fields
+  const allowedUpdates = ['url', 'events', 'name', 'isActive'];
+  for (const key of allowedUpdates) {
+    if (updates[key] !== undefined) {
+      webhook[key] = updates[key];
+    }
+  }
+
+  await webhooks.setJSON(webhookId, webhook);
+
+  const { secret, ...safeWebhook } = webhook;
+  return safeWebhook;
+}
+
+export async function deleteWebhook(webhookId, userId) {
+  const webhooks = store(STORES.WEBHOOKS);
+  const webhook = await webhooks.get(webhookId, { type: 'json' });
+
+  if (!webhook || webhook.userId !== userId) {
+    return false;
+  }
+
+  webhook.isActive = false;
+  webhook.deletedAt = new Date().toISOString();
+  await webhooks.setJSON(webhookId, webhook);
+
+  return true;
+}
+
+export async function recordWebhookDelivery(webhookId, success) {
+  const webhooks = store(STORES.WEBHOOKS);
+  const webhook = await webhooks.get(webhookId, { type: 'json' });
+
+  if (!webhook) return;
+
+  webhook.lastTriggeredAt = new Date().toISOString();
+  if (success) {
+    webhook.successCount++;
+    webhook.failureCount = 0; // Reset on success
+  } else {
+    webhook.failureCount++;
+    // Disable webhook after 10 consecutive failures
+    if (webhook.failureCount >= 10) {
+      webhook.isActive = false;
+      webhook.disabledReason = 'Too many consecutive failures';
+    }
+  }
+
+  await webhooks.setJSON(webhookId, webhook);
+}
+
+// Get webhooks that should receive a specific event type for a site
+export async function getWebhooksForEvent(siteId, eventType) {
+  const webhooks = store(STORES.WEBHOOKS);
+  const siteWebhooksKey = `site_webhooks_${siteId}`;
+  const webhookIds = await webhooks.get(siteWebhooksKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of webhookIds) {
+    const webhook = await webhooks.get(id, { type: 'json' });
+    if (webhook && webhook.isActive && webhook.events.includes(eventType)) {
+      result.push(webhook);
+    }
+  }
+
+  return result;
 }
