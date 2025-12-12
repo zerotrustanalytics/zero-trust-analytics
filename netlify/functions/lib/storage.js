@@ -16,7 +16,8 @@ const STORES = {
   ACTIVITY_LOG: 'activity_log',
   WEBHOOKS: 'webhooks',
   ALERTS: 'alerts',
-  ANNOTATIONS: 'annotations'
+  ANNOTATIONS: 'annotations',
+  TEAMS: 'teams'
 };
 
 // Get a store instance
@@ -1531,4 +1532,444 @@ export async function deleteAnnotation(annotationId, userId) {
   await annotations.delete(annotationId);
 
   return true;
+}
+
+// === TEAM MANAGEMENT ===
+
+export const TeamRoles = {
+  OWNER: 'owner',       // Full access, can delete team, transfer ownership
+  ADMIN: 'admin',       // Can manage members, sites, and settings
+  EDITOR: 'editor',     // Can view/edit analytics, create annotations
+  VIEWER: 'viewer'      // Read-only access to analytics
+};
+
+export const TeamInviteStatus = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  DECLINED: 'declined',
+  EXPIRED: 'expired'
+};
+
+// Create a new team (organization)
+export async function createTeam(ownerId, ownerEmail, name) {
+  const teams = store(STORES.TEAMS);
+
+  const teamId = 'team_' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+
+  const team = {
+    id: teamId,
+    name: name || 'My Team',
+    ownerId,
+    createdAt: new Date().toISOString(),
+    settings: {
+      allowMemberInvites: false, // Only owner/admin can invite
+      defaultRole: TeamRoles.VIEWER
+    }
+  };
+
+  await teams.setJSON(teamId, team);
+
+  // Add owner as first member
+  const membersKey = `team_members_${teamId}`;
+  const members = [{
+    id: 'member_' + crypto.randomUUID().replace(/-/g, '').substring(0, 8),
+    userId: ownerId,
+    email: ownerEmail,
+    role: TeamRoles.OWNER,
+    joinedAt: new Date().toISOString()
+  }];
+  await teams.setJSON(membersKey, members);
+
+  // Add team to user's team list
+  const userTeamsKey = `user_teams_${ownerId}`;
+  let userTeams = await teams.get(userTeamsKey, { type: 'json' }) || [];
+  userTeams.push(teamId);
+  await teams.setJSON(userTeamsKey, userTeams);
+
+  return team;
+}
+
+export async function getTeam(teamId) {
+  const teams = store(STORES.TEAMS);
+  return await teams.get(teamId, { type: 'json' });
+}
+
+export async function updateTeam(teamId, userId, updates) {
+  const teams = store(STORES.TEAMS);
+  const team = await teams.get(teamId, { type: 'json' });
+
+  if (!team) return null;
+
+  // Check if user has permission (owner or admin)
+  const memberRole = await getTeamMemberRole(teamId, userId);
+  if (memberRole !== TeamRoles.OWNER && memberRole !== TeamRoles.ADMIN) {
+    return null;
+  }
+
+  const allowedUpdates = ['name', 'settings'];
+  for (const key of allowedUpdates) {
+    if (updates[key] !== undefined) {
+      team[key] = updates[key];
+    }
+  }
+
+  await teams.setJSON(teamId, team);
+  return team;
+}
+
+export async function getUserTeams(userId) {
+  const teams = store(STORES.TEAMS);
+  const userTeamsKey = `user_teams_${userId}`;
+  const teamIds = await teams.get(userTeamsKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of teamIds) {
+    const team = await teams.get(id, { type: 'json' });
+    if (team) {
+      const role = await getTeamMemberRole(id, userId);
+      result.push({ ...team, role });
+    }
+  }
+
+  return result;
+}
+
+// Get user's role in a team
+export async function getTeamMemberRole(teamId, userId) {
+  const teams = store(STORES.TEAMS);
+  const membersKey = `team_members_${teamId}`;
+  const members = await teams.get(membersKey, { type: 'json' }) || [];
+
+  const member = members.find(m => m.userId === userId);
+  return member ? member.role : null;
+}
+
+// Get all members of a team
+export async function getTeamMembers(teamId) {
+  const teams = store(STORES.TEAMS);
+  const membersKey = `team_members_${teamId}`;
+  return await teams.get(membersKey, { type: 'json' }) || [];
+}
+
+// Create team invite
+export async function createTeamInvite(teamId, inviterId, email, role = TeamRoles.VIEWER) {
+  const teams = store(STORES.TEAMS);
+
+  // Check if already a member
+  const members = await getTeamMembers(teamId);
+  if (members.some(m => m.email.toLowerCase() === email.toLowerCase())) {
+    return { error: 'User is already a team member' };
+  }
+
+  // Check for existing pending invite
+  const invitesKey = `team_invites_${teamId}`;
+  let invites = await teams.get(invitesKey, { type: 'json' }) || [];
+  const existingInvite = invites.find(i =>
+    i.email.toLowerCase() === email.toLowerCase() && i.status === TeamInviteStatus.PENDING
+  );
+
+  if (existingInvite) {
+    return { error: 'Pending invite already exists for this email' };
+  }
+
+  const inviteId = 'inv_' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+  const inviteToken = crypto.randomUUID().replace(/-/g, '');
+
+  const invite = {
+    id: inviteId,
+    token: inviteToken,
+    teamId,
+    email: email.toLowerCase(),
+    role,
+    inviterId,
+    status: TeamInviteStatus.PENDING,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+  };
+
+  // Store invite
+  await teams.setJSON(inviteId, invite);
+  await teams.setJSON(`invite_token_${inviteToken}`, inviteId);
+
+  // Add to team's invite list
+  invites.push(inviteId);
+  await teams.setJSON(invitesKey, invites);
+
+  return invite;
+}
+
+// Get invite by token
+export async function getTeamInviteByToken(token) {
+  const teams = store(STORES.TEAMS);
+  const inviteId = await teams.get(`invite_token_${token}`, { type: 'json' });
+
+  if (!inviteId) return null;
+
+  const invite = await teams.get(inviteId, { type: 'json' });
+
+  if (!invite) return null;
+
+  // Check if expired
+  if (new Date(invite.expiresAt) < new Date()) {
+    invite.status = TeamInviteStatus.EXPIRED;
+    await teams.setJSON(inviteId, invite);
+    return null;
+  }
+
+  // Check if still pending
+  if (invite.status !== TeamInviteStatus.PENDING) {
+    return null;
+  }
+
+  return invite;
+}
+
+// Get team invites
+export async function getTeamInvites(teamId) {
+  const teams = store(STORES.TEAMS);
+  const invitesKey = `team_invites_${teamId}`;
+  const inviteIds = await teams.get(invitesKey, { type: 'json' }) || [];
+
+  const result = [];
+  for (const id of inviteIds) {
+    const invite = await teams.get(id, { type: 'json' });
+    if (invite && invite.status === TeamInviteStatus.PENDING) {
+      // Check if expired
+      if (new Date(invite.expiresAt) < new Date()) {
+        invite.status = TeamInviteStatus.EXPIRED;
+        await teams.setJSON(id, invite);
+        continue;
+      }
+      // Hide token in listing
+      const { token, ...safeInvite } = invite;
+      result.push(safeInvite);
+    }
+  }
+
+  return result;
+}
+
+// Accept team invite
+export async function acceptTeamInvite(token, userId, userEmail) {
+  const teams = store(STORES.TEAMS);
+  const invite = await getTeamInviteByToken(token);
+
+  if (!invite) {
+    return { error: 'Invalid or expired invite' };
+  }
+
+  // Verify email matches
+  if (invite.email.toLowerCase() !== userEmail.toLowerCase()) {
+    return { error: 'Invite is for a different email address' };
+  }
+
+  // Add user as team member
+  const membersKey = `team_members_${invite.teamId}`;
+  const members = await teams.get(membersKey, { type: 'json' }) || [];
+
+  members.push({
+    id: 'member_' + crypto.randomUUID().replace(/-/g, '').substring(0, 8),
+    userId,
+    email: userEmail,
+    role: invite.role,
+    joinedAt: new Date().toISOString(),
+    invitedBy: invite.inviterId
+  });
+
+  await teams.setJSON(membersKey, members);
+
+  // Add team to user's team list
+  const userTeamsKey = `user_teams_${userId}`;
+  let userTeams = await teams.get(userTeamsKey, { type: 'json' }) || [];
+  if (!userTeams.includes(invite.teamId)) {
+    userTeams.push(invite.teamId);
+    await teams.setJSON(userTeamsKey, userTeams);
+  }
+
+  // Update invite status
+  invite.status = TeamInviteStatus.ACCEPTED;
+  invite.acceptedAt = new Date().toISOString();
+  await teams.setJSON(invite.id, invite);
+
+  const team = await getTeam(invite.teamId);
+  return { success: true, team };
+}
+
+// Decline team invite
+export async function declineTeamInvite(token, userEmail) {
+  const teams = store(STORES.TEAMS);
+  const invite = await getTeamInviteByToken(token);
+
+  if (!invite) {
+    return { error: 'Invalid or expired invite' };
+  }
+
+  // Verify email matches
+  if (invite.email.toLowerCase() !== userEmail.toLowerCase()) {
+    return { error: 'Invite is for a different email address' };
+  }
+
+  invite.status = TeamInviteStatus.DECLINED;
+  invite.declinedAt = new Date().toISOString();
+  await teams.setJSON(invite.id, invite);
+
+  return { success: true };
+}
+
+// Revoke team invite (admin action)
+export async function revokeTeamInvite(inviteId, userId) {
+  const teams = store(STORES.TEAMS);
+  const invite = await teams.get(inviteId, { type: 'json' });
+
+  if (!invite) return false;
+
+  // Check permission
+  const role = await getTeamMemberRole(invite.teamId, userId);
+  if (role !== TeamRoles.OWNER && role !== TeamRoles.ADMIN) {
+    return false;
+  }
+
+  invite.status = TeamInviteStatus.EXPIRED;
+  invite.revokedAt = new Date().toISOString();
+  invite.revokedBy = userId;
+  await teams.setJSON(inviteId, invite);
+
+  return true;
+}
+
+// Update team member role
+export async function updateTeamMemberRole(teamId, targetUserId, newRole, requesterId) {
+  const teams = store(STORES.TEAMS);
+
+  // Check requester permission
+  const requesterRole = await getTeamMemberRole(teamId, requesterId);
+  if (requesterRole !== TeamRoles.OWNER && requesterRole !== TeamRoles.ADMIN) {
+    return { error: 'Insufficient permissions' };
+  }
+
+  // Can't change owner's role (must transfer ownership)
+  const team = await getTeam(teamId);
+  if (team.ownerId === targetUserId && newRole !== TeamRoles.OWNER) {
+    return { error: 'Cannot change owner role. Transfer ownership instead.' };
+  }
+
+  // Admin can't promote to owner
+  if (requesterRole === TeamRoles.ADMIN && newRole === TeamRoles.OWNER) {
+    return { error: 'Only the owner can transfer ownership' };
+  }
+
+  const membersKey = `team_members_${teamId}`;
+  const members = await teams.get(membersKey, { type: 'json' }) || [];
+
+  const memberIndex = members.findIndex(m => m.userId === targetUserId);
+  if (memberIndex === -1) {
+    return { error: 'Member not found' };
+  }
+
+  members[memberIndex].role = newRole;
+  members[memberIndex].roleUpdatedAt = new Date().toISOString();
+  members[memberIndex].roleUpdatedBy = requesterId;
+
+  await teams.setJSON(membersKey, members);
+
+  return { success: true, member: members[memberIndex] };
+}
+
+// Remove team member
+export async function removeTeamMember(teamId, targetUserId, requesterId) {
+  const teams = store(STORES.TEAMS);
+
+  // Check requester permission
+  const requesterRole = await getTeamMemberRole(teamId, requesterId);
+  if (requesterRole !== TeamRoles.OWNER && requesterRole !== TeamRoles.ADMIN) {
+    return { error: 'Insufficient permissions' };
+  }
+
+  // Can't remove the owner
+  const team = await getTeam(teamId);
+  if (team.ownerId === targetUserId) {
+    return { error: 'Cannot remove the team owner' };
+  }
+
+  const membersKey = `team_members_${teamId}`;
+  const members = await teams.get(membersKey, { type: 'json' }) || [];
+
+  const updatedMembers = members.filter(m => m.userId !== targetUserId);
+
+  if (updatedMembers.length === members.length) {
+    return { error: 'Member not found' };
+  }
+
+  await teams.setJSON(membersKey, updatedMembers);
+
+  // Remove team from user's team list
+  const userTeamsKey = `user_teams_${targetUserId}`;
+  let userTeams = await teams.get(userTeamsKey, { type: 'json' }) || [];
+  userTeams = userTeams.filter(id => id !== teamId);
+  await teams.setJSON(userTeamsKey, userTeams);
+
+  return { success: true };
+}
+
+// Leave team (self-removal)
+export async function leaveTeam(teamId, userId) {
+  const teams = store(STORES.TEAMS);
+  const team = await getTeam(teamId);
+
+  if (!team) return { error: 'Team not found' };
+
+  // Owner can't leave, must transfer ownership first
+  if (team.ownerId === userId) {
+    return { error: 'Owner cannot leave team. Transfer ownership first.' };
+  }
+
+  return await removeTeamMember(teamId, userId, userId);
+}
+
+// Add a site to a team
+export async function addSiteToTeam(teamId, siteId, userId) {
+  const teams = store(STORES.TEAMS);
+
+  // Check permission
+  const role = await getTeamMemberRole(teamId, userId);
+  if (role !== TeamRoles.OWNER && role !== TeamRoles.ADMIN) {
+    return { error: 'Insufficient permissions' };
+  }
+
+  const teamSitesKey = `team_sites_${teamId}`;
+  let teamSites = await teams.get(teamSitesKey, { type: 'json' }) || [];
+
+  if (!teamSites.includes(siteId)) {
+    teamSites.push(siteId);
+    await teams.setJSON(teamSitesKey, teamSites);
+  }
+
+  return { success: true };
+}
+
+// Get team sites
+export async function getTeamSites(teamId) {
+  const teams = store(STORES.TEAMS);
+  const teamSitesKey = `team_sites_${teamId}`;
+  return await teams.get(teamSitesKey, { type: 'json' }) || [];
+}
+
+// Check if user can access a site (either owns it or is in a team with it)
+export async function canUserAccessSite(userId, siteId) {
+  // Check direct ownership
+  const userSites = await getUserSites(userId);
+  if (userSites.includes(siteId)) {
+    return { canAccess: true, role: TeamRoles.OWNER };
+  }
+
+  // Check team access
+  const userTeams = await getUserTeams(userId);
+  for (const team of userTeams) {
+    const teamSites = await getTeamSites(team.id);
+    if (teamSites.includes(siteId)) {
+      return { canAccess: true, role: team.role, teamId: team.id };
+    }
+  }
+
+  return { canAccess: false };
 }

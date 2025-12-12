@@ -2849,3 +2849,541 @@ function updateAnnotationMarkers(annotations) {
     });
   });
 }
+
+// === TEAM MANAGEMENT ===
+
+let currentTeamId = null;
+let currentTeamRole = null;
+let userTeams = [];
+
+function openTeamsModal() {
+  // Reset state
+  document.getElementById('teams-no-team').classList.add('d-none');
+  document.getElementById('team-create-form').classList.add('d-none');
+  document.getElementById('team-selector-section').classList.add('d-none');
+  document.getElementById('team-details').classList.add('d-none');
+  document.getElementById('teams-loading').classList.remove('d-none');
+  document.getElementById('invite-success').classList.add('d-none');
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('teamsModal'));
+  modal.show();
+
+  // Load teams
+  loadUserTeams();
+}
+
+async function loadUserTeams() {
+  try {
+    const res = await fetch(`${API_BASE}/teams`, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    document.getElementById('teams-loading').classList.add('d-none');
+    userTeams = data.teams || [];
+
+    if (userTeams.length === 0) {
+      // Show "no team" state
+      document.getElementById('teams-no-team').classList.remove('d-none');
+    } else if (userTeams.length === 1) {
+      // Load single team directly
+      currentTeamId = userTeams[0].id;
+      loadTeamDetails();
+    } else {
+      // Show team selector
+      const selector = document.getElementById('team-selector');
+      selector.innerHTML = '<option value="">Select a team...</option>';
+      userTeams.forEach(team => {
+        const option = document.createElement('option');
+        option.value = team.id;
+        option.textContent = `${team.name} (${team.role})`;
+        selector.appendChild(option);
+      });
+      document.getElementById('team-selector-section').classList.remove('d-none');
+    }
+
+  } catch (err) {
+    console.error('Load teams error:', err);
+    document.getElementById('teams-loading').innerHTML = '<p class="text-danger">Failed to load teams</p>';
+  }
+}
+
+function showCreateTeamForm() {
+  document.getElementById('teams-no-team').classList.add('d-none');
+  document.getElementById('team-create-form').classList.remove('d-none');
+  document.getElementById('new-team-name').value = '';
+  document.getElementById('new-team-name').focus();
+}
+
+function hideCreateTeamForm() {
+  document.getElementById('team-create-form').classList.add('d-none');
+  if (userTeams.length === 0) {
+    document.getElementById('teams-no-team').classList.remove('d-none');
+  }
+}
+
+async function createTeam() {
+  const name = document.getElementById('new-team-name').value.trim();
+
+  if (!name) {
+    alert('Please enter a team name');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+  try {
+    const res = await fetch(`${API_BASE}/teams`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create team');
+    }
+
+    // Reload teams
+    document.getElementById('team-create-form').classList.add('d-none');
+    currentTeamId = data.team.id;
+    loadUserTeams();
+
+  } catch (err) {
+    console.error('Create team error:', err);
+    alert('Failed to create team: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Team';
+  }
+}
+
+async function loadTeamDetails() {
+  const selector = document.getElementById('team-selector');
+  if (selector.value) {
+    currentTeamId = selector.value;
+  }
+
+  if (!currentTeamId) return;
+
+  document.getElementById('teams-loading').classList.remove('d-none');
+  document.getElementById('team-details').classList.add('d-none');
+  document.getElementById('team-members-list').classList.add('d-none');
+
+  try {
+    const res = await fetch(`${API_BASE}/teams?teamId=${currentTeamId}`, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    document.getElementById('teams-loading').classList.add('d-none');
+    document.getElementById('team-details').classList.remove('d-none');
+
+    // Update team info
+    document.getElementById('current-team-name').textContent = data.team.name;
+    document.getElementById('current-user-role').textContent = capitalizeFirst(data.userRole);
+    currentTeamRole = data.userRole;
+
+    // Update role badge color
+    const roleBadge = document.getElementById('current-user-role');
+    roleBadge.className = 'badge ' + getRoleBadgeClass(data.userRole);
+
+    // Show/hide invite section based on role
+    const inviteSection = document.getElementById('team-invite-section');
+    if (data.userRole === 'owner' || data.userRole === 'admin') {
+      inviteSection.classList.remove('d-none');
+    } else {
+      inviteSection.classList.add('d-none');
+    }
+
+    // Show/hide sites section based on role
+    const sitesSection = document.getElementById('team-sites-section');
+    if (data.userRole === 'owner' || data.userRole === 'admin') {
+      sitesSection.classList.remove('d-none');
+      populateSiteSelector();
+    } else {
+      sitesSection.classList.add('d-none');
+    }
+
+    // Update leave button (owner can't leave)
+    const leaveBtn = document.querySelector('#team-actions button');
+    if (data.userRole === 'owner') {
+      leaveBtn.style.display = 'none';
+    } else {
+      leaveBtn.style.display = 'inline-block';
+    }
+
+    // Display members
+    displayTeamMembers(data.members, data.userRole);
+
+    // Display pending invites
+    displayTeamInvites(data.invites, data.userRole);
+
+    // Display team sites
+    displayTeamSites(data.sites);
+
+  } catch (err) {
+    console.error('Load team details error:', err);
+    document.getElementById('teams-loading').innerHTML = '<p class="text-danger">Failed to load team details</p>';
+  }
+}
+
+function displayTeamMembers(members, userRole) {
+  const listEl = document.getElementById('team-members-list');
+  listEl.classList.remove('d-none');
+
+  const canManage = userRole === 'owner' || userRole === 'admin';
+
+  listEl.innerHTML = members.map(member => {
+    const joinedDate = new Date(member.joinedAt).toLocaleDateString();
+    const roleOptions = canManage && member.role !== 'owner' ? `
+      <select class="form-select form-select-sm" style="width: auto;" onchange="updateMemberRole('${member.userId}', this.value)">
+        <option value="viewer" ${member.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+        <option value="editor" ${member.role === 'editor' ? 'selected' : ''}>Editor</option>
+        <option value="admin" ${member.role === 'admin' ? 'selected' : ''}>Admin</option>
+      </select>
+    ` : `<span class="badge ${getRoleBadgeClass(member.role)}">${capitalizeFirst(member.role)}</span>`;
+
+    const removeBtn = canManage && member.role !== 'owner' ? `
+      <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeMember('${member.userId}')" title="Remove member">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    ` : '';
+
+    return `
+      <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+        <div class="d-flex align-items-center">
+          <div class="me-3" style="font-size: 1.5rem;">
+            <i class="bi bi-person-circle text-muted"></i>
+          </div>
+          <div>
+            <div class="fw-medium">${escapeHtml(member.email)}</div>
+            <div class="small text-muted">Joined ${joinedDate}</div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center">
+          ${roleOptions}
+          ${removeBtn}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function displayTeamInvites(invites, userRole) {
+  const sectionEl = document.getElementById('team-invites-section');
+  const listEl = document.getElementById('team-invites-list');
+
+  if (!invites || invites.length === 0) {
+    sectionEl.classList.add('d-none');
+    return;
+  }
+
+  sectionEl.classList.remove('d-none');
+  const canManage = userRole === 'owner' || userRole === 'admin';
+
+  listEl.innerHTML = invites.map(invite => {
+    const expiresDate = new Date(invite.expiresAt).toLocaleDateString();
+    return `
+      <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+        <div>
+          <div class="fw-medium">${escapeHtml(invite.email)}</div>
+          <div class="small text-muted">
+            <span class="badge bg-secondary me-1">${capitalizeFirst(invite.role)}</span>
+            Expires ${expiresDate}
+          </div>
+        </div>
+        ${canManage ? `
+          <button class="btn btn-sm btn-outline-danger" onclick="revokeInvite('${invite.id}')" title="Revoke invite">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function displayTeamSites(sites) {
+  const listEl = document.getElementById('team-sites-list');
+
+  if (!sites || sites.length === 0) {
+    listEl.innerHTML = '<span class="text-muted">No sites shared with this team yet.</span>';
+    return;
+  }
+
+  listEl.innerHTML = sites.map(siteId => `
+    <span class="badge bg-secondary me-1 mb-1">${siteId}</span>
+  `).join('');
+}
+
+async function populateSiteSelector() {
+  const selector = document.getElementById('site-to-add');
+  selector.innerHTML = '<option value="">Select a site to share...</option>';
+
+  // Get sites from the main site selector
+  const mainSelector = document.getElementById('site-selector');
+  Array.from(mainSelector.options).forEach(opt => {
+    if (opt.value) {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.textContent;
+      selector.appendChild(option);
+    }
+  });
+}
+
+async function inviteTeamMember() {
+  if (!currentTeamId) return;
+
+  const email = document.getElementById('invite-email').value.trim();
+  const role = document.getElementById('invite-role').value;
+
+  if (!email) {
+    alert('Please enter an email address');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  try {
+    const res = await fetch(`${API_BASE}/teams`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'invite',
+        teamId: currentTeamId,
+        email,
+        role
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to send invite');
+    }
+
+    // Show invite link
+    document.getElementById('invite-email-display').textContent = email;
+    document.getElementById('invite-link').value = data.inviteUrl;
+    document.getElementById('invite-success').classList.remove('d-none');
+
+    // Clear form
+    document.getElementById('invite-email').value = '';
+
+    // Reload team details
+    loadTeamDetails();
+
+  } catch (err) {
+    console.error('Invite error:', err);
+    alert('Failed to send invite: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send me-1"></i>Invite';
+  }
+}
+
+function copyInviteLink() {
+  const link = document.getElementById('invite-link').value;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target.closest('button');
+    btn.innerHTML = '<i class="bi bi-check"></i>';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+    }, 2000);
+  });
+}
+
+async function updateMemberRole(memberId, newRole) {
+  if (!currentTeamId) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/teams`, {
+      method: 'PATCH',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'updateRole',
+        teamId: currentTeamId,
+        memberId,
+        role: newRole
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to update role');
+    }
+
+    // Reload team details
+    loadTeamDetails();
+
+  } catch (err) {
+    console.error('Update role error:', err);
+    alert('Failed to update role: ' + err.message);
+  }
+}
+
+async function removeMember(memberId) {
+  if (!currentTeamId) return;
+
+  if (!confirm('Are you sure you want to remove this member from the team?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/teams?teamId=${currentTeamId}&memberId=${memberId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to remove member');
+    }
+
+    // Reload team details
+    loadTeamDetails();
+
+  } catch (err) {
+    console.error('Remove member error:', err);
+    alert('Failed to remove member: ' + err.message);
+  }
+}
+
+async function revokeInvite(inviteId) {
+  if (!currentTeamId) return;
+
+  if (!confirm('Are you sure you want to revoke this invite?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/teams?teamId=${currentTeamId}&inviteId=${inviteId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to revoke invite');
+    }
+
+    // Reload team details
+    loadTeamDetails();
+
+  } catch (err) {
+    console.error('Revoke invite error:', err);
+    alert('Failed to revoke invite: ' + err.message);
+  }
+}
+
+async function addSiteToTeam() {
+  if (!currentTeamId) return;
+
+  const siteId = document.getElementById('site-to-add').value;
+  if (!siteId) {
+    alert('Please select a site');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/teams`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'addSite',
+        teamId: currentTeamId,
+        siteId
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to add site');
+    }
+
+    // Reset selector
+    document.getElementById('site-to-add').value = '';
+
+    // Reload team details
+    loadTeamDetails();
+
+  } catch (err) {
+    console.error('Add site error:', err);
+    alert('Failed to add site: ' + err.message);
+  }
+}
+
+async function leaveCurrentTeam() {
+  if (!currentTeamId) return;
+
+  if (!confirm('Are you sure you want to leave this team? You will lose access to all shared sites.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/teams?teamId=${currentTeamId}&action=leave`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to leave team');
+    }
+
+    // Reset and reload
+    currentTeamId = null;
+    loadUserTeams();
+
+  } catch (err) {
+    console.error('Leave team error:', err);
+    alert('Failed to leave team: ' + err.message);
+  }
+}
+
+function getRoleBadgeClass(role) {
+  const classes = {
+    'owner': 'bg-danger',
+    'admin': 'bg-warning text-dark',
+    'editor': 'bg-info',
+    'viewer': 'bg-secondary'
+  };
+  return classes[role] || 'bg-secondary';
+}
+
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
