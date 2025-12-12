@@ -67,6 +67,29 @@
         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('90d')" aria-pressed="false">90d</button>
         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('365d')" aria-pressed="false">1y</button>
       </div>
+      <!-- Date Range Presets -->
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="datePresetDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-calendar-range me-1"></i>Quick Range
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="datePresetDropdown">
+          <li><h6 class="dropdown-header">Relative</h6></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('today'); return false;">Today</a></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('yesterday'); return false;">Yesterday</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><h6 class="dropdown-header">This Period</h6></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('this-week'); return false;">This Week</a></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('this-month'); return false;">This Month</a></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('this-quarter'); return false;">This Quarter</a></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('this-year'); return false;">This Year</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><h6 class="dropdown-header">Last Period</h6></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('last-week'); return false;">Last Week</a></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('last-month'); return false;">Last Month</a></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('last-quarter'); return false;">Last Quarter</a></li>
+          <li><a class="dropdown-item" href="#" onclick="setDatePreset('last-year'); return false;">Last Year</a></li>
+        </ul>
+      </div>
       <fieldset class="d-flex gap-2 align-items-center">
         <legend class="visually-hidden">Custom date range</legend>
         <label for="start-date" class="visually-hidden">Start date</label>

@@ -1313,6 +1313,114 @@ function closeAllModals() {
   });
 }
 
+// === DATE RANGE PRESETS ===
+
+function setDatePreset(preset) {
+  const today = new Date();
+  let startDate, endDate;
+
+  switch (preset) {
+    case 'today':
+      startDate = endDate = new Date(today);
+      break;
+
+    case 'yesterday':
+      startDate = endDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 1);
+      break;
+
+    case 'this-week':
+      // Start of week (Monday)
+      startDate = new Date(today);
+      const dayOfWeek = startDate.getDay();
+      const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Adjust for Monday start
+      startDate.setDate(startDate.getDate() - diff);
+      endDate = new Date(today);
+      break;
+
+    case 'this-month':
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      endDate = new Date(today);
+      break;
+
+    case 'this-quarter':
+      const currentQuarter = Math.floor(today.getMonth() / 3);
+      startDate = new Date(today.getFullYear(), currentQuarter * 3, 1);
+      endDate = new Date(today);
+      break;
+
+    case 'this-year':
+      startDate = new Date(today.getFullYear(), 0, 1);
+      endDate = new Date(today);
+      break;
+
+    case 'last-week':
+      endDate = new Date(today);
+      const lastWeekDay = endDate.getDay();
+      const lastWeekDiff = lastWeekDay === 0 ? 6 : lastWeekDay - 1;
+      endDate.setDate(endDate.getDate() - lastWeekDiff - 1); // Last Sunday
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 6); // Previous Monday
+      break;
+
+    case 'last-month':
+      endDate = new Date(today.getFullYear(), today.getMonth(), 0); // Last day of prev month
+      startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1); // First day of prev month
+      break;
+
+    case 'last-quarter':
+      const lastQuarter = Math.floor(today.getMonth() / 3) - 1;
+      const lastQuarterYear = lastQuarter < 0 ? today.getFullYear() - 1 : today.getFullYear();
+      const adjustedQuarter = lastQuarter < 0 ? 3 : lastQuarter;
+      startDate = new Date(lastQuarterYear, adjustedQuarter * 3, 1);
+      endDate = new Date(lastQuarterYear, adjustedQuarter * 3 + 3, 0);
+      break;
+
+    case 'last-year':
+      startDate = new Date(today.getFullYear() - 1, 0, 1);
+      endDate = new Date(today.getFullYear() - 1, 11, 31);
+      break;
+
+    default:
+      return;
+  }
+
+  // Update date inputs
+  document.getElementById('start-date').value = formatDateForInput(startDate);
+  document.getElementById('end-date').value = formatDateForInput(endDate);
+
+  // Update dropdown button text
+  const presetLabels = {
+    'today': 'Today',
+    'yesterday': 'Yesterday',
+    'this-week': 'This Week',
+    'this-month': 'This Month',
+    'this-quarter': 'This Quarter',
+    'this-year': 'This Year',
+    'last-week': 'Last Week',
+    'last-month': 'Last Month',
+    'last-quarter': 'Last Quarter',
+    'last-year': 'Last Year'
+  };
+
+  const dropdownBtn = document.getElementById('datePresetDropdown');
+  if (dropdownBtn) {
+    dropdownBtn.innerHTML = `<i class="bi bi-calendar-range me-1"></i>${presetLabels[preset]}`;
+  }
+
+  // Clear period selector active state
+  document.querySelectorAll('.period-selector .btn').forEach(btn => btn.classList.remove('active'));
+
+  // Load stats with custom range
+  if (currentSiteId) {
+    loadStatsCustomRange();
+  }
+}
+
+function formatDateForInput(date) {
+  return date.toISOString().split('T')[0];
+}
+
 // === PDF EXPORT ===
 
 function exportPDF() {
