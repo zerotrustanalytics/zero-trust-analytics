@@ -194,4 +194,102 @@ if (typeof window !== 'undefined') {
 
   // Initialize theme immediately (before DOMContentLoaded to prevent flash)
   initTheme();
+
+  // Initialize offline detection
+  initOfflineDetection();
+}
+
+// === OFFLINE DETECTION ===
+
+let isOnline = navigator.onLine;
+let offlineBanner = null;
+
+/**
+ * Initialize offline detection
+ */
+function initOfflineDetection() {
+  // Create offline banner element
+  createOfflineBanner();
+
+  // Listen for online/offline events
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+
+  // Check initial state
+  if (!navigator.onLine) {
+    handleOffline();
+  }
+}
+
+/**
+ * Create the offline banner element
+ */
+function createOfflineBanner() {
+  offlineBanner = document.createElement('div');
+  offlineBanner.id = 'offline-banner';
+  offlineBanner.className = 'offline-banner';
+  offlineBanner.innerHTML = `
+    <i class="bi bi-wifi-off me-2"></i>
+    <span>You're offline. Some features may be unavailable.</span>
+  `;
+  offlineBanner.style.cssText = `
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #dc3545;
+    color: white;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    z-index: 9999;
+    font-size: 0.9rem;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+  `;
+  document.body.appendChild(offlineBanner);
+}
+
+/**
+ * Handle going offline
+ */
+function handleOffline() {
+  isOnline = false;
+  if (offlineBanner) {
+    offlineBanner.style.display = 'block';
+  }
+  console.log('Network status: offline');
+}
+
+/**
+ * Handle coming back online
+ */
+function handleOnline() {
+  isOnline = true;
+  if (offlineBanner) {
+    // Show "back online" message briefly
+    offlineBanner.innerHTML = `
+      <i class="bi bi-wifi me-2"></i>
+      <span>You're back online!</span>
+    `;
+    offlineBanner.style.background = '#198754';
+
+    // Hide after 3 seconds
+    setTimeout(() => {
+      offlineBanner.style.display = 'none';
+      // Reset for next offline event
+      offlineBanner.innerHTML = `
+        <i class="bi bi-wifi-off me-2"></i>
+        <span>You're offline. Some features may be unavailable.</span>
+      `;
+      offlineBanner.style.background = '#dc3545';
+    }, 3000);
+  }
+  console.log('Network status: online');
+}
+
+/**
+ * Check if currently online
+ */
+function checkOnline() {
+  return isOnline;
 }
