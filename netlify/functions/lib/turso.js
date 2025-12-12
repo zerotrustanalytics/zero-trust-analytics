@@ -408,10 +408,34 @@ async function exportData(siteId, startDate, endDate, type = 'pageviews', limit 
   return normalizeRows(result.rows);
 }
 
+/**
+ * Debug: Get row count for a site
+ */
+async function debugGetCount(siteId) {
+  const result = await turso.execute({
+    sql: `SELECT COUNT(*) as count, MAX(timestamp) as latest FROM pageviews WHERE site_id = ?`,
+    args: [siteId]
+  });
+  return normalizeRows(result.rows)[0] || { count: 0, latest: null };
+}
+
+/**
+ * Debug: Get recent rows
+ */
+async function debugGetRecent(siteId, limit = 5) {
+  const result = await turso.execute({
+    sql: `SELECT * FROM pageviews WHERE site_id = ? ORDER BY timestamp DESC LIMIT ?`,
+    args: [siteId, limit]
+  });
+  return normalizeRows(result.rows);
+}
+
 export {
   turso,
   initSchema,
   ingestEvents,
+  debugGetCount,
+  debugGetRecent,
   getStats,
   getRealtime,
   exportData
