@@ -154,6 +154,26 @@ body {
   opacity: 1;
 }
 
+/* Keyboard shortcut styling */
+kbd {
+  display: inline-block;
+  padding: 0.2em 0.4em;
+  font-size: 0.875em;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1;
+  color: var(--zta-text, #212529);
+  background-color: var(--zta-bg-tertiary, #e9ecef);
+  border: 1px solid var(--zta-border, #dee2e6);
+  border-radius: 0.25rem;
+  box-shadow: inset 0 -1px 0 var(--zta-border, #dee2e6);
+}
+
+[data-theme="dark"] kbd {
+  background-color: #374151;
+  border-color: #4b5563;
+  box-shadow: inset 0 -1px 0 #4b5563;
+}
+
 h1, h2, h3, h4, h6, p {
   color: unset;
 }
