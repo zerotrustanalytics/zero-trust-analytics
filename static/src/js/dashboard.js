@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
   loadSites();
   initDatePickers();
   initTooltips();
+  initKeyboardShortcuts();
 });
 
 // Initialize Bootstrap tooltips
@@ -1195,4 +1196,186 @@ function finishOnboarding() {
       loadStats();
     }
   });
+}
+
+// === KEYBOARD SHORTCUTS ===
+
+const KEYBOARD_SHORTCUTS = {
+  '?': { action: 'showHelp', description: 'Show keyboard shortcuts' },
+  'r': { action: 'refresh', description: 'Refresh dashboard data' },
+  'd': { action: 'toggleDarkMode', description: 'Toggle dark mode' },
+  '1': { action: 'period24h', description: 'Set period to 24 hours' },
+  '2': { action: 'period7d', description: 'Set period to 7 days' },
+  '3': { action: 'period30d', description: 'Set period to 30 days' },
+  '4': { action: 'period90d', description: 'Set period to 90 days' },
+  '5': { action: 'period365d', description: 'Set period to 1 year' },
+  'e': { action: 'exportJSON', description: 'Export data as JSON' },
+  'c': { action: 'exportCSV', description: 'Export data as CSV' },
+  's': { action: 'focusSiteSelector', description: 'Focus site selector' },
+  'Escape': { action: 'closeModals', description: 'Close open modals' }
+};
+
+function initKeyboardShortcuts() {
+  document.addEventListener('keydown', handleKeyboardShortcut);
+}
+
+function handleKeyboardShortcut(e) {
+  // Ignore if typing in an input field
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+    return;
+  }
+
+  // Ignore if modifier keys are pressed (except for ?)
+  if (e.ctrlKey || e.altKey || e.metaKey) {
+    return;
+  }
+
+  const key = e.key;
+  const shortcut = KEYBOARD_SHORTCUTS[key];
+
+  if (!shortcut) return;
+
+  e.preventDefault();
+
+  switch (shortcut.action) {
+    case 'showHelp':
+      showKeyboardShortcutsHelp();
+      break;
+    case 'refresh':
+      if (currentSiteId) loadStats();
+      break;
+    case 'toggleDarkMode':
+      if (typeof toggleTheme === 'function') toggleTheme();
+      break;
+    case 'period24h':
+      setPeriodByKey('24h');
+      break;
+    case 'period7d':
+      setPeriodByKey('7d');
+      break;
+    case 'period30d':
+      setPeriodByKey('30d');
+      break;
+    case 'period90d':
+      setPeriodByKey('90d');
+      break;
+    case 'period365d':
+      setPeriodByKey('365d');
+      break;
+    case 'exportJSON':
+      if (currentSiteId) exportData('json');
+      break;
+    case 'exportCSV':
+      if (currentSiteId) exportData('csv');
+      break;
+    case 'focusSiteSelector':
+      document.getElementById('site-selector')?.focus();
+      break;
+    case 'closeModals':
+      closeAllModals();
+      break;
+  }
+}
+
+// Set period without requiring event target
+function setPeriodByKey(period) {
+  if (!currentSiteId) return;
+
+  currentPeriod = period;
+
+  // Update button states
+  document.querySelectorAll('.period-selector .btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.textContent.includes(period.replace('d', ' days').replace('h', ' hours').replace('365 days', '1 year'))) {
+      btn.classList.add('active');
+    }
+  });
+
+  // Find and activate the right button
+  const periodLabels = { '24h': '24h', '7d': '7d', '30d': '30d', '90d': '90d', '365d': '1y' };
+  document.querySelectorAll('.period-selector .btn').forEach(btn => {
+    if (btn.textContent.trim() === periodLabels[period]) {
+      btn.classList.add('active');
+    }
+  });
+
+  loadStats();
+}
+
+function closeAllModals() {
+  document.querySelectorAll('.modal.show').forEach(modal => {
+    const bsModal = bootstrap.Modal.getInstance(modal);
+    if (bsModal) bsModal.hide();
+  });
+}
+
+function showKeyboardShortcutsHelp() {
+  // Check if modal already exists
+  let modal = document.getElementById('keyboardShortcutsModal');
+
+  if (!modal) {
+    // Create modal
+    modal = document.createElement('div');
+    modal.id = 'keyboardShortcutsModal';
+    modal.className = 'modal fade';
+    modal.tabIndex = -1;
+    modal.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-keyboard me-2"></i>Keyboard Shortcuts
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-6">
+                <h6 class="text-muted mb-2">Navigation</h6>
+                <ul class="list-unstyled">
+                  <li class="mb-2"><kbd>?</kbd> <span class="ms-2">Show this help</span></li>
+                  <li class="mb-2"><kbd>r</kbd> <span class="ms-2">Refresh data</span></li>
+                  <li class="mb-2"><kbd>s</kbd> <span class="ms-2">Focus site selector</span></li>
+                  <li class="mb-2"><kbd>Esc</kbd> <span class="ms-2">Close modals</span></li>
+                </ul>
+              </div>
+              <div class="col-6">
+                <h6 class="text-muted mb-2">Time Period</h6>
+                <ul class="list-unstyled">
+                  <li class="mb-2"><kbd>1</kbd> <span class="ms-2">24 hours</span></li>
+                  <li class="mb-2"><kbd>2</kbd> <span class="ms-2">7 days</span></li>
+                  <li class="mb-2"><kbd>3</kbd> <span class="ms-2">30 days</span></li>
+                  <li class="mb-2"><kbd>4</kbd> <span class="ms-2">90 days</span></li>
+                  <li class="mb-2"><kbd>5</kbd> <span class="ms-2">1 year</span></li>
+                </ul>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-6">
+                <h6 class="text-muted mb-2">Export</h6>
+                <ul class="list-unstyled">
+                  <li class="mb-2"><kbd>e</kbd> <span class="ms-2">Export JSON</span></li>
+                  <li class="mb-2"><kbd>c</kbd> <span class="ms-2">Export CSV</span></li>
+                </ul>
+              </div>
+              <div class="col-6">
+                <h6 class="text-muted mb-2">Display</h6>
+                <ul class="list-unstyled">
+                  <li class="mb-2"><kbd>d</kbd> <span class="ms-2">Toggle dark mode</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const bsModal = new bootstrap.Modal(modal);
+  bsModal.show();
 }
