@@ -1874,6 +1874,256 @@ function maskIP(ip) {
   return ip.substring(0, 8) + '***';
 }
 
+// === WEBHOOK MANAGEMENT ===
+
+function openWebhooksModal() {
+  // Reset state
+  document.getElementById('webhooks-loading').classList.remove('d-none');
+  document.getElementById('webhooks-list').classList.add('d-none');
+  document.getElementById('webhooks-empty').classList.add('d-none');
+  document.getElementById('new-webhook-display').classList.add('d-none');
+  document.getElementById('webhooks-no-site').classList.add('d-none');
+  document.getElementById('webhook-create-section').classList.remove('d-none');
+  document.getElementById('new-webhook-name').value = '';
+  document.getElementById('new-webhook-url').value = '';
+
+  // Reset checkboxes
+  document.getElementById('webhook-event-event').checked = true;
+  document.getElementById('webhook-event-pageview').checked = false;
+  document.getElementById('webhook-event-daily').checked = false;
+  document.getElementById('webhook-event-spike').checked = false;
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('webhooksModal'));
+  modal.show();
+
+  // Check if site selected
+  if (!currentSiteId) {
+    document.getElementById('webhooks-loading').classList.add('d-none');
+    document.getElementById('webhooks-no-site').classList.remove('d-none');
+    document.getElementById('webhook-create-section').classList.add('d-none');
+    return;
+  }
+
+  // Load webhooks
+  loadWebhooks();
+}
+
+async function loadWebhooks() {
+  const loadingEl = document.getElementById('webhooks-loading');
+  const listEl = document.getElementById('webhooks-list');
+  const emptyEl = document.getElementById('webhooks-empty');
+
+  try {
+    const res = await fetch(`${API_BASE}/webhooks?siteId=${currentSiteId}`, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    loadingEl.classList.add('d-none');
+
+    if (!data.webhooks || data.webhooks.length === 0) {
+      emptyEl.classList.remove('d-none');
+      return;
+    }
+
+    listEl.classList.remove('d-none');
+    listEl.innerHTML = data.webhooks.map(webhook => {
+      const createdDate = new Date(webhook.createdAt).toLocaleDateString();
+      const lastTriggered = webhook.lastTriggeredAt ? formatRelativeTime(webhook.lastTriggeredAt) : 'Never';
+      const eventsStr = webhook.events.join(', ');
+      const statusBadge = webhook.isActive
+        ? '<span class="badge bg-success">Active</span>'
+        : '<span class="badge bg-danger">Disabled</span>';
+
+      return `
+        <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+          <div class="d-flex align-items-center flex-grow-1">
+            <div class="me-3 text-muted" style="font-size: 1.5rem;">
+              <i class="bi bi-lightning"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-bold">${escapeHtml(webhook.name)} ${statusBadge}</div>
+              <div class="small text-muted text-truncate" style="max-width: 300px;">
+                ${escapeHtml(webhook.url)}
+              </div>
+              <div class="small text-muted">
+                Events: ${eventsStr} &bull; Last: ${lastTriggered} &bull; ${webhook.successCount} sent
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="testWebhook('${webhook.id}')" title="Send test">
+              <i class="bi bi-send"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteWebhook('${webhook.id}')" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Load webhooks error:', err);
+    loadingEl.innerHTML = '<p class="text-danger">Failed to load webhooks</p>';
+  }
+}
+
+async function createWebhook() {
+  if (!currentSiteId) {
+    alert('Please select a site first');
+    return;
+  }
+
+  const name = document.getElementById('new-webhook-name').value.trim() || 'Unnamed Webhook';
+  const url = document.getElementById('new-webhook-url').value.trim();
+
+  if (!url) {
+    alert('Please enter a webhook URL');
+    return;
+  }
+
+  if (!url.startsWith('https://')) {
+    alert('Webhook URL must use HTTPS');
+    return;
+  }
+
+  // Collect selected events
+  const events = [];
+  if (document.getElementById('webhook-event-event').checked) events.push('event');
+  if (document.getElementById('webhook-event-pageview').checked) events.push('pageview');
+  if (document.getElementById('webhook-event-daily').checked) events.push('daily_summary');
+  if (document.getElementById('webhook-event-spike').checked) events.push('traffic_spike');
+
+  if (events.length === 0) {
+    alert('Please select at least one event type');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+  try {
+    const res = await fetch(`${API_BASE}/webhooks`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        siteId: currentSiteId,
+        name,
+        url,
+        events
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create webhook');
+    }
+
+    // Show the signing secret
+    document.getElementById('new-webhook-secret').value = data.webhook.secret;
+    document.getElementById('new-webhook-display').classList.remove('d-none');
+
+    // Reset form
+    document.getElementById('new-webhook-name').value = '';
+    document.getElementById('new-webhook-url').value = '';
+
+    // Reload webhooks list
+    loadWebhooks();
+
+  } catch (err) {
+    console.error('Create webhook error:', err);
+    alert('Failed to create webhook: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Webhook';
+  }
+}
+
+function copyWebhookSecret() {
+  const secretValue = document.getElementById('new-webhook-secret').value;
+  navigator.clipboard.writeText(secretValue).then(() => {
+    const btn = event.target.closest('button');
+    btn.innerHTML = '<i class="bi bi-check"></i>';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+    }, 2000);
+  });
+}
+
+async function testWebhook(webhookId) {
+  const btn = event.target.closest('button');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  try {
+    const res = await fetch(`${API_BASE}/webhooks`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'test',
+        webhookId
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert('Test webhook delivered successfully!');
+    } else {
+      alert('Test failed: ' + data.message);
+    }
+
+    // Reload to update stats
+    loadWebhooks();
+
+  } catch (err) {
+    console.error('Test webhook error:', err);
+    alert('Failed to test webhook: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send"></i>';
+  }
+}
+
+async function deleteWebhook(webhookId) {
+  if (!confirm('Are you sure you want to delete this webhook?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/webhooks?webhookId=${webhookId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete webhook');
+    }
+
+    loadWebhooks();
+
+  } catch (err) {
+    console.error('Delete webhook error:', err);
+    alert('Failed to delete webhook: ' + err.message);
+  }
+}
+
 // === API KEY MANAGEMENT ===
 
 function openApiKeysModal() {
