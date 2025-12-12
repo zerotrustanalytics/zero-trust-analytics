@@ -1746,6 +1746,134 @@ function exportPDF() {
   }, 100);
 }
 
+// === ACTIVITY LOG ===
+
+let activityOffset = 0;
+
+function openActivityModal() {
+  // Reset state
+  activityOffset = 0;
+  document.getElementById('activity-loading').classList.remove('d-none');
+  document.getElementById('activity-list').classList.add('d-none');
+  document.getElementById('activity-empty').classList.add('d-none');
+  document.getElementById('activity-load-more').classList.add('d-none');
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('activityModal'));
+  modal.show();
+
+  // Load activity
+  loadActivity();
+}
+
+async function loadActivity(append = false) {
+  const loadingEl = document.getElementById('activity-loading');
+  const listEl = document.getElementById('activity-list');
+  const emptyEl = document.getElementById('activity-empty');
+  const loadMoreEl = document.getElementById('activity-load-more');
+
+  if (!append) {
+    loadingEl.classList.remove('d-none');
+    listEl.classList.add('d-none');
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/activity?limit=20&offset=${activityOffset}`, {
+      headers: getAuthHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    loadingEl.classList.add('d-none');
+
+    if (!data.activities || data.activities.length === 0) {
+      if (activityOffset === 0) {
+        emptyEl.classList.remove('d-none');
+      }
+      loadMoreEl.classList.add('d-none');
+      return;
+    }
+
+    listEl.classList.remove('d-none');
+
+    const activitiesHtml = data.activities.map(activity => {
+      const icon = getActivityIcon(activity.type);
+      const timeAgo = formatRelativeTime(activity.timestamp);
+
+      return `
+        <div class="d-flex py-3 border-bottom">
+          <div class="me-3 text-muted" style="font-size: 1.25rem;">
+            <i class="bi ${icon}"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-medium">${escapeHtml(activity.message)}</div>
+            <div class="small text-muted">
+              ${timeAgo} &bull; ${maskIP(activity.ipAddress)}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (append) {
+      listEl.innerHTML += activitiesHtml;
+    } else {
+      listEl.innerHTML = activitiesHtml;
+    }
+
+    activityOffset += data.activities.length;
+
+    if (data.hasMore) {
+      loadMoreEl.classList.remove('d-none');
+    } else {
+      loadMoreEl.classList.add('d-none');
+    }
+
+  } catch (err) {
+    console.error('Load activity error:', err);
+    loadingEl.innerHTML = '<p class="text-danger">Failed to load activity</p>';
+  }
+}
+
+function loadMoreActivity() {
+  loadActivity(true);
+}
+
+function getActivityIcon(type) {
+  const icons = {
+    'auth.login': 'bi-box-arrow-in-right',
+    'auth.logout': 'bi-box-arrow-left',
+    'auth.password_change': 'bi-key',
+    'auth.password_reset': 'bi-key-fill',
+    'site.create': 'bi-plus-circle',
+    'site.update': 'bi-pencil',
+    'site.delete': 'bi-trash',
+    'api_key.create': 'bi-key',
+    'api_key.revoke': 'bi-key-fill',
+    'share.create': 'bi-share',
+    'share.revoke': 'bi-share-fill',
+    'session.revoke': 'bi-x-circle',
+    'session.revoke_all': 'bi-x-circle-fill',
+    'data.export': 'bi-download',
+    'billing.subscribe': 'bi-credit-card',
+    'billing.cancel': 'bi-credit-card-2-front'
+  };
+  return icons[type] || 'bi-circle';
+}
+
+function maskIP(ip) {
+  if (!ip || ip === 'Unknown') return 'Unknown location';
+  const parts = ip.split('.');
+  if (parts.length === 4) {
+    return `${parts[0]}.${parts[1]}.*.*`;
+  }
+  return ip.substring(0, 8) + '***';
+}
+
 // === API KEY MANAGEMENT ===
 
 function openApiKeysModal() {

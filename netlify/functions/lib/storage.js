@@ -12,7 +12,8 @@ const STORES = {
   PASSWORD_RESET_TOKENS: 'password_reset_tokens',
   PUBLIC_SHARES: 'public_shares',
   SESSIONS: 'sessions',
-  API_KEYS: 'api_keys'
+  API_KEYS: 'api_keys',
+  ACTIVITY_LOG: 'activity_log'
 };
 
 // Get a store instance
@@ -1030,4 +1031,116 @@ async function hashApiKey(key) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// === ACTIVITY LOG ===
+
+// Activity types
+export const ActivityTypes = {
+  // Auth
+  LOGIN: 'auth.login',
+  LOGOUT: 'auth.logout',
+  PASSWORD_CHANGE: 'auth.password_change',
+  PASSWORD_RESET: 'auth.password_reset',
+
+  // Sites
+  SITE_CREATE: 'site.create',
+  SITE_UPDATE: 'site.update',
+  SITE_DELETE: 'site.delete',
+
+  // API Keys
+  API_KEY_CREATE: 'api_key.create',
+  API_KEY_REVOKE: 'api_key.revoke',
+
+  // Shares
+  SHARE_CREATE: 'share.create',
+  SHARE_REVOKE: 'share.revoke',
+
+  // Sessions
+  SESSION_REVOKE: 'session.revoke',
+  SESSION_REVOKE_ALL: 'session.revoke_all',
+
+  // Export
+  DATA_EXPORT: 'data.export',
+
+  // Billing
+  SUBSCRIPTION_CREATE: 'billing.subscribe',
+  SUBSCRIPTION_CANCEL: 'billing.cancel'
+};
+
+export async function logActivity(userId, type, details = {}, meta = {}) {
+  const activityLog = store(STORES.ACTIVITY_LOG);
+
+  const activityId = 'act_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+
+  const activity = {
+    id: activityId,
+    userId,
+    type,
+    details, // e.g., { siteId: 'xxx', domain: 'example.com' }
+    ipAddress: meta.ipAddress || 'Unknown',
+    userAgent: meta.userAgent || 'Unknown',
+    timestamp: new Date().toISOString()
+  };
+
+  // Store individual activity
+  await activityLog.setJSON(activityId, activity);
+
+  // Add to user's activity list (keep last 100)
+  const userLogKey = `user_log_${userId}`;
+  let userLog = await activityLog.get(userLogKey, { type: 'json' }) || [];
+  userLog.unshift(activityId);
+  if (userLog.length > 100) {
+    userLog = userLog.slice(0, 100);
+  }
+  await activityLog.setJSON(userLogKey, userLog);
+
+  return activity;
+}
+
+export async function getUserActivityLog(userId, limit = 50, offset = 0) {
+  const activityLog = store(STORES.ACTIVITY_LOG);
+  const userLogKey = `user_log_${userId}`;
+  const activityIds = await activityLog.get(userLogKey, { type: 'json' }) || [];
+
+  // Get activities with pagination
+  const paginatedIds = activityIds.slice(offset, offset + limit);
+  const activities = [];
+
+  for (const id of paginatedIds) {
+    const activity = await activityLog.get(id, { type: 'json' });
+    if (activity) {
+      activities.push(activity);
+    }
+  }
+
+  return {
+    activities,
+    total: activityIds.length,
+    hasMore: offset + limit < activityIds.length
+  };
+}
+
+// Helper to format activity for display
+export function formatActivityMessage(activity) {
+  const messages = {
+    'auth.login': 'Signed in',
+    'auth.logout': 'Signed out',
+    'auth.password_change': 'Changed password',
+    'auth.password_reset': 'Reset password',
+    'site.create': `Created site "${activity.details?.domain || 'Unknown'}"`,
+    'site.update': `Updated site "${activity.details?.domain || 'Unknown'}"`,
+    'site.delete': `Deleted site "${activity.details?.domain || 'Unknown'}"`,
+    'api_key.create': `Created API key "${activity.details?.name || 'Unnamed'}"`,
+    'api_key.revoke': `Revoked API key "${activity.details?.name || 'Unknown'}"`,
+    'share.create': `Created share link for "${activity.details?.domain || 'Unknown'}"`,
+    'share.revoke': 'Revoked share link',
+    'session.revoke': 'Signed out a device',
+    'session.revoke_all': 'Signed out all other devices',
+    'data.export': `Exported ${activity.details?.format || 'data'}`,
+    'billing.subscribe': 'Started subscription',
+    'billing.cancel': 'Cancelled subscription'
+  };
+
+  return messages[activity.type] || activity.type;
 }
