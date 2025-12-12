@@ -223,6 +223,14 @@ async function getStats(siteId, startDate, endDate) {
     { pageviews: 0, unique_visitors: 0, bounces: 0, total_duration: 0 }
   );
 
+  // Convert arrays to objects for frontend compatibility
+  // Frontend expects: { "/path": 5, "/other": 3 }
+  const pagesToObj = rowsToObject(normalizeRows(topPages.rows), 'page', 'views');
+  const referrersToObj = rowsToObject(normalizeRows(topReferrers.rows), 'referrer', 'views');
+  const devicesToObj = rowsToObject(normalizeRows(devices.rows), 'device', 'count');
+  const browsersToObj = rowsToObject(normalizeRows(browsers.rows), 'browser', 'count');
+  const countriesToObj = rowsToObject(normalizeRows(countries.rows), 'country', 'count');
+
   return {
     summary: {
       pageviews: totals.pageviews,
@@ -235,12 +243,27 @@ async function getStats(siteId, startDate, endDate) {
         : 0
     },
     daily,
-    pages: normalizeRows(topPages.rows),
-    referrers: normalizeRows(topReferrers.rows),
-    devices: normalizeRows(devices.rows),
-    browsers: normalizeRows(browsers.rows),
-    countries: normalizeRows(countries.rows)
+    pages: pagesToObj,
+    referrers: referrersToObj,
+    devices: devicesToObj,
+    browsers: browsersToObj,
+    countries: countriesToObj
   };
+}
+
+/**
+ * Convert array of rows to object format
+ * e.g., [{ page: "/", views: 5 }] -> { "/": 5 }
+ */
+function rowsToObject(rows, keyField, valueField) {
+  const obj = {};
+  for (const row of rows) {
+    const key = row[keyField];
+    if (key !== null && key !== undefined && key !== '') {
+      obj[key] = row[valueField];
+    }
+  }
+  return obj;
 }
 
 /**
