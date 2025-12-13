@@ -1,6 +1,7 @@
 baseURL = 'https://zero-trust-analytics.netlify.app/'
 languageCode = 'en-us'
 title = 'Zero Trust Analytics'
+enableRobotsTXT = true
 
 [params]
 CompanyName = 'Zero Trust Analytics'

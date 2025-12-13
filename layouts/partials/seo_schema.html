@@ -26,15 +26,15 @@
 <meta property="og:site_name" content="{{ .Site.Title }}" />
 <meta property="og:type" content="website">
 
-{{if eq site.BaseURL "{{ .Site.BaseURL }}/"}}
-{{- if .Params.noIndex -}}
+{{- if or (eq site.BaseURL "https://ztas.io/") (eq site.BaseURL "https://zerotrustanalytics.com/") -}}
+  {{- if .Params.noIndex -}}
 <meta name="robots" content="noindex, nofollow">
-{{- else -}}
+  {{- else -}}
 <meta name="robots" content="index, follow">
-{{- end -}}
-{{ else }}
+  {{- end -}}
+{{- else -}}
 <meta name="robots" content="noindex, nofollow">
-{{ end }}
+{{- end -}}
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
