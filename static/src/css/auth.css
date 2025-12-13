@@ -73,4 +73,45 @@
 .auth-error {
   display: none;
   margin-bottom: 1rem;
+}
+
+/* Dark mode styles for auth pages */
+[data-theme="dark"] .auth-container {
+  background-color: var(--zta-bg);
+}
+
+[data-theme="dark"] .auth-card {
+  background-color: var(--zta-card-bg);
+  border: 1px solid var(--zta-border);
+}
+
+[data-theme="dark"] .auth-header h1 {
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .auth-header p {
+  color: #d4d4d8; /* Light gray for 10:1 contrast */
+}
+
+[data-theme="dark"] .auth-form .form-label {
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .auth-form .form-control {
+  background-color: var(--zta-input-bg);
+  border-color: var(--zta-border);
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .auth-form .form-control::placeholder {
+  color: #9ca3af; /* Gray-400 for placeholder contrast */
+}
+
+[data-theme="dark"] .auth-footer {
+  border-top-color: var(--zta-border);
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .auth-footer a {
+  color: #60a5fa; /* Blue-400 for link visibility */
 }/*# sourceMappingURL=auth.css.map */

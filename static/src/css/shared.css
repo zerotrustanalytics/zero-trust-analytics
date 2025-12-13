@@ -156,6 +156,56 @@ body {
   border-color: var(--zta-border);
 }
 
+/* Dark mode: Fix text colors on dark backgrounds */
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] p.text-muted,
+[data-theme="dark"] small.text-muted {
+  color: #d4d4d8 !important; /* Zinc-300 - 10:1 contrast on dark */
+}
+
+/* Dark mode: Footer styles */
+[data-theme="dark"] .footer-main,
+[data-theme="dark"] footer {
+  background: linear-gradient(180deg, #1a1d21 0%, #16213e 100%) !important;
+}
+
+[data-theme="dark"] .footer-description,
+[data-theme="dark"] .footer-links a {
+  color: #d4dae0 !important;
+}
+
+/* Dark mode: Card text */
+[data-theme="dark"] .card-text,
+[data-theme="dark"] .card p {
+  color: var(--zta-text-muted) !important;
+}
+
+/* Dark mode: Section backgrounds */
+[data-theme="dark"] section.bg-light,
+[data-theme="dark"] .bg-light {
+  background-color: var(--zta-bg-secondary) !important;
+}
+
+/* Dark mode: Tables with light headers */
+[data-theme="dark"] .table-light,
+[data-theme="dark"] thead.table-light th {
+  background-color: var(--zta-bg-tertiary) !important;
+  color: var(--zta-text) !important;
+}
+
+/* Dark mode: Borders */
+[data-theme="dark"] .border-bottom,
+[data-theme="dark"] .border-top,
+[data-theme="dark"] .border {
+  border-color: var(--zta-border) !important;
+}
+
+/* Dark mode: Badge variants */
+[data-theme="dark"] .badge.bg-light {
+  background-color: var(--zta-bg-tertiary) !important;
+  color: var(--zta-text) !important;
+}
+
 /* Theme toggle button */
 #theme-toggle {
   font-size: 1.1rem;
