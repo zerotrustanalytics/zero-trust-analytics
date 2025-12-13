@@ -2,6 +2,7 @@
 title: "Privacy Model"
 description: "How Zero Trust Analytics protects visitor privacy"
 weight: 20
+priority: 0.7
 ---
 
 ## The Zero Trust Principle

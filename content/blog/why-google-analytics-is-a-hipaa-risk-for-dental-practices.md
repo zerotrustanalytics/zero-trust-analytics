@@ -6,6 +6,7 @@ author: "Zero Trust Analytics Team"
 category: "HIPAA Compliance"
 tags: ["HIPAA", "Healthcare", "Dental", "Privacy", "Google Analytics"]
 image: "/images/blog/hipaa-dental.jpg"
+priority: 0.8
 ---
 
 If you run a dental practice, chances are your website has Google Analytics installed. It's the industry standard, after all. But here's something that might keep you up at night: **Google Analytics may be putting your practice at risk of HIPAA violations.**

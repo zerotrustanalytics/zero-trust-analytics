@@ -5,6 +5,7 @@ date: 2025-02-24
 author: "Zero Trust Analytics Team"
 category: "Privacy"
 tags: ["Big Tech", "Data", "Privacy", "Value", "Google", "Advertising"]
+priority: 0.8
 ---
 
 "If you're not paying for the product, you are the product."

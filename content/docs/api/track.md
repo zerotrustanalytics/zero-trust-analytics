@@ -2,6 +2,7 @@
 title: "Track Endpoint"
 description: "Send pageview and event data to Zero Trust Analytics"
 weight: 11
+priority: 0.7
 ---
 
 ## Overview

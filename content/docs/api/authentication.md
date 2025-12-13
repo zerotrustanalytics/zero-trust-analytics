@@ -2,6 +2,7 @@
 title: "Authentication"
 description: "How to authenticate with the Zero Trust Analytics API"
 weight: 10
+priority: 0.7
 ---
 
 ## Overview

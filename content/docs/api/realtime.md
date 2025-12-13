@@ -2,6 +2,7 @@
 title: "Realtime Endpoint"
 description: "Get live visitor data for your site"
 weight: 13
+priority: 0.7
 ---
 
 ## Overview

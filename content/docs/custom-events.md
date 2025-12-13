@@ -2,6 +2,7 @@
 title: "Custom Events"
 description: "Track button clicks, form submissions, and custom user interactions"
 weight: 4
+priority: 0.7
 ---
 
 ## Overview

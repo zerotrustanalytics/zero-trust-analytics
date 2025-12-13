@@ -2,6 +2,7 @@
 title: "Installation"
 description: "Different ways to install Zero Trust Analytics on your website"
 weight: 2
+priority: 0.7
 ---
 
 ## Standard Installation

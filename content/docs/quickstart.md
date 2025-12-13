@@ -2,6 +2,7 @@
 title: "Quick Start"
 description: "Get Zero Trust Analytics running on your site in under 5 minutes"
 weight: 1
+priority: 0.7
 ---
 
 ## Step 1: Create an Account

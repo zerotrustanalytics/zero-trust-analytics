@@ -5,6 +5,7 @@ date: 2025-02-03
 author: "Zero Trust Analytics Team"
 category: "Analytics"
 tags: ["Conversion Rate", "Cookie Consent", "UX", "Optimization", "Marketing"]
+priority: 0.8
 ---
 
 You've spent thousands on your website. Carefully crafted copy. Beautiful design. Optimized user flows. A/B tested everything.

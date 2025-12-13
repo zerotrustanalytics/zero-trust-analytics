@@ -5,6 +5,7 @@ date: 2025-02-10
 author: "Zero Trust Analytics Team"
 category: "HIPAA Compliance"
 tags: ["Therapists", "Mental Health", "HIPAA", "Privacy", "Healthcare", "Counseling"]
+priority: 0.8
 ---
 
 You've built a practice on trust. Clients share their deepest fears, traumas, and struggles because they trust you'll protect that vulnerability.

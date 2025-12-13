@@ -7,4 +7,5 @@ css:
 js:
   - "auth.js"
 cta: false
+noindex: true
 ---

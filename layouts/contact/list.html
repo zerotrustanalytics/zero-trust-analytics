@@ -1,0 +1,140 @@
+{{ define "main"}}
+
+<section id="inner-page-hero-section">
+  <div class="site-container-1340">
+    <div class="row">
+      <div class="col-12">
+        <h4>Contact</h4>
+        <h1>Get In Touch</h1>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact-form-section" class="py-5">
+  <div class="site-container-1340">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+
+        <div class="mb-4 p-4" style="background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0066cc;">
+          <h5>Privacy Notice</h5>
+          <p class="mb-0">This form uses <strong>VeilForms</strong> client-side encryption. Your data is encrypted in your browser <em>before</em> being transmitted. We receive only encrypted blobs - we cannot read your message without the decryption key.</p>
+        </div>
+
+        <!-- Netlify Forms: Hidden form for detection -->
+        <form name="contact" netlify netlify-honeypot="bot-field" hidden>
+          <input type="text" name="submission-id" />
+          <input type="text" name="timestamp" />
+          <textarea name="encrypted-payload"></textarea>
+        </form>
+
+        <!-- Actual form with VeilForms -->
+        <form name="contact" data-veilform class="contact-form" id="contact-form">
+          <input type="hidden" name="form-name" value="contact" />
+
+          <!-- Honeypot field for spam -->
+          <p class="d-none">
+            <label>Don't fill this out: <input name="bot-field" /></label>
+          </p>
+
+          <div class="mb-3">
+            <label for="name" class="form-label">Your Name</label>
+            <input type="text" class="form-control" id="name" name="name" required aria-required="true" placeholder="John Doe">
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" name="email" required aria-required="true" placeholder="you@example.com">
+          </div>
+
+          <div class="mb-3">
+            <label for="subject" class="form-label">Subject</label>
+            <select class="form-select" id="subject" name="subject" required aria-required="true">
+              <option value="">Select a topic...</option>
+              <option value="general">General Inquiry</option>
+              <option value="sales">Sales / Pricing</option>
+              <option value="support">Technical Support</option>
+              <option value="partnership">Partnership Opportunity</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" id="message" name="message" rows="5" required aria-required="true" placeholder="How can we help you?"></textarea>
+          </div>
+
+          <div class="mb-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="privacy-consent" required aria-required="true">
+              <label class="form-check-label" for="privacy-consent">
+                I understand my data will be encrypted before transmission
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg">
+            Send Message
+          </button>
+        </form>
+
+        <!-- Debug Panel (for testing) -->
+        <div class="mt-5 p-4" style="background: #fff3cd; border-radius: 8px;">
+          <h5>Testing Mode</h5>
+          <p>To test what Netlify receives:</p>
+          <ol>
+            <li>Submit the form above</li>
+            <li>Go to your <a href="https://app.netlify.com" target="_blank">Netlify Dashboard</a></li>
+            <li>Navigate to: Site > Forms > contact</li>
+            <li>View the submission - you'll see encrypted blobs instead of readable data</li>
+          </ol>
+          <p class="mb-0"><strong>Note:</strong> Currently running without a public key, so data is sent unencrypted for initial testing. Add a public key to enable encryption.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VeilForms Script -->
+<script src="/js/veilforms-lite.js"></script>
+<script>
+  // Initialize VeilForms
+  // For testing: no public key = unencrypted (so you can see what's sent)
+  // For production: add your RSA public key to encrypt client-side
+
+  VeilForms.init({
+    debug: true,  // Console logging enabled
+    piiWarning: true,
+    publicKey: {
+      "alg": "RSA-OAEP-256",
+      "e": "AQAB",
+      "ext": true,
+      "key_ops": ["encrypt"],
+      "kty": "RSA",
+      "n": "qM27ddW-8HuY58nC1GTzduz9Sd7FN7hE0p-9DN2davh_Oo2xemAQJJQQSHrVyP-4dArTm56dqBocyurpecWeJr5kmwZsU068t-Uz9iCbrDSpGP7l857O2YPsZUatesRgmOwQBOhzkJ3jcRKtJIPEYA8K9OTrGG3kak1o3L2_t6NqzPCykOs0osOtU2CpLU-fAX-DsfYQKCJLW5ZRu4lxX6J-oKVc4Fa9KDmmrmIyDSiwNPWV0i4o96qIMdGix4WLG3kwhQCuj_Bh6fCsuaMHADEQyPV2CslJ4Pt1ejq575rHs8H3Mhma-MFtliy65iEnkuem2yyd3KUisZGb3jVSFw"
+    }
+  });
+
+  // Example of how to add encryption:
+  // VeilForms.init({
+  //   debug: true,
+  //   publicKey: {
+  //     "kty": "RSA",
+  //     "n": "...",  // Your RSA modulus
+  //     "e": "AQAB",
+  //     "alg": "RSA-OAEP-256"
+  //   }
+  // });
+
+  // Listen for success/error events
+  document.getElementById('contact-form').addEventListener('veilforms:success', (e) => {
+    console.log('Form submitted successfully! ID:', e.detail.submissionId);
+  });
+
+  document.getElementById('contact-form').addEventListener('veilforms:error', (e) => {
+    console.error('Form error:', e.detail.error);
+  });
+</script>
+
+{{ end }}

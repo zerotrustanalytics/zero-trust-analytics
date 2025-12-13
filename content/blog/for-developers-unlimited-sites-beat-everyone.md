@@ -5,6 +5,7 @@ date: 2025-03-03
 author: "Zero Trust Analytics Team"
 category: "Product Updates"
 tags: ["Developers", "Pricing", "Side Projects", "Unlimited", "Value"]
+priority: 0.8
 ---
 
 Let me guess your situation:

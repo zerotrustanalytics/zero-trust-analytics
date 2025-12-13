@@ -5,6 +5,7 @@ date: 2025-01-27
 author: "Zero Trust Analytics Team"
 category: "Privacy"
 tags: ["Google Analytics", "Privacy", "Cost", "Data", "Trust", "Business"]
+priority: 0.8
 ---
 
 "Why would I pay for analytics when Google Analytics is free?"

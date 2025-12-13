@@ -5,6 +5,7 @@ date: 2025-02-17
 author: "Zero Trust Analytics Team"
 category: "Industry"
 tags: ["Agencies", "Pricing", "Marketing", "White Label", "Multi-Site"]
+priority: 0.8
 ---
 
 You manage 50 client websites. Each one needs analytics. Traditional pricing models make this expensive:

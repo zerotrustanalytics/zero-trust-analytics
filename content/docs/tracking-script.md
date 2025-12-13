@@ -2,6 +2,7 @@
 title: "Tracking Script"
 description: "Complete reference for the Zero Trust Analytics tracking script"
 weight: 3
+priority: 0.7
 ---
 
 ## Script Attributes

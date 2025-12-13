@@ -2,6 +2,7 @@
 title: "Stats Endpoint"
 description: "Retrieve analytics data for your sites"
 weight: 12
+priority: 0.7
 ---
 
 ## Overview

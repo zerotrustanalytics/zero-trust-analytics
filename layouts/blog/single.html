@@ -42,17 +42,17 @@
 
           <!-- Social Share -->
           <div class="d-flex gap-2 mb-4">
-            <a href="https://twitter.com/intent/tweet?url={{ .Permalink }}&text={{ .Title }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-              <i class="fab fa-twitter"></i>
+            <a href="https://twitter.com/intent/tweet?url={{ .Permalink }}&text={{ .Title }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" aria-label="Share on Twitter (opens in new window)">
+              <i class="fab fa-twitter" aria-hidden="true"></i>
             </a>
-            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ .Permalink }}&title={{ .Title }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-              <i class="fab fa-linkedin"></i>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ .Permalink }}&title={{ .Title }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" aria-label="Share on LinkedIn (opens in new window)">
+              <i class="fab fa-linkedin" aria-hidden="true"></i>
             </a>
-            <a href="https://www.facebook.com/sharer/sharer.php?u={{ .Permalink }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-              <i class="fab fa-facebook"></i>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ .Permalink }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" aria-label="Share on Facebook (opens in new window)">
+              <i class="fab fa-facebook" aria-hidden="true"></i>
             </a>
-            <button onclick="navigator.clipboard.writeText('{{ .Permalink }}')" class="btn btn-sm btn-outline-secondary">
-              <i class="fas fa-link"></i>
+            <button onclick="navigator.clipboard.writeText('{{ .Permalink }}')" class="btn btn-sm btn-outline-secondary" aria-label="Copy link to clipboard">
+              <i class="fas fa-link" aria-hidden="true"></i>
             </button>
           </div>
         </header>

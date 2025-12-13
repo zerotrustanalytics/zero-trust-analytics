@@ -5,6 +5,7 @@ date: 2024-12-23
 author: "Zero Trust Analytics Team"
 category: "Privacy"
 tags: ["Cookies", "Privacy", "GDPR", "User Experience", "Consent"]
+priority: 0.8
 ---
 
 You know that popup. The one that appears before you can read a single word of content. "We use cookies to improve your experience. Accept All / Manage Preferences / Reject All."

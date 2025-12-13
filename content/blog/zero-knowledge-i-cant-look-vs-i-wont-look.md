@@ -5,6 +5,7 @@ date: 2025-03-10
 author: "Zero Trust Analytics Team"
 category: "Technical"
 tags: ["Zero Knowledge", "Privacy", "Security", "Architecture", "Trust"]
+priority: 0.8
 ---
 
 Every tech company has a privacy policy. They all say some version of:

@@ -2,6 +2,7 @@
 title: "SPA Support"
 description: "Using Zero Trust Analytics with React, Vue, Next.js, and other single-page applications"
 weight: 5
+priority: 0.7
 ---
 
 ## Automatic SPA Detection

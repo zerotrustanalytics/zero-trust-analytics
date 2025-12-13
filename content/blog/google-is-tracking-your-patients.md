@@ -5,6 +5,7 @@ date: 2024-12-16
 author: "Zero Trust Analytics Team"
 category: "HIPAA Compliance"
 tags: ["HIPAA", "Healthcare", "Google Analytics", "Privacy", "Compliance"]
+priority: 0.8
 ---
 
 Every time a patient visits your practice's website, something invisible happens. A small piece of code sends their IP address, browser information, and the pages they viewed to Google's servers. If they're researching "dental implants" or "anxiety medication," that behavior is now part of their advertising profile.

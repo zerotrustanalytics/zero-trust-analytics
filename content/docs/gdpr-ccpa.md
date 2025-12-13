@@ -2,6 +2,7 @@
 title: "GDPR & CCPA Compliance"
 description: "How Zero Trust Analytics helps you stay compliant"
 weight: 22
+priority: 0.7
 ---
 
 ## GDPR Compliance

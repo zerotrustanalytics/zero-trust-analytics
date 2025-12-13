@@ -2,6 +2,7 @@
 title: "Export Endpoint"
 description: "Export your analytics data as JSON or CSV"
 weight: 14
+priority: 0.7
 ---
 
 ## Overview

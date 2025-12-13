@@ -5,4 +5,5 @@ description: "Set a new password for your account"
 css:
   - "auth.css"
 cta: false
+noindex: true
 ---

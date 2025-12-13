@@ -5,6 +5,7 @@ date: 2025-01-13
 author: "Zero Trust Analytics Team"
 category: "GDPR"
 tags: ["GDPR", "Compliance", "Fines", "Google Analytics", "Europe", "Privacy"]
+priority: 0.8
 ---
 
 In January 2022, the Austrian Data Protection Authority made a ruling that sent shockwaves through the marketing world: **Google Analytics violates GDPR.**

@@ -5,6 +5,7 @@ date: 2024-12-30
 author: "Zero Trust Analytics Team"
 category: "Technical"
 tags: ["Zero Knowledge", "Security", "Privacy", "Cryptography", "Technology"]
+priority: 0.8
 ---
 
 When we named our company "Zero Trust Analytics," we weren't just picking cool words. We were committing to a specific security philosophy with deep roots in cryptography and systems design.

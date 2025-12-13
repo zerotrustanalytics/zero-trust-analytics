@@ -2,6 +2,7 @@
 title: "Data Collected"
 description: "Exactly what data Zero Trust Analytics collects (and doesn't)"
 weight: 21
+priority: 0.7
 ---
 
 ## What We Collect

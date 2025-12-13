@@ -5,4 +5,5 @@ description: "Reset your Zero Trust Analytics password"
 css:
   - "auth.css"
 cta: false
+noindex: true
 ---

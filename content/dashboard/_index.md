@@ -10,4 +10,6 @@ js:
   - "auth.js"
   - "dashboard.js"
 cta: false
+noindex: true
+private: true
 ---

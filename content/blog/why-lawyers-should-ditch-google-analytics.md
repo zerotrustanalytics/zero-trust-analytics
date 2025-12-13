@@ -5,6 +5,7 @@ date: 2025-01-20
 author: "Zero Trust Analytics Team"
 category: "Industry"
 tags: ["Legal", "Lawyers", "Confidentiality", "Attorney-Client Privilege", "Privacy", "Google Analytics"]
+priority: 0.8
 ---
 
 You spent years in law school learning about attorney-client privilege. You've built systems to protect confidential communications. Your firm takes client privacy seriously.
