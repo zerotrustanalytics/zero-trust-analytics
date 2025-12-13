@@ -427,9 +427,9 @@ Backend functions and frontend modals already exist for all features. Work is pr
 
 ---
 
-## Phase A: Quick Wins (Week 1) - CURRENT
+## Phase A: Quick Wins (Week 1) - COMPLETE
 
-**Status: IN PROGRESS**
+**Status: SHIPPED**
 
 ### A.1 Sessions Management
 - [x] Backend: `/api/user/sessions` endpoint (GET, DELETE)
@@ -455,12 +455,14 @@ Backend functions and frontend modals already exist for all features. Work is pr
 
 ---
 
-## Phase B: Collaboration & Security (Week 2-3)
+## Phase B: Collaboration & Security (Week 2-3) - CURRENT
+
+**Status: IN PROGRESS**
 
 ### B.1 Activity Log
 - [x] Backend: `/api/activity` endpoint
 - [x] Frontend: `openActivityModal()` with pagination
-- [ ] Enable feature (remove d-none)
+- [x] Enable feature (remove d-none)
 - [ ] Add `logActivity()` calls to all user actions
 - [ ] Add filtering by action type
 - [ ] Add export activity log
@@ -468,7 +470,7 @@ Backend functions and frontend modals already exist for all features. Work is pr
 ### B.2 Team Management
 - [x] Backend: `/api/teams` endpoint (CRUD, invites, roles)
 - [x] Frontend: `openTeamsModal()` with member management
-- [ ] Enable feature (remove d-none)
+- [x] Enable feature (remove d-none)
 - [ ] Implement invite acceptance flow
 - [ ] Add team-based site filtering
 - [ ] Test multi-user permissions
