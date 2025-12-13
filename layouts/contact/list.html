@@ -129,11 +129,17 @@
 
   // Listen for success/error events
   document.getElementById('contact-form').addEventListener('veilforms:success', (e) => {
-    console.log('Form submitted successfully! ID:', e.detail.submissionId);
+    // Form submitted successfully
+    if (window.ZTA?.notify) {
+      window.ZTA.notify.success('Your message has been sent successfully!');
+    }
   });
 
   document.getElementById('contact-form').addEventListener('veilforms:error', (e) => {
-    console.error('Form error:', e.detail.error);
+    // Form submission error
+    if (window.ZTA?.notify) {
+      window.ZTA.notify.error('Failed to send message. Please try again.');
+    }
   });
 </script>
 

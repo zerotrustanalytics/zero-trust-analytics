@@ -1,7 +1,5 @@
 // Zero Trust Analytics - Auth JavaScript
-// Requires: shared/auth-service.js, shared/utils.js, shared/api.js
-
-const API_BASE = '/api';
+// Requires: shared/auth-service.js, shared/utils.js, shared/api.js, shared/notifications.js
 
 // Check auth state on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -28,22 +26,12 @@ async function handleLogin(event) {
     const tempToken = sessionStorage.getItem('temp_token');
 
     if (tempToken && twofaCode) {
-      // Validate 2FA code
-      const res = await fetch(`${API_BASE}/auth/2fa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'validate',
-          tempToken,
-          code: twofaCode
-        })
+      // Validate 2FA code using shared API client
+      const data = await ZTA.api.post('/auth/2fa', {
+        action: 'validate',
+        tempToken,
+        code: twofaCode
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || '2FA validation failed');
-      }
 
       // Clear temp token
       sessionStorage.removeItem('temp_token');
@@ -56,18 +44,8 @@ async function handleLogin(event) {
       return;
     }
 
-    // Initial login request
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
+    // Initial login request using shared API client
+    const data = await ZTA.api.post('/auth/login', { email, password });
 
     // Check if 2FA is required
     if (data.requires_2fa) {
@@ -96,7 +74,8 @@ async function handleLogin(event) {
     // Redirect to dashboard
     window.location.href = '/dashboard/';
   } catch (err) {
-    ZTA.utils.showError(errorEl, err.message);
+    const errorMsg = err.data?.error || err.message || 'Login failed';
+    ZTA.utils.showError(errorEl, errorMsg);
     ZTA.utils.setButtonLoading(btn, false, null, 'Sign In');
   }
 }
@@ -113,9 +92,16 @@ async function handleRegister(event) {
   const confirmPassword = form.confirmPassword.value;
   const plan = form.plan?.value || 'pro'; // Get selected plan from hidden field
 
-  // Validate passwords match
-  if (password !== confirmPassword) {
+  // Validate passwords match using shared validator
+  if (!ZTA.validate.matches(password, confirmPassword)) {
     ZTA.utils.showError(errorEl, 'Passwords do not match');
+    return;
+  }
+
+  // Validate password strength
+  const pwResult = ZTA.validate.password(password);
+  if (!pwResult.valid) {
+    ZTA.utils.showError(errorEl, pwResult.errors[0]);
     return;
   }
 
@@ -123,17 +109,8 @@ async function handleRegister(event) {
   ZTA.utils.hideError(errorEl);
 
   try {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, plan })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
+    // Use shared API client
+    const data = await ZTA.api.post('/auth/register', { email, password, plan });
 
     // Use shared auth service
     ZTA.auth.setAuth(data.token, data.user);
@@ -141,7 +118,8 @@ async function handleRegister(event) {
     // Redirect to dashboard
     window.location.href = '/dashboard/';
   } catch (err) {
-    ZTA.utils.showError(errorEl, err.message);
+    const errorMsg = err.data?.error || err.message || 'Registration failed';
+    ZTA.utils.showError(errorEl, errorMsg);
     ZTA.utils.setButtonLoading(btn, false, null, 'Create Account');
   }
 }
@@ -156,22 +134,19 @@ async function handleForgotPassword(event) {
 
   const email = form.email.value;
 
+  // Validate email using shared validator
+  if (!ZTA.validate.email(email)) {
+    ZTA.utils.showError(errorEl, 'Please enter a valid email address');
+    return;
+  }
+
   ZTA.utils.setButtonLoading(btn, true, 'Sending...');
   ZTA.utils.hideError(errorEl);
   if (successEl) successEl.style.display = 'none';
 
   try {
-    const res = await fetch(`${API_BASE}/auth/forgot`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Request failed');
-    }
+    // Use shared API client
+    await ZTA.api.post('/auth/forgot', { email });
 
     // Show success message
     if (successEl) {
@@ -180,7 +155,8 @@ async function handleForgotPassword(event) {
     }
     ZTA.utils.setButtonLoading(btn, false, null, 'Send Reset Link');
   } catch (err) {
-    ZTA.utils.showError(errorEl, err.message);
+    const errorMsg = err.data?.error || err.message || 'Request failed';
+    ZTA.utils.showError(errorEl, errorMsg);
     ZTA.utils.setButtonLoading(btn, false, null, 'Send Reset Link');
   }
 }
@@ -196,8 +172,16 @@ async function handleResetPassword(event) {
   const confirmPassword = form.confirmPassword.value;
   const token = new URLSearchParams(window.location.search).get('token');
 
-  if (password !== confirmPassword) {
+  // Validate passwords match
+  if (!ZTA.validate.matches(password, confirmPassword)) {
     ZTA.utils.showError(errorEl, 'Passwords do not match');
+    return;
+  }
+
+  // Validate password strength
+  const pwResult = ZTA.validate.password(password);
+  if (!pwResult.valid) {
+    ZTA.utils.showError(errorEl, pwResult.errors[0]);
     return;
   }
 
@@ -210,22 +194,14 @@ async function handleResetPassword(event) {
   ZTA.utils.hideError(errorEl);
 
   try {
-    const res = await fetch(`${API_BASE}/auth/reset`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Reset failed');
-    }
+    // Use shared API client
+    await ZTA.api.post('/auth/reset', { token, password });
 
     // Redirect to login with success message
     window.location.href = '/login/?reset=success';
   } catch (err) {
-    ZTA.utils.showError(errorEl, err.message);
+    const errorMsg = err.data?.error || err.message || 'Reset failed';
+    ZTA.utils.showError(errorEl, errorMsg);
     ZTA.utils.setButtonLoading(btn, false, null, 'Reset Password');
   }
 }

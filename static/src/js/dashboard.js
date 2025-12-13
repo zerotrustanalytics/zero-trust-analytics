@@ -492,7 +492,10 @@ async function handleAddSite(event) {
     const data = await ZTA.api.apiPost('/sites/create', { domain });
 
     // Show embed code immediately
-    alert('Site created! Embed code:\n\n' + data.embedCode);
+    ZTA.notify.success('Site created successfully!');
+    // Show embed code in modal
+    document.getElementById('embed-code').textContent = data.embedCode;
+    showModal('embedCodeModal');
 
     // Close modal and reload sites
     hideModal('addSiteModal');
@@ -513,7 +516,7 @@ async function handleAddSite(event) {
 // Export data
 async function exportData(format) {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -539,7 +542,7 @@ async function exportData(format) {
     URL.revokeObjectURL(a.href);
 
   } catch (err) {
-    alert('Failed to export data');
+    ZTA.notify.error('Failed to export data');
   }
 }
 
@@ -547,7 +550,7 @@ async function exportData(format) {
 function copyEmbedCode() {
   const code = document.getElementById('embed-code').textContent;
   navigator.clipboard.writeText(code).then(() => {
-    alert('Embed code copied to clipboard!');
+    ZTA.notify.success('Embed code copied to clipboard!');
   });
 }
 
@@ -916,11 +919,11 @@ async function deleteSite(siteId) {
     // Close modal and reload
     hideModal('siteSettingsModal');
 
-    alert('Site deleted successfully');
+    ZTA.notify.success('Site deleted successfully');
     await loadSites();
 
   } catch (err) {
-    alert('Failed to delete site: ' + err.message);
+    ZTA.notify.error('Failed to delete site: ' + err.message);
   }
 }
 
@@ -933,7 +936,7 @@ async function startCheckout() {
     // Redirect to Stripe checkout
     window.location.href = data.url;
   } catch (err) {
-    alert('Failed to start checkout: ' + err.message);
+    ZTA.notify.error('Failed to start checkout: ' + err.message);
   }
 }
 
@@ -944,7 +947,7 @@ async function openBillingPortal() {
     // Redirect to Stripe portal
     window.location.href = data.url;
   } catch (err) {
-    alert('Failed to open billing portal: ' + err.message);
+    ZTA.notify.error('Failed to open billing portal: ' + err.message);
   }
 }
 
@@ -953,13 +956,13 @@ function checkCheckoutStatus() {
   const params = new URLSearchParams(window.location.search);
 
   if (params.get('success') === 'true') {
-    alert('Payment successful! Your subscription is now active.');
+    ZTA.notify.success('Payment successful! Your subscription is now active.');
     // Clean URL
     window.history.replaceState({}, document.title, '/dashboard/');
   }
 
   if (params.get('canceled') === 'true') {
-    alert('Checkout was canceled. You can try again when ready.');
+    ZTA.notify.info('Checkout was canceled. You can try again when ready.');
     window.history.replaceState({}, document.title, '/dashboard/');
   }
 }
@@ -1450,7 +1453,7 @@ async function revokeSession(sessionId) {
     loadSessions();
 
   } catch (err) {
-    alert('Failed to sign out device: ' + err.message);
+    ZTA.notify.error('Failed to sign out device: ' + err.message);
   }
 }
 
@@ -1471,13 +1474,13 @@ async function revokeAllSessions() {
       throw new Error(data.error || 'Failed to revoke sessions');
     }
 
-    alert(data.message || 'All other devices have been signed out');
+    ZTA.notify.success(data.message || 'All other devices have been signed out');
 
     // Reload sessions
     loadSessions();
 
   } catch (err) {
-    alert('Failed to sign out devices: ' + err.message);
+    ZTA.notify.error('Failed to sign out devices: ' + err.message);
   }
 }
 
@@ -1485,7 +1488,7 @@ async function revokeAllSessions() {
 
 function openShareModal() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -1540,7 +1543,7 @@ async function createShareLink() {
     loadExistingShares();
 
   } catch (err) {
-    alert('Failed to create share link: ' + err.message);
+    ZTA.notify.error('Failed to create share link: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-link-45deg me-1"></i>Generate Share Link';
@@ -1620,7 +1623,7 @@ async function revokeShare(token) {
     loadExistingShares();
 
   } catch (err) {
-    alert('Failed to revoke share: ' + err.message);
+    ZTA.notify.error('Failed to revoke share: ' + err.message);
   }
 }
 
@@ -1736,7 +1739,7 @@ function formatDateForInput(date) {
 
 function exportPDF() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -1997,7 +2000,7 @@ async function loadAlerts() {
 
 async function createAlert() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -2045,7 +2048,7 @@ async function createAlert() {
     loadAlerts();
 
   } catch (err) {
-    alert('Failed to create alert: ' + err.message);
+    ZTA.notify.error('Failed to create alert: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Alert';
@@ -2071,7 +2074,7 @@ async function toggleAlert(alertId, isActive) {
     loadAlerts();
 
   } catch (err) {
-    alert('Failed to update alert: ' + err.message);
+    ZTA.notify.error('Failed to update alert: ' + err.message);
   }
 }
 
@@ -2094,7 +2097,7 @@ async function deleteAlert(alertId) {
     loadAlerts();
 
   } catch (err) {
-    alert('Failed to delete alert: ' + err.message);
+    ZTA.notify.error('Failed to delete alert: ' + err.message);
   }
 }
 
@@ -2200,7 +2203,7 @@ async function loadWebhooks() {
 
 async function createWebhook() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -2208,12 +2211,12 @@ async function createWebhook() {
   const url = document.getElementById('new-webhook-url').value.trim();
 
   if (!url) {
-    alert('Please enter a webhook URL');
+    ZTA.notify.warning('Please enter a webhook URL');
     return;
   }
 
   if (!url.startsWith('https://')) {
-    alert('Webhook URL must use HTTPS');
+    ZTA.notify.warning('Webhook URL must use HTTPS');
     return;
   }
 
@@ -2225,7 +2228,7 @@ async function createWebhook() {
   if (document.getElementById('webhook-event-spike').checked) events.push('traffic_spike');
 
   if (events.length === 0) {
-    alert('Please select at least one event type');
+    ZTA.notify.warning('Please select at least one event type');
     return;
   }
 
@@ -2266,7 +2269,7 @@ async function createWebhook() {
     loadWebhooks();
 
   } catch (err) {
-    alert('Failed to create webhook: ' + err.message);
+    ZTA.notify.error('Failed to create webhook: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Webhook';
@@ -2305,16 +2308,16 @@ async function testWebhook(webhookId) {
     const data = await res.json();
 
     if (data.success) {
-      alert('Test webhook delivered successfully!');
+      ZTA.notify.success('Test webhook delivered successfully!');
     } else {
-      alert('Test failed: ' + data.message);
+      ZTA.notify.error('Test failed: ' + data.message);
     }
 
     // Reload to update stats
     loadWebhooks();
 
   } catch (err) {
-    alert('Failed to test webhook: ' + err.message);
+    ZTA.notify.error('Failed to test webhook: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-send"></i>';
@@ -2340,7 +2343,7 @@ async function deleteWebhook(webhookId) {
     loadWebhooks();
 
   } catch (err) {
-    alert('Failed to delete webhook: ' + err.message);
+    ZTA.notify.error('Failed to delete webhook: ' + err.message);
   }
 }
 
@@ -2458,7 +2461,7 @@ async function createApiKey() {
     loadApiKeys();
 
   } catch (err) {
-    alert('Failed to create API key: ' + err.message);
+    ZTA.notify.error('Failed to create API key: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Generate API Key';
@@ -2496,7 +2499,7 @@ async function revokeApiKey(keyId) {
     loadApiKeys();
 
   } catch (err) {
-    alert('Failed to revoke API key: ' + err.message);
+    ZTA.notify.error('Failed to revoke API key: ' + err.message);
   }
 }
 
@@ -2585,7 +2588,7 @@ let currentAnnotations = [];
 
 function openAnnotationModal() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -2679,7 +2682,7 @@ async function loadAnnotations() {
 
 async function createAnnotation() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -2691,7 +2694,7 @@ async function createAnnotation() {
   const icon = activeIconBtn ? activeIconBtn.dataset.icon : 'star';
 
   if (!date) {
-    alert('Please select a date');
+    ZTA.notify.warning('Please select a date');
     return;
   }
 
@@ -2730,7 +2733,7 @@ async function createAnnotation() {
     loadAnnotations();
 
   } catch (err) {
-    alert('Failed to create annotation: ' + err.message);
+    ZTA.notify.error('Failed to create annotation: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = 'Add Annotation';
@@ -2757,7 +2760,7 @@ async function deleteAnnotation(annotationId) {
     loadAnnotations();
 
   } catch (err) {
-    alert('Failed to delete annotation: ' + err.message);
+    ZTA.notify.error('Failed to delete annotation: ' + err.message);
   }
 }
 
@@ -2896,7 +2899,7 @@ async function createTeam() {
   const name = document.getElementById('new-team-name').value.trim();
 
   if (!name) {
-    alert('Please enter a team name');
+    ZTA.notify.warning('Please enter a team name');
     return;
   }
 
@@ -2926,7 +2929,7 @@ async function createTeam() {
     loadUserTeams();
 
   } catch (err) {
-    alert('Failed to create team: ' + err.message);
+    ZTA.notify.error('Failed to create team: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Team';
@@ -3118,7 +3121,7 @@ async function inviteTeamMember() {
   const role = document.getElementById('invite-role').value;
 
   if (!email) {
-    alert('Please enter an email address');
+    ZTA.notify.warning('Please enter an email address');
     return;
   }
 
@@ -3159,7 +3162,7 @@ async function inviteTeamMember() {
     loadTeamDetails();
 
   } catch (err) {
-    alert('Failed to send invite: ' + err.message);
+    ZTA.notify.error('Failed to send invite: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-send me-1"></i>Invite';
@@ -3205,7 +3208,7 @@ async function updateMemberRole(memberId, newRole) {
     loadTeamDetails();
 
   } catch (err) {
-    alert('Failed to update role: ' + err.message);
+    ZTA.notify.error('Failed to update role: ' + err.message);
   }
 }
 
@@ -3232,7 +3235,7 @@ async function removeMember(memberId) {
     loadTeamDetails();
 
   } catch (err) {
-    alert('Failed to remove member: ' + err.message);
+    ZTA.notify.error('Failed to remove member: ' + err.message);
   }
 }
 
@@ -3258,7 +3261,7 @@ async function revokeInvite(inviteId) {
     loadTeamDetails();
 
   } catch (err) {
-    alert('Failed to revoke invite: ' + err.message);
+    ZTA.notify.error('Failed to revoke invite: ' + err.message);
   }
 }
 
@@ -3267,7 +3270,7 @@ async function addSiteToTeam() {
 
   const siteId = document.getElementById('site-to-add').value;
   if (!siteId) {
-    alert('Please select a site');
+    ZTA.notify.warning('Please select a site');
     return;
   }
 
@@ -3298,7 +3301,7 @@ async function addSiteToTeam() {
     loadTeamDetails();
 
   } catch (err) {
-    alert('Failed to add site: ' + err.message);
+    ZTA.notify.error('Failed to add site: ' + err.message);
   }
 }
 
@@ -3326,7 +3329,7 @@ async function leaveCurrentTeam() {
     loadUserTeams();
 
   } catch (err) {
-    alert('Failed to leave team: ' + err.message);
+    ZTA.notify.error('Failed to leave team: ' + err.message);
   }
 }
 
@@ -3463,7 +3466,7 @@ async function loadGoals() {
 
 async function createGoal() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -3475,7 +3478,7 @@ async function createGoal() {
   const notifyOnComplete = document.getElementById('new-goal-notify').checked;
 
   if (!target || parseInt(target) < 1) {
-    alert('Please enter a valid target');
+    ZTA.notify.warning('Please enter a valid target');
     return;
   }
 
@@ -3515,7 +3518,7 @@ async function createGoal() {
     loadGoals();
 
   } catch (err) {
-    alert('Failed to create goal: ' + err.message);
+    ZTA.notify.error('Failed to create goal: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Goal';
@@ -3542,7 +3545,7 @@ async function deleteGoal(goalId) {
     loadGoals();
 
   } catch (err) {
-    alert('Failed to delete goal: ' + err.message);
+    ZTA.notify.error('Failed to delete goal: ' + err.message);
   }
 }
 
@@ -3856,7 +3859,7 @@ async function loadFunnels() {
 
 async function createFunnel() {
   if (!currentSiteId) {
-    alert('Please select a site first');
+    ZTA.notify.warning('Please select a site first');
     return;
   }
 
@@ -3864,7 +3867,7 @@ async function createFunnel() {
   const steps = getFunnelSteps();
 
   if (steps.length < 2) {
-    alert('A funnel requires at least 2 steps with values');
+    ZTA.notify.warning('A funnel requires at least 2 steps with values');
     return;
   }
 
@@ -3905,7 +3908,7 @@ async function createFunnel() {
     loadFunnels();
 
   } catch (err) {
-    alert('Failed to create funnel: ' + err.message);
+    ZTA.notify.error('Failed to create funnel: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Create Funnel';
@@ -3932,7 +3935,7 @@ async function deleteFunnel(funnelId) {
     loadFunnels();
 
   } catch (err) {
-    alert('Failed to delete funnel: ' + err.message);
+    ZTA.notify.error('Failed to delete funnel: ' + err.message);
   }
 }
 

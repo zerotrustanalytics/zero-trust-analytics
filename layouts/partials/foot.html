@@ -5,6 +5,11 @@
 <!-- Shared utilities - load first, no defer to ensure ZTA namespace exists -->
 <script src="{{ "src/js/shared/utils.js" | relURL }}"></script>
 <script src="{{ "src/js/shared/auth-service.js" | relURL }}"></script>
+<script src="{{ "src/js/shared/api.js" | relURL }}"></script>
+<script src="{{ "src/js/shared/notifications.js" | relURL }}"></script>
+<script src="{{ "src/js/shared/modal.js" | relURL }}"></script>
+<script src="{{ "src/js/shared/validators.js" | relURL }}"></script>
+<script src="{{ "src/js/shared/form-handler.js" | relURL }}"></script>
 
 {{ if eq .Section "dashboard" }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
