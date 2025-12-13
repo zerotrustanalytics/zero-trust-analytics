@@ -17,6 +17,16 @@ Thumbs.db
 # Local Netlify folder
 .netlify
 
+# Docker
+docker/.env
+docker/certbot/
+docker/ssl/
+*.db
+*.db-shm
+*.db-wal
+data/
+backups/
+
 # Lead scraping output (contains business data)
 /leads/
 nul
