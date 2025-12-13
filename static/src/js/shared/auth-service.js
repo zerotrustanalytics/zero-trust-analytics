@@ -91,17 +91,15 @@ const THEME_KEY = 'zta_theme';
 
 /**
  * Get current theme (light or dark)
+ * Default to LIGHT mode - user must explicitly choose dark
  */
 function getTheme() {
-  // Check localStorage first
+  // Check localStorage first - respect user's explicit choice
   const stored = localStorage.getItem(THEME_KEY);
   if (stored) return stored;
 
-  // Check system preference
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-
+  // Default to light mode (don't auto-detect system preference)
+  // Users can click the toggle if they want dark mode
   return 'light';
 }
 

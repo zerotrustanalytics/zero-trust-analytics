@@ -57,6 +57,20 @@ body {
   border-color: var(--zta-border);
 }
 
+/* Dark mode navbar */
+[data-theme="dark"] .navbar.bg-white {
+  background-color: var(--zta-bg-secondary) !important;
+}
+
+[data-theme="dark"] .navbar-light .navbar-brand,
+[data-theme="dark"] .navbar-light .nav-link {
+  color: var(--zta-text) !important;
+}
+
+[data-theme="dark"] .navbar-light .nav-link:hover {
+  color: var(--zta-primary) !important;
+}
+
 [data-theme="dark"] .bg-light {
   background-color: var(--zta-bg-secondary) !important;
 }
