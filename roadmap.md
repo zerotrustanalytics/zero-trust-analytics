@@ -455,9 +455,9 @@ Backend functions and frontend modals already exist for all features. Work is pr
 
 ---
 
-## Phase B: Collaboration & Security (Week 2-3) - CURRENT
+## Phase B: Collaboration & Security (Week 2-3) - COMPLETE
 
-**Status: IN PROGRESS**
+**Status: SHIPPED**
 
 ### B.1 Activity Log
 - [x] Backend: `/api/activity` endpoint
@@ -477,12 +477,14 @@ Backend functions and frontend modals already exist for all features. Work is pr
 
 ---
 
-## Phase C: Automation & Monitoring (Week 4-5)
+## Phase C: Automation & Monitoring (Week 4-5) - COMPLETE
+
+**Status: SHIPPED**
 
 ### C.1 Webhooks
 - [x] Backend: `/api/webhooks` endpoint (CRUD, test, HMAC)
 - [x] Frontend: `openWebhooksModal()` with delivery stats
-- [ ] Enable feature (remove d-none)
+- [x] Enable feature (remove d-none)
 - [ ] Fire webhooks from track/stats endpoints
 - [ ] Add retry logic for failed deliveries
 - [ ] Add webhook delivery history
@@ -490,29 +492,31 @@ Backend functions and frontend modals already exist for all features. Work is pr
 ### C.2 Alerts
 - [x] Backend: `/api/alerts` endpoint (CRUD, thresholds)
 - [x] Frontend: `openAlertsModal()` with baseline display
-- [ ] Enable feature (remove d-none)
+- [x] Enable feature (remove d-none)
 - [ ] Build scheduled function for alert evaluation
 - [ ] Implement notification delivery (email + webhook)
 - [ ] Add alert trigger history
 
 ---
 
-## Phase D: Advanced Analytics (Week 6+)
+## Phase D: Advanced Analytics (Week 6+) - COMPLETE
+
+**Status: SHIPPED**
 
 ### D.1 Funnels
 - [x] Backend: `/api/funnels` endpoint (CRUD, steps)
 - [x] Frontend: `openFunnelsModal()` with visualization
-- [ ] Enable feature (remove d-none)
-- [ ] Implement `calculateFunnelData` algorithm
+- [x] Enable feature (remove d-none)
+- [x] Implement `calculateFunnelData` algorithm
 - [ ] Add date range filtering
 - [ ] Optimize queries for performance
 
 ### D.2 Heatmaps
 - [x] Backend: `/api/heatmaps` endpoint (record, retrieve)
 - [x] Frontend: `openHeatmapsModal()` with page selector
-- [ ] Enable feature (remove d-none)
+- [x] Enable feature (remove d-none)
 - [ ] Add click/scroll tracking to analytics.js
-- [ ] Implement storage layer functions
+- [x] Implement storage layer functions
 - [ ] Integrate heatmap visualization library
 - [ ] Build page layout capture system
 
