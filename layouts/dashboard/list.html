@@ -76,6 +76,9 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="openHeatmapsModal()" aria-label="View heatmaps">
           <i class="fas fa-fire me-1" aria-hidden="true"></i>Heatmaps
         </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openGSCModal()" aria-label="Google Search Console">
+          <i class="fas fa-search me-1" aria-hidden="true"></i>Search Console
+        </button>
         <button class="btn btn-outline-secondary" onclick="openBillingPortal()" aria-label="Open billing portal">
           <i class="fas fa-credit-card me-1" aria-hidden="true"></i>Billing
         </button>
@@ -1957,6 +1960,195 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
   </div>
 </div>
 
+<!-- Google Search Console Modal -->
+<div class="modal fade" id="gscModal" tabindex="-1" aria-labelledby="gscModalTitle">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="gscModalTitle">
+          <i class="fab fa-google me-2" aria-hidden="true"></i>Google Search Console
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Connection Status -->
+        <div id="gsc-not-connected">
+          <div class="text-center py-5">
+            <i class="fab fa-google fa-4x text-muted mb-4"></i>
+            <h4>Connect Google Search Console</h4>
+            <p class="text-muted mb-4">View your search performance data alongside your analytics.<br>See impressions, clicks, CTR, and keyword rankings.</p>
+            <button class="btn btn-primary btn-lg" onclick="connectGSC()">
+              <i class="fab fa-google me-2"></i>Connect Google Search Console
+            </button>
+            <p class="text-muted small mt-3">We only request read-only access to your search data.</p>
+          </div>
+        </div>
+
+        <!-- Connected View -->
+        <div id="gsc-connected" class="d-none">
+          <!-- GSC Site Selector -->
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <label for="gsc-site-selector" class="form-label mb-0">GSC Property:</label>
+              <select class="form-select form-select-sm" id="gsc-site-selector" onchange="loadGSCData()" style="min-width: 300px;">
+                <option value="">Select a property...</option>
+              </select>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary btn-sm" onclick="refreshGSCData()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+              </button>
+              <button class="btn btn-outline-danger btn-sm" onclick="disconnectGSC()">
+                <i class="fas fa-unlink me-1"></i>Disconnect
+              </button>
+            </div>
+          </div>
+
+          <!-- GSC Metrics Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h6 class="card-subtitle mb-2 text-white-50">Total Clicks</h6>
+                      <h3 class="card-title mb-0" id="gsc-total-clicks">-</h3>
+                    </div>
+                    <i class="fas fa-mouse-pointer fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h6 class="card-subtitle mb-2 text-white-50">Total Impressions</h6>
+                      <h3 class="card-title mb-0" id="gsc-total-impressions">-</h3>
+                    </div>
+                    <i class="fas fa-eye fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h6 class="card-subtitle mb-2 text-white-50">Average CTR</h6>
+                      <h3 class="card-title mb-0" id="gsc-avg-ctr">-</h3>
+                    </div>
+                    <i class="fas fa-percentage fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h6 class="card-subtitle mb-2 text-dark-50">Avg Position</h6>
+                      <h3 class="card-title mb-0" id="gsc-avg-position">-</h3>
+                    </div>
+                    <i class="fas fa-sort-numeric-up fa-2x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GSC Tabs -->
+          <ul class="nav nav-tabs" id="gscTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="gsc-queries-tab" data-bs-toggle="tab" data-bs-target="#gsc-queries" type="button" role="tab">
+                <i class="fas fa-search me-1"></i>Top Queries
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="gsc-pages-tab" data-bs-toggle="tab" data-bs-target="#gsc-pages" type="button" role="tab">
+                <i class="fas fa-file-alt me-1"></i>Top Pages
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="gsc-performance-tab" data-bs-toggle="tab" data-bs-target="#gsc-performance" type="button" role="tab">
+                <i class="fas fa-chart-line me-1"></i>Performance Over Time
+              </button>
+            </li>
+          </ul>
+          <div class="tab-content border border-top-0 rounded-bottom p-3" id="gscTabContent">
+            <!-- Top Queries Tab -->
+            <div class="tab-pane fade show active" id="gsc-queries" role="tabpanel">
+              <div class="table-responsive">
+                <table class="table table-hover" id="gsc-queries-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Search Query</th>
+                      <th class="text-end">Clicks</th>
+                      <th class="text-end">Impressions</th>
+                      <th class="text-end">CTR</th>
+                      <th class="text-end">Position</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Select a property to view data</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Top Pages Tab -->
+            <div class="tab-pane fade" id="gsc-pages" role="tabpanel">
+              <div class="table-responsive">
+                <table class="table table-hover" id="gsc-pages-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Page URL</th>
+                      <th class="text-end">Clicks</th>
+                      <th class="text-end">Impressions</th>
+                      <th class="text-end">CTR</th>
+                      <th class="text-end">Position</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Select a property to view data</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Performance Over Time Tab -->
+            <div class="tab-pane fade" id="gsc-performance" role="tabpanel">
+              <div id="gsc-chart-container" style="height: 300px;">
+                <canvas id="gsc-performance-chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="gsc-loading" class="d-none text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3 text-muted">Loading Search Console data...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="gsc-error" class="d-none">
+          <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="gsc-error-message">An error occurred while fetching Search Console data.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Onboarding Wizard Modal -->
 <div class="modal fade" id="onboardingModal" tabindex="-1" aria-labelledby="onboardingModalTitle" data-bs-backdrop="static">
   <div class="modal-dialog modal-lg">
@@ -2910,6 +3102,324 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('import-preview').classList.add('d-none');
       }
     });
+  }
+});
+
+// ============================================
+// Google Search Console Functions
+// ============================================
+
+let gscChart = null;
+
+function openGSCModal() {
+  const modal = new bootstrap.Modal(document.getElementById('gscModal'));
+  modal.show();
+  checkGSCStatus();
+}
+
+async function checkGSCStatus() {
+  showGSCLoading(true);
+
+  try {
+    const response = await fetch('/.netlify/functions/gsc?action=status', {
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.connected) {
+      document.getElementById('gsc-not-connected').classList.add('d-none');
+      document.getElementById('gsc-connected').classList.remove('d-none');
+      await loadGSCSites();
+    } else {
+      document.getElementById('gsc-not-connected').classList.remove('d-none');
+      document.getElementById('gsc-connected').classList.add('d-none');
+    }
+  } catch (err) {
+    showGSCError('Failed to check connection status: ' + err.message);
+  } finally {
+    showGSCLoading(false);
+  }
+}
+
+async function connectGSC() {
+  showGSCLoading(true);
+
+  try {
+    const response = await fetch('/.netlify/functions/gsc?action=connect', {
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.authUrl) {
+      // Redirect to Google OAuth
+      window.location.href = data.authUrl;
+    } else {
+      showGSCError(data.error || 'Failed to start OAuth flow');
+    }
+  } catch (err) {
+    showGSCError('Failed to connect: ' + err.message);
+  } finally {
+    showGSCLoading(false);
+  }
+}
+
+async function disconnectGSC() {
+  if (!confirm('Are you sure you want to disconnect Google Search Console?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('/.netlify/functions/gsc?action=disconnect', {
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+
+    if (response.ok) {
+      document.getElementById('gsc-not-connected').classList.remove('d-none');
+      document.getElementById('gsc-connected').classList.add('d-none');
+    }
+  } catch (err) {
+    showGSCError('Failed to disconnect: ' + err.message);
+  }
+}
+
+async function loadGSCSites() {
+  try {
+    const response = await fetch('/.netlify/functions/gsc?action=sites', {
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+
+    const data = await response.json();
+    const selector = document.getElementById('gsc-site-selector');
+
+    selector.innerHTML = '<option value="">Select a property...</option>';
+
+    if (data.sites && data.sites.length > 0) {
+      data.sites.forEach(site => {
+        const option = document.createElement('option');
+        option.value = site.url;
+        option.textContent = site.url;
+        selector.appendChild(option);
+      });
+    }
+  } catch (err) {
+    showGSCError('Failed to load sites: ' + err.message);
+  }
+}
+
+async function loadGSCData() {
+  const siteUrl = document.getElementById('gsc-site-selector').value;
+  if (!siteUrl) return;
+
+  showGSCLoading(true);
+  hideGSCError();
+
+  try {
+    // Load queries, pages, and performance in parallel
+    const [queriesRes, pagesRes, performanceRes] = await Promise.all([
+      fetch(`/.netlify/functions/gsc?action=queries&siteUrl=${encodeURIComponent(siteUrl)}`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      }),
+      fetch(`/.netlify/functions/gsc?action=pages&siteUrl=${encodeURIComponent(siteUrl)}`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      }),
+      fetch(`/.netlify/functions/gsc?action=performance&siteUrl=${encodeURIComponent(siteUrl)}&dimensions=date`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      })
+    ]);
+
+    const [queriesData, pagesData, performanceData] = await Promise.all([
+      queriesRes.json(),
+      pagesRes.json(),
+      performanceRes.json()
+    ]);
+
+    // Update totals from performance data
+    if (performanceData.totals) {
+      document.getElementById('gsc-total-clicks').textContent = formatNumber(performanceData.totals.clicks);
+      document.getElementById('gsc-total-impressions').textContent = formatNumber(performanceData.totals.impressions);
+      document.getElementById('gsc-avg-ctr').textContent = (performanceData.totals.avgCtr * 100).toFixed(2) + '%';
+      document.getElementById('gsc-avg-position').textContent = performanceData.totals.avgPosition.toFixed(1);
+    }
+
+    // Update queries table
+    updateGSCQueriesTable(queriesData.queries || []);
+
+    // Update pages table
+    updateGSCPagesTable(pagesData.pages || []);
+
+    // Update chart
+    updateGSCChart(performanceData.rows || []);
+
+  } catch (err) {
+    showGSCError('Failed to load data: ' + err.message);
+  } finally {
+    showGSCLoading(false);
+  }
+}
+
+function refreshGSCData() {
+  loadGSCData();
+}
+
+function updateGSCQueriesTable(queries) {
+  const tbody = document.querySelector('#gsc-queries-table tbody');
+
+  if (queries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No query data available</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = queries.map(q => `
+    <tr>
+      <td>${escapeHtml(q.query)}</td>
+      <td class="text-end">${formatNumber(q.clicks)}</td>
+      <td class="text-end">${formatNumber(q.impressions)}</td>
+      <td class="text-end">${(q.ctr * 100).toFixed(2)}%</td>
+      <td class="text-end">${q.position.toFixed(1)}</td>
+    </tr>
+  `).join('');
+}
+
+function updateGSCPagesTable(pages) {
+  const tbody = document.querySelector('#gsc-pages-table tbody');
+
+  if (pages.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No page data available</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = pages.map(p => `
+    <tr>
+      <td><a href="${escapeHtml(p.page)}" target="_blank" class="text-decoration-none">${escapeHtml(p.page.replace(/^https?:\/\/[^\/]+/, ''))}</a></td>
+      <td class="text-end">${formatNumber(p.clicks)}</td>
+      <td class="text-end">${formatNumber(p.impressions)}</td>
+      <td class="text-end">${(p.ctr * 100).toFixed(2)}%</td>
+      <td class="text-end">${p.position.toFixed(1)}</td>
+    </tr>
+  `).join('');
+}
+
+function updateGSCChart(rows) {
+  const canvas = document.getElementById('gsc-performance-chart');
+  const ctx = canvas.getContext('2d');
+
+  if (gscChart) {
+    gscChart.destroy();
+  }
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  const labels = rows.map(r => r.date);
+  const clicksData = rows.map(r => r.clicks);
+  const impressionsData = rows.map(r => r.impressions);
+
+  gscChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Clicks',
+          data: clicksData,
+          borderColor: 'rgb(54, 162, 235)',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Impressions',
+          data: impressionsData,
+          borderColor: 'rgb(255, 159, 64)',
+          backgroundColor: 'rgba(255, 159, 64, 0.1)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: { display: true, text: 'Clicks' }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: { display: true, text: 'Impressions' },
+          grid: { drawOnChartArea: false }
+        }
+      },
+      plugins: {
+        legend: { position: 'top' }
+      }
+    }
+  });
+}
+
+function showGSCLoading(show) {
+  const loading = document.getElementById('gsc-loading');
+  const notConnected = document.getElementById('gsc-not-connected');
+  const connected = document.getElementById('gsc-connected');
+
+  if (show) {
+    loading.classList.remove('d-none');
+    notConnected.classList.add('d-none');
+    connected.classList.add('d-none');
+  } else {
+    loading.classList.add('d-none');
+  }
+}
+
+function showGSCError(message) {
+  const errorEl = document.getElementById('gsc-error');
+  const messageEl = document.getElementById('gsc-error-message');
+  messageEl.textContent = message;
+  errorEl.classList.remove('d-none');
+}
+
+function hideGSCError() {
+  document.getElementById('gsc-error').classList.add('d-none');
+}
+
+// Check for GSC callback params on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('gsc_connected') === 'true') {
+    // Show success toast or notification
+    showToast('Google Search Console connected successfully!', 'success');
+    // Clean up URL
+    window.history.replaceState({}, '', window.location.pathname);
+    // Open the GSC modal
+    setTimeout(() => openGSCModal(), 500);
+  }
+
+  if (params.get('gsc_error')) {
+    showToast('Failed to connect Google Search Console: ' + params.get('gsc_error'), 'danger');
+    window.history.replaceState({}, '', window.location.pathname);
   }
 });
 </script>
