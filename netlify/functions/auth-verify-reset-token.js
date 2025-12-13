@@ -1,4 +1,5 @@
 import { getPasswordResetToken } from './lib/storage.js';
+import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
 
 export default async function handler(req, context) {
   if (req.method === 'OPTIONS') {
@@ -17,6 +18,15 @@ export default async function handler(req, context) {
       status: 405,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  // Rate limit by IP (10 per minute)
+  const ip = context?.ip || req.headers.get?.('x-forwarded-for')?.split(',')[0] || 'unknown';
+  const rateLimitKey = hashIP(ip);
+  const rateLimit = checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60000 });
+
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
   }
 
   try {

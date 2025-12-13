@@ -76,11 +76,11 @@ export default async function handler(req, context) {
         startDate.setDate(startDate.getDate() - 30);
     }
 
-    // Format dates for Tinybird
+    // Format dates for database query
     const startStr = startDate.toISOString().replace('T', ' ').split('.')[0];
     const endStr = endDate.toISOString().replace('T', ' ').split('.')[0];
 
-    // Query Tinybird for export data
+    // Query database for export data
     const data = await exportData(siteId, startStr, endStr, dataType, limit);
 
     const timestamp = new Date().toISOString().split('T')[0];

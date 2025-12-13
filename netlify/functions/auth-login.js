@@ -1,4 +1,4 @@
-import { verifyPassword, createToken } from './lib/auth.js';
+import { verifyPassword, createToken, Errors } from './lib/auth.js';
 import { getUser } from './lib/storage.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
 
@@ -15,10 +15,7 @@ export default async function handler(req, context) {
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return Errors.methodNotAllowed();
   }
 
   // Strict rate limiting for login: 10 attempts per minute per IP
@@ -34,31 +31,45 @@ export default async function handler(req, context) {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return new Response(JSON.stringify({ error: 'Email and password required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return Errors.validationError('Email and password required');
     }
 
     // Get user
     const user = await getUser(email);
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return Errors.unauthorized('Invalid credentials');
     }
 
     // Verify password
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
-      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
+      return Errors.unauthorized('Invalid credentials');
+    }
+
+    // Check if user has 2FA enabled
+    if (user.twoFactorEnabled) {
+      // Create a temporary token (short-lived, 5 minutes)
+      const jwt = (await import('jsonwebtoken')).default;
+      const tempToken = jwt.sign(
+        { email: user.email, temp: true },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+
+      return new Response(JSON.stringify({
+        success: true,
+        requires_2fa: true,
+        tempToken
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
       });
     }
 
-    // Create JWT token
+    // Create JWT token (no 2FA required)
     const token = createToken({ id: user.id, email: user.email });
 
     return new Response(JSON.stringify({
@@ -78,10 +89,7 @@ export default async function handler(req, context) {
     });
   } catch (err) {
     console.error('Login error:', err);
-    return new Response(JSON.stringify({ error: 'Login failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return Errors.internalError('Login failed');
   }
 }
 

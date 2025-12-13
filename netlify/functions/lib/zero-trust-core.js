@@ -100,7 +100,7 @@ function parseGeo(headers) {
  * This is the canonical format for all ZT products
  *
  * @param {object} params
- * @returns {object} - Record ready for Tinybird/storage
+ * @returns {object} - Record ready for storage
  */
 function createZTRecord({
   siteId,

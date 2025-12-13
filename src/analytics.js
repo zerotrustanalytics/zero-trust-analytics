@@ -67,9 +67,8 @@
       ZTA.setupSPATracking();
     }
 
-    // Engagement tracking disabled temporarily to avoid rate limits
-    // TODO: Re-enable when on paid Tinybird plan
-    // ZTA.setupEngagementTracking();
+    // Engagement tracking (time on page, scroll depth)
+    ZTA.setupEngagementTracking();
 
     // Setup scroll depth tracking
     if (ZTA.config.trackScrollDepth) {
@@ -94,9 +93,8 @@
     // Setup declarative tracking (data-zta-track attributes)
     ZTA.setupDeclarativeTracking();
 
-    // Heartbeat disabled temporarily to avoid rate limits
-    // TODO: Re-enable when on paid Tinybird plan
-    // ZTA.setupHeartbeat();
+    // Heartbeat for real-time visitor tracking
+    ZTA.setupHeartbeat();
 
     // Flush queue on page unload to ensure no events are lost
     ZTA.setupUnloadFlush();

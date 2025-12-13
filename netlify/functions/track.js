@@ -111,7 +111,7 @@ export default async function handler(req, context) {
   }
 }
 
-// Handle batch of events (single API call to Tinybird)
+// Handle batch of events (single database write)
 async function handleBatch(req, context, origin, siteId, events) {
   if (!siteId) {
     return new Response(JSON.stringify({ error: 'Site ID required' }), {
@@ -171,7 +171,7 @@ async function handleBatch(req, context, origin, siteId, events) {
     });
   }).filter(record => validateNoPII(record));
 
-  // Send all records to Tinybird in ONE request
+  // Send all records to database in ONE request
   if (records.length > 0) {
     await ingestEvents('pageviews', records);
     console.log(`Batch ingested ${records.length} events for site ${siteId}`);
@@ -330,7 +330,7 @@ async function handleSingleEvent(req, context, origin, data) {
     });
   }
 
-  // Send to Tinybird
+  // Send to database
   await ingestEvents('pageviews', record);
 
   return new Response(JSON.stringify({ success: true }), {

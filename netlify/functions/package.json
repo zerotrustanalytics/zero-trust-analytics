@@ -12,6 +12,7 @@
     "@netlify/blobs": "^8.1.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
+    "otpauth": "^9.4.1",
     "stripe": "^14.10.0"
   },
   "devDependencies": {

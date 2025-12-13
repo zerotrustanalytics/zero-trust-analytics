@@ -44,7 +44,7 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
-// Mock turso (replaced tinybird)
+// Mock turso database
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
   getRealtime: jest.fn(() => Promise.resolve({
     active_visitors: 5,
@@ -128,7 +128,7 @@ describe('Realtime Endpoint', () => {
   });
 
   describe('GET /api/realtime', () => {
-    it('should return active visitor count from tinybird', async () => {
+    it('should return active visitor count from database', async () => {
       const { default: handler } = await import('../../netlify/functions/realtime.js');
 
       const url = new URL('https://example.com/api/realtime?siteId=site_test');
@@ -143,7 +143,7 @@ describe('Realtime Endpoint', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      // Value comes from mocked tinybird getRealtime
+      // Value comes from mocked getRealtime
       expect(data.activeVisitors).toBe(5);
       expect(data.pageviewsLast5Min).toBe(10);
       expect(data.timestamp).toBeDefined();
@@ -174,7 +174,7 @@ describe('Realtime Endpoint', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      // Data still comes from tinybird mock
+      // Data comes from database mock
       expect(data.activeVisitors).toBeDefined();
       expect(data.visitorsPerMinute).toBeDefined();
     });

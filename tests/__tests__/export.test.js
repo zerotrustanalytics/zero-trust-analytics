@@ -46,7 +46,7 @@ jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
   })
 }));
 
-// Mock turso module (replaced tinybird)
+// Mock turso database module
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
   exportData: jest.fn((siteId, startStr, endStr, dataType, limit) => {
     if (dataType === 'pageviews') {

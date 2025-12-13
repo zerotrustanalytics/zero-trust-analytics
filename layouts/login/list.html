@@ -16,7 +16,7 @@
       ></div>
 
       <form class="auth-form" id="login-form" onsubmit="handleLogin(event)" novalidate>
-        <div class="mb-3">
+        <div class="mb-3" id="email-field">
           <label for="email" class="form-label">Email address</label>
           <input
             type="email"
@@ -30,7 +30,7 @@
           >
           <div id="email-hint" class="form-text visually-hidden">Enter your registered email address</div>
         </div>
-        <div class="mb-3">
+        <div class="mb-3" id="password-field">
           <label for="password" class="form-label">Password</label>
           <input
             type="password"
@@ -42,9 +42,28 @@
             aria-required="true"
           >
         </div>
-        <div class="mb-3 text-end">
+        <div class="mb-3 text-end" id="forgot-password-link">
           <a href="/forgot/" class="text-decoration-none small">Forgot password?</a>
         </div>
+
+        <!-- 2FA Code Input (hidden by default) -->
+        <div class="mb-3 d-none" id="twofa-field">
+          <label for="twofa-code" class="form-label">Two-Factor Authentication Code</label>
+          <input
+            type="text"
+            class="form-control"
+            id="twofa-code"
+            name="twofa-code"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="6"
+            autocomplete="one-time-code"
+            placeholder="Enter 6-digit code"
+            aria-describedby="twofa-hint"
+          >
+          <div id="twofa-hint" class="form-text">Enter the 6-digit code from your authenticator app</div>
+        </div>
+
         <button type="submit" class="btn btn-primary w-100" id="login-btn">
           Sign In
         </button>
