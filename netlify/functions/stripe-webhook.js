@@ -42,7 +42,6 @@ export default async function handler(req, context) {
               createdAt: new Date().toISOString()
             }
           });
-          console.log('Subscription activated for:', email);
         }
         break;
       }
@@ -52,26 +51,22 @@ export default async function handler(req, context) {
         // Find user by customer ID and update status
         // This is a simplified version - in production you'd want to store
         // a mapping of Stripe customer IDs to user emails
-        console.log('Subscription updated:', subscription.id, subscription.status);
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object;
-        console.log('Subscription canceled:', subscription.id);
         // In production, find user and update subscription status to 'canceled'
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object;
-        console.log('Payment failed for:', invoice.customer_email);
         // In production, notify user and/or update subscription status
         break;
       }
 
       default:
-        console.log('Unhandled event type:', event.type);
     }
 
     return new Response(JSON.stringify({ received: true }), {

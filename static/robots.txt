@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
-Sitemap: https://zerotrustanalytics.com/sitemap.xml
+Sitemap: https://ztas.io/sitemap.xml
 
 # Disallow private areas
 Disallow: /dashboard/

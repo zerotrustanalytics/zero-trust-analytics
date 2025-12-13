@@ -30,20 +30,16 @@ export default async function handler(req, context) {
   }
 
   try {
-    console.log('Getting sites for user:', auth.user.id);
     const siteIds = await getUserSites(auth.user.id);
-    console.log('Site IDs found:', siteIds);
 
     // Fetch full site details
     const sites = await Promise.all(
       siteIds.map(async (siteId) => {
         const site = await getSite(siteId);
-        console.log('Fetched site:', siteId, site);
         return site;
       })
     );
 
-    console.log('Returning sites:', sites.filter(Boolean));
     return new Response(JSON.stringify({
       success: true,
       sites: sites.filter(Boolean)

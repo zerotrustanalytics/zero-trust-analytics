@@ -1,0 +1,383 @@
+{{ define "main" }}
+<!-- Demo Banner -->
+<div class="alert alert-info mb-0 rounded-0 text-center" role="alert">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span><strong>Live Demo</strong> - This is sample data from a fictional website</span>
+    <a href="/register/" class="btn btn-primary btn-sm">Start Your Free Trial</a>
+  </div>
+</div>
+
+<!-- Demo Dashboard -->
+<div class="bg-light min-vh-100">
+  <div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h1 class="h3 mb-1">Analytics Dashboard</h1>
+        <p class="text-muted mb-0">demo-site.example.com</p>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <select class="form-select form-select-sm" style="width: auto;" disabled>
+          <option>Last 7 days</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" disabled>
+          <i class="fas fa-sync-alt me-1"></i>Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="text-muted small mb-1">Unique Visitors</p>
+                <h3 class="mb-0 fw-bold">4,892</h3>
+              </div>
+              <span class="badge bg-success-subtle text-success">+12.3%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="text-muted small mb-1">Page Views</p>
+                <h3 class="mb-0 fw-bold">12,847</h3>
+              </div>
+              <span class="badge bg-success-subtle text-success">+8.7%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="text-muted small mb-1">Avg. Time on Site</p>
+                <h3 class="mb-0 fw-bold">2m 47s</h3>
+              </div>
+              <span class="badge bg-success-subtle text-success">+5.2%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="text-muted small mb-1">Bounce Rate</p>
+                <h3 class="mb-0 fw-bold">34.2%</h3>
+              </div>
+              <span class="badge bg-danger-subtle text-danger">+2.1%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Area -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Traffic Overview</h5>
+          <div class="btn-group btn-group-sm" role="group">
+            <button class="btn btn-outline-secondary active">Visitors</button>
+            <button class="btn btn-outline-secondary">Page Views</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- SVG Chart -->
+        <svg viewBox="0 0 800 200" class="w-100" style="height: 200px;">
+          <!-- Grid lines -->
+          <line x1="0" y1="40" x2="800" y2="40" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="0" y1="80" x2="800" y2="80" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="0" y1="120" x2="800" y2="120" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="0" y1="160" x2="800" y2="160" stroke="#e5e7eb" stroke-width="1"/>
+
+          <!-- Area fill -->
+          <path d="M0,180 L0,140 L114,100 L228,120 L342,80 L456,60 L570,90 L684,50 L800,70 L800,180 Z"
+                fill="url(#demoGradient)" opacity="0.3"/>
+
+          <!-- Line -->
+          <polyline fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                    points="0,140 114,100 228,120 342,80 456,60 570,90 684,50 800,70"/>
+
+          <!-- Data points -->
+          <circle cx="0" cy="140" r="4" fill="#2563eb"/>
+          <circle cx="114" cy="100" r="4" fill="#2563eb"/>
+          <circle cx="228" cy="120" r="4" fill="#2563eb"/>
+          <circle cx="342" cy="80" r="4" fill="#2563eb"/>
+          <circle cx="456" cy="60" r="4" fill="#2563eb"/>
+          <circle cx="570" cy="90" r="4" fill="#2563eb"/>
+          <circle cx="684" cy="50" r="4" fill="#2563eb"/>
+          <circle cx="800" cy="70" r="4" fill="#2563eb"/>
+
+          <defs>
+            <linearGradient id="demoGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#2563eb;stop-opacity:0.4"/>
+              <stop offset="100%" style="stop-color:#2563eb;stop-opacity:0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="d-flex justify-content-between text-muted small mt-2">
+          <span>Dec 7</span>
+          <span>Dec 8</span>
+          <span>Dec 9</span>
+          <span>Dec 10</span>
+          <span>Dec 11</span>
+          <span>Dec 12</span>
+          <span>Dec 13</span>
+          <span>Today</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="row g-4">
+      <!-- Top Pages -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Top Pages</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Page</th>
+                    <th class="text-end">Visitors</th>
+                    <th class="text-end">Views</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>/</code></td>
+                    <td class="text-end">2,341</td>
+                    <td class="text-end">4,892</td>
+                  </tr>
+                  <tr>
+                    <td><code>/pricing</code></td>
+                    <td class="text-end">1,247</td>
+                    <td class="text-end">2,103</td>
+                  </tr>
+                  <tr>
+                    <td><code>/features</code></td>
+                    <td class="text-end">892</td>
+                    <td class="text-end">1,456</td>
+                  </tr>
+                  <tr>
+                    <td><code>/blog/getting-started</code></td>
+                    <td class="text-end">634</td>
+                    <td class="text-end">987</td>
+                  </tr>
+                  <tr>
+                    <td><code>/docs/api</code></td>
+                    <td class="text-end">421</td>
+                    <td class="text-end">654</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Traffic Sources -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Traffic Sources</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Source</th>
+                    <th class="text-end">Visitors</th>
+                    <th class="text-end">%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><i class="fab fa-google text-muted me-2"></i>Google</td>
+                    <td class="text-end">2,156</td>
+                    <td class="text-end">44.1%</td>
+                  </tr>
+                  <tr>
+                    <td><i class="fas fa-link text-muted me-2"></i>Direct</td>
+                    <td class="text-end">1,423</td>
+                    <td class="text-end">29.1%</td>
+                  </tr>
+                  <tr>
+                    <td><i class="fab fa-twitter text-muted me-2"></i>Twitter</td>
+                    <td class="text-end">534</td>
+                    <td class="text-end">10.9%</td>
+                  </tr>
+                  <tr>
+                    <td><i class="fab fa-hacker-news text-muted me-2"></i>Hacker News</td>
+                    <td class="text-end">412</td>
+                    <td class="text-end">8.4%</td>
+                  </tr>
+                  <tr>
+                    <td><i class="fab fa-reddit text-muted me-2"></i>Reddit</td>
+                    <td class="text-end">367</td>
+                    <td class="text-end">7.5%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="row g-4 mt-0">
+      <!-- Countries -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Countries</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Country</th>
+                    <th class="text-end">Visitors</th>
+                    <th class="text-end">%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="me-2">🇺🇸</span>United States</td>
+                    <td class="text-end">1,892</td>
+                    <td class="text-end">38.7%</td>
+                  </tr>
+                  <tr>
+                    <td><span class="me-2">🇬🇧</span>United Kingdom</td>
+                    <td class="text-end">634</td>
+                    <td class="text-end">13.0%</td>
+                  </tr>
+                  <tr>
+                    <td><span class="me-2">🇩🇪</span>Germany</td>
+                    <td class="text-end">521</td>
+                    <td class="text-end">10.7%</td>
+                  </tr>
+                  <tr>
+                    <td><span class="me-2">🇨🇦</span>Canada</td>
+                    <td class="text-end">398</td>
+                    <td class="text-end">8.1%</td>
+                  </tr>
+                  <tr>
+                    <td><span class="me-2">🇫🇷</span>France</td>
+                    <td class="text-end">287</td>
+                    <td class="text-end">5.9%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Devices -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Devices</h5>
+          </div>
+          <div class="card-body">
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="mb-2">
+                  <i class="fas fa-desktop fa-2x text-primary"></i>
+                </div>
+                <h4 class="fw-bold mb-0">58%</h4>
+                <small class="text-muted">Desktop</small>
+              </div>
+              <div class="col-4">
+                <div class="mb-2">
+                  <i class="fas fa-mobile-alt fa-2x text-success"></i>
+                </div>
+                <h4 class="fw-bold mb-0">36%</h4>
+                <small class="text-muted">Mobile</small>
+              </div>
+              <div class="col-4">
+                <div class="mb-2">
+                  <i class="fas fa-tablet-alt fa-2x text-warning"></i>
+                </div>
+                <h4 class="fw-bold mb-0">6%</h4>
+                <small class="text-muted">Tablet</small>
+              </div>
+            </div>
+            <hr>
+            <h6 class="text-muted mb-3">Browsers</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span><i class="fab fa-chrome text-muted me-2"></i>Chrome</span>
+              <span class="fw-bold">62%</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span><i class="fab fa-safari text-muted me-2"></i>Safari</span>
+              <span class="fw-bold">24%</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span><i class="fab fa-firefox text-muted me-2"></i>Firefox</span>
+              <span class="fw-bold">9%</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span><i class="fab fa-edge text-muted me-2"></i>Edge</span>
+              <span class="fw-bold">5%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real-time Section -->
+    <div class="row g-4 mt-0">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><span class="badge bg-success me-2">LIVE</span> Real-time Visitors</h5>
+            <span class="text-muted">Last 30 minutes</span>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <h2 class="fw-bold mb-0">23</h2>
+                <p class="text-muted mb-0">visitors on site right now</p>
+              </div>
+              <div class="d-flex gap-2">
+                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>US: 12</span>
+                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>UK: 5</span>
+                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>DE: 3</span>
+                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>Other: 3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center py-5">
+      <h3 class="mb-3">Ready to get these insights for your site?</h3>
+      <p class="text-muted mb-4">Start tracking in under 2 minutes. No cookies, no consent banners needed.</p>
+      <a href="/register/" class="btn btn-primary btn-lg me-2">Start Free Trial</a>
+      <a href="/#pricing" class="btn btn-outline-secondary btn-lg">View Pricing</a>
+    </div>
+  </div>
+</div>
+{{ end }}

@@ -48,9 +48,7 @@ export default async function handler(req, context) {
 
     // Generate site ID and create
     const siteId = generateSiteId();
-    console.log('Creating site:', { userId: auth.user.id, siteId, domain: normalizedDomain });
     const site = await createSite(auth.user.id, siteId, normalizedDomain);
-    console.log('Site created:', site);
 
     return new Response(JSON.stringify({
       success: true,

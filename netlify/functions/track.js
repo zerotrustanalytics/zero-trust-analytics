@@ -3,6 +3,15 @@ import { ingestEvents } from './lib/turso.js';
 import { getSite } from './lib/storage.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
 
+// Get required hash secret - throws if not configured
+function getRequiredHashSecret() {
+  const secret = process.env.HASH_SECRET;
+  if (!secret) {
+    throw new Error('HASH_SECRET environment variable is required');
+  }
+  return secret;
+}
+
 // Basic bot detection - filters common bots/crawlers
 function isBot(userAgent) {
   if (!userAgent) return false;
@@ -164,7 +173,7 @@ async function handleBatch(req, context, origin, siteId, events) {
       ip,
       userAgent,
       headers,
-      secret: process.env.HASH_SECRET || 'default-secret-change-me',
+      secret: getRequiredHashSecret(),
       eventType,
       payload,
       meta
@@ -174,7 +183,6 @@ async function handleBatch(req, context, origin, siteId, events) {
   // Send all records to database in ONE request
   if (records.length > 0) {
     await ingestEvents('pageviews', records);
-    console.log(`Batch ingested ${records.length} events for site ${siteId}`);
   }
 
   return new Response(JSON.stringify({ success: true, count: records.length }), {
@@ -273,9 +281,7 @@ async function handleSingleEvent(req, context, origin, data) {
 
   // CORS origin validation
   const allowedOrigin = getAllowedOrigin(origin, site.domain);
-  console.log(`CORS check: origin=${origin}, siteDomain=${site.domain}, allowed=${allowedOrigin}`);
   if (!allowedOrigin && origin) {
-    console.log(`CORS blocked: origin=${origin}, expected domain=${site.domain}`);
     return new Response(JSON.stringify({ error: 'Origin not allowed', debug: { origin, expected: site.domain } }), {
       status: 403,
       headers: {
@@ -315,7 +321,7 @@ async function handleSingleEvent(req, context, origin, data) {
     ip,
     userAgent,
     headers,
-    secret: process.env.HASH_SECRET || 'default-secret-change-me',
+    secret: getRequiredHashSecret(),
     eventType,
     payload,
     meta

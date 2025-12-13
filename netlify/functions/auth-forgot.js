@@ -73,7 +73,6 @@ export default async function handler(req, context) {
     // Send email
     try {
       await sendPasswordResetEmail(email, resetUrl);
-      console.log(`Password reset email sent to ${email}`);
     } catch (emailError) {
       console.error('Failed to send password reset email:', emailError);
       // Still return success to prevent enumeration

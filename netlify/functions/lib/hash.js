@@ -1,9 +1,18 @@
 import crypto from 'crypto';
 
+// Validate required environment variables
+function getHashSecret() {
+  const secret = process.env.HASH_SECRET;
+  if (!secret) {
+    throw new Error('HASH_SECRET environment variable is required for zero-trust hashing');
+  }
+  return secret;
+}
+
 // Get daily salt (rotates daily for privacy)
 export function getDailySalt() {
   const today = new Date().toISOString().split('T')[0];
-  const secret = process.env.HASH_SECRET || 'zta-default-secret-change-me';
+  const secret = getHashSecret();
   return crypto.createHash('sha256').update(today + secret).digest('hex').slice(0, 16);
 }
 

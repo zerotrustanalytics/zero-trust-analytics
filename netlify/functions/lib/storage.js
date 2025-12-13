@@ -155,25 +155,19 @@ export async function createSite(userId, siteId, domain) {
     createdAt: new Date().toISOString()
   };
 
-  console.log('Storage: Saving site with key:', siteId);
   await sites.setJSON(siteId, site);
-  console.log('Storage: Site saved');
 
   // Also store in user's site list
   const userSitesKey = `user_sites_${userId}`;
-  console.log('Storage: Getting user sites with key:', userSitesKey);
   let userSites = [];
   try {
     userSites = await sites.get(userSitesKey, { type: 'json' }) || [];
   } catch (e) {
-    console.log('Storage: No existing user sites, starting fresh');
     userSites = [];
   }
 
   userSites.push(siteId);
-  console.log('Storage: Saving user sites:', userSites);
   await sites.setJSON(userSitesKey, userSites);
-  console.log('Storage: User sites saved');
 
   return site;
 }
@@ -215,13 +209,10 @@ export async function deleteSite(siteId, userId) {
 export async function getUserSites(userId) {
   const sites = store(STORES.SITES);
   const userSitesKey = `user_sites_${userId}`;
-  console.log('Storage: getUserSites with key:', userSitesKey);
   try {
     const list = await sites.get(userSitesKey, { type: 'json' });
-    console.log('Storage: getUserSites result:', list);
     return list || [];
   } catch (e) {
-    console.log('Storage: getUserSites error:', e.message);
     return [];
   }
 }

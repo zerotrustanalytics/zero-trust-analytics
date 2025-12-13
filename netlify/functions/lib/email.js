@@ -136,10 +136,9 @@ export async function sendPasswordResetEmail(email, resetUrl) {
   if (resend) {
     try {
       const result = await sendViaResend(email, subject, html, text);
-      console.log(`Email sent via Resend to ${email}`);
       return result;
     } catch (error) {
-      console.error('Resend failed, trying SendGrid:', error.message);
+      // Resend failed, will try SendGrid
     }
   }
 
@@ -147,10 +146,8 @@ export async function sendPasswordResetEmail(email, resetUrl) {
   if (process.env.SENDGRID_API_KEY) {
     try {
       const result = await sendViaSendGrid(email, subject, html, text);
-      console.log(`Email sent via SendGrid to ${email}`);
       return result;
     } catch (error) {
-      console.error('SendGrid also failed:', error.message);
       throw new Error('All email providers failed');
     }
   }
