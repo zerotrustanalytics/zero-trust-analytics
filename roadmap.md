@@ -417,3 +417,118 @@ Privacy-focused, anonymous analytics SaaS with Stripe billing.
 | Can't compete with free (GA) | Medium | Target customers already decided "no Google" |
 | Competitors copy approach | High | Build community moat, first-mover advantage |
 
+---
+
+# Dashboard Power Features Roadmap
+
+*Added: December 12, 2025*
+
+Backend functions and frontend modals already exist for all features. Work is primarily enabling, testing, and polishing.
+
+---
+
+## Phase A: Quick Wins (Week 1) - CURRENT
+
+**Status: IN PROGRESS**
+
+### A.1 Sessions Management
+- [x] Backend: `/api/user/sessions` endpoint (GET, DELETE)
+- [x] Frontend: `openSessionsModal()` with device list
+- [x] Enable feature (remove d-none)
+- [ ] Test session tracking on login
+- [ ] Test session revocation
+
+### A.2 API Keys
+- [x] Backend: `/api/keys` endpoint (CRUD)
+- [x] Frontend: `openApiKeysModal()` with permissions
+- [x] Enable feature (remove d-none)
+- [ ] Add API key authentication middleware
+- [ ] Test key generation and revocation
+- [ ] Document API key usage
+
+### A.3 Goals/Conversions
+- [x] Backend: `/api/goals` endpoint (CRUD + progress calc)
+- [x] Frontend: `openGoalsModal()` with progress bars
+- [x] Enable feature (remove d-none)
+- [ ] Test goal calculations (daily, weekly, monthly)
+- [ ] Add goal completion notifications
+
+---
+
+## Phase B: Collaboration & Security (Week 2-3)
+
+### B.1 Activity Log
+- [x] Backend: `/api/activity` endpoint
+- [x] Frontend: `openActivityModal()` with pagination
+- [ ] Enable feature (remove d-none)
+- [ ] Add `logActivity()` calls to all user actions
+- [ ] Add filtering by action type
+- [ ] Add export activity log
+
+### B.2 Team Management
+- [x] Backend: `/api/teams` endpoint (CRUD, invites, roles)
+- [x] Frontend: `openTeamsModal()` with member management
+- [ ] Enable feature (remove d-none)
+- [ ] Implement invite acceptance flow
+- [ ] Add team-based site filtering
+- [ ] Test multi-user permissions
+
+---
+
+## Phase C: Automation & Monitoring (Week 4-5)
+
+### C.1 Webhooks
+- [x] Backend: `/api/webhooks` endpoint (CRUD, test, HMAC)
+- [x] Frontend: `openWebhooksModal()` with delivery stats
+- [ ] Enable feature (remove d-none)
+- [ ] Fire webhooks from track/stats endpoints
+- [ ] Add retry logic for failed deliveries
+- [ ] Add webhook delivery history
+
+### C.2 Alerts
+- [x] Backend: `/api/alerts` endpoint (CRUD, thresholds)
+- [x] Frontend: `openAlertsModal()` with baseline display
+- [ ] Enable feature (remove d-none)
+- [ ] Build scheduled function for alert evaluation
+- [ ] Implement notification delivery (email + webhook)
+- [ ] Add alert trigger history
+
+---
+
+## Phase D: Advanced Analytics (Week 6+)
+
+### D.1 Funnels
+- [x] Backend: `/api/funnels` endpoint (CRUD, steps)
+- [x] Frontend: `openFunnelsModal()` with visualization
+- [ ] Enable feature (remove d-none)
+- [ ] Implement `calculateFunnelData` algorithm
+- [ ] Add date range filtering
+- [ ] Optimize queries for performance
+
+### D.2 Heatmaps
+- [x] Backend: `/api/heatmaps` endpoint (record, retrieve)
+- [x] Frontend: `openHeatmapsModal()` with page selector
+- [ ] Enable feature (remove d-none)
+- [ ] Add click/scroll tracking to analytics.js
+- [ ] Implement storage layer functions
+- [ ] Integrate heatmap visualization library
+- [ ] Build page layout capture system
+
+---
+
+## Feature Effort Summary
+
+| Feature | Backend | Frontend | Effort | Priority |
+|---------|---------|----------|--------|----------|
+| Sessions | Done | Done | 2-4 hrs | Phase A |
+| API Keys | Done | Done | 3-6 hrs | Phase A |
+| Goals | Done | Done | 4-6 hrs | Phase A |
+| Activity Log | Done | Done | 6-10 hrs | Phase B |
+| Teams | Done | Done | 10-14 hrs | Phase B |
+| Webhooks | Done | Done | 8-12 hrs | Phase C |
+| Alerts | Partial | Done | 12-16 hrs | Phase C |
+| Funnels | Partial | Done | 12-18 hrs | Phase D |
+| Heatmaps | Partial | Partial | 16-24 hrs | Phase D |
+
+**Total: 73-110 hours**
+
