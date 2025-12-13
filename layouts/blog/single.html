@@ -234,5 +234,48 @@
 .article-content a:hover {
   text-decoration: underline;
 }
+
+/* Dark mode styles for blog articles */
+[data-theme="dark"] .article-content {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .article-content h2,
+[data-theme="dark"] .article-content h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .article-content blockquote {
+  color: #d4d4d8;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .article-content code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .breadcrumb-item a,
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .badge.bg-light {
+  background-color: var(--zta-bg-tertiary, #2c3034) !important;
+  color: var(--zta-text, #e9ecef) !important;
+}
+[data-theme="dark"] .card-title.text-dark {
+  color: var(--zta-text, #e9ecef) !important;
+}
+[data-theme="dark"] article h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] article .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .bg-light.rounded-3 {
+  background-color: var(--zta-bg-secondary, #212529) !important;
+}
+[data-theme="dark"] .bg-light.rounded-3 h6 {
+  color: var(--zta-text, #e9ecef);
+}
 </style>
 {{ end }}

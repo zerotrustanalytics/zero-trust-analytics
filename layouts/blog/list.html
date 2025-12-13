@@ -166,6 +166,21 @@
 <style>
 .blog-post-hidden { display: none; }
 .blog-post-filtered { display: none !important; }
+
+/* Dark mode for blog list */
+[data-theme="dark"] .card-title.text-dark {
+  color: var(--zta-text, #e9ecef) !important;
+}
+[data-theme="dark"] .card-text.text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .card-footer.bg-transparent {
+  background-color: transparent !important;
+}
+[data-theme="dark"] #no-results h3,
+[data-theme="dark"] #no-results p {
+  color: #d4d4d8 !important;
+}
 </style>
 
 <script>

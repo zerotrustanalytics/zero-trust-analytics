@@ -1,92 +1,159 @@
 {{ define "main" }}
-<div class="dashboard-container">
-  <div class="container-fluid px-4">
-    <!-- Trial Banner (shown via JS) -->
-    <div id="trial-banner" class="alert alert-warning d-none mb-4" role="alert">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-          <strong id="trial-status-text">14 days left in your free trial</strong>
-          <span class="d-block d-sm-inline ms-sm-2 text-muted small">Upgrade to continue tracking after your trial ends.</span>
-        </div>
-        <a href="/#pricing" class="btn btn-warning btn-sm">Upgrade Now</a>
-      </div>
+<!-- Sliding Sidebar -->
+<aside id="dashboard-sidebar" class="dashboard-sidebar" aria-label="Dashboard navigation">
+  <div class="sidebar-header">
+    <span class="sidebar-brand">ZTA</span>
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <!-- Analytics Section -->
+    <div class="sidebar-section">
+      <span class="sidebar-section-title">Analytics</span>
+      <button class="sidebar-item active" onclick="scrollToStats()" aria-label="Dashboard overview">
+        <i class="fas fa-chart-line"></i>
+        <span>Overview</span>
+      </button>
+      <button class="sidebar-item" onclick="openGoalsModal()" aria-label="Track goals">
+        <i class="fas fa-bullseye"></i>
+        <span>Goals</span>
+      </button>
+      <button class="sidebar-item" onclick="openFunnelsModal()" aria-label="Funnel analysis">
+        <i class="fas fa-filter"></i>
+        <span>Funnels</span>
+      </button>
+      <button class="sidebar-item" onclick="openHeatmapsModal()" aria-label="View heatmaps">
+        <i class="fas fa-fire"></i>
+        <span>Heatmaps</span>
+      </button>
+      <button class="sidebar-item" onclick="openGSCModal()" aria-label="Google Search Console">
+        <i class="fas fa-search"></i>
+        <span>Search Console</span>
+      </button>
     </div>
 
-    <!-- Expired Banner (shown via JS) -->
-    <div id="expired-banner" class="alert alert-danger d-none mb-4" role="alert">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-          <strong>Your free trial has ended</strong>
-          <span class="d-block d-sm-inline ms-sm-2">Upgrade to continue using Zero Trust Analytics.</span>
-        </div>
-        <a href="/#pricing" class="btn btn-danger btn-sm">Choose a Plan</a>
-      </div>
+    <!-- Data Section -->
+    <div class="sidebar-section">
+      <span class="sidebar-section-title">Data</span>
+      <button class="sidebar-item" onclick="openExportDropdown()" aria-label="Export data">
+        <i class="fas fa-download"></i>
+        <span>Export</span>
+      </button>
+      <button class="sidebar-item" onclick="openImportModal()" aria-label="Import Google Analytics">
+        <i class="fas fa-upload"></i>
+        <span>Import GA</span>
+      </button>
+      <button class="sidebar-item" onclick="openShareModal()" aria-label="Share dashboard">
+        <i class="fas fa-share-alt"></i>
+        <span>Share</span>
+      </button>
     </div>
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-      <div>
-        <h1 class="h3 mb-1">Dashboard</h1>
-        <p class="text-muted mb-0" id="current-site-domain" aria-live="polite">Select a site to view analytics</p>
+    <!-- Settings Section -->
+    <div class="sidebar-section">
+      <span class="sidebar-section-title">Settings</span>
+      <button class="sidebar-item" data-bs-toggle="modal" data-bs-target="#addSiteModal" aria-label="Add site">
+        <i class="fas fa-plus-circle"></i>
+        <span>Add Site</span>
+      </button>
+      <button class="sidebar-item" onclick="openSiteSettings()" aria-label="Site settings">
+        <i class="fas fa-cog"></i>
+        <span>Site Settings</span>
+      </button>
+      <button class="sidebar-item" onclick="openApiKeysModal()" aria-label="API Keys">
+        <i class="fas fa-key"></i>
+        <span>API Keys</span>
+      </button>
+      <button class="sidebar-item" onclick="openWebhooksModal()" aria-label="Webhooks">
+        <i class="fas fa-bolt"></i>
+        <span>Webhooks</span>
+      </button>
+      <button class="sidebar-item" onclick="openAlertsModal()" aria-label="Alerts">
+        <i class="fas fa-bell"></i>
+        <span>Alerts</span>
+      </button>
+    </div>
+
+    <!-- Account Section -->
+    <div class="sidebar-section">
+      <span class="sidebar-section-title">Account</span>
+      <button class="sidebar-item" onclick="openTeamsModal()" aria-label="Team management">
+        <i class="fas fa-users"></i>
+        <span>Team</span>
+      </button>
+      <button class="sidebar-item" onclick="openSessionsModal()" aria-label="Active sessions">
+        <i class="fas fa-shield-alt"></i>
+        <span>Sessions</span>
+      </button>
+      <button class="sidebar-item" onclick="openActivityModal()" aria-label="Activity log">
+        <i class="fas fa-history"></i>
+        <span>Activity</span>
+      </button>
+      <button class="sidebar-item" onclick="openBillingPortal()" aria-label="Billing">
+        <i class="fas fa-credit-card"></i>
+        <span>Billing</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-footer">
+    <button class="sidebar-item" onclick="logout()" aria-label="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Logout</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Mobile Sidebar Overlay -->
+<div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- Main Dashboard Content -->
+<div class="dashboard-main">
+  <div class="dashboard-container">
+    <div class="container-fluid px-4">
+      <!-- Mobile Header -->
+      <div class="mobile-header d-lg-none mb-3">
+        <button class="btn btn-outline-secondary" onclick="openSidebar()" aria-label="Open menu">
+          <i class="fas fa-bars"></i>
+        </button>
+        <span class="mobile-title">Dashboard</span>
       </div>
-      <div class="d-flex gap-2 flex-wrap" role="toolbar" aria-label="Dashboard actions">
-        <button class="btn btn-outline-secondary btn-sm" onclick="exportData('json')" aria-label="Export data as JSON">
-          <i class="fas fa-download me-1" aria-hidden="true"></i>Export JSON
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="exportData('csv')" aria-label="Export data as CSV">
-          <i class="fas fa-file-csv me-1" aria-hidden="true"></i>Export CSV
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="exportPDF()" aria-label="Export as PDF report">
-          <i class="fas fa-file-pdf me-1" aria-hidden="true"></i>Export PDF
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openImportModal()" aria-label="Import Google Analytics data">
-          <i class="fas fa-upload me-1" aria-hidden="true"></i>Import GA
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openShareModal()" aria-label="Share dashboard">
-          <i class="fas fa-share-alt me-1" aria-hidden="true"></i>Share
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openSessionsModal()" aria-label="Manage sessions">
-          <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Sessions
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openApiKeysModal()" aria-label="Manage API keys">
-          <i class="fas fa-key me-1" aria-hidden="true"></i>API Keys
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openActivityModal()" aria-label="View activity log">
-          <i class="fas fa-history me-1" aria-hidden="true"></i>Activity
-        </button>
-        <!-- Planned feature: Webhook configuration -->
-        <button class="btn btn-outline-secondary btn-sm" onclick="openWebhooksModal()" aria-label="Manage webhooks">
-          <i class="fas fa-bolt me-1" aria-hidden="true"></i>Webhooks
-        </button>
-        <!-- Planned feature: Alert configuration -->
-        <button class="btn btn-outline-secondary btn-sm" onclick="openAlertsModal()" aria-label="Configure alerts">
-          <i class="fas fa-bell me-1" aria-hidden="true"></i>Alerts
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openTeamsModal()" aria-label="Manage team">
-          <i class="fas fa-users me-1" aria-hidden="true"></i>Team
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openGoalsModal()" aria-label="Track goals">
-          <i class="fas fa-bullseye me-1" aria-hidden="true"></i>Goals
-        </button>
-        <!-- Planned feature: Funnel analysis -->
-        <button class="btn btn-outline-secondary btn-sm" onclick="openFunnelsModal()" aria-label="Funnel analysis">
-          <i class="fas fa-filter me-1" aria-hidden="true"></i>Funnels
-        </button>
-        <!-- Planned feature: Heatmaps -->
-        <button class="btn btn-outline-secondary btn-sm" onclick="openHeatmapsModal()" aria-label="View heatmaps">
-          <i class="fas fa-fire me-1" aria-hidden="true"></i>Heatmaps
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openGSCModal()" aria-label="Google Search Console">
-          <i class="fas fa-search me-1" aria-hidden="true"></i>Search Console
-        </button>
-        <button class="btn btn-outline-secondary" onclick="openBillingPortal()" aria-label="Open billing portal">
-          <i class="fas fa-credit-card me-1" aria-hidden="true"></i>Billing
-        </button>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSiteModal" aria-label="Add a new site">
+
+      <!-- Trial Banner (shown via JS) -->
+      <div id="trial-banner" class="alert alert-warning d-none mb-4" role="alert">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong id="trial-status-text">14 days left in your free trial</strong>
+            <span class="d-block d-sm-inline ms-sm-2 text-muted small">Upgrade to continue tracking after your trial ends.</span>
+          </div>
+          <a href="/#pricing" class="btn btn-warning btn-sm">Upgrade Now</a>
+        </div>
+      </div>
+
+      <!-- Expired Banner (shown via JS) -->
+      <div id="expired-banner" class="alert alert-danger d-none mb-4" role="alert">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong>Your free trial has ended</strong>
+            <span class="d-block d-sm-inline ms-sm-2">Upgrade to continue using Zero Trust Analytics.</span>
+          </div>
+          <a href="/#pricing" class="btn btn-danger btn-sm">Choose a Plan</a>
+        </div>
+      </div>
+
+      <!-- Header - Clean and minimal -->
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h1 class="h3 mb-1 d-none d-lg-block">Dashboard</h1>
+          <p class="text-muted mb-0" id="current-site-domain" aria-live="polite">Select a site to view analytics</p>
+        </div>
+        <button class="btn btn-primary d-none d-lg-inline-flex" data-bs-toggle="modal" data-bs-target="#addSiteModal" aria-label="Add a new site">
           <i class="fas fa-plus me-1" aria-hidden="true"></i>Add Site
         </button>
       </div>
-    </div>
 
     <!-- Site Selector, Period & Date Range -->
     <div class="d-flex flex-wrap gap-3 mb-4 align-items-center" role="region" aria-label="Analytics filters">
@@ -3422,6 +3489,369 @@ document.addEventListener('DOMContentLoaded', function() {
     window.history.replaceState({}, '', window.location.pathname);
   }
 });
+
+// === SIDEBAR FUNCTIONS ===
+function toggleSidebar() {
+  const sidebar = document.getElementById('dashboard-sidebar');
+  const main = document.querySelector('.dashboard-main');
+  const isExpanded = sidebar.classList.contains('expanded');
+
+  if (isExpanded) {
+    sidebar.classList.remove('expanded');
+    main.classList.remove('sidebar-expanded');
+    localStorage.setItem('zta_sidebar', 'collapsed');
+  } else {
+    sidebar.classList.add('expanded');
+    main.classList.add('sidebar-expanded');
+    localStorage.setItem('zta_sidebar', 'expanded');
+  }
+}
+
+function openSidebar() {
+  const sidebar = document.getElementById('dashboard-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.add('mobile-open');
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById('dashboard-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.remove('mobile-open');
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function scrollToStats() {
+  const statsContent = document.getElementById('stats-content');
+  if (statsContent) {
+    statsContent.scrollIntoView({ behavior: 'smooth' });
+  }
+  closeSidebar();
+}
+
+function openExportDropdown() {
+  // Create dropdown menu for export options
+  const dropdown = document.createElement('div');
+  dropdown.className = 'export-dropdown';
+  dropdown.innerHTML = `
+    <div class="export-dropdown-menu">
+      <button onclick="exportData('json'); this.parentElement.parentElement.remove();">
+        <i class="fas fa-file-code me-2"></i>Export JSON
+      </button>
+      <button onclick="exportData('csv'); this.parentElement.parentElement.remove();">
+        <i class="fas fa-file-csv me-2"></i>Export CSV
+      </button>
+      <button onclick="exportPDF(); this.parentElement.parentElement.remove();">
+        <i class="fas fa-file-pdf me-2"></i>Export PDF
+      </button>
+    </div>
+  `;
+
+  // Remove any existing dropdown
+  const existing = document.querySelector('.export-dropdown');
+  if (existing) existing.remove();
+
+  // Position and show
+  document.body.appendChild(dropdown);
+
+  // Close on click outside
+  setTimeout(() => {
+    document.addEventListener('click', function closeDropdown(e) {
+      if (!dropdown.contains(e.target)) {
+        dropdown.remove();
+        document.removeEventListener('click', closeDropdown);
+      }
+    });
+  }, 10);
+
+  closeSidebar();
+}
+
+// Initialize sidebar state
+document.addEventListener('DOMContentLoaded', function() {
+  const savedState = localStorage.getItem('zta_sidebar');
+  const sidebar = document.getElementById('dashboard-sidebar');
+  const main = document.querySelector('.dashboard-main');
+
+  if (savedState === 'expanded' && window.innerWidth >= 992) {
+    sidebar.classList.add('expanded');
+    main.classList.add('sidebar-expanded');
+  }
+
+  // Close sidebar on mobile when clicking nav items
+  const sidebarItems = document.querySelectorAll('.sidebar-item');
+  sidebarItems.forEach(item => {
+    item.addEventListener('click', function() {
+      if (window.innerWidth < 992) {
+        closeSidebar();
+      }
+    });
+  });
+});
 </script>
+
+<!-- Sidebar Styles -->
+<style>
+/* Dashboard Sidebar */
+.dashboard-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  color: #e2e8f0;
+  z-index: 1040;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+.dashboard-sidebar.expanded {
+  width: 240px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  min-height: 60px;
+}
+
+.sidebar-brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #60a5fa;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dashboard-sidebar.expanded .sidebar-brand {
+  opacity: 1;
+}
+
+.sidebar-toggle {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  color: #fff;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0;
+}
+
+.sidebar-section {
+  padding: 0.5rem 0;
+}
+
+.sidebar-section-title {
+  display: block;
+  padding: 0.5rem 1rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dashboard-sidebar.expanded .sidebar-section-title {
+  opacity: 1;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+
+.sidebar-item.active {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+  border-left: 3px solid #60a5fa;
+}
+
+.sidebar-item i {
+  width: 28px;
+  text-align: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-item span {
+  margin-left: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dashboard-sidebar.expanded .sidebar-item span {
+  opacity: 1;
+}
+
+.sidebar-footer {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 0.5rem 0;
+}
+
+/* Main Content Area */
+.dashboard-main {
+  margin-left: 60px;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
+}
+
+.dashboard-main.sidebar-expanded {
+  margin-left: 240px;
+}
+
+/* Mobile Styles */
+.mobile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.mobile-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1035;
+}
+
+.sidebar-overlay.active {
+  display: block;
+}
+
+/* Export Dropdown */
+.export-dropdown {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1050;
+}
+
+.export-dropdown-menu {
+  background: var(--zta-card-bg, #fff);
+  border: 1px solid var(--zta-border, #dee2e6);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  padding: 0.5rem;
+  min-width: 200px;
+}
+
+.export-dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  text-align: left;
+  color: var(--zta-text, #212529);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.export-dropdown-menu button:hover {
+  background: var(--zta-bg-secondary, #f8f9fa);
+}
+
+@media (max-width: 991.98px) {
+  .dashboard-sidebar {
+    transform: translateX(-100%);
+    width: 280px;
+  }
+
+  .dashboard-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .dashboard-sidebar.mobile-open .sidebar-brand,
+  .dashboard-sidebar.mobile-open .sidebar-section-title,
+  .dashboard-sidebar.mobile-open .sidebar-item span {
+    opacity: 1;
+  }
+
+  .dashboard-main {
+    margin-left: 0;
+  }
+
+  .dashboard-main.sidebar-expanded {
+    margin-left: 0;
+  }
+}
+
+/* Dark mode for sidebar */
+[data-theme="dark"] .export-dropdown-menu {
+  background: var(--zta-card-bg);
+  border-color: var(--zta-border);
+}
+
+[data-theme="dark"] .export-dropdown-menu button {
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .export-dropdown-menu button:hover {
+  background: var(--zta-bg-tertiary);
+}
+
+/* Print: hide sidebar */
+@media print {
+  .dashboard-sidebar,
+  .sidebar-overlay,
+  .mobile-header {
+    display: none !important;
+  }
+
+  .dashboard-main {
+    margin-left: 0 !important;
+  }
+}
+</style>
+
+</div><!-- /container-fluid -->
+</div><!-- /dashboard-container -->
+</div><!-- /dashboard-main -->
 
 {{ end }}
