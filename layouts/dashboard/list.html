@@ -39,6 +39,9 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="exportPDF()" aria-label="Export as PDF report">
           <i class="fas fa-file-pdf me-1" aria-hidden="true"></i>Export PDF
         </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openImportModal()" aria-label="Import Google Analytics data">
+          <i class="fas fa-upload me-1" aria-hidden="true"></i>Import GA
+        </button>
         <button class="btn btn-outline-secondary btn-sm" onclick="openShareModal()" aria-label="Share dashboard">
           <i class="fas fa-share-alt me-1" aria-hidden="true"></i>Share
         </button>
@@ -379,6 +382,30 @@
                   </thead>
                   <tbody id="exit-pages-table">
                     <tr><td colspan="2" class="text-center text-muted">No data yet</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 mb-4">
+              <div class="data-table">
+                <h5 class="p-3 mb-0 bg-light d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-exclamation-triangle me-2"></i>404 Errors &amp; Issues</span>
+                  <span class="badge bg-danger" id="errors-count">0</span>
+                </h5>
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>URL</th>
+                      <th>Type</th>
+                      <th class="text-end">Count</th>
+                      <th>Last Seen</th>
+                      <th>Referrer</th>
+                    </tr>
+                  </thead>
+                  <tbody id="errors-table">
+                    <tr><td colspan="5" class="text-center text-muted">No errors tracked</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1788,6 +1815,148 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
   </div>
 </div>
 
+<!-- Import Google Analytics Data Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalTitle">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="importModalTitle">
+          <i class="fas fa-upload me-2" aria-hidden="true"></i>Import Google Analytics Data
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- No Site Selected Warning -->
+        <div id="import-no-site" class="alert alert-info d-none">
+          <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+          Please select a site first to import data.
+        </div>
+
+        <!-- Import Instructions -->
+        <div id="import-instructions">
+          <div class="alert alert-success mb-4">
+            <h6 class="alert-heading mb-2"><i class="fas fa-lightbulb me-2"></i>Seamless Migration</h6>
+            <p class="mb-0 small">Import your historical Google Analytics data to maintain continuity. Your dashboard will show GA data before the switch and ZTA data after.</p>
+          </div>
+
+          <h6 class="mb-3">How to Export from Google Analytics:</h6>
+
+          <div class="accordion mb-4" id="importAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGA4">
+                  <i class="fab fa-google me-2"></i>Google Analytics 4 (GA4)
+                </button>
+              </h2>
+              <div id="collapseGA4" class="accordion-collapse collapse show" data-bs-parent="#importAccordion">
+                <div class="accordion-body small">
+                  <ol class="mb-0">
+                    <li>Go to <strong>Reports → Acquisition → Traffic acquisition</strong></li>
+                    <li>Set your desired date range</li>
+                    <li>Click the <strong>Share</strong> icon (top right)</li>
+                    <li>Select <strong>Download file → CSV</strong></li>
+                    <li>Upload the downloaded file below</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUA">
+                  <i class="fab fa-google me-2"></i>Universal Analytics (Legacy)
+                </button>
+              </h2>
+              <div id="collapseUA" class="accordion-collapse collapse" data-bs-parent="#importAccordion">
+                <div class="accordion-body small">
+                  <ol class="mb-0">
+                    <li>Go to <strong>Behavior → Site Content → All Pages</strong></li>
+                    <li>Set your desired date range</li>
+                    <li>Click <strong>Export → CSV</strong></li>
+                    <li>Upload the downloaded file below</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAPI">
+                  <i class="fas fa-code me-2"></i>GA4 API / BigQuery
+                </button>
+              </h2>
+              <div id="collapseAPI" class="accordion-collapse collapse" data-bs-parent="#importAccordion">
+                <div class="accordion-body small">
+                  <p>For large datasets, export via the GA4 API or BigQuery:</p>
+                  <pre class="bg-light p-2 rounded small mb-0"><code>{
+  "rows": [...],
+  "dimensionHeaders": [{"name": "date"}, ...],
+  "metricHeaders": [{"name": "screenPageViews"}, ...]
+}</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Upload -->
+          <div class="mb-4">
+            <label for="import-file" class="form-label">Upload Export File</label>
+            <input type="file" class="form-control" id="import-file" accept=".csv,.json,.txt" onchange="handleImportFileSelect(event)">
+            <div class="form-text">Supported formats: CSV, JSON (max 10MB)</div>
+          </div>
+
+          <!-- Or Paste JSON -->
+          <div class="mb-4">
+            <label for="import-json" class="form-label">Or Paste JSON Data</label>
+            <textarea class="form-control font-monospace small" id="import-json" rows="4" placeholder='[{"date":"20241201","pageviews":150,"sessions":100}, ...]'></textarea>
+          </div>
+
+          <!-- Format Selection -->
+          <div class="mb-4">
+            <label for="import-format" class="form-label">Data Format</label>
+            <select class="form-select" id="import-format">
+              <option value="csv">CSV (GA4 or Universal Analytics export)</option>
+              <option value="json">JSON (API response or custom)</option>
+              <option value="ga4-api">GA4 API Response Format</option>
+              <option value="ua-csv">Universal Analytics CSV</option>
+            </select>
+          </div>
+
+          <!-- Preview -->
+          <div id="import-preview" class="d-none mb-4">
+            <h6 class="mb-2">Preview (first 5 rows):</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered small" id="import-preview-table">
+                <thead class="table-light"></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="text-muted small" id="import-preview-count"></div>
+          </div>
+
+          <!-- Error Display -->
+          <div id="import-error" class="alert alert-danger d-none" role="alert"></div>
+
+          <!-- Success Display -->
+          <div id="import-success" class="alert alert-success d-none" role="alert"></div>
+        </div>
+
+        <!-- Import History -->
+        <div id="import-history-section" class="mt-4 pt-3 border-top">
+          <h6 class="text-muted mb-3">Import History</h6>
+          <div id="import-history-list">
+            <p class="text-muted small">No previous imports.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="import-submit-btn" onclick="submitImport()" disabled>
+          <i class="fas fa-upload me-1" aria-hidden="true"></i>Import Data
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Onboarding Wizard Modal -->
 <div class="modal fade" id="onboardingModal" tabindex="-1" aria-labelledby="onboardingModalTitle" data-bs-backdrop="static">
   <div class="modal-dialog modal-lg">
@@ -2323,4 +2492,426 @@ ZTA.track('download', { file: 'report.pdf' });</code></pre>
   display: none;
 }
 </style>
+
+<script>
+// Load errors data
+async function loadErrors() {
+  const siteId = getCurrentSiteId(); // Assumes this function exists in the dashboard
+  if (!siteId) return;
+
+  try {
+    const response = await fetch(`/api/errors?siteId=${siteId}&limit=50`, {
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}` // Assumes this function exists
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Failed to load errors:', response.statusText);
+      return;
+    }
+
+    const data = await response.json();
+    renderErrorsTable(data.errors || []);
+  } catch (err) {
+    console.error('Error loading errors:', err);
+  }
+}
+
+function renderErrorsTable(errors) {
+  const tbody = document.getElementById('errors-table');
+  const countBadge = document.getElementById('errors-count');
+
+  if (!tbody) return;
+
+  if (errors.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No errors tracked</td></tr>';
+    if (countBadge) countBadge.textContent = '0';
+    return;
+  }
+
+  if (countBadge) countBadge.textContent = errors.length;
+
+  tbody.innerHTML = errors.map(error => {
+    const lastSeen = new Date(error.last_seen);
+    const relativeTime = formatRelativeTime(lastSeen);
+    const referrerDisplay = error.referrer ? truncateUrl(error.referrer, 30) : '-';
+
+    let typeClass = 'badge bg-warning';
+    if (error.type === '404') typeClass = 'badge bg-danger';
+    else if (error.type === 'js_error') typeClass = 'badge bg-warning';
+    else if (error.type === '500') typeClass = 'badge bg-danger';
+
+    return `
+      <tr>
+        <td><code class="text-break">${escapeHtml(error.url)}</code></td>
+        <td><span class="${typeClass}">${escapeHtml(error.type)}</span></td>
+        <td class="text-end"><strong>${error.count}</strong></td>
+        <td class="text-muted small" title="${lastSeen.toLocaleString()}">${relativeTime}</td>
+        <td class="text-muted small" title="${escapeHtml(error.referrer || '')}">${escapeHtml(referrerDisplay)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function formatRelativeTime(date) {
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 30) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
+function truncateUrl(url, maxLength) {
+  if (!url || url.length <= maxLength) return url;
+  return url.substring(0, maxLength) + '...';
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Hook into existing dashboard load cycle
+if (typeof window.dashboardLoadCallbacks !== 'undefined') {
+  window.dashboardLoadCallbacks = window.dashboardLoadCallbacks || [];
+  window.dashboardLoadCallbacks.push(loadErrors);
+} else {
+  // Fallback: try to load after a short delay to ensure dashboard is initialized
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(loadErrors, 1000);
+  });
+}
+
+// ============================================
+// Google Analytics Import Functions
+// ============================================
+
+let importData = null;
+let importFormat = 'csv';
+
+function openImportModal() {
+  const modal = new bootstrap.Modal(document.getElementById('importModal'));
+  const siteId = getCurrentSiteId();
+
+  // Reset state
+  importData = null;
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-json').value = '';
+  document.getElementById('import-preview').classList.add('d-none');
+  document.getElementById('import-error').classList.add('d-none');
+  document.getElementById('import-success').classList.add('d-none');
+  document.getElementById('import-submit-btn').disabled = true;
+
+  // Show/hide no site warning
+  if (!siteId) {
+    document.getElementById('import-no-site').classList.remove('d-none');
+    document.getElementById('import-instructions').style.opacity = '0.5';
+    document.getElementById('import-instructions').style.pointerEvents = 'none';
+  } else {
+    document.getElementById('import-no-site').classList.add('d-none');
+    document.getElementById('import-instructions').style.opacity = '1';
+    document.getElementById('import-instructions').style.pointerEvents = 'auto';
+  }
+
+  // Load import history
+  loadImportHistory();
+
+  modal.show();
+}
+
+async function handleImportFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Check file size (10MB max)
+  if (file.size > 10 * 1024 * 1024) {
+    showImportError('File size exceeds 10MB limit');
+    return;
+  }
+
+  try {
+    const text = await file.text();
+
+    // Auto-detect format
+    if (file.name.endsWith('.json') || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+      document.getElementById('import-format').value = 'json';
+      importFormat = 'json';
+      try {
+        importData = JSON.parse(text);
+      } catch (e) {
+        showImportError('Invalid JSON format');
+        return;
+      }
+    } else {
+      document.getElementById('import-format').value = 'csv';
+      importFormat = 'csv';
+      importData = text;
+    }
+
+    // Show preview
+    showImportPreview();
+    document.getElementById('import-submit-btn').disabled = false;
+
+  } catch (err) {
+    showImportError('Failed to read file: ' + err.message);
+  }
+}
+
+function showImportPreview() {
+  const previewEl = document.getElementById('import-preview');
+  const tableEl = document.getElementById('import-preview-table');
+  const countEl = document.getElementById('import-preview-count');
+
+  let rows = [];
+  let headers = [];
+
+  try {
+    if (importFormat === 'csv' && typeof importData === 'string') {
+      const lines = importData.trim().split('\n');
+      headers = parseCSVLine(lines[0]);
+      rows = lines.slice(1, 6).map(line => parseCSVLine(line));
+      countEl.textContent = `Showing ${rows.length} of ${lines.length - 1} rows`;
+    } else if (Array.isArray(importData)) {
+      headers = Object.keys(importData[0] || {});
+      rows = importData.slice(0, 5).map(row => headers.map(h => row[h]));
+      countEl.textContent = `Showing ${rows.length} of ${importData.length} rows`;
+    } else if (importData.rows) {
+      // GA4 API format
+      headers = (importData.dimensionHeaders || []).map(h => h.name)
+                .concat((importData.metricHeaders || []).map(h => h.name));
+      rows = importData.rows.slice(0, 5).map(row =>
+        (row.dimensionValues || []).map(v => v.value)
+        .concat((row.metricValues || []).map(v => v.value))
+      );
+      countEl.textContent = `Showing ${rows.length} of ${importData.rows.length} rows`;
+    }
+
+    // Render table
+    tableEl.querySelector('thead').innerHTML = '<tr>' + headers.map(h =>
+      `<th>${escapeHtml(String(h))}</th>`
+    ).join('') + '</tr>';
+
+    tableEl.querySelector('tbody').innerHTML = rows.map(row =>
+      '<tr>' + row.map(cell => `<td>${escapeHtml(String(cell || ''))}</td>`).join('') + '</tr>'
+    ).join('');
+
+    previewEl.classList.remove('d-none');
+    document.getElementById('import-error').classList.add('d-none');
+
+  } catch (err) {
+    showImportError('Failed to parse data: ' + err.message);
+  }
+}
+
+function parseCSVLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+}
+
+async function submitImport() {
+  const siteId = getCurrentSiteId();
+  if (!siteId) {
+    showImportError('Please select a site first');
+    return;
+  }
+
+  if (!importData) {
+    showImportError('No data to import');
+    return;
+  }
+
+  const format = document.getElementById('import-format').value;
+  const submitBtn = document.getElementById('import-submit-btn');
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importing...';
+
+  try {
+    const response = await fetch('/api/import', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        siteId: siteId,
+        format: format,
+        data: importData,
+        source: 'google-analytics'
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Import failed');
+    }
+
+    // Show success
+    document.getElementById('import-error').classList.add('d-none');
+    const successEl = document.getElementById('import-success');
+    successEl.innerHTML = `
+      <i class="fas fa-check-circle me-2"></i>
+      <strong>Import successful!</strong><br>
+      ${result.recordsStored} days of historical data imported.
+      ${result.dateRange ? `<br><small>Date range: ${result.dateRange.start} to ${result.dateRange.end}</small>` : ''}
+    `;
+    successEl.classList.remove('d-none');
+
+    // Reset form
+    importData = null;
+    document.getElementById('import-file').value = '';
+    document.getElementById('import-json').value = '';
+    document.getElementById('import-preview').classList.add('d-none');
+
+    // Reload import history
+    loadImportHistory();
+
+    // Refresh dashboard data
+    if (typeof loadStats === 'function') {
+      setTimeout(loadStats, 500);
+    }
+
+  } catch (err) {
+    showImportError(err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Import Data';
+  }
+}
+
+async function loadImportHistory() {
+  const listEl = document.getElementById('import-history-list');
+
+  try {
+    const response = await fetch('/api/import', {
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+
+    if (!response.ok) {
+      listEl.innerHTML = '<p class="text-muted small">Failed to load import history</p>';
+      return;
+    }
+
+    const data = await response.json();
+    const imports = data.imports || [];
+
+    if (imports.length === 0) {
+      listEl.innerHTML = '<p class="text-muted small">No previous imports.</p>';
+      return;
+    }
+
+    listEl.innerHTML = imports.slice(0, 10).map(imp => {
+      const date = new Date(imp.importedAt);
+      return `
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+          <div>
+            <small class="text-muted">${date.toLocaleDateString()}</small>
+            <span class="ms-2">${imp.recordCount} records</span>
+            <span class="badge bg-secondary ms-2">${imp.source || 'GA'}</span>
+          </div>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteImport('${imp.id}')" title="Delete import">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    listEl.innerHTML = '<p class="text-muted small">Failed to load import history</p>';
+  }
+}
+
+async function deleteImport(importId) {
+  if (!confirm('Are you sure you want to delete this import? All imported historical data will be removed.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/import?importId=${importId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Delete failed');
+    }
+
+    // Reload history
+    loadImportHistory();
+
+    // Refresh dashboard
+    if (typeof loadStats === 'function') {
+      loadStats();
+    }
+
+  } catch (err) {
+    alert('Failed to delete import: ' + err.message);
+  }
+}
+
+function showImportError(message) {
+  const errorEl = document.getElementById('import-error');
+  errorEl.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + escapeHtml(message);
+  errorEl.classList.remove('d-none');
+  document.getElementById('import-success').classList.add('d-none');
+}
+
+// Handle paste in JSON textarea
+document.addEventListener('DOMContentLoaded', function() {
+  const jsonTextarea = document.getElementById('import-json');
+  if (jsonTextarea) {
+    jsonTextarea.addEventListener('input', function() {
+      const text = this.value.trim();
+      if (text) {
+        try {
+          importData = JSON.parse(text);
+          importFormat = 'json';
+          document.getElementById('import-format').value = 'json';
+          showImportPreview();
+          document.getElementById('import-submit-btn').disabled = false;
+        } catch (e) {
+          // Invalid JSON, disable submit
+          document.getElementById('import-submit-btn').disabled = true;
+          document.getElementById('import-preview').classList.add('d-none');
+        }
+      } else {
+        importData = null;
+        document.getElementById('import-submit-btn').disabled = true;
+        document.getElementById('import-preview').classList.add('d-none');
+      }
+    });
+  }
+});
+</script>
+
 {{ end }}
