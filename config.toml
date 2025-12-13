@@ -1,22 +1,21 @@
-baseURL = "http://localhost:1313/"
-repoName = "GitRepoName"
-environment = "prod"
+baseURL = "https://ztas.io/"
+title = "Zero Trust Analytics"
 languageCode = "en-us"
 
 [taxonomies]
   tag = "tags"
-  IndustryType = "IndustryType"
+  category = "categories"
 
 [markup]
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
 
-
-
 [params]
-  CompanyName = "My Hugo Site"
-
+  CompanyName = "Zero Trust Analytics"
+  description = "Privacy-first website analytics without cookies"
 
 [outputs]
-  section = ["HTML", "JSON"]
+  home = ["HTML", "RSS"]
+  section = ["HTML", "RSS", "JSON"]
+  page = ["HTML"]
