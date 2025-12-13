@@ -33,7 +33,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
   };
 });
 
-// Mock turso (replaced tinybird)
+// Mock turso database
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
   ingestEvents: jest.fn(() => Promise.resolve({ success: true }))
 }));

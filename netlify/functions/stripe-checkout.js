@@ -50,7 +50,7 @@ export default async function handler(req, context) {
       customer_email: auth.user.email,
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID, // $10/month price ID
+          price: process.env.STRIPE_PRICE_ID, // Stripe price ID from env
           quantity: 1
         }
       ],

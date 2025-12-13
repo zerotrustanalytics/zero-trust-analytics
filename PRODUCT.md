@@ -122,7 +122,7 @@ We give you everything you need to understand your website traffic - visitors, p
 
 No cookies. No IP logging. No fingerprinting. No consent banners needed.
 
-GDPR compliant by design. $10/month. 3KB script. 5-minute setup.
+GDPR compliant by design. Plans from $5/month. 3KB script. 5-minute setup.
 
 ---
 
@@ -186,7 +186,7 @@ Everything you actually need from analytics:
 - **Backend**: Netlify Functions (serverless Node.js)
 - **Storage**: Netlify Blobs (no external database)
 - **Auth**: JWT + bcrypt password hashing
-- **Payments**: Stripe ($10/month)
+- **Payments**: Stripe (tiered pricing from $5/month)
 - **Hosting**: Netlify Edge (global CDN)
 
 The entire stack is serverless, scalable, and runs on Netlify's infrastructure.
@@ -200,8 +200,8 @@ The entire stack is serverless, scalable, and runs on Netlify's infrastructure.
 
 **Zero Trust Analytics** offers:
 - True zero-knowledge privacy (not just "privacy-friendly")
-- Simple flat $10/month pricing
-- No pageview limits on basic tier
+- Tiered pricing from $5/month (unlimited sites on all plans)
+- Plans scaled by pageviews (10k to 10M+)
 - 3KB script (fastest in class)
 - Full GA feature parity for what 90% of sites actually need
 

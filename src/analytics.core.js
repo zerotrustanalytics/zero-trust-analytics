@@ -172,6 +172,14 @@
       if (document.visibilityState === 'hidden') flush();
     });
 
+    if (options.auto404 !== false) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', detect404OnLoad);
+      } else {
+        detect404OnLoad();
+      }
+    }
+
     if (cfg.debug) console.log('[ZTA] Initialized:', siteId);
   };
 
@@ -237,6 +245,101 @@
       timestamp: new Date().toISOString()
     });
   };
+
+  ZTA.track404 = function(options) {
+    options = options || {};
+    var errorUrl = options.url || window.location.pathname;
+    var referrer = options.referrer || document.referrer || null;
+
+    var errorEndpoint = cfg.endpoint.replace('/track', '/errors');
+
+    fetch(errorEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        site_id: cfg.siteId,
+        type: '404',
+        url: errorUrl,
+        referrer: referrer,
+        user_agent: navigator.userAgent
+      }),
+      keepalive: true
+    }).catch(function(err) {
+      if (cfg.debug) console.log('[ZTA] 404 tracking error:', err);
+    });
+  };
+
+  ZTA.trackError = function(type, options) {
+    options = options || {};
+    var errorUrl = options.url || window.location.pathname;
+
+    var errorEndpoint = cfg.endpoint.replace('/track', '/errors');
+
+    fetch(errorEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        site_id: cfg.siteId,
+        type: type,
+        url: errorUrl,
+        referrer: options.referrer || document.referrer || null,
+        user_agent: navigator.userAgent,
+        message: options.message || null,
+        stack: options.stack || null,
+        metadata: options.metadata || null
+      }),
+      keepalive: true
+    }).catch(function(err) {
+      if (cfg.debug) console.log('[ZTA] Error tracking error:', err);
+    });
+  };
+
+  function auto404Detection() {
+    var indicators = [
+      function() {
+        var title = document.title.toLowerCase();
+        return title.includes('404') || title.includes('not found') || title.includes('page not found');
+      },
+      function() {
+        var h1 = document.querySelector('h1');
+        if (h1) {
+          var text = h1.textContent.toLowerCase();
+          return text.includes('404') || text.includes('not found');
+        }
+        return false;
+      },
+      function() {
+        var body = document.body;
+        if (body) {
+          var classes = body.className.toLowerCase();
+          return classes.includes('error-404') || classes.includes('not-found') || classes.includes('page-not-found');
+        }
+        return false;
+      },
+      function() {
+        var meta = document.querySelector('meta[name="prerender-status-code"]');
+        if (meta) {
+          return meta.getAttribute('content') === '404';
+        }
+        return false;
+      }
+    ];
+
+    for (var i = 0; i < indicators.length; i++) {
+      if (indicators[i]()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function detect404OnLoad() {
+    if (auto404Detection()) {
+      ZTA.track404();
+      if (cfg.debug) console.log('[ZTA] Auto-detected 404 page');
+    }
+  }
 
   window.ZTA = ZTA;
 

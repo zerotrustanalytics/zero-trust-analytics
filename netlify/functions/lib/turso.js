@@ -2,7 +2,7 @@
  * TURSO CLIENT
  * =============
  * Wrapper for Turso (libSQL) database interactions.
- * Replaces Tinybird for analytics storage.
+ * Primary analytics storage layer.
  */
 
 import { createClient } from '@libsql/client';

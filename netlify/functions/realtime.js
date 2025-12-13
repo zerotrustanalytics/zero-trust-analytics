@@ -51,7 +51,7 @@ export default async function handler(req, context) {
       });
     }
 
-    // Get realtime data from Tinybird
+    // Get realtime data from database
     const realtime = await getRealtime(siteId);
 
     // Build page breakdown from recent pageviews

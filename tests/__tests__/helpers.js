@@ -4,6 +4,8 @@ export function createHeaders(headersObj) {
   const map = new Map(entries.map(([k, v]) => [k.toLowerCase(), v]));
 
   return {
+    // Support both direct property access (headers.authorization) and .get() method
+    ...headersObj,
     get(key) {
       return map.get(key.toLowerCase()) || null;
     },

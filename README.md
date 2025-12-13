@@ -531,15 +531,60 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 ## Self-Hosting / Deployment
 
-Want to run your own instance? Here's how:
+Zero Trust Analytics can be deployed in two ways:
 
-### Prerequisites
+### Option 1: Docker Self-Hosting (Recommended)
 
+Run your own instance with complete data control. Perfect for privacy-conscious organizations.
+
+**Quick Start:**
+
+```bash
+# 1. Copy environment template
+cp docker/.env.example docker/.env
+
+# 2. Set required secrets
+nano docker/.env  # Set HASH_SECRET and JWT_SECRET
+
+# 3. Start with Docker Compose
+docker-compose up -d
+```
+
+Your instance is now running at `http://localhost:3000`
+
+**Production Deployment with SSL:**
+
+```bash
+# Automated setup script
+./docker/quick-start.sh
+```
+
+**Features:**
+- SQLite database (default) or PostgreSQL for scale
+- Nginx reverse proxy with Let's Encrypt SSL
+- Automated backups
+- Docker health checks
+- Resource limits and monitoring
+
+**Full Documentation:** See [Self-Hosting Guide](content/docs/self-hosting.md) or visit `/docs/self-hosting` on your running instance.
+
+**System Requirements:**
+- 2GB RAM minimum (4GB recommended)
+- 10GB disk space
+- Docker 20.10+ and Docker Compose 2.0+
+
+---
+
+### Option 2: Netlify Cloud Deployment
+
+Deploy to Netlify's infrastructure (requires Netlify and Stripe accounts).
+
+**Prerequisites:**
 - Node.js 18+
 - Netlify account
 - Stripe account (for billing)
 
-### 1. Clone & Install
+**1. Clone & Install:**
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/zero-trust-analytics.git
@@ -547,7 +592,7 @@ cd zero-trust-analytics
 cd netlify/functions && npm install && cd ../..
 ```
 
-### 2. Create Netlify Site
+**2. Create Netlify Site:**
 
 ```bash
 npm install -g netlify-cli
@@ -555,7 +600,7 @@ netlify login
 netlify init
 ```
 
-### 3. Set Environment Variables
+**3. Set Environment Variables:**
 
 In Netlify Dashboard > Site Settings > Environment Variables:
 
@@ -565,16 +610,15 @@ In Netlify Dashboard > Site Settings > Environment Variables:
 | `JWT_SECRET` | Random string for auth tokens | `x9k2m5n8p1q4...` |
 | `STRIPE_SECRET_KEY` | Stripe API secret key | `sk_live_...` |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | `whsec_...` |
-| `STRIPE_PRICE_ID` | Your $10/month price ID | `price_...` |
+| `STRIPE_PRICE_ID` | Your Stripe price ID | `price_...` |
 
 Generate secrets with:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+openssl rand -hex 32
 ```
 
-
-### 5. Deploy
+**4. Deploy:**
 
 ```bash
 netlify deploy --prod

@@ -85,11 +85,11 @@ export default async function handler(req, context) {
       }
     }
 
-    // Format dates for Tinybird (DateTime format)
+    // Format dates for database query
     const startStr = startDate.toISOString().replace('T', ' ').split('.')[0];
     const endStr = endDate.toISOString().replace('T', ' ').split('.')[0];
 
-    // Query Tinybird for stats
+    // Query database for stats
     const stats = await getStats(siteId, startStr, endStr);
 
     return new Response(JSON.stringify(stats), {
