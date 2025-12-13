@@ -214,10 +214,11 @@ describe('Teams Endpoint', () => {
         role: 'viewer',
         token: 'invite_token',
         invitedBy: 'user_123',
+        status: 'pending',
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_invite_invite_1', invite);
+      await teamsStore.setJSON('invite_1', invite);
       await teamsStore.setJSON('team_invites_team_2', ['invite_1']);
 
       const url = new URL('https://example.com/api/teams?teamId=team_2');
@@ -304,8 +305,7 @@ describe('Teams Endpoint', () => {
         role: 'viewer',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_3_user_123', member);
-      await teamsStore.setJSON('team_members_team_3', ['user_123']);
+      await teamsStore.setJSON('team_members_team_3', [member]);
 
       const url = new URL('https://example.com/api/teams?teamId=team_3');
 
@@ -421,7 +421,7 @@ describe('Teams Endpoint', () => {
         role: 'owner',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_invite_user_123', member);
+      await teamsStore.setJSON('team_members_team_invite', [member]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -473,7 +473,7 @@ describe('Teams Endpoint', () => {
         role: 'admin',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_admin_invite_user_123', member);
+      await teamsStore.setJSON('team_members_team_admin_invite', [member]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -520,7 +520,7 @@ describe('Teams Endpoint', () => {
         role: 'viewer',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_viewer_user_123', member);
+      await teamsStore.setJSON('team_members_team_viewer', [member]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -590,7 +590,7 @@ describe('Teams Endpoint', () => {
         role: 'owner',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_invalid_role_user_123', member);
+      await teamsStore.setJSON('team_members_team_invalid_role', [member]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -636,7 +636,7 @@ describe('Teams Endpoint', () => {
         role: 'owner',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_owner_role_user_123', member);
+      await teamsStore.setJSON('team_members_team_owner_role', [member]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -682,7 +682,7 @@ describe('Teams Endpoint', () => {
         role: 'owner',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_default_role_user_123', member);
+      await teamsStore.setJSON('team_members_team_default_role', [member]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -721,6 +721,16 @@ describe('Teams Endpoint', () => {
         createdAt: new Date().toISOString()
       };
       await teamsStore.setJSON('team_add_site', team);
+
+      // Add owner as member
+      const owner = {
+        teamId: 'team_add_site',
+        userId: 'user_123',
+        email: 'user@example.com',
+        role: 'owner',
+        joinedAt: new Date().toISOString()
+      };
+      await teamsStore.setJSON('team_members_team_add_site', [owner]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -829,6 +839,16 @@ describe('Teams Endpoint', () => {
       };
       await teamsStore.setJSON('team_update', team);
 
+      // Add owner as member
+      const owner = {
+        teamId: 'team_update',
+        userId: 'user_123',
+        email: 'user@example.com',
+        role: 'owner',
+        joinedAt: new Date().toISOString()
+      };
+      await teamsStore.setJSON('team_members_team_update', [owner]);
+
       const url = new URL('https://example.com/api/teams');
 
       const req = {
@@ -921,7 +941,6 @@ describe('Teams Endpoint', () => {
         role: 'owner',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_role_update_user_123', owner);
 
       const member = {
         teamId: 'team_role_update',
@@ -930,7 +949,7 @@ describe('Teams Endpoint', () => {
         role: 'viewer',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_role_update_user_456', member);
+      await teamsStore.setJSON('team_members_team_role_update', [owner, member]);
 
       const url = new URL('https://example.com/api/teams');
 
@@ -1006,7 +1025,6 @@ describe('Teams Endpoint', () => {
         role: 'owner',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_remove_user_123', owner);
 
       const member = {
         teamId: 'team_remove',
@@ -1015,8 +1033,7 @@ describe('Teams Endpoint', () => {
         role: 'viewer',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_remove_user_456', member);
-      await teamsStore.setJSON('team_members_team_remove', ['user_123', 'user_456']);
+      await teamsStore.setJSON('team_members_team_remove', [owner, member]);
 
       const url = new URL('https://example.com/api/teams?teamId=team_remove&memberId=user_456');
 
@@ -1083,6 +1100,16 @@ describe('Teams Endpoint', () => {
       };
       await teamsStore.setJSON('team_revoke', team);
 
+      // Add owner as member
+      const owner = {
+        teamId: 'team_revoke',
+        userId: 'user_123',
+        email: 'user@example.com',
+        role: 'owner',
+        joinedAt: new Date().toISOString()
+      };
+      await teamsStore.setJSON('team_members_team_revoke', [owner]);
+
       const invite = {
         id: 'invite_revoke',
         teamId: 'team_revoke',
@@ -1090,10 +1117,11 @@ describe('Teams Endpoint', () => {
         role: 'viewer',
         token: 'invite_token',
         invitedBy: 'user_123',
+        status: 'pending',
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_invite_invite_revoke', invite);
+      await teamsStore.setJSON('invite_revoke', invite);
       await teamsStore.setJSON('team_invites_team_revoke', ['invite_revoke']);
 
       const url = new URL('https://example.com/api/teams?teamId=team_revoke&inviteId=invite_revoke');
@@ -1135,8 +1163,7 @@ describe('Teams Endpoint', () => {
         role: 'viewer',
         joinedAt: new Date().toISOString()
       };
-      await teamsStore.setJSON('team_member_team_leave_user_123', member);
-      await teamsStore.setJSON('team_members_team_leave', ['user_123']);
+      await teamsStore.setJSON('team_members_team_leave', [member]);
 
       const url = new URL('https://example.com/api/teams?teamId=team_leave&action=leave');
 

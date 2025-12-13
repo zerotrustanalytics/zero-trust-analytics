@@ -43,7 +43,7 @@
   line-height: 1.25;
 }
 .stat-card .stat-label {
-  color: #6c757d;
+  color: #495057;
   font-size: 0.875rem;
   margin-top: 0.5rem;
 }
@@ -141,7 +141,7 @@
   color: #495057;
 }
 .empty-state p {
-  color: #6c757d;
+  color: #495057;
   max-width: 400px;
   margin: 0 auto 1.5rem;
 }

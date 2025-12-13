@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Sitemap: https://zerotrustanalytics.com/sitemap.xml
+
+# Disallow private areas
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /admin/

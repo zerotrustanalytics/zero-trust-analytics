@@ -14,10 +14,56 @@ global.crypto = {
   }
 };
 
-// Mock rate-limit to always allow requests
+// Mock rate-limit with actual limit enforcement for testing
+const rateLimitStore = new Map();
+
 jest.unstable_mockModule('../../netlify/functions/lib/rate-limit.js', () => ({
-  checkRateLimit: jest.fn(() => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
-  rateLimitResponse: jest.fn(),
+  checkRateLimit: jest.fn((identifier, options = {}) => {
+    const { limit = 100, windowMs = 60000 } = options;
+    const now = Date.now();
+
+    let data = rateLimitStore.get(identifier);
+
+    if (!data || now > data.resetTime) {
+      data = {
+        count: 0,
+        resetTime: now + windowMs
+      };
+    }
+
+    data.count++;
+    rateLimitStore.set(identifier, data);
+
+    const allowed = data.count <= limit;
+    const remaining = Math.max(0, limit - data.count);
+
+    return {
+      allowed,
+      remaining,
+      resetTime: data.resetTime,
+      retryAfter: allowed ? 0 : Math.ceil((data.resetTime - now) / 1000)
+    };
+  }),
+  rateLimitHeaders: jest.fn((result, limit) => ({
+    'X-RateLimit-Limit': String(limit),
+    'X-RateLimit-Remaining': String(result.remaining),
+    'X-RateLimit-Reset': String(Math.ceil(result.resetTime / 1000))
+  })),
+  rateLimitResponse: jest.fn((result) => {
+    return new Response(JSON.stringify({
+      error: 'Too many requests',
+      retryAfter: result.retryAfter
+    }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': String(result.retryAfter),
+        'X-RateLimit-Limit': String(100),
+        'X-RateLimit-Remaining': String(result.remaining),
+        'X-RateLimit-Reset': String(Math.ceil(result.resetTime / 1000))
+      }
+    });
+  }),
   hashIP: jest.fn((ip) => `hashed_${ip}`)
 }));
 
@@ -96,6 +142,7 @@ describe('Stats API Endpoint', () => {
 
   beforeEach(async () => {
     __clearAllStores();
+    rateLimitStore.clear(); // Clear rate limit tracking between tests
     process.env.JWT_SECRET = 'test-jwt-secret';
 
     // Create test user

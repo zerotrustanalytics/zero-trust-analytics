@@ -257,7 +257,6 @@ function handleOffline() {
   if (offlineBanner) {
     offlineBanner.style.display = 'block';
   }
-  console.log('Network status: offline');
 }
 
 /**
@@ -284,7 +283,6 @@ function handleOnline() {
       offlineBanner.style.background = '#dc3545';
     }, 3000);
   }
-  console.log('Network status: online');
 }
 
 /**

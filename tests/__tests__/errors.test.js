@@ -124,9 +124,9 @@ describe('Errors API', () => {
       const response = await handler(req, {});
 
       expect(response.status).toBe(204);
-      expect(response.headers['Access-Control-Allow-Origin']).toBe('*');
-      expect(response.headers['Access-Control-Allow-Methods']).toContain('GET');
-      expect(response.headers['Access-Control-Allow-Methods']).toContain('POST');
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      expect(response.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+      expect(response.headers.get('Access-Control-Allow-Methods')).toContain('POST');
     });
 
     it('should include CORS headers in POST response', async () => {
@@ -151,7 +151,7 @@ describe('Errors API', () => {
       };
 
       const response = await handler(req, {});
-      expect(response.headers['Access-Control-Allow-Origin']).toBe('*');
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
     });
   });
 

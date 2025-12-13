@@ -399,7 +399,16 @@ textarea:focus-visible,
 }
 
 .text-muted {
-  color: #595959 !important;
+  color: #4d4d4d !important;
+}
+
+/* Fix: Placeholder text contrast - WCAG AA compliance */
+.form-control::placeholder,
+.form-select::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: #495057 !important;
+  opacity: 1;
 }
 
 .footer-description,

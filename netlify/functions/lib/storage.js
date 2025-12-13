@@ -1883,8 +1883,10 @@ export async function removeTeamMember(teamId, targetUserId, requesterId) {
   const teams = store(STORES.TEAMS);
 
   // Check requester permission
+  // Allow if requester is removing themselves (leaving) OR if they are owner/admin
   const requesterRole = await getTeamMemberRole(teamId, requesterId);
-  if (requesterRole !== TeamRoles.OWNER && requesterRole !== TeamRoles.ADMIN) {
+  const isSelfRemoval = targetUserId === requesterId;
+  if (!isSelfRemoval && requesterRole !== TeamRoles.OWNER && requesterRole !== TeamRoles.ADMIN) {
     return { error: 'Insufficient permissions' };
   }
 

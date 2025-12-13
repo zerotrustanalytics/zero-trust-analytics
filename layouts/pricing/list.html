@@ -1,0 +1,212 @@
+{{ define "main" }}
+<!-- Pricing Section -->
+<section id="pricing" class="py-5" aria-labelledby="pricing-heading">
+  <div class="container py-5">
+    <h2 class="text-center fw-bold mb-2" id="pricing-heading">Simple, Transparent Pricing</h2>
+    <p class="text-center text-muted mb-4">14-day free trial on all plans. No credit card required.</p>
+
+    <!-- Billing Toggle -->
+    <div class="d-flex justify-content-center align-items-center gap-3 mb-5">
+      <span class="fw-semibold" id="monthly-label">Monthly</span>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch" id="billing-toggle" aria-label="Toggle between monthly and yearly billing" style="width: 3rem; height: 1.5rem; cursor: pointer;">
+      </div>
+      <span class="fw-semibold" id="yearly-label">Yearly <span class="badge bg-success">Save 17%</span></span>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="row g-4 justify-content-center">
+      <!-- Solo -->
+      <div class="col-lg col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <h5 class="fw-bold">Solo</h5>
+            <p class="text-muted small mb-3">For personal sites</p>
+            <h2 class="fw-bold mb-0">$<span class="price-value" data-monthly="5" data-yearly="50">5</span></h2>
+            <p class="text-muted small"><span class="price-period">per month</span></p>
+            <hr>
+            <ul class="list-unstyled text-start mb-4">
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i><strong>10k</strong> pageviews/mo</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Unlimited sites</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Real-time dashboard</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>API access</li>
+            </ul>
+            <a href="/register/?plan=solo" class="btn btn-outline-primary w-100">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Starter -->
+      <div class="col-lg col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <h5 class="fw-bold">Starter</h5>
+            <p class="text-muted small mb-3">For growing sites</p>
+            <h2 class="fw-bold mb-0">$<span class="price-value" data-monthly="15" data-yearly="150">15</span></h2>
+            <p class="text-muted small"><span class="price-period">per month</span></p>
+            <hr>
+            <ul class="list-unstyled text-start mb-4">
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i><strong>50k</strong> pageviews/mo</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Unlimited sites</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Real-time dashboard</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>API access</li>
+            </ul>
+            <a href="/register/?plan=starter" class="btn btn-outline-primary w-100">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pro (Popular) -->
+      <div class="col-lg col-md-6">
+        <div class="card h-100 border-primary shadow position-relative">
+          <div class="position-absolute top-0 start-50 translate-middle">
+            <span class="badge bg-primary px-3 py-2">Most Popular</span>
+          </div>
+          <div class="card-body text-center p-4 pt-5">
+            <h5 class="fw-bold">Pro</h5>
+            <p class="text-muted small mb-3">For professionals</p>
+            <h2 class="fw-bold mb-0">$<span class="price-value" data-monthly="29" data-yearly="290">29</span></h2>
+            <p class="text-muted small"><span class="price-period">per month</span></p>
+            <hr>
+            <ul class="list-unstyled text-start mb-4">
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i><strong>100k</strong> pageviews/mo</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Unlimited sites</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Real-time dashboard</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>API access</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Email reports</li>
+            </ul>
+            <a href="/register/?plan=pro" class="btn btn-primary w-100">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business -->
+      <div class="col-lg col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <h5 class="fw-bold">Business</h5>
+            <p class="text-muted small mb-3">For agencies</p>
+            <h2 class="fw-bold mb-0">$<span class="price-value" data-monthly="79" data-yearly="790">79</span></h2>
+            <p class="text-muted small"><span class="price-period">per month</span></p>
+            <hr>
+            <ul class="list-unstyled text-start mb-4">
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i><strong>1M</strong> pageviews/mo</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Unlimited sites</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Priority support</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Team members</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Custom domains</li>
+            </ul>
+            <a href="/register/?plan=business" class="btn btn-outline-primary w-100">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scale -->
+      <div class="col-lg col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <h5 class="fw-bold">Scale</h5>
+            <p class="text-muted small mb-3">For enterprises</p>
+            <h2 class="fw-bold mb-0">$<span class="price-value" data-monthly="199" data-yearly="1990">199</span></h2>
+            <p class="text-muted small"><span class="price-period">per month</span></p>
+            <hr>
+            <ul class="list-unstyled text-start mb-4">
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i><strong>10M</strong> pageviews/mo</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Unlimited sites</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Priority support</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>White-label option</li>
+              <li class="py-1"><i class="fas fa-check text-success me-2" aria-hidden="true"></i>Extended retention</li>
+            </ul>
+            <a href="/register/?plan=scale" class="btn btn-outline-primary w-100">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Plans Include -->
+    <div class="text-center mt-5">
+      <p class="text-muted mb-3">All plans include: <strong>GDPR/CCPA compliant</strong> &bull; <strong>No cookies</strong> &bull; <strong>Data export</strong> &bull; <strong>API access</strong></p>
+    </div>
+
+    <!-- Competitor Comparison -->
+    <div class="row justify-content-center mt-5">
+      <div class="col-lg-10">
+        <h4 class="text-center fw-bold mb-4">How We Compare</h4>
+        <div class="table-responsive">
+          <table class="table table-bordered text-center">
+            <thead class="table-light">
+              <tr>
+                <th>Pageviews</th>
+                <th class="table-primary">Zero Trust</th>
+                <th>Plausible</th>
+                <th>Fathom</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>10k</td>
+                <td class="table-primary fw-bold">$5 <small class="text-muted">(unlimited sites)</small></td>
+                <td>$9 <small class="text-muted">(1 site)</small></td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>50k</td>
+                <td class="table-primary fw-bold">$15 <small class="text-muted">(unlimited sites)</small></td>
+                <td>~$14 <small class="text-muted">(1 site)</small></td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>100k</td>
+                <td class="table-primary fw-bold">$29 <small class="text-muted">(unlimited sites)</small></td>
+                <td>$19 <small class="text-muted">(1 site)</small></td>
+                <td>$15 <small class="text-muted">(50 sites)</small></td>
+              </tr>
+              <tr>
+                <td>1M</td>
+                <td class="table-primary fw-bold">$79 <small class="text-muted">(unlimited sites)</small></td>
+                <td>$69 <small class="text-muted">(3 sites)</small></td>
+                <td>$60 <small class="text-muted">(50 sites)</small></td>
+              </tr>
+              <tr>
+                <td>10M</td>
+                <td class="table-primary fw-bold">$199 <small class="text-muted">(unlimited sites)</small></td>
+                <td>$180 <small class="text-muted">(10 sites)</small></td>
+                <td>$200 <small class="text-muted">(50 sites)</small></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-center text-muted mt-3"><i class="fas fa-info-circle me-1" aria-hidden="true"></i>Our advantage: <strong>Unlimited sites on every tier.</strong> Perfect for agencies, freelancers, and multi-site owners.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Billing Toggle Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const toggle = document.getElementById('billing-toggle');
+  const prices = document.querySelectorAll('.price-value');
+  const periods = document.querySelectorAll('.price-period');
+
+  toggle.addEventListener('change', function() {
+    const isYearly = this.checked;
+    prices.forEach(function(el) {
+      el.textContent = isYearly ? el.dataset.yearly : el.dataset.monthly;
+    });
+    periods.forEach(function(el) {
+      el.textContent = isYearly ? 'per year' : 'per month';
+    });
+  });
+});
+</script>
+
+<!-- CTA Section -->
+<section class="bg-primary text-white py-5" aria-labelledby="cta-heading">
+  <div class="container text-center py-4">
+    <h2 class="mb-4" id="cta-heading">Ready to respect your users' privacy?</h2>
+    <p class="lead mb-4">Join hundreds of websites using privacy-focused analytics.</p>
+    <a href="/register/" class="btn btn-light btn-lg">Start Your Free Trial</a>
+  </div>
+</section>
+{{ end }}

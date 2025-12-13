@@ -55,7 +55,7 @@ export default async function handler(req, context) {
       const qrCodeUri = totp.toString();
 
       // Store the secret temporarily (not enabled yet)
-      await updateUser(userId, {
+      await updateUser(user.email, {
         twoFactorSecret: secret.base32,
         twoFactorEnabled: false
       });
@@ -114,7 +114,7 @@ export default async function handler(req, context) {
       }
 
       // Enable 2FA for the user
-      await updateUser(userId, {
+      await updateUser(user.email, {
         twoFactorEnabled: true
       });
 
@@ -170,7 +170,7 @@ export default async function handler(req, context) {
       }
 
       // Disable 2FA
-      await updateUser(userId, {
+      await updateUser(user.email, {
         twoFactorEnabled: false,
         twoFactorSecret: null
       });

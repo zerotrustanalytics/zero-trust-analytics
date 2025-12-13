@@ -65,7 +65,6 @@ async function checkUserStatus() {
     // If status is 'active', don't show any banner
 
   } catch (err) {
-    console.error('Failed to check user status:', err);
   }
 }
 
@@ -131,7 +130,6 @@ async function loadSites() {
       }
     }
   } catch (err) {
-    console.error('Failed to load sites:', err);
   }
 }
 
@@ -194,7 +192,6 @@ async function loadStats() {
     loadAnnotationsForChart();
 
   } catch (err) {
-    console.error('Failed to load stats:', err);
     showLoading(false);
   }
 }
@@ -222,7 +219,6 @@ async function loadAnnotationsForChart() {
       updateAnnotationMarkers(currentAnnotations);
     }
   } catch (err) {
-    console.error('Failed to load annotations:', err);
   }
 }
 
@@ -262,7 +258,6 @@ async function loadComparisonData() {
       previousPeriodData = data;
     }
   } catch (err) {
-    console.error('Failed to load comparison data:', err);
     previousPeriodData = null;
   }
 }
@@ -319,7 +314,6 @@ async function loadStatsCustomRange() {
     updateDashboard(data);
 
   } catch (err) {
-    console.error('Failed to load stats:', err);
   }
 }
 
@@ -483,7 +477,6 @@ async function updateRealtime() {
       }
     }
   } catch (err) {
-    console.error('Realtime update failed:', err);
   }
 }
 
@@ -511,7 +504,6 @@ async function handleAddSite(event) {
     loadStats();
 
   } catch (err) {
-    console.error('Add site error:', err);
     const errorEl = document.getElementById('add-site-error');
     errorEl.textContent = err.message;
     ZTA.utils.showElement(errorEl);
@@ -547,7 +539,6 @@ async function exportData(format) {
     URL.revokeObjectURL(a.href);
 
   } catch (err) {
-    console.error('Export error:', err);
     alert('Failed to export data');
   }
 }
@@ -901,7 +892,6 @@ async function handleUpdateSite(event) {
     loadStats();
 
   } catch (err) {
-    console.error('Update site error:', err);
     const errorEl = document.getElementById('site-settings-error');
     errorEl.textContent = err.message;
     ZTA.utils.showElement(errorEl);
@@ -930,7 +920,6 @@ async function deleteSite(siteId) {
     await loadSites();
 
   } catch (err) {
-    console.error('Delete site error:', err);
     alert('Failed to delete site: ' + err.message);
   }
 }
@@ -944,7 +933,6 @@ async function startCheckout() {
     // Redirect to Stripe checkout
     window.location.href = data.url;
   } catch (err) {
-    console.error('Checkout error:', err);
     alert('Failed to start checkout: ' + err.message);
   }
 }
@@ -956,7 +944,6 @@ async function openBillingPortal() {
     // Redirect to Stripe portal
     window.location.href = data.url;
   } catch (err) {
-    console.error('Portal error:', err);
     alert('Failed to open billing portal: ' + err.message);
   }
 }
@@ -1149,7 +1136,6 @@ function startVerification() {
         onVerificationSuccess();
       }
     } catch (err) {
-      console.error('Verification check failed:', err);
     }
 
   }, 5000); // Check every 5 seconds
@@ -1417,7 +1403,6 @@ async function loadSessions() {
     }).join('');
 
   } catch (err) {
-    console.error('Load sessions error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load sessions</p>';
   }
 }
@@ -1465,7 +1450,6 @@ async function revokeSession(sessionId) {
     loadSessions();
 
   } catch (err) {
-    console.error('Revoke session error:', err);
     alert('Failed to sign out device: ' + err.message);
   }
 }
@@ -1493,7 +1477,6 @@ async function revokeAllSessions() {
     loadSessions();
 
   } catch (err) {
-    console.error('Revoke all sessions error:', err);
     alert('Failed to sign out devices: ' + err.message);
   }
 }
@@ -1557,7 +1540,6 @@ async function createShareLink() {
     loadExistingShares();
 
   } catch (err) {
-    console.error('Create share error:', err);
     alert('Failed to create share link: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -1615,7 +1597,6 @@ async function loadExistingShares() {
     }).join('');
 
   } catch (err) {
-    console.error('Load shares error:', err);
     container.innerHTML = '<p class="text-danger small">Failed to load shares</p>';
   }
 }
@@ -1639,7 +1620,6 @@ async function revokeShare(token) {
     loadExistingShares();
 
   } catch (err) {
-    console.error('Revoke share error:', err);
     alert('Failed to revoke share: ' + err.message);
   }
 }
@@ -1864,7 +1844,6 @@ async function loadActivity(append = false) {
     }
 
   } catch (err) {
-    console.error('Load activity error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load activity</p>';
   }
 }
@@ -2012,7 +1991,6 @@ async function loadAlerts() {
     }).join('');
 
   } catch (err) {
-    console.error('Load alerts error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load alerts</p>';
   }
 }
@@ -2067,7 +2045,6 @@ async function createAlert() {
     loadAlerts();
 
   } catch (err) {
-    console.error('Create alert error:', err);
     alert('Failed to create alert: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -2094,7 +2071,6 @@ async function toggleAlert(alertId, isActive) {
     loadAlerts();
 
   } catch (err) {
-    console.error('Toggle alert error:', err);
     alert('Failed to update alert: ' + err.message);
   }
 }
@@ -2118,7 +2094,6 @@ async function deleteAlert(alertId) {
     loadAlerts();
 
   } catch (err) {
-    console.error('Delete alert error:', err);
     alert('Failed to delete alert: ' + err.message);
   }
 }
@@ -2219,7 +2194,6 @@ async function loadWebhooks() {
     }).join('');
 
   } catch (err) {
-    console.error('Load webhooks error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load webhooks</p>';
   }
 }
@@ -2292,7 +2266,6 @@ async function createWebhook() {
     loadWebhooks();
 
   } catch (err) {
-    console.error('Create webhook error:', err);
     alert('Failed to create webhook: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -2341,7 +2314,6 @@ async function testWebhook(webhookId) {
     loadWebhooks();
 
   } catch (err) {
-    console.error('Test webhook error:', err);
     alert('Failed to test webhook: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -2368,7 +2340,6 @@ async function deleteWebhook(webhookId) {
     loadWebhooks();
 
   } catch (err) {
-    console.error('Delete webhook error:', err);
     alert('Failed to delete webhook: ' + err.message);
   }
 }
@@ -2445,7 +2416,6 @@ async function loadApiKeys() {
     }).join('');
 
   } catch (err) {
-    console.error('Load API keys error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load API keys</p>';
   }
 }
@@ -2488,7 +2458,6 @@ async function createApiKey() {
     loadApiKeys();
 
   } catch (err) {
-    console.error('Create API key error:', err);
     alert('Failed to create API key: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -2527,7 +2496,6 @@ async function revokeApiKey(keyId) {
     loadApiKeys();
 
   } catch (err) {
-    console.error('Revoke API key error:', err);
     alert('Failed to revoke API key: ' + err.message);
   }
 }
@@ -2705,7 +2673,6 @@ async function loadAnnotations() {
     updateAnnotationMarkers(currentAnnotations);
 
   } catch (err) {
-    console.error('Load annotations error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load annotations</p>';
   }
 }
@@ -2763,7 +2730,6 @@ async function createAnnotation() {
     loadAnnotations();
 
   } catch (err) {
-    console.error('Create annotation error:', err);
     alert('Failed to create annotation: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -2791,7 +2757,6 @@ async function deleteAnnotation(annotationId) {
     loadAnnotations();
 
   } catch (err) {
-    console.error('Delete annotation error:', err);
     alert('Failed to delete annotation: ' + err.message);
   }
 }
@@ -2909,7 +2874,6 @@ async function loadUserTeams() {
     }
 
   } catch (err) {
-    console.error('Load teams error:', err);
     document.getElementById('teams-loading').innerHTML = '<p class="text-danger">Failed to load teams</p>';
   }
 }
@@ -2962,7 +2926,6 @@ async function createTeam() {
     loadUserTeams();
 
   } catch (err) {
-    console.error('Create team error:', err);
     alert('Failed to create team: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -3040,7 +3003,6 @@ async function loadTeamDetails() {
     displayTeamSites(data.sites);
 
   } catch (err) {
-    console.error('Load team details error:', err);
     document.getElementById('teams-loading').innerHTML = '<p class="text-danger">Failed to load team details</p>';
   }
 }
@@ -3197,7 +3159,6 @@ async function inviteTeamMember() {
     loadTeamDetails();
 
   } catch (err) {
-    console.error('Invite error:', err);
     alert('Failed to send invite: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -3244,7 +3205,6 @@ async function updateMemberRole(memberId, newRole) {
     loadTeamDetails();
 
   } catch (err) {
-    console.error('Update role error:', err);
     alert('Failed to update role: ' + err.message);
   }
 }
@@ -3272,7 +3232,6 @@ async function removeMember(memberId) {
     loadTeamDetails();
 
   } catch (err) {
-    console.error('Remove member error:', err);
     alert('Failed to remove member: ' + err.message);
   }
 }
@@ -3299,7 +3258,6 @@ async function revokeInvite(inviteId) {
     loadTeamDetails();
 
   } catch (err) {
-    console.error('Revoke invite error:', err);
     alert('Failed to revoke invite: ' + err.message);
   }
 }
@@ -3340,7 +3298,6 @@ async function addSiteToTeam() {
     loadTeamDetails();
 
   } catch (err) {
-    console.error('Add site error:', err);
     alert('Failed to add site: ' + err.message);
   }
 }
@@ -3369,7 +3326,6 @@ async function leaveCurrentTeam() {
     loadUserTeams();
 
   } catch (err) {
-    console.error('Leave team error:', err);
     alert('Failed to leave team: ' + err.message);
   }
 }
@@ -3501,7 +3457,6 @@ async function loadGoals() {
     }).join('');
 
   } catch (err) {
-    console.error('Load goals error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load goals</p>';
   }
 }
@@ -3560,7 +3515,6 @@ async function createGoal() {
     loadGoals();
 
   } catch (err) {
-    console.error('Create goal error:', err);
     alert('Failed to create goal: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -3588,7 +3542,6 @@ async function deleteGoal(goalId) {
     loadGoals();
 
   } catch (err) {
-    console.error('Delete goal error:', err);
     alert('Failed to delete goal: ' + err.message);
   }
 }
@@ -3897,7 +3850,6 @@ async function loadFunnels() {
     }).join('');
 
   } catch (err) {
-    console.error('Load funnels error:', err);
     loadingEl.innerHTML = '<p class="text-danger">Failed to load funnels</p>';
   }
 }
@@ -3953,7 +3905,6 @@ async function createFunnel() {
     loadFunnels();
 
   } catch (err) {
-    console.error('Create funnel error:', err);
     alert('Failed to create funnel: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -3981,7 +3932,6 @@ async function deleteFunnel(funnelId) {
     loadFunnels();
 
   } catch (err) {
-    console.error('Delete funnel error:', err);
     alert('Failed to delete funnel: ' + err.message);
   }
 }
@@ -4070,7 +4020,6 @@ async function loadHeatmapPages() {
     }
 
   } catch (err) {
-    console.error('Load heatmap pages error:', err);
     select.innerHTML = '<option value="">Failed to load pages</option>';
   }
 }
@@ -4110,7 +4059,6 @@ async function loadHeatmapData() {
     }
 
   } catch (err) {
-    console.error('Load heatmap data error:', err);
     document.getElementById('heatmap-loading').classList.add('d-none');
     document.getElementById('heatmap-no-data').classList.remove('d-none');
   }

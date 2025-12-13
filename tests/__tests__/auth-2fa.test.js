@@ -131,7 +131,7 @@ describe('2FA Authentication', () => {
     const { getStore } = await import('@netlify/blobs');
     const usersStore = getStore({ name: 'users' });
 
-    await usersStore.setJSON('user:user-123', {
+    await usersStore.setJSON('test@example.com', {
       id: 'user-123',
       email: 'test@example.com',
       passwordHash: 'hashed_password123',
@@ -195,7 +195,7 @@ describe('2FA Authentication', () => {
       await handler(req, { ip: '127.0.0.1' });
 
       const usersStore = getStore({ name: 'users' });
-      const user = await usersStore.get('user:user-123', { type: 'json' });
+      const user = await usersStore.get('test@example.com', { type: 'json' });
 
       expect(user.twoFactorSecret).toBeDefined();
       expect(user.twoFactorEnabled).toBe(false);
@@ -208,7 +208,7 @@ describe('2FA Authentication', () => {
       const { getStore } = await import('@netlify/blobs');
       const usersStore = getStore({ name: 'users' });
 
-      await usersStore.setJSON('user:user-123', {
+      await usersStore.setJSON('test@example.com', {
         id: 'user-123',
         email: 'test@example.com',
         passwordHash: 'hashed_password123',
@@ -283,7 +283,7 @@ describe('2FA Authentication', () => {
       const usersStore = getStore({ name: 'users' });
 
       // Remove the secret
-      await usersStore.setJSON('user:user-123', {
+      await usersStore.setJSON('test@example.com', {
         id: 'user-123',
         email: 'test@example.com',
         passwordHash: 'hashed_password123',
@@ -324,7 +324,7 @@ describe('2FA Authentication', () => {
       await handler(req, { ip: '127.0.0.1' });
 
       const usersStore = getStore({ name: 'users' });
-      const user = await usersStore.get('user:user-123', { type: 'json' });
+      const user = await usersStore.get('test@example.com', { type: 'json' });
 
       expect(user.twoFactorEnabled).toBe(true);
     });
@@ -336,7 +336,7 @@ describe('2FA Authentication', () => {
       const { getStore } = await import('@netlify/blobs');
       const usersStore = getStore({ name: 'users' });
 
-      await usersStore.setJSON('user:user-123', {
+      await usersStore.setJSON('test@example.com', {
         id: 'user-123',
         email: 'test@example.com',
         passwordHash: 'hashed_password123',
@@ -403,7 +403,7 @@ describe('2FA Authentication', () => {
       await handler(req, { ip: '127.0.0.1' });
 
       const usersStore = getStore({ name: 'users' });
-      const user = await usersStore.get('user:user-123', { type: 'json' });
+      const user = await usersStore.get('test@example.com', { type: 'json' });
 
       expect(user.twoFactorEnabled).toBe(false);
       expect(user.twoFactorSecret).toBeNull();
@@ -414,7 +414,7 @@ describe('2FA Authentication', () => {
       const { getStore } = await import('@netlify/blobs');
       const usersStore = getStore({ name: 'users' });
 
-      await usersStore.setJSON('user:user-123', {
+      await usersStore.setJSON('test@example.com', {
         id: 'user-123',
         email: 'test@example.com',
         passwordHash: 'hashed_password123',
@@ -445,7 +445,7 @@ describe('2FA Authentication', () => {
       const { getStore } = await import('@netlify/blobs');
       const usersStore = getStore({ name: 'users' });
 
-      await usersStore.setJSON('user:user-123', {
+      await usersStore.setJSON('test@example.com', {
         id: 'user-123',
         email: 'test@example.com',
         passwordHash: 'hashed_password123',
@@ -545,7 +545,7 @@ describe('2FA Authentication', () => {
       const { getStore } = await import('@netlify/blobs');
       const usersStore = getStore({ name: 'users' });
 
-      await usersStore.setJSON('user:user-123', {
+      await usersStore.setJSON('test@example.com', {
         id: 'user-123',
         email: 'test@example.com',
         passwordHash: 'hashed_password123',
@@ -578,7 +578,7 @@ describe('2FA Authentication', () => {
       const { getStore } = await import('@netlify/blobs');
       const usersStore = getStore({ name: 'users' });
 
-      await usersStore.setJSON('user:user-123', {
+      await usersStore.setJSON('test@example.com', {
         id: 'user-123',
         email: 'test@example.com',
         passwordHash: 'hashed_password123',
