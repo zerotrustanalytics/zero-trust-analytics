@@ -63,6 +63,29 @@ export async function updateUser(email, updates) {
   return updated;
 }
 
+// Create user from OAuth provider (no password)
+export async function createOAuthUser(email, provider, providerId, name = null, plan = 'pro') {
+  const users = store(STORES.USERS);
+  const userId = 'user_' + Date.now();
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
+  const user = {
+    id: userId,
+    email,
+    passwordHash: null, // OAuth users don't have passwords
+    oauthProvider: provider,
+    oauthProviderId: providerId,
+    name: name,
+    createdAt: now.toISOString(),
+    plan,
+    trialEndsAt: trialEndsAt.toISOString(),
+    subscription: null
+  };
+  await users.setJSON(email, user);
+  return user;
+}
+
 // Find user by Stripe customer ID
 export async function getUserByCustomerId(customerId) {
   const users = store(STORES.USERS);

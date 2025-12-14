@@ -114,4 +114,110 @@
 
 [data-theme=dark] .auth-footer a {
   color: #60a5fa; /* Blue-400 for link visibility */
+}
+
+/* OAuth Buttons */
+.oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-oauth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: 1px solid #e9ecef;
+  background: #fff;
+  color: #212529;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn-oauth svg {
+  flex-shrink: 0;
+}
+
+.btn-oauth:hover {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.btn-oauth:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.btn-github {
+  background: #24292e;
+  border-color: #24292e;
+  color: #fff;
+}
+
+.btn-github:hover {
+  background: #1b1f23;
+  border-color: #1b1f23;
+}
+
+.btn-google {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  color: #212529;
+}
+
+.btn-google:hover {
+  background: #f8f9fa;
+}
+
+/* Auth Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e9ecef;
+}
+
+.auth-divider span {
+  padding: 0 1rem;
+  font-size: 0.8125rem;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+/* Dark mode OAuth styles */
+[data-theme=dark] .btn-oauth {
+  border-color: var(--zta-border);
+}
+
+[data-theme=dark] .btn-google {
+  background: var(--zta-card-bg);
+  color: var(--zta-text);
+  border-color: var(--zta-border);
+}
+
+[data-theme=dark] .btn-google:hover {
+  background: var(--zta-bg);
+}
+
+[data-theme=dark] .auth-divider::before,
+[data-theme=dark] .auth-divider::after {
+  background: var(--zta-border);
+}
+
+[data-theme=dark] .auth-divider span {
+  color: #9ca3af;
 }/*# sourceMappingURL=auth.css.map */
