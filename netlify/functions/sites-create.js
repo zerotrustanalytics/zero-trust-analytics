@@ -1,5 +1,5 @@
-import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
-import { createSite } from './lib/storage.js';
+import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders, validateCSRFFromRequest } from './lib/auth.js';
+import { createSite, getUser } from './lib/storage.js';
 import { generateSiteId } from './lib/hash.js';
 
 export default async function handler(req, context) {
@@ -20,6 +20,12 @@ export default async function handler(req, context) {
       status: auth.status,
       headers: getSecurityHeaders(origin)
     });
+  }
+
+  // SECURITY: Validate CSRF token for state-changing operations
+  const csrfValidation = validateCSRFFromRequest(req.headers, auth.user.id);
+  if (!csrfValidation.valid) {
+    return Errors.csrfInvalid();
   }
 
   try {

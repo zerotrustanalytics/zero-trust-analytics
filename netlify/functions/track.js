@@ -2,6 +2,8 @@ import { createZTRecord, validateNoPII } from './lib/zero-trust-core.js';
 import { ingestEvents } from './lib/turso.js';
 import { getSite } from './lib/storage.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError, ValidationError, NotFoundError } from './lib/error-handler.js';
 
 // Get required hash secret - throws if not configured
 function getRequiredHashSecret() {
@@ -71,6 +73,7 @@ function extractReferrerDomain(referrer) {
 
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
+  const logger = createFunctionLogger('track', req, context);
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -85,6 +88,7 @@ export default async function handler(req, context) {
   }
 
   if (req.method !== 'POST') {
+    logger.warn('Invalid HTTP method', { method: req.method });
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: { 'Content-Type': 'application/json' }
@@ -97,6 +101,9 @@ export default async function handler(req, context) {
   const rateLimit = checkRateLimit(rateLimitKey, { limit: 1000, windowMs: 60000 });
 
   if (!rateLimit.allowed) {
+    logger.warn('Rate limit exceeded for tracking', {
+      remainingTime: rateLimit.resetIn
+    });
     return rateLimitResponse(rateLimit);
   }
 
@@ -106,23 +113,25 @@ export default async function handler(req, context) {
 
     // Handle batch requests
     if (batch && Array.isArray(events)) {
-      return await handleBatch(req, context, origin, siteId, events);
+      logger.debug('Processing batch tracking request', {
+        siteId,
+        eventCount: events.length
+      });
+      return await handleBatch(req, context, origin, siteId, events, logger);
     }
 
     // Handle single event (legacy support)
-    return await handleSingleEvent(req, context, origin, data);
+    logger.debug('Processing single event (legacy)', { siteId });
+    return await handleSingleEvent(req, context, origin, data, logger);
   } catch (err) {
-    console.error('Track error:', err.message, err.stack);
-    return new Response(JSON.stringify({ error: 'Internal error', debug: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return handleError(err, logger, origin);
   }
 }
 
 // Handle batch of events (single database write)
-async function handleBatch(req, context, origin, siteId, events) {
+async function handleBatch(req, context, origin, siteId, events, logger) {
   if (!siteId) {
+    logger.warn('Batch request missing site ID');
     return new Response(JSON.stringify({ error: 'Site ID required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
@@ -132,6 +141,7 @@ async function handleBatch(req, context, origin, siteId, events) {
   // Verify site exists
   const site = await getSite(siteId);
   if (!site) {
+    logger.warn('Invalid site ID in batch request', { siteId });
     return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' }
@@ -141,6 +151,11 @@ async function handleBatch(req, context, origin, siteId, events) {
   // CORS origin validation
   const allowedOrigin = getAllowedOrigin(origin, site.domain);
   if (!allowedOrigin && origin) {
+    logger.warn('CORS origin not allowed', {
+      siteId,
+      siteDomain: site.domain,
+      requestOrigin: origin
+    });
     return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
       status: 403,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'null' }
@@ -153,6 +168,7 @@ async function handleBatch(req, context, origin, siteId, events) {
 
   // Filter bots
   if (isBot(userAgent)) {
+    logger.debug('Bot detected, silently accepting', { siteId });
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': allowedOrigin || '*' }
@@ -182,7 +198,17 @@ async function handleBatch(req, context, origin, siteId, events) {
 
   // Send all records to database in ONE request
   if (records.length > 0) {
+    logger.info('Ingesting batch events', {
+      siteId,
+      recordCount: records.length,
+      originalEventCount: events.length
+    });
     await ingestEvents('pageviews', records);
+  } else {
+    logger.debug('No valid records to ingest after filtering', {
+      siteId,
+      originalEventCount: events.length
+    });
   }
 
   return new Response(JSON.stringify({ success: true, count: records.length }), {
@@ -260,10 +286,11 @@ function parseEvent(data) {
 }
 
 // Handle single event (legacy/fallback)
-async function handleSingleEvent(req, context, origin, data) {
+async function handleSingleEvent(req, context, origin, data, logger) {
   const { type, siteId } = data;
 
   if (!siteId) {
+    logger.warn('Single event missing site ID');
     return new Response(JSON.stringify({ error: 'Site ID required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
@@ -273,6 +300,7 @@ async function handleSingleEvent(req, context, origin, data) {
   // Verify site exists (still using Netlify Blobs for site config)
   const site = await getSite(siteId);
   if (!site) {
+    logger.warn('Invalid site ID in single event', { siteId });
     return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' }
@@ -282,6 +310,11 @@ async function handleSingleEvent(req, context, origin, data) {
   // CORS origin validation
   const allowedOrigin = getAllowedOrigin(origin, site.domain);
   if (!allowedOrigin && origin) {
+    logger.warn('CORS origin not allowed for single event', {
+      siteId,
+      siteDomain: site.domain,
+      requestOrigin: origin
+    });
     return new Response(JSON.stringify({ error: 'Origin not allowed', debug: { origin, expected: site.domain } }), {
       status: 403,
       headers: {
@@ -297,6 +330,7 @@ async function handleSingleEvent(req, context, origin, data) {
 
   // Filter bots silently
   if (isBot(userAgent)) {
+    logger.debug('Bot detected in single event, silently accepting', { siteId });
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
@@ -329,7 +363,10 @@ async function handleSingleEvent(req, context, origin, data) {
 
   // Safety check - ensure no PII leaked into record
   if (!validateNoPII(record)) {
-    console.error('PII detected in record, blocking storage');
+    logger.error('PII detected in record, blocking storage', null, {
+      siteId,
+      eventType
+    });
     return new Response(JSON.stringify({ error: 'Data validation failed' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
@@ -337,6 +374,10 @@ async function handleSingleEvent(req, context, origin, data) {
   }
 
   // Send to database
+  logger.info('Ingesting single event', {
+    siteId,
+    eventType
+  });
   await ingestEvents('pageviews', record);
 
   return new Response(JSON.stringify({ success: true }), {

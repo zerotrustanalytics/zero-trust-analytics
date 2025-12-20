@@ -1,15 +1,21 @@
-import { verifyPassword, createToken, Errors, corsPreflightResponse, successResponse, getSecurityHeaders } from './lib/auth.js';
+import { verifyPassword, createToken, Errors, corsPreflightResponse, successResponse, getSecurityHeaders, createAuthResponse } from './lib/auth.js';
 import { getUser } from './lib/storage.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError, AuthError, ValidationError } from './lib/error-handler.js';
 
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
+  const logger = createFunctionLogger('auth-login', req, context);
+
+  logger.info('Login attempt received');
 
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse(origin, 'POST, OPTIONS');
   }
 
   if (req.method !== 'POST') {
+    logger.warn('Invalid HTTP method', { method: req.method });
     return Errors.methodNotAllowed();
   }
 
@@ -19,6 +25,10 @@ export default async function handler(req, context) {
   const rateLimit = checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60000 });
 
   if (!rateLimit.allowed) {
+    logger.warn('Rate limit exceeded', {
+      remainingTime: rateLimit.resetIn,
+      limit: 10
+    });
     return rateLimitResponse(rateLimit);
   }
 
@@ -26,20 +36,34 @@ export default async function handler(req, context) {
     const { email, password } = await req.json();
 
     if (!email || !password) {
+      logger.warn('Missing required fields');
       return Errors.validationError('Email and password required');
     }
+
+    logger.debug('Attempting to retrieve user');
 
     // Get user
     const user = await getUser(email);
     if (!user) {
+      logger.warn('Login failed - user not found', {
+        hasEmail: !!email
+      });
       return Errors.unauthorized('Invalid credentials');
     }
 
     // Verify password
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
+      logger.warn('Login failed - invalid password', {
+        userId: user.id
+      });
       return Errors.unauthorized('Invalid credentials');
     }
+
+    logger.info('Password verified successfully', {
+      userId: user.id,
+      has2FA: user.twoFactorEnabled
+    });
 
     // Check if user has 2FA enabled
     if (user.twoFactorEnabled) {
@@ -51,6 +75,10 @@ export default async function handler(req, context) {
         { expiresIn: '5m' }
       );
 
+      logger.info('2FA required, returning temp token', {
+        userId: user.id
+      });
+
       return successResponse({
         success: true,
         requires_2fa: true,
@@ -61,18 +89,15 @@ export default async function handler(req, context) {
     // Create JWT token (no 2FA required)
     const token = createToken({ id: user.id, email: user.email });
 
-    return successResponse({
-      success: true,
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        subscription: user.subscription
-      }
-    }, 200, origin);
+    logger.info('Login successful', {
+      userId: user.id,
+      subscription: user.subscription?.status
+    });
+
+    // SECURITY: Return auth response with CSRF token
+    return createAuthResponse(user, token, origin);
   } catch (err) {
-    console.error('Login error:', err);
-    return Errors.internalError('Login failed');
+    return handleError(err, logger, origin);
   }
 }
 

@@ -55,8 +55,15 @@ export default async function handler(req, context) {
     // Hash new password
     const passwordHash = await hashPassword(password);
 
-    // Update user's password
-    const updated = await updateUser(tokenData.email, { passwordHash });
+    // SECURITY: Invalidate all existing sessions when password is changed
+    // This prevents old JWT tokens from being used after a password reset
+    const tokenInvalidatedAt = new Date().toISOString();
+
+    // Update user's password and invalidation timestamp
+    const updated = await updateUser(tokenData.email, {
+      passwordHash,
+      tokenInvalidatedAt
+    });
     if (!updated) {
       return Errors.internalError('Failed to update password');
     }

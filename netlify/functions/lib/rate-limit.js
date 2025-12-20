@@ -4,6 +4,8 @@
  * Note: In production, consider using Upstash Redis for distributed rate limiting
  */
 
+import { Config } from './config.js';
+
 // In-memory store (will reset on cold starts, but provides basic protection)
 const rateLimitStore = new Map();
 
@@ -28,12 +30,12 @@ function cleanup() {
  *
  * @param {string} identifier - Usually IP address or hashed identifier
  * @param {object} options - Rate limit options
- * @param {number} options.limit - Max requests per window (default: 100)
- * @param {number} options.windowMs - Window size in ms (default: 60000 = 1 minute)
+ * @param {number} options.limit - Max requests per window (default from config)
+ * @param {number} options.windowMs - Window size in ms (default from config)
  * @returns {object} { allowed: boolean, remaining: number, resetTime: number }
  */
 export function checkRateLimit(identifier, options = {}) {
-  const { limit = 100, windowMs = 60000 } = options;
+  const { limit = Config.rateLimit.max, windowMs = Config.rateLimit.window } = options;
   const now = Date.now();
 
   // Run cleanup occasionally
