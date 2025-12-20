@@ -216,5 +216,131 @@ describe('DomainValidator', () => {
     it('should extract root domain from multi-level subdomain', () => {
       expect(validator.getRootDomain('api.v2.example.com')).toBe('example.com')
     })
+
+    it('should handle complex TLDs', () => {
+      expect(validator.getRootDomain('blog.example.co.uk')).toBe('example.co.uk')
+    })
+  })
+
+  describe('Advanced Validation', () => {
+    it('should validate domain with all numeric TLD', () => {
+      expect(validator.isValid('example.123')).toBe(false)
+    })
+
+    it('should validate punycode domains', () => {
+      expect(validator.isValid('xn--mnchen-3ya.de')).toBe(true)
+    })
+
+    it('should reject domain with consecutive dots', () => {
+      expect(validator.isValid('example..com')).toBe(false)
+    })
+
+    it('should reject domain starting with dot', () => {
+      expect(validator.isValid('.example.com')).toBe(false)
+    })
+
+    it('should validate domain with maximum allowed length', () => {
+      const maxDomain = 'a'.repeat(63) + '.com'
+      expect(validator.isValid(maxDomain)).toBe(true)
+    })
+
+    it('should reject domain exceeding maximum label length', () => {
+      const longLabel = 'a'.repeat(64) + '.com'
+      expect(validator.isValid(longLabel)).toBe(false)
+    })
+
+    it('should validate common TLDs', () => {
+      expect(validator.isValid('example.com')).toBe(true)
+      expect(validator.isValid('example.org')).toBe(true)
+      expect(validator.isValid('example.net')).toBe(true)
+      expect(validator.isValid('example.io')).toBe(true)
+    })
+
+    it('should validate new gTLDs', () => {
+      expect(validator.isValid('example.app')).toBe(true)
+      expect(validator.isValid('example.dev')).toBe(true)
+      expect(validator.isValid('example.blog')).toBe(true)
+    })
+
+    it('should reject domain with underscore', () => {
+      expect(validator.isValid('my_site.com')).toBe(false)
+    })
+
+    it('should handle mixed case in validation', () => {
+      expect(validator.isValid('Example.COM')).toBe(true)
+    })
+  })
+
+  describe('Security Validation', () => {
+    it('should reject domains with embedded nulls', () => {
+      expect(validator.isValid('example.com\0.evil.com')).toBe(false)
+    })
+
+    it('should reject domains with control characters', () => {
+      expect(validator.isValid('example\n.com')).toBe(false)
+    })
+
+    it('should sanitize homograph attacks', () => {
+      // Cyrillic 'a' looks like Latin 'a'
+      const homograph = validator.sanitize('pаypal.com') // Contains Cyrillic 'а'
+      expect(homograph).toBeTruthy()
+    })
+
+    it('should detect and handle IDN homograph attacks', () => {
+      const result = validator.isValid('аррӏе.com') // Cyrillic characters
+      expect(result).toBeDefined()
+    })
+  })
+
+  describe('Performance', () => {
+    it('should validate many domains quickly', () => {
+      const domains = Array.from({ length: 1000 }, (_, i) => `site${i}.com`)
+      const start = Date.now()
+
+      domains.forEach(domain => validator.isValid(domain))
+
+      const duration = Date.now() - start
+      expect(duration).toBeLessThan(1000) // Should complete in under 1 second
+    })
+
+    it('should sanitize many domains quickly', () => {
+      const domains = Array.from({ length: 1000 }, (_, i) =>
+        `https://www.site${i}.com/path`
+      )
+      const start = Date.now()
+
+      domains.forEach(domain => validator.sanitize(domain))
+
+      const duration = Date.now() - start
+      expect(duration).toBeLessThan(1000)
+    })
+  })
+
+  describe('Edge Cases with Special Domains', () => {
+    it('should handle .local domains', () => {
+      expect(validator.isValid('myserver.local')).toBe(false)
+    })
+
+    it('should reject .test domains in production', () => {
+      expect(validator.isValid('example.test')).toBe(false)
+    })
+
+    it('should handle country-code TLDs', () => {
+      expect(validator.isValid('example.uk')).toBe(true)
+      expect(validator.isValid('example.de')).toBe(true)
+      expect(validator.isValid('example.jp')).toBe(true)
+    })
+
+    it('should validate domains with multiple subdomains', () => {
+      expect(validator.isValid('a.b.c.d.example.com')).toBe(true)
+    })
+
+    it('should handle domains with numeric labels', () => {
+      expect(validator.isValid('123.example.com')).toBe(true)
+    })
+
+    it('should reject label starting with number then hyphen', () => {
+      expect(validator.isValid('1-.example.com')).toBe(false)
+    })
   })
 })

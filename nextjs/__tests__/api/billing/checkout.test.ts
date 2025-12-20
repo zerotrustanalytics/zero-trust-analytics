@@ -501,5 +501,245 @@ describe('Checkout API Route', () => {
         handler.createCheckoutSession('user_123', req.body)
       ).rejects.toThrow('Price ID is required')
     })
+
+    it('validates success URL format', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      await handler.createCheckoutSession('user_123', {
+        priceId: 'price_123',
+        planTier: 'professional',
+        successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+        cancelUrl: 'https://example.com/cancel',
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success_url: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+        })
+      )
+    })
+
+    it('validates cancel URL format', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      await handler.createCheckoutSession('user_123', {
+        priceId: 'price_123',
+        planTier: 'professional',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel?reason=user_cancelled',
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cancel_url: 'https://example.com/cancel?reason=user_cancelled',
+        })
+      )
+    })
+
+    it('handles Stripe API errors', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockRejectedValue(
+        new Error('Stripe API error')
+      )
+
+      await expect(
+        handler.createCheckoutSession('user_123', {
+          priceId: 'price_123',
+          planTier: 'professional',
+          successUrl: 'https://example.com/success',
+          cancelUrl: 'https://example.com/cancel',
+        })
+      ).rejects.toThrow('Stripe API error')
+    })
+
+    it('handles database errors when creating customer', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue(null)
+      mockDb.users.findById.mockRejectedValue(new Error('Database error'))
+
+      await expect(
+        handler.createCheckoutSession('user_123', {
+          priceId: 'price_123',
+          planTier: 'professional',
+          successUrl: 'https://example.com/success',
+          cancelUrl: 'https://example.com/cancel',
+        })
+      ).rejects.toThrow('Database error')
+    })
+
+    it('creates session with zero trial days', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      await handler.createCheckoutSession('user_123', {
+        priceId: 'price_123',
+        planTier: 'professional',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel',
+        trialDays: 0,
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscription_data: expect.objectContaining({
+            trial_period_days: 0,
+          }),
+        })
+      )
+    })
+
+    it('creates session with extended trial period', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      await handler.createCheckoutSession('user_123', {
+        priceId: 'price_123',
+        planTier: 'professional',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel',
+        trialDays: 30,
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscription_data: expect.objectContaining({
+            trial_period_days: 30,
+          }),
+        })
+      )
+    })
+
+    it('includes userId in subscription metadata', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      await handler.createCheckoutSession('user_123', {
+        priceId: 'price_123',
+        planTier: 'professional',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel',
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscription_data: expect.objectContaining({
+            metadata: expect.objectContaining({
+              userId: 'user_123',
+            }),
+          }),
+        })
+      )
+    })
+
+    it('sets subscription mode correctly', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      await handler.createCheckoutSession('user_123', {
+        priceId: 'price_123',
+        planTier: 'professional',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel',
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'subscription',
+        })
+      )
+    })
+
+    it('sets line items with quantity 1', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      await handler.createCheckoutSession('user_123', {
+        priceId: 'price_123',
+        planTier: 'professional',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel',
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          line_items: [{ price: 'price_123', quantity: 1 }],
+        })
+      )
+    })
+
+    it('handles free tier checkout request', async () => {
+      mockDb.customers.findByUserId.mockResolvedValue({
+        userId: 'user_123',
+        stripeCustomerId: 'cus_123',
+      })
+      mockStripeClient.createCheckoutSession.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/pay/cs_123',
+      })
+
+      const result = await handler.createCheckoutSession('user_123', {
+        priceId: 'price_free',
+        planTier: 'free',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel',
+      })
+
+      expect(mockStripeClient.createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscription_data: expect.objectContaining({
+            metadata: expect.objectContaining({
+              planTier: 'free',
+            }),
+          }),
+        })
+      )
+      expect(result.sessionId).toBe('cs_123')
+    })
   })
 })

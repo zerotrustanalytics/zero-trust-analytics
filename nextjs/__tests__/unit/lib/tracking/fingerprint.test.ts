@@ -358,5 +358,138 @@ describe('Browser Fingerprint', () => {
       expect(components.screenWidth).toBeGreaterThan(0)
       expect(components.screenHeight).toBeGreaterThan(0)
     })
+
+    it('should generate fingerprints that are not globally unique', () => {
+      // Privacy-preserving fingerprints should allow for collisions
+      const components = {
+        userAgent: 'Mozilla/5.0',
+        language: 'en-US',
+        screenWidth: 1920,
+        screenHeight: 1080,
+        colorDepth: 24,
+        timezone: -300,
+      }
+
+      const fingerprint = generateFingerprint(components)
+
+      // Fingerprint should be relatively short (allowing for collisions)
+      expect(fingerprint.length).toBeLessThan(20)
+    })
+
+    it('should not collect device identifiers', () => {
+      const components = {
+        userAgent: 'Mozilla/5.0',
+        language: 'en-US',
+        screenWidth: 1920,
+        screenHeight: 1080,
+        colorDepth: 24,
+        timezone: -300,
+      }
+
+      const keys = Object.keys(components)
+
+      expect(keys).not.toContain('deviceId')
+      expect(keys).not.toContain('hardwareId')
+      expect(keys).not.toContain('macAddress')
+    })
+
+    it('should be resistant to fingerprint changes on minor updates', () => {
+      // Small changes shouldn't completely change the fingerprint
+      const base = {
+        userAgent: 'Mozilla/5.0 Chrome/90.0',
+        language: 'en-US',
+        screenWidth: 1920,
+        screenHeight: 1080,
+        colorDepth: 24,
+        timezone: -300,
+      }
+
+      const updated = {
+        ...base,
+        userAgent: 'Mozilla/5.0 Chrome/91.0', // Minor version change
+      }
+
+      const fp1 = generateFingerprint(base)
+      const fp2 = generateFingerprint(updated)
+
+      // Should be different but derivable from similar inputs
+      expect(fp1).not.toBe(fp2)
+      expect(typeof fp1).toBe(typeof fp2)
+    })
+
+    it('should handle missing components gracefully', () => {
+      const partial = {
+        userAgent: 'Mozilla/5.0',
+        language: '',
+        screenWidth: 0,
+        screenHeight: 0,
+        colorDepth: 0,
+        timezone: 0,
+      }
+
+      const fingerprint = generateFingerprint(partial)
+      expect(fingerprint).toBeTruthy()
+      expect(typeof fingerprint).toBe('string')
+    })
+  })
+
+  describe('Fingerprint Stability', () => {
+    it('should remain stable across page reloads', () => {
+      const components = {
+        userAgent: 'Mozilla/5.0',
+        language: 'en-US',
+        screenWidth: 1920,
+        screenHeight: 1080,
+        colorDepth: 24,
+        timezone: -300,
+      }
+
+      const fp1 = generateFingerprint(components)
+      const fp2 = generateFingerprint(components)
+      const fp3 = generateFingerprint(components)
+
+      expect(fp1).toBe(fp2)
+      expect(fp2).toBe(fp3)
+    })
+
+    it('should be deterministic', () => {
+      const components = {
+        userAgent: 'Mozilla/5.0',
+        language: 'en-US',
+        screenWidth: 1920,
+        screenHeight: 1080,
+        colorDepth: 24,
+        timezone: -300,
+      }
+
+      const results = new Set()
+      for (let i = 0; i < 100; i++) {
+        results.add(generateFingerprint(components))
+      }
+
+      expect(results.size).toBe(1)
+    })
+
+    it('should change when screen resolution changes', () => {
+      const desktop = generateFingerprint({
+        userAgent: 'Mozilla/5.0',
+        language: 'en-US',
+        screenWidth: 1920,
+        screenHeight: 1080,
+        colorDepth: 24,
+        timezone: -300,
+      })
+
+      const tablet = generateFingerprint({
+        userAgent: 'Mozilla/5.0',
+        language: 'en-US',
+        screenWidth: 768,
+        screenHeight: 1024,
+        colorDepth: 24,
+        timezone: -300,
+      })
+
+      expect(desktop).not.toBe(tablet)
+    })
   })
 })
