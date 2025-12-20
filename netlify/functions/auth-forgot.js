@@ -53,9 +53,9 @@ export default async function handler(req, context) {
     // Store token
     await createPasswordResetToken(email, token);
 
-    // Build reset URL
-    const baseUrl = process.env.URL || 'https://zta.io';
-    const resetUrl = `${baseUrl}/reset/?token=${token}`;
+    // Build reset URL - points to Next.js reset-password page
+    const baseUrl = process.env.URL || 'https://ztas.io';
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
     // Send email
     try {

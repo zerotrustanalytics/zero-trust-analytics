@@ -48,12 +48,20 @@ export function LoginForm({ onSuccess, redirectTo = '/dashboard' }: LoginFormPro
       const data = await res.json()
 
       if (!res.ok) {
-        if (data.requires2FA) {
+        if (data.requires_2fa) {
           setShowTwoFactor(true)
           return
         }
         setError(data.error || 'Invalid credentials')
         return
+      }
+
+      // Store auth token and CSRF token
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+      }
+      if (data.csrfToken) {
+        sessionStorage.setItem('csrfToken', data.csrfToken)
       }
 
       onSuccess?.()

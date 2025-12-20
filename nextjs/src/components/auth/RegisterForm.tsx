@@ -29,10 +29,11 @@ export function RegisterForm({ onSuccess, redirectTo = '/dashboard' }: RegisterF
   const [loading, setLoading] = useState(false)
 
   const validatePassword = (pwd: string): string | null => {
-    if (pwd.length < 8) return 'Password must be at least 8 characters'
+    if (pwd.length < 12) return 'Password must be at least 12 characters'
     if (!/[A-Z]/.test(pwd)) return 'Password must contain an uppercase letter'
     if (!/[a-z]/.test(pwd)) return 'Password must contain a lowercase letter'
     if (!/[0-9]/.test(pwd)) return 'Password must contain a number'
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) return 'Password must contain a special character'
     return null
   }
 
@@ -75,6 +76,14 @@ export function RegisterForm({ onSuccess, redirectTo = '/dashboard' }: RegisterF
         return
       }
 
+      // Store auth token and CSRF token
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+      }
+      if (data.csrfToken) {
+        sessionStorage.setItem('csrfToken', data.csrfToken)
+      }
+
       onSuccess?.()
       router.push(redirectTo)
     } catch {
@@ -109,7 +118,7 @@ export function RegisterForm({ onSuccess, redirectTo = '/dashboard' }: RegisterF
           placeholder="••••••••"
           autoComplete="new-password"
           disabled={loading}
-          hint="8+ characters, uppercase, lowercase, number"
+          hint="12+ characters, uppercase, lowercase, number, special character"
         />
 
         <Input
