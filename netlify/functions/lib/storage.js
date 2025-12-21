@@ -20,7 +20,8 @@ const STORES = {
   TEAMS: 'teams',
   GOALS: 'goals',
   FUNNELS: 'funnels',
-  HEATMAPS: 'heatmaps'
+  HEATMAPS: 'heatmaps',
+  OAUTH_STATES: 'oauth_states'
 };
 
 // Get a store instance
@@ -2658,4 +2659,55 @@ export async function getHeatmapPages(siteId, startDate, endDate) {
   }
 
   return Array.from(pages.values());
+}
+
+// === OAUTH STATE MANAGEMENT ===
+// SECURITY: Server-side storage for OAuth state to prevent CSRF attacks
+// State is stored with a 10-minute TTL and one-time use enforcement
+
+export async function storeOAuthState(stateId, data) {
+  const states = store(STORES.OAUTH_STATES);
+
+  const stateRecord = {
+    id: stateId,
+    data,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+    used: false
+  };
+
+  await states.setJSON(stateId, stateRecord);
+  return stateRecord;
+}
+
+export async function validateOAuthState(stateId) {
+  const states = store(STORES.OAUTH_STATES);
+
+  const stateRecord = await states.get(stateId, { type: 'json' });
+
+  if (!stateRecord) {
+    return { valid: false, error: 'State not found' };
+  }
+
+  if (stateRecord.used) {
+    return { valid: false, error: 'State already used (replay attack prevented)' };
+  }
+
+  if (Date.now() > stateRecord.expiresAt) {
+    // Clean up expired state
+    await states.delete(stateId);
+    return { valid: false, error: 'State expired' };
+  }
+
+  // Mark as used (one-time use)
+  stateRecord.used = true;
+  stateRecord.usedAt = Date.now();
+  await states.setJSON(stateId, stateRecord);
+
+  return { valid: true, data: stateRecord.data };
+}
+
+export async function deleteOAuthState(stateId) {
+  const states = store(STORES.OAUTH_STATES);
+  await states.delete(stateId);
 }

@@ -1,5 +1,5 @@
 import { createToken, Errors } from './lib/auth.js';
-import { getUser, createOAuthUser, updateUser } from './lib/storage.js';
+import { getUser, createOAuthUser, updateUser, validateOAuthState } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 
@@ -34,25 +34,29 @@ export default async function handler(req, context) {
     return redirectWithError('No authorization code received');
   }
 
-  // Verify state (CSRF protection) and extract plan
-  const cookies = parseCookies(req.headers.get('cookie') || '');
-  const storedState = cookies.oauth_state;
-
-  if (!storedState || storedState !== state) {
-    logger.warn('OAuth state verification failed', { provider });
-    return redirectWithError('Invalid state parameter');
+  if (!state) {
+    logger.warn('OAuth callback missing state parameter', { provider });
+    return redirectWithError('Missing state parameter');
   }
 
-  // Decode state to get plan
-  let plan = 'pro';
-  try {
-    const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-    plan = stateData.plan || 'pro';
-    logger.debug('OAuth state decoded', { plan });
-  } catch (e) {
-    logger.warn('Failed to decode OAuth state, using default plan', { error: e.message });
-    // Use default plan if state parsing fails
+  // SECURITY: Validate state server-side (prevents CSRF and replay attacks)
+  const stateValidation = await validateOAuthState(state);
+
+  if (!stateValidation.valid) {
+    logger.warn('OAuth state validation failed', { provider, error: stateValidation.error });
+    return redirectWithError(`Security validation failed: ${stateValidation.error}`);
   }
+
+  // Extract plan and verify provider matches
+  const stateData = stateValidation.data;
+  const plan = stateData.plan || 'pro';
+
+  if (stateData.provider && stateData.provider !== provider) {
+    logger.warn('OAuth provider mismatch', { expected: stateData.provider, received: provider });
+    return redirectWithError('Provider mismatch');
+  }
+
+  logger.debug('OAuth state validated', { plan, provider });
 
   try {
     let userInfo;
@@ -98,17 +102,14 @@ export default async function handler(req, context) {
     // Create JWT token
     const token = createToken({ id: user.id, email: userInfo.email });
 
-    // Clear the state cookie and redirect with token
-    const clearStateCookie = 'oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
-
     logger.info('OAuth authentication successful', { userId: user.id, provider });
 
     // Redirect to dashboard with token in URL fragment (client-side only)
+    // Note: State is already marked as used in validateOAuthState (one-time use)
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': `/dashboard/?auth_token=${token}`,
-        'Set-Cookie': clearStateCookie
+        'Location': `/dashboard/?auth_token=${token}`
       }
     });
 
@@ -224,18 +225,6 @@ async function handleGoogle(code, logger) {
     providerId: userData.id,
     name: userData.name
   };
-}
-
-function parseCookies(cookieHeader) {
-  const cookies = {};
-  if (!cookieHeader) return cookies;
-
-  cookieHeader.split(';').forEach(cookie => {
-    const [name, ...rest] = cookie.trim().split('=');
-    cookies[name] = rest.join('=');
-  });
-
-  return cookies;
 }
 
 function redirectWithError(message) {

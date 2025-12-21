@@ -1,4 +1,5 @@
 import { corsPreflightResponse, Errors } from './lib/auth.js';
+import { storeOAuthState } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 
@@ -26,21 +27,22 @@ export default async function handler(req, context) {
     const url = new URL(req.url);
     const plan = url.searchParams.get('plan') || 'pro';
 
-    logger.debug('OAuth state generated', { plan });
+    // SECURITY: Generate unique state ID and store server-side
+    // This prevents OAuth CSRF attacks and ensures one-time use
+    const stateId = crypto.randomUUID();
+    const stateData = { csrf: crypto.randomUUID(), plan, provider: 'github' };
 
-    // Generate state for CSRF protection (include plan)
-    const stateData = JSON.stringify({ csrf: crypto.randomUUID(), plan });
-    const state = Buffer.from(stateData).toString('base64');
+    // Store state server-side with 10-minute TTL
+    await storeOAuthState(stateId, stateData);
 
-    // Store state in cookie for verification on callback
-    const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`;
+    logger.debug('OAuth state stored server-side', { stateId, plan });
 
     // Build GitHub authorization URL
     const params = new URLSearchParams({
       client_id: GITHUB_CLIENT_ID,
       redirect_uri: GITHUB_REDIRECT_URI,
       scope: 'user:email',
-      state: state
+      state: stateId // Use stateId as the state parameter
     });
 
     const authUrl = `https://github.com/login/oauth/authorize?${params}`;
@@ -49,8 +51,8 @@ export default async function handler(req, context) {
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': authUrl,
-        'Set-Cookie': stateCookie
+        'Location': authUrl
+        // No longer storing state in cookie - server-side storage instead
       }
     });
   } catch (err) {
