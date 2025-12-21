@@ -1,10 +1,14 @@
 [build]
   publish = "public"
-  command = "npm install && npm run build && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify"
+  command = "npm install && npm run build && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify -s hugo -d ../public"
   functions = "netlify/functions"
 
+# Local development options:
+# Option 1: Hugo marketing site (default) - run from root with: netlify dev
+# Option 2: Next.js app - run from /nextjs with: npm run dev
+# Option 3: Next.js with functions - see docs/LOCAL_DEV.md
 [dev]
-  command = "hugo server -w"
+  command = "hugo server -w -s hugo"
   targetPort = 1313
   port = 8888
   autoLaunch = false

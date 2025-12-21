@@ -1,0 +1,18 @@
+// Header styles
+.header {
+  // Transparent by default, styled via layout templates
+}
+
+.mobile-nav {
+  background-color: var(--bs-body-bg, #fff);
+
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--bs-dark, #212529);
+  }
+}
+
+.mobile-nav-active {
+  .mobile-nav {
+    background-color: var(--bs-body-bg, #fff);
+  }
+}

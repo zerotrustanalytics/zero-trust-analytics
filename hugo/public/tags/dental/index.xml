@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Dental on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/dental/</link>
+    <description>Recent content in Dental on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 09 Dec 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/dental/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Why Google Analytics Is a HIPAA Risk for Dental Practices</title>
+      <link>http://localhost:49390/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/</link>
+      <pubDate>Mon, 09 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/</guid>
+      <description>&lt;p&gt;If you run a dental practice, chances are your website has Google Analytics installed. It&amp;rsquo;s the industry standard, after all. But here&amp;rsquo;s something that might keep you up at night: &lt;strong&gt;Google Analytics may be putting your practice at risk of HIPAA violations.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-hidden-problem-with-google-analytics&#34;&gt;The Hidden Problem with Google Analytics&lt;/h2&gt;&#xA;&lt;p&gt;Every time someone visits your dental website, Google Analytics captures their IP address. That IP address is sent to Google&amp;rsquo;s servers, where it&amp;rsquo;s stored and processed alongside data from millions of other websites.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

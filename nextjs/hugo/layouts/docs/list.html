@@ -1,0 +1,244 @@
+{{ define "main" }}
+<!-- Docs Header -->
+<section class="bg-dark text-white py-5">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-3">Developer Documentation</h1>
+        <p class="lead mb-0">Everything you need to integrate Zero Trust Analytics into your website or application.</p>
+      </div>
+      <div class="col-lg-6 mt-4 mt-lg-0">
+        <div class="d-flex gap-3 justify-content-lg-end align-items-center flex-wrap">
+          <!-- Search Box -->
+          <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="docs-search" class="form-control border-0" placeholder="Search docs..." onkeyup="filterDocs()">
+          </div>
+          <a href="/register/" class="btn btn-primary">Get API Key</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container py-5">
+  <div class="row">
+    <!-- Sidebar Navigation -->
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link {{ if eq .RelPermalink "/docs/" }}active fw-bold{{ end }}">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9">
+      <div class="docs-content">
+        {{ .Content }}
+
+        <!-- Quick Links Cards -->
+        <div class="row g-4 mt-4">
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-primary bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-rocket text-primary fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">Quick Start</h5>
+                </div>
+                <p class="card-text text-muted">Get up and running in under 5 minutes with our simple integration guide.</p>
+                <a href="/docs/quickstart/" class="btn btn-outline-primary btn-sm">Start Now</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-success bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-code text-success fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">API Reference</h5>
+                </div>
+                <p class="card-text text-muted">Full API documentation for building custom integrations.</p>
+                <a href="/docs/api/authentication/" class="btn btn-outline-success btn-sm">View API</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-warning bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-bolt text-warning fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">Custom Events</h5>
+                </div>
+                <p class="card-text text-muted">Track button clicks, form submissions, and custom user interactions.</p>
+                <a href="/docs/custom-events/" class="btn btn-outline-warning btn-sm">Learn More</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-info bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-shield-alt text-info fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">Privacy Model</h5>
+                </div>
+                <p class="card-text text-muted">Understand how we protect visitor privacy with zero-knowledge analytics.</p>
+                <a href="/docs/privacy-model/" class="btn btn-outline-info btn-sm">Read More</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-item.filtered { display: none; }
+.docs-card-filtered { display: none !important; }
+</style>
+
+<!-- Search Results Container (shows when searching) -->
+<div id="docs-search-results" class="container pb-5" style="display: none;">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="mb-0">Search Results</h4>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearDocsSearch()">Clear Search</button>
+      </div>
+      <div id="docs-results-list"></div>
+      <div id="docs-no-results" class="text-center py-5" style="display: none;">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No documentation found</h5>
+        <p class="text-muted">Try a different search term</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Build search index from all docs pages
+const docsIndex = [
+  {{ range where .Site.RegularPages "Section" "docs" }}
+  {
+    title: {{ .Title | jsonify }},
+    description: {{ .Params.description | default "" | jsonify }},
+    url: {{ .Permalink | jsonify }},
+    content: {{ .Plain | truncate 500 | jsonify }}
+  },
+  {{ end }}
+];
+
+function filterDocs() {
+  const searchTerm = document.getElementById('docs-search').value.toLowerCase().trim();
+  const resultsContainer = document.getElementById('docs-search-results');
+  const resultsList = document.getElementById('docs-results-list');
+  const noResults = document.getElementById('docs-no-results');
+  const mainContent = document.querySelector('.container.py-5 > .row');
+
+  if (!searchTerm) {
+    clearDocsSearch();
+    return;
+  }
+
+  // Filter docs
+  const matches = docsIndex.filter(doc =>
+    doc.title.toLowerCase().includes(searchTerm) ||
+    doc.description.toLowerCase().includes(searchTerm) ||
+    doc.content.toLowerCase().includes(searchTerm)
+  );
+
+  // Show results container, hide main content
+  mainContent.style.display = 'none';
+  resultsContainer.style.display = 'block';
+
+  if (matches.length === 0) {
+    resultsList.innerHTML = '';
+    noResults.style.display = 'block';
+    return;
+  }
+
+  noResults.style.display = 'none';
+
+  // Build results HTML
+  resultsList.innerHTML = matches.map(doc => `
+    <a href="${doc.url}" class="text-decoration-none">
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title text-primary mb-1">${highlightMatch(doc.title, searchTerm)}</h5>
+          <p class="card-text text-muted mb-0">${highlightMatch(doc.description || doc.content.substring(0, 150) + '...', searchTerm)}</p>
+        </div>
+      </div>
+    </a>
+  `).join('');
+}
+
+function highlightMatch(text, term) {
+  if (!term) return text;
+  const regex = new RegExp(`(${term})`, 'gi');
+  return text.replace(regex, '<mark>$1</mark>');
+}
+
+function clearDocsSearch() {
+  document.getElementById('docs-search').value = '';
+  document.getElementById('docs-search-results').style.display = 'none';
+  document.querySelector('.container.py-5 > .row').style.display = 'flex';
+}
+
+// Clear search on escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    clearDocsSearch();
+  }
+});
+</script>
+{{ end }}

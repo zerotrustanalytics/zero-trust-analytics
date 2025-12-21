@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Security on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/security/</link>
+    <description>Recent content in Security on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 10 Mar 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/security/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Zero Knowledge: &#39;I Can&#39;t Look&#39; vs &#39;I Promise Not to Look&#39;</title>
+      <link>http://localhost:49390/blog/zero-knowledge-i-cant-look-vs-i-wont-look/</link>
+      <pubDate>Mon, 10 Mar 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/zero-knowledge-i-cant-look-vs-i-wont-look/</guid>
+      <description>&lt;p&gt;Every tech company has a privacy policy. They all say some version of:&lt;/p&gt;&#xA;&lt;blockquote&gt;&#xA;&lt;p&gt;&amp;ldquo;We take your privacy seriously. We promise to protect your data. We won&amp;rsquo;t sell your information.&amp;rdquo;&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;p&gt;&lt;strong&gt;How&amp;rsquo;s that working out?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-promise-problem&#34;&gt;The Promise Problem&lt;/h2&gt;&#xA;&lt;p&gt;Privacy promises get broken. Constantly.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-acquisition-problem&#34;&gt;The Acquisition Problem&lt;/h3&gt;&#xA;&lt;p&gt;Company A has great privacy practices. They get acquired by Company B. Privacy policy changes. Your data flows to new hands.&lt;/p&gt;&#xA;&lt;p&gt;This isn&amp;rsquo;t theoretical:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;WhatsApp promised end-to-end encryption privacy. Then Facebook bought them.&lt;/li&gt;&#xA;&lt;li&gt;Fitbit promised health data protection. Then Google bought them.&lt;/li&gt;&#xA;&lt;li&gt;Countless startups with great intentions get absorbed by data-hungry giants.&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Promises don&amp;rsquo;t survive acquisitions.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What Is Zero Knowledge? The Security Concept Behind ZTA.io</title>
+      <link>http://localhost:49390/blog/what-is-zero-knowledge-origins-and-history/</link>
+      <pubDate>Mon, 30 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/what-is-zero-knowledge-origins-and-history/</guid>
+      <description>&lt;p&gt;When we named our company &amp;ldquo;Zero Trust Analytics,&amp;rdquo; we weren&amp;rsquo;t just picking cool words. We were committing to a specific security philosophy with deep roots in cryptography and systems design.&lt;/p&gt;&#xA;&lt;p&gt;Let me explain what Zero Knowledge means and why it matters for your privacy.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-original-zero-knowledge-proofs&#34;&gt;The Original Zero Knowledge Proofs&lt;/h2&gt;&#xA;&lt;p&gt;The concept of &amp;ldquo;zero knowledge&amp;rdquo; comes from cryptography. In 1985, three MIT researchers—Goldwasser, Micali, and Rackoff—published a groundbreaking paper on &amp;ldquo;zero-knowledge proofs.&amp;rdquo;&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

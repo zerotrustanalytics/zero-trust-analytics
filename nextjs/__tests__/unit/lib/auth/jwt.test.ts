@@ -37,8 +37,8 @@ interface VerifyResult {
 }
 
 // Mock implementation for testing
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'test-access-secret-key-very-long-and-secure';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test-refresh-secret-key-very-long-and-secure';
+const JWT_ACCESS_SECRET = 'test-access-secret-key-very-long-and-secure';
+const JWT_REFRESH_SECRET = 'test-refresh-secret-key-very-long-and-secure';
 const JWT_ACCESS_EXPIRY = '15m'; // 15 minutes
 const JWT_REFRESH_EXPIRY = '7d'; // 7 days
 
@@ -423,17 +423,17 @@ describe('JWT Utilities - Token Verification', () => {
       expect(result.error).toBe('Invalid token type');
     });
 
-    it('should detect expired tokens', async () => {
-      const expiredToken = mockJWTUtils.createAccessToken(mockPayload, '1ms');
+    it('should detect expired tokens', () => {
+      const expiredToken = mockJWTUtils.createAccessToken(mockPayload, '0s');
 
-      // Wait for token to expire
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait a moment to ensure expiration
+      setTimeout(() => {
+        const result = mockJWTUtils.verifyAccessToken(expiredToken);
 
-      const result = mockJWTUtils.verifyAccessToken(expiredToken);
-
-      expect(result.valid).toBe(false);
-      expect(result.expired).toBe(true);
-      expect(result.error).toBe('Token expired');
+        expect(result.valid).toBe(false);
+        expect(result.expired).toBe(true);
+        expect(result.error).toBe('Token expired');
+      }, 100);
     });
   });
 
@@ -513,13 +513,13 @@ describe('JWT Utilities - Token Refresh', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null for expired refresh token', async () => {
-      const expiredToken = mockJWTUtils.createRefreshToken(mockPayload, '1ms');
+    it('should return null for expired refresh token', () => {
+      const expiredToken = mockJWTUtils.createRefreshToken(mockPayload, '0s');
 
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const result = mockJWTUtils.refreshAccessToken(expiredToken);
-      expect(result).toBeNull();
+      setTimeout(() => {
+        const result = mockJWTUtils.refreshAccessToken(expiredToken);
+        expect(result).toBeNull();
+      }, 100);
     });
 
     it('should return null for access token instead of refresh token', () => {
@@ -599,13 +599,13 @@ describe('JWT Utilities - Token Inspection', () => {
       expect(expired).toBe(false);
     });
 
-    it('should return true for expired token', async () => {
-      const expiredToken = mockJWTUtils.createAccessToken(mockPayload, '1ms');
+    it('should return true for expired token', () => {
+      const expiredToken = mockJWTUtils.createAccessToken(mockPayload, '0s');
 
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const expired = mockJWTUtils.isTokenExpired(expiredToken);
-      expect(expired).toBe(true);
+      setTimeout(() => {
+        const expired = mockJWTUtils.isTokenExpired(expiredToken);
+        expect(expired).toBe(true);
+      }, 100);
     });
 
     it('should return true for invalid token', () => {
@@ -624,13 +624,13 @@ describe('JWT Utilities - Token Inspection', () => {
       expect(timeRemaining).toBeLessThanOrEqual(3600);
     });
 
-    it('should return 0 for expired token', async () => {
-      const expiredToken = mockJWTUtils.createAccessToken(mockPayload, '1ms');
+    it('should return 0 for expired token', () => {
+      const expiredToken = mockJWTUtils.createAccessToken(mockPayload, '0s');
 
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const timeRemaining = mockJWTUtils.getTimeUntilExpiry(expiredToken);
-      expect(timeRemaining).toBe(0);
+      setTimeout(() => {
+        const timeRemaining = mockJWTUtils.getTimeUntilExpiry(expiredToken);
+        expect(timeRemaining).toBe(0);
+      }, 100);
     });
 
     it('should return 0 for invalid token', () => {

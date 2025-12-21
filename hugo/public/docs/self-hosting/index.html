@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Self-Hosting Guide
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Self-Hosting Guide">
+
+
+<meta name="description" content="Complete guide to self-hosting Zero Trust Analytics using Docker">
+<meta name="summary" content="Self-Hosting Zero Trust Analytics
+Take full control of your analytics data by hosting Zero Trust Analytics on your own infrastructure. This guide will help you deploy and manage your own instance using Docker.
+Why Self-Host?
+
+Complete Data Control: Your analytics data never leaves your infrastructure
+No Usage Limits: Track unlimited sites and pageviews
+Customization: Modify the platform to fit your needs
+Cost Savings: Free for unlimited use (just pay for hosting)
+Privacy Compliance: Keep data in your jurisdiction for GDPR/CCPA
+
+Prerequisites
+Before you begin, ensure you have:" >
+<meta name="date" content="2025-12-12 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Self-Hosting Guide">
+
+<meta property="og:date" content="2025-12-12 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Complete guide to self-hosting Zero Trust Analytics using Docker">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/self-hosting/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/self-hosting/">
+
+<meta name="twitter:title" content="Self-Hosting Guide">
+
+<meta name="twitter:description" content="Complete guide to self-hosting Zero Trust Analytics using Docker">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/self-hosting/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/docs/" class="text-decoration-none">Docs</a></li>
+        
+        
+        
+        <li class="breadcrumb-item active" aria-current="page">Self-Hosting Guide</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link ">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link ">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link ">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link ">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link ">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link ">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link ">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link ">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link ">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link ">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link ">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link ">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link ">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <article class="docs-content">
+        <h1 class="mb-4">Self-Hosting Guide</h1>
+        
+        <p class="lead text-muted mb-4">Complete guide to self-hosting Zero Trust Analytics using Docker</p>
+        
+
+        <div class="docs-body">
+          <h1 id="self-hosting-zero-trust-analytics">Self-Hosting Zero Trust Analytics</h1>
+<p>Take full control of your analytics data by hosting Zero Trust Analytics on your own infrastructure. This guide will help you deploy and manage your own instance using Docker.</p>
+<h2 id="why-self-host">Why Self-Host?</h2>
+<ul>
+<li><strong>Complete Data Control</strong>: Your analytics data never leaves your infrastructure</li>
+<li><strong>No Usage Limits</strong>: Track unlimited sites and pageviews</li>
+<li><strong>Customization</strong>: Modify the platform to fit your needs</li>
+<li><strong>Cost Savings</strong>: Free for unlimited use (just pay for hosting)</li>
+<li><strong>Privacy Compliance</strong>: Keep data in your jurisdiction for GDPR/CCPA</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Before you begin, ensure you have:</p>
+<ul>
+<li><strong>Docker</strong> (20.10 or higher) and <strong>Docker Compose</strong> (2.0 or higher)</li>
+<li><strong>2GB RAM</strong> minimum (4GB recommended)</li>
+<li><strong>10GB disk space</strong> minimum</li>
+<li><strong>Linux, macOS, or Windows</strong> with WSL2</li>
+<li>A <strong>domain name</strong> (optional, for HTTPS/SSL)</li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<p>Get Zero Trust Analytics running in under 5 minutes:</p>
+<h3 id="1-clone-the-repository">1. Clone the Repository</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>git clone https://github.com/jasonsutter87/zero-trust-analytics.git
+</span></span><span style="display:flex;"><span>cd zero-trust-analytics
+</span></span></code></pre></div><h3 id="2-configure-environment">2. Configure Environment</h3>
+<p>Copy the example environment file and edit it:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cp docker/.env.example docker/.env
+</span></span><span style="display:flex;"><span>nano docker/.env
+</span></span></code></pre></div><p><strong>Required Settings</strong> (minimum for local testing):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Generate secure secrets (run: openssl rand -hex 32)</span>
+</span></span><span style="display:flex;"><span>HASH_SECRET<span style="color:#f92672">=</span>your-random-secret-here
+</span></span><span style="display:flex;"><span>JWT_SECRET<span style="color:#f92672">=</span>your-jwt-secret-here
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Your domain or IP</span>
+</span></span><span style="display:flex;"><span>SITE_URL<span style="color:#f92672">=</span>http://localhost:3000
+</span></span></code></pre></div><h3 id="3-start-the-application">3. Start the Application</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker-compose up -d
+</span></span></code></pre></div><p>That&rsquo;s it! Zero Trust Analytics is now running at <code>http://localhost:3000</code></p>
+<h3 id="4-create-your-first-account">4. Create Your First Account</h3>
+<ol>
+<li>Visit <code>http://localhost:3000/register</code></li>
+<li>Create an account (no email verification needed for self-hosted)</li>
+<li>Add your first website in the dashboard</li>
+<li>Install the tracking script on your site</li>
+</ol>
+<h2 id="production-deployment">Production Deployment</h2>
+<p>For production deployments with SSL/HTTPS, follow these steps:</p>
+<h3 id="1-configure-production-settings">1. Configure Production Settings</h3>
+<p>Edit <code>docker/.env</code> with production values:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Production URL</span>
+</span></span><span style="display:flex;"><span>SITE_URL<span style="color:#f92672">=</span>https://analytics.yourdomain.com
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Strong secrets (CHANGE THESE!)</span>
+</span></span><span style="display:flex;"><span>HASH_SECRET<span style="color:#f92672">=</span>your-production-secret-minimum-32-chars
+</span></span><span style="display:flex;"><span>JWT_SECRET<span style="color:#f92672">=</span>your-production-jwt-secret-minimum-32-chars
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Email service (for password resets)</span>
+</span></span><span style="display:flex;"><span>RESEND_API_KEY<span style="color:#f92672">=</span>re_your_resend_api_key
+</span></span><span style="display:flex;"><span>FROM_EMAIL<span style="color:#f92672">=</span>noreply@yourdomain.com
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Disable registration after creating accounts</span>
+</span></span><span style="display:flex;"><span>ENABLE_REGISTRATION<span style="color:#f92672">=</span>false
+</span></span></code></pre></div><h3 id="2-configure-domain-and-ssl">2. Configure Domain and SSL</h3>
+<p>Edit <code>docker/nginx.conf</code> and replace <code>your-domain</code> with your actual domain:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-nginx" data-lang="nginx"><span style="display:flex;"><span><span style="color:#66d9ef">ssl_certificate</span> <span style="color:#e6db74">/etc/letsencrypt/live/analytics.yourdomain.com/fullchain.pem</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">ssl_certificate_key</span> <span style="color:#e6db74">/etc/letsencrypt/live/analytics.yourdomain.com/privkey.pem</span>;
+</span></span></code></pre></div><h3 id="3-obtain-ssl-certificate">3. Obtain SSL Certificate</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Create directories for Let&#39;s Encrypt</span>
+</span></span><span style="display:flex;"><span>mkdir -p docker/certbot/conf docker/certbot/www
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Get initial certificate</span>
+</span></span><span style="display:flex;"><span>docker-compose run --rm certbot certonly --webroot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --webroot-path<span style="color:#f92672">=</span>/var/www/certbot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --email admin@yourdomain.com <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --agree-tos <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --no-eff-email <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d analytics.yourdomain.com
+</span></span></code></pre></div><h3 id="4-start-with-production-configuration">4. Start with Production Configuration</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Stop if already running</span>
+</span></span><span style="display:flex;"><span>docker-compose down
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Start with production overrides</span>
+</span></span><span style="display:flex;"><span>docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+</span></span></code></pre></div><h3 id="5-verify-deployment">5. Verify Deployment</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Check container status</span>
+</span></span><span style="display:flex;"><span>docker-compose ps
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># View logs</span>
+</span></span><span style="display:flex;"><span>docker-compose logs -f zta
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Test health endpoint</span>
+</span></span><span style="display:flex;"><span>curl https://analytics.yourdomain.com/api/health
+</span></span></code></pre></div><h2 id="configuration-options">Configuration Options</h2>
+<h3 id="environment-variables">Environment Variables</h3>
+<p>Full list of configuration options in <code>docker/.env</code>:</p>
+<h4 id="required-settings">Required Settings</h4>
+<table>
+  <thead>
+      <tr>
+          <th>Variable</th>
+          <th>Description</th>
+          <th>Example</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>SITE_URL</code></td>
+          <td>Your instance URL</td>
+          <td><code>https://analytics.yourdomain.com</code></td>
+      </tr>
+      <tr>
+          <td><code>HASH_SECRET</code></td>
+          <td>Secret for hashing visitor IDs</td>
+          <td>Generate with <code>openssl rand -hex 32</code></td>
+      </tr>
+      <tr>
+          <td><code>JWT_SECRET</code></td>
+          <td>Secret for JWT tokens</td>
+          <td>Generate with <code>openssl rand -hex 32</code></td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="database-configuration">Database Configuration</h4>
+<table>
+  <thead>
+      <tr>
+          <th>Variable</th>
+          <th>Description</th>
+          <th>Default</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>DATABASE_PATH</code></td>
+          <td>SQLite database location</td>
+          <td><code>/app/data/analytics.db</code></td>
+      </tr>
+      <tr>
+          <td><code>DATABASE_URL</code></td>
+          <td>PostgreSQL URL (optional)</td>
+          <td>-</td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="email-configuration-optional">Email Configuration (Optional)</h4>
+<p>Configure at least one email provider for password reset functionality:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Variable</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>RESEND_API_KEY</code></td>
+          <td>Resend API key (<a href="https://resend.com">get one</a>)</td>
+      </tr>
+      <tr>
+          <td><code>SENDGRID_API_KEY</code></td>
+          <td>SendGrid API key (alternative)</td>
+      </tr>
+      <tr>
+          <td><code>FROM_EMAIL</code></td>
+          <td>Sender email address</td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="feature-flags">Feature Flags</h4>
+<table>
+  <thead>
+      <tr>
+          <th>Variable</th>
+          <th>Description</th>
+          <th>Default</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>ENABLE_REGISTRATION</code></td>
+          <td>Allow new user registrations</td>
+          <td><code>true</code></td>
+      </tr>
+      <tr>
+          <td><code>MAX_SITES_PER_USER</code></td>
+          <td>Maximum sites per user</td>
+          <td><code>999</code></td>
+      </tr>
+      <tr>
+          <td><code>LOG_LEVEL</code></td>
+          <td>Logging level (error, warn, info, debug)</td>
+          <td><code>info</code></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="using-postgresql-instead-of-sqlite">Using PostgreSQL Instead of SQLite</h3>
+<p>For higher traffic volumes, use PostgreSQL:</p>
+<ol>
+<li>Edit <code>docker/.env</code>:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Comment out SQLite</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># DATABASE_PATH=/app/data/analytics.db</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Enable PostgreSQL</span>
+</span></span><span style="display:flex;"><span>DATABASE_URL<span style="color:#f92672">=</span>postgresql://zta:yourpassword@postgres:5432/zta
+</span></span><span style="display:flex;"><span>POSTGRES_USER<span style="color:#f92672">=</span>zta
+</span></span><span style="display:flex;"><span>POSTGRES_PASSWORD<span style="color:#f92672">=</span>your-secure-password
+</span></span><span style="display:flex;"><span>POSTGRES_DB<span style="color:#f92672">=</span>zta
+</span></span></code></pre></div><ol start="2">
+<li>Start with PostgreSQL profile:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker-compose --profile postgres -f docker-compose.yml -f docker-compose.prod.yml up -d
+</span></span></code></pre></div><h2 id="sslhttps-setup">SSL/HTTPS Setup</h2>
+<h3 id="automated-certificate-renewal">Automated Certificate Renewal</h3>
+<p>Let&rsquo;s Encrypt certificates expire every 90 days. The <code>certbot</code> container automatically renews them.</p>
+<p>Verify auto-renewal is working:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Test renewal process (dry run)</span>
+</span></span><span style="display:flex;"><span>docker-compose run --rm certbot renew --dry-run
+</span></span></code></pre></div><h3 id="manual-certificate-renewal">Manual Certificate Renewal</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker-compose run --rm certbot renew
+</span></span><span style="display:flex;"><span>docker-compose restart nginx
+</span></span></code></pre></div><h2 id="maintenance">Maintenance</h2>
+<h3 id="viewing-logs">Viewing Logs</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># All services</span>
+</span></span><span style="display:flex;"><span>docker-compose logs -f
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Specific service</span>
+</span></span><span style="display:flex;"><span>docker-compose logs -f zta
+</span></span><span style="display:flex;"><span>docker-compose logs -f nginx
+</span></span></code></pre></div><h3 id="database-backup">Database Backup</h3>
+<h4 id="sqlite-backup">SQLite Backup</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Manual backup</span>
+</span></span><span style="display:flex;"><span>docker-compose exec zta sqlite3 /app/data/analytics.db <span style="color:#e6db74">&#34;.backup &#39;/app/data/backup.db&#39;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Copy backup to host</span>
+</span></span><span style="display:flex;"><span>docker cp zero-trust-analytics:/app/data/backup.db ./backup-<span style="color:#66d9ef">$(</span>date +%Y%m%d<span style="color:#66d9ef">)</span>.db
+</span></span></code></pre></div><h4 id="automated-backups">Automated Backups</h4>
+<p>Use the backup service in docker-compose.prod.yml:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Run backup manually</span>
+</span></span><span style="display:flex;"><span>docker-compose --profile backup run --rm backup
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Schedule with cron (add to crontab)</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">0</span> <span style="color:#ae81ff">2</span> * * * cd /path/to/zero-trust-analytics <span style="color:#f92672">&amp;&amp;</span> docker-compose --profile backup run --rm backup
+</span></span></code></pre></div><h4 id="postgresql-backup">PostgreSQL Backup</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker-compose exec postgres pg_dump -U zta zta &gt; backup-<span style="color:#66d9ef">$(</span>date +%Y%m%d<span style="color:#66d9ef">)</span>.sql
+</span></span></code></pre></div><h3 id="database-restore">Database Restore</h3>
+<h4 id="sqlite-restore">SQLite Restore</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Stop the application</span>
+</span></span><span style="display:flex;"><span>docker-compose stop zta
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Copy backup into container</span>
+</span></span><span style="display:flex;"><span>docker cp backup-20251212.db zero-trust-analytics:/app/data/analytics.db
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Start application</span>
+</span></span><span style="display:flex;"><span>docker-compose start zta
+</span></span></code></pre></div><h4 id="postgresql-restore">PostgreSQL Restore</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker-compose exec -T postgres psql -U zta zta &lt; backup-20251212.sql
+</span></span></code></pre></div><h3 id="updating-to-latest-version">Updating to Latest Version</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Pull latest code</span>
+</span></span><span style="display:flex;"><span>git pull origin main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Rebuild and restart</span>
+</span></span><span style="display:flex;"><span>docker-compose down
+</span></span><span style="display:flex;"><span>docker-compose build --no-cache
+</span></span><span style="display:flex;"><span>docker-compose up -d
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Or with production config</span>
+</span></span><span style="display:flex;"><span>docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+</span></span></code></pre></div><h2 id="performance-tuning">Performance Tuning</h2>
+<h3 id="resource-limits">Resource Limits</h3>
+<p>Adjust resources in <code>docker-compose.prod.yml</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">services</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">zta</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">deploy</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpus</span>: <span style="color:#e6db74">&#39;2&#39;</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">memory</span>: <span style="color:#ae81ff">2G</span>
+</span></span></code></pre></div><h3 id="database-optimization">Database Optimization</h3>
+<h4 id="sqlite">SQLite</h4>
+<p>The database uses WAL (Write-Ahead Logging) mode for better concurrency. For very high traffic:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Access database</span>
+</span></span><span style="display:flex;"><span>docker-compose exec zta sqlite3 /app/data/analytics.db
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Optimize</span>
+</span></span><span style="display:flex;"><span>PRAGMA optimize;
+</span></span><span style="display:flex;"><span>VACUUM;
+</span></span><span style="display:flex;"><span>.exit
+</span></span></code></pre></div><h4 id="postgresql">PostgreSQL</h4>
+<p>Add connection pooling and tune settings in <code>docker-compose.prod.yml</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">postgres</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">environment</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">POSTGRES_INITDB_ARGS</span>: <span style="color:#e6db74">&#34;-E UTF8 --locale=C&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">command</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;postgres&#34;</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;-c&#34;</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;max_connections=200&#34;</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;-c&#34;</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#e6db74">&#34;shared_buffers=256MB&#34;</span>
+</span></span></code></pre></div><h3 id="nginx-caching">Nginx Caching</h3>
+<p>Enable caching for better performance:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-nginx" data-lang="nginx"><span style="display:flex;"><span><span style="color:#75715e"># Add to docker/nginx.conf
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">proxy_cache_path</span> <span style="color:#e6db74">/var/cache/nginx</span> <span style="color:#e6db74">levels=1:2</span> <span style="color:#e6db74">keys_zone=zta_cache:10m</span> <span style="color:#e6db74">max_size=1g</span> <span style="color:#e6db74">inactive=60m</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">location</span> <span style="color:#e6db74">/api/stats</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">proxy_cache</span> <span style="color:#e6db74">zta_cache</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">proxy_cache_valid</span> <span style="color:#ae81ff">200</span> <span style="color:#ae81ff">5m</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># ... rest of config
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="container-wont-start">Container Won&rsquo;t Start</h3>
+<p>Check logs for errors:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker-compose logs zta
+</span></span></code></pre></div><p>Common issues:</p>
+<ul>
+<li><strong>Port already in use</strong>: Change <code>PORT</code> in docker/.env</li>
+<li><strong>Permission denied</strong>: Ensure data directory is writable</li>
+<li><strong>Missing secrets</strong>: Check <code>HASH_SECRET</code> and <code>JWT_SECRET</code> are set</li>
+</ul>
+<h3 id="database-errors">Database Errors</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Check database exists</span>
+</span></span><span style="display:flex;"><span>docker-compose exec zta ls -la /app/data/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Reinitialize database</span>
+</span></span><span style="display:flex;"><span>docker-compose exec zta node /app/server/init-db.js
+</span></span></code></pre></div><h3 id="ssl-certificate-issues">SSL Certificate Issues</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Check certificate files</span>
+</span></span><span style="display:flex;"><span>docker-compose exec nginx ls -la /etc/letsencrypt/live/your-domain/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Test nginx configuration</span>
+</span></span><span style="display:flex;"><span>docker-compose exec nginx nginx -t
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Reload nginx</span>
+</span></span><span style="display:flex;"><span>docker-compose exec nginx nginx -s reload
+</span></span></code></pre></div><h3 id="high-memory-usage">High Memory Usage</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Check resource usage</span>
+</span></span><span style="display:flex;"><span>docker stats
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Restart with memory limits</span>
+</span></span><span style="display:flex;"><span>docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+</span></span></code></pre></div><h3 id="analytics-not-tracking">Analytics Not Tracking</h3>
+<ol>
+<li><strong>Check CORS</strong>: Ensure your website domain matches the site configuration</li>
+<li><strong>Check tracking script</strong>: Verify <code>/js/analytics.js</code> is loading</li>
+<li><strong>Check API endpoint</strong>: Visit <code>/api/health</code> to verify API is running</li>
+<li><strong>Check logs</strong>: <code>docker-compose logs -f zta</code> for error messages</li>
+</ol>
+<h2 id="security-best-practices">Security Best Practices</h2>
+<h3 id="1-change-default-secrets">1. Change Default Secrets</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Generate secure secrets</span>
+</span></span><span style="display:flex;"><span>openssl rand -hex <span style="color:#ae81ff">32</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Update in docker/.env</span>
+</span></span><span style="display:flex;"><span>HASH_SECRET<span style="color:#f92672">=</span>your-generated-secret
+</span></span><span style="display:flex;"><span>JWT_SECRET<span style="color:#f92672">=</span>your-generated-secret
+</span></span></code></pre></div><h3 id="2-disable-registration">2. Disable Registration</h3>
+<p>After creating accounts:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>ENABLE_REGISTRATION<span style="color:#f92672">=</span>false
+</span></span></code></pre></div><h3 id="3-firewall-configuration">3. Firewall Configuration</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Allow only HTTP/HTTPS</span>
+</span></span><span style="display:flex;"><span>ufw allow 80/tcp
+</span></span><span style="display:flex;"><span>ufw allow 443/tcp
+</span></span><span style="display:flex;"><span>ufw enable
+</span></span></code></pre></div><h3 id="4-regular-updates">4. Regular Updates</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Weekly security updates</span>
+</span></span><span style="display:flex;"><span>docker-compose pull
+</span></span><span style="display:flex;"><span>docker-compose up -d
+</span></span></code></pre></div><h3 id="5-restrict-database-access">5. Restrict Database Access</h3>
+<p>The database should only be accessible from the application container. Default configuration already isolates it.</p>
+<h2 id="monitoring">Monitoring</h2>
+<h3 id="health-checks">Health Checks</h3>
+<p>Built-in health check endpoint:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl http://localhost:3000/api/health
+</span></span></code></pre></div><h3 id="uptime-monitoring">Uptime Monitoring</h3>
+<p>Use external monitoring services:</p>
+<ul>
+<li><a href="https://uptimerobot.com">UptimeRobot</a> (free)</li>
+<li><a href="https://pingdom.com">Pingdom</a></li>
+<li><a href="https://betteruptime.com">Better Uptime</a></li>
+</ul>
+<p>Monitor: <code>https://analytics.yourdomain.com/api/health</code></p>
+<h3 id="system-monitoring">System Monitoring</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Container resource usage</span>
+</span></span><span style="display:flex;"><span>docker stats
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Disk usage</span>
+</span></span><span style="display:flex;"><span>docker system df
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Database size</span>
+</span></span><span style="display:flex;"><span>docker-compose exec zta du -sh /app/data/
+</span></span></code></pre></div><h2 id="scaling">Scaling</h2>
+<h3 id="vertical-scaling">Vertical Scaling</h3>
+<p>Increase resources for single server:</p>
+<ol>
+<li>Increase VPS/server size</li>
+<li>Update resource limits in <code>docker-compose.prod.yml</code></li>
+<li>Restart services</li>
+</ol>
+<h3 id="horizontal-scaling">Horizontal Scaling</h3>
+<p>For very high traffic (multiple servers):</p>
+<ol>
+<li>Use PostgreSQL instead of SQLite</li>
+<li>Deploy multiple application containers with load balancer</li>
+<li>Share database across all containers</li>
+<li>Use Redis for session storage (requires code modification)</li>
+</ol>
+<h2 id="migration">Migration</h2>
+<h3 id="from-hosted-to-self-hosted">From Hosted to Self-Hosted</h3>
+<ol>
+<li>Export data from hosted instance (Dashboard → Export)</li>
+<li>Set up self-hosted instance</li>
+<li>Import data using API or database import</li>
+</ol>
+<h3 id="from-self-hosted-to-hosted">From Self-Hosted to Hosted</h3>
+<p>Contact support for migration assistance.</p>
+<h2 id="support">Support</h2>
+<h3 id="community-support">Community Support</h3>
+<ul>
+<li><strong>GitHub Issues</strong>: <a href="https://github.com/jasonsutter87/zero-trust-analytics/issues">Report bugs or request features</a></li>
+<li><strong>Discussions</strong>: <a href="https://github.com/jasonsutter87/zero-trust-analytics/discussions">Community forum</a></li>
+</ul>
+<h3 id="commercial-support">Commercial Support</h3>
+<p>For enterprise support, customization, or migration assistance:</p>
+<ul>
+<li>Email: <a href="mailto:support@zerotrust.analytics">support@zerotrust.analytics</a></li>
+<li>Custom SLA available</li>
+</ul>
+<h2 id="faq">FAQ</h2>
+<h3 id="how-much-does-self-hosting-cost">How much does self-hosting cost?</h3>
+<p>Free! You only pay for your server/VPS costs. Recommended providers:</p>
+<ul>
+<li><strong>DigitalOcean</strong>: $12/month (2GB RAM)</li>
+<li><strong>Linode</strong>: $12/month (2GB RAM)</li>
+<li><strong>Hetzner</strong>: €4.51/month (2GB RAM)</li>
+</ul>
+<h3 id="can-i-use-this-for-multiple-websites">Can I use this for multiple websites?</h3>
+<p>Yes! Each user can track up to 999 sites (configurable via <code>MAX_SITES_PER_USER</code>).</p>
+<h3 id="whats-the-difference-from-hosted-version">What&rsquo;s the difference from hosted version?</h3>
+<p>Self-hosted is identical in features. You manage infrastructure and updates.</p>
+<h3 id="how-many-pageviews-can-it-handle">How many pageviews can it handle?</h3>
+<p>With default SQLite: <strong>1M+ pageviews/month</strong> comfortably.
+With PostgreSQL: <strong>10M+ pageviews/month</strong> and beyond.</p>
+<h3 id="is-visitor-data-truly-private">Is visitor data truly private?</h3>
+<p>Yes! Visitor IPs are hashed with your secret, never stored in raw form. All data stays on your server.</p>
+<h3 id="can-i-modify-the-code">Can I modify the code?</h3>
+<p>Yes! Zero Trust Analytics is open source. Fork and customize as needed.</p>
+<h3 id="how-do-i-get-updates">How do I get updates?</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>git pull origin main
+</span></span><span style="display:flex;"><span>docker-compose up -d --build
+</span></span></code></pre></div><h3 id="what-if-i-need-help">What if I need help?</h3>
+<p>Open an issue on GitHub or check the Discussions forum.</p>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><a href="/docs/installation">Installation Guide</a> - Add tracking to your website</li>
+<li><a href="/docs/api">API Documentation</a> - Integrate with other tools</li>
+<li><a href="/docs/privacy-model">Privacy Model</a> - Understand how privacy works</li>
+</ul>
+<hr>
+<p><strong>Need help?</strong> Open an issue on <a href="https://github.com/jasonsutter87/zero-trust-analytics/issues">GitHub</a> or join our <a href="https://github.com/jasonsutter87/zero-trust-analytics/discussions">community discussions</a>.</p>
+
+        </div>
+
+        
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+          
+          <span></span>
+          
+
+          
+          <a href="/docs/gdpr-ccpa/" class="btn btn-outline-primary">
+            GDPR &amp; CCPA Compliance<i class="fas fa-arrow-right ms-2"></i>
+          </a>
+          
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-body h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+.docs-body h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.docs-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.docs-body code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+.docs-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.docs-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+.docs-body th, .docs-body td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+.docs-body th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+.docs-body .alert {
+  margin: 1.5rem 0;
+}
+
+ 
+[data-theme="dark"] .docs-sidebar .nav-link {
+  color: #d4d4d8;
+}
+[data-theme="dark"] .docs-sidebar .nav-link:hover,
+[data-theme="dark"] .docs-sidebar .nav-link.active {
+  color: #60a5fa;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .docs-sidebar h6.text-muted {
+  color: #9ca3af !important;
+}
+[data-theme="dark"] .docs-content h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-content .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .docs-body {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body h2 {
+  color: var(--zta-text, #e9ecef);
+  border-bottom-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .docs-body h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .docs-body th,
+[data-theme="dark"] .docs-body td {
+  border-color: var(--zta-border, #495057);
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body th {
+  background: var(--zta-bg-tertiary, #2c3034);
+}
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  color: #d4d4d8;
+  border-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--zta-bg-tertiary, #2c3034);
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>

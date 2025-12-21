@@ -1,0 +1,106 @@
+:root {
+  --zta-primary: #0d6efd;
+  --zta-primary-dark: #0a58ca;
+  --zta-success: #198754;
+  --zta-danger: #dc3545;
+  --zta-warning: #ffc107;
+  --zta-white: #fff;
+  --zta-gray-100: #f8f9fa;
+  --zta-gray-600: #6c757d;
+  --zta-gray-700: #495057;
+  --zta-gray-900: #212529;
+  --zta-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --zta-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --zta-shadow-lg: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+  --zta-radius: 0.5rem;
+  --zta-radius-lg: 1rem;
+  --zta-gradient-primary: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+#inner-page-hero-section {
+  padding: 60px 0 40px;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: #fff;
+}
+#inner-page-hero-section h4 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+#inner-page-hero-section h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+@media (min-width: 768px) {
+  #inner-page-hero-section h1 {
+    font-size: 3rem;
+  }
+}
+
+#policies-main-section {
+  padding: 50px 0 80px;
+  background: #f8f9fa;
+}
+#policies-main-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #212529;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #0d6efd;
+}
+#policies-main-section h2:first-child {
+  margin-top: 0;
+}
+#policies-main-section p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+#policies-main-section ul {
+  margin-bottom: 1.5rem;
+  padding-left: 1.25rem;
+}
+#policies-main-section ul li {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  color: #495057;
+}
+#policies-main-section ul li strong {
+  color: #212529;
+}
+#policies-main-section .btn-primary {
+  padding: 12px 30px;
+  font-weight: 500;
+}
+
+/* Dark mode styles for about/policy pages */
+[data-theme=dark] #policies-main-section {
+  background-color: var(--zta-bg-secondary);
+}
+
+[data-theme=dark] #policies-main-section h2 {
+  color: var(--zta-text);
+  border-bottom-color: var(--zta-primary);
+}
+
+[data-theme=dark] #policies-main-section p {
+  color: #d4d4d8; /* Light gray for 10:1 contrast */
+}
+
+[data-theme=dark] #policies-main-section ul li {
+  color: #d4d4d8;
+}
+
+[data-theme=dark] #policies-main-section ul li strong {
+  color: var(--zta-text);
+}
+
+[data-theme=dark] #policies-main-section a {
+  color: #60a5fa; /* Blue-400 for link visibility */
+}/*# sourceMappingURL=about.css.map */

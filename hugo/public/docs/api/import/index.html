@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Google Analytics Import API
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Google Analytics Import API">
+
+
+<meta name="description" content="Import historical data from Google Analytics to ensure seamless data continuity when switching to Zero Trust Analytics.">
+<meta name="summary" content="Google Analytics Import API
+Import historical analytics data from Google Analytics (GA4 or Universal Analytics) to maintain data continuity when switching to Zero Trust Analytics.
+Overview
+The Import API allows you to:
+
+Import data from GA4 exports (CSV or JSON)
+Import data from Universal Analytics exports
+Import data directly from GA4 API responses
+View import history
+Delete imported data if needed
+
+Endpoint: /.netlify/functions/import
+Authentication: Required (JWT token in Authorization header)" >
+<meta name="date" content="0001-01-01 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Google Analytics Import API">
+
+<meta property="og:date" content="0001-01-01 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Import historical data from Google Analytics to ensure seamless data continuity when switching to Zero Trust Analytics.">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/api/import/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/api/import/">
+
+<meta name="twitter:title" content="Google Analytics Import API">
+
+<meta name="twitter:description" content="Import historical data from Google Analytics to ensure seamless data continuity when switching to Zero Trust Analytics.">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/api/import/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/docs/" class="text-decoration-none">Docs</a></li>
+        
+        
+        <li class="breadcrumb-item"><a href="/docs/api/" class="text-decoration-none">API Reference</a></li>
+        
+        
+        <li class="breadcrumb-item active" aria-current="page">Google Analytics Import API</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link ">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link ">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link ">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link ">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link ">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link ">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link ">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link ">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link ">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link ">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link ">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link ">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link ">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <article class="docs-content">
+        <h1 class="mb-4">Google Analytics Import API</h1>
+        
+        <p class="lead text-muted mb-4">Import historical data from Google Analytics to ensure seamless data continuity when switching to Zero Trust Analytics.</p>
+        
+
+        <div class="docs-body">
+          <h1 id="google-analytics-import-api">Google Analytics Import API</h1>
+<p>Import historical analytics data from Google Analytics (GA4 or Universal Analytics) to maintain data continuity when switching to Zero Trust Analytics.</p>
+<h2 id="overview">Overview</h2>
+<p>The Import API allows you to:</p>
+<ul>
+<li>Import data from GA4 exports (CSV or JSON)</li>
+<li>Import data from Universal Analytics exports</li>
+<li>Import data directly from GA4 API responses</li>
+<li>View import history</li>
+<li>Delete imported data if needed</li>
+</ul>
+<p><strong>Endpoint:</strong> <code>/.netlify/functions/import</code></p>
+<p><strong>Authentication:</strong> Required (JWT token in Authorization header)</p>
+<hr>
+<h2 id="import-data">Import Data</h2>
+<p>Import historical analytics data from Google Analytics.</p>
+<p><strong>POST</strong> <code>/.netlify/functions/import</code></p>
+<h3 id="request-body">Request Body</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>siteId</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Your ZTA site ID</td>
+      </tr>
+      <tr>
+          <td><code>format</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Data format: <code>csv</code>, <code>json</code>, <code>ga4-api</code>, or <code>ua-csv</code></td>
+      </tr>
+      <tr>
+          <td><code>data</code></td>
+          <td>string/object</td>
+          <td>Yes</td>
+          <td>The analytics data (CSV string or JSON object/array)</td>
+      </tr>
+      <tr>
+          <td><code>source</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Source identifier (default: <code>google-analytics</code>)</td>
+      </tr>
+      <tr>
+          <td><code>dateRange</code></td>
+          <td>object</td>
+          <td>No</td>
+          <td>Optional date range override <code>{start, end}</code></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="supported-formats">Supported Formats</h3>
+<h4 id="csv-format-csv-or-ua-csv">CSV Format (<code>csv</code> or <code>ua-csv</code>)</h4>
+<p>Standard CSV export from Google Analytics:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csv" data-lang="csv"><span style="display:flex;"><span><span style="color:#e6db74">date</span>,<span style="color:#e6db74">pagePath</span>,<span style="color:#e6db74">pageTitle</span>,<span style="color:#e6db74">screenPageViews</span>,<span style="color:#e6db74">sessions</span>,<span style="color:#e6db74">totalUsers</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">20241201</span>,<span style="color:#e6db74">/home</span>,<span style="color:#e6db74">Homepage</span>,<span style="color:#e6db74">150</span>,<span style="color:#e6db74">100</span>,<span style="color:#e6db74">80</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">20241202</span>,<span style="color:#e6db74">/about</span>,<span style="color:#e6db74">About Us</span>,<span style="color:#e6db74">75</span>,<span style="color:#e6db74">50</span>,<span style="color:#e6db74">40</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">20241203</span>,<span style="color:#e6db74">/contact</span>,<span style="color:#e6db74">Contact</span>,<span style="color:#e6db74">30</span>,<span style="color:#e6db74">25</span>,<span style="color:#e6db74">20</span>
+</span></span></code></pre></div><h4 id="json-array-format-json">JSON Array Format (<code>json</code>)</h4>
+<p>Array of records:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>[
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;20241201&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;pagePath&#34;</span>: <span style="color:#e6db74">&#34;/home&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;screenPageViews&#34;</span>: <span style="color:#ae81ff">150</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;sessions&#34;</span>: <span style="color:#ae81ff">100</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;totalUsers&#34;</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;20241202&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;pagePath&#34;</span>: <span style="color:#e6db74">&#34;/about&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;screenPageViews&#34;</span>: <span style="color:#ae81ff">75</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;sessions&#34;</span>: <span style="color:#ae81ff">50</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;totalUsers&#34;</span>: <span style="color:#ae81ff">40</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></div><h4 id="ga4-api-response-format-ga4-api">GA4 API Response Format (<code>ga4-api</code>)</h4>
+<p>Direct response from GA4 Data API:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;dimensionHeaders&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {<span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;date&#34;</span>},
+</span></span><span style="display:flex;"><span>    {<span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;pagePath&#34;</span>}
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;metricHeaders&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {<span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;screenPageViews&#34;</span>},
+</span></span><span style="display:flex;"><span>    {<span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;sessions&#34;</span>}
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;rows&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;dimensionValues&#34;</span>: [
+</span></span><span style="display:flex;"><span>        {<span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;20241201&#34;</span>},
+</span></span><span style="display:flex;"><span>        {<span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;/home&#34;</span>}
+</span></span><span style="display:flex;"><span>      ],
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;metricValues&#34;</span>: [
+</span></span><span style="display:flex;"><span>        {<span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;150&#34;</span>},
+</span></span><span style="display:flex;"><span>        {<span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;100&#34;</span>}
+</span></span><span style="display:flex;"><span>      ]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="example-request">Example Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST https://yourdomain.com/.netlify/functions/import <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_JWT_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;format&#34;: &#34;csv&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;data&#34;: &#34;date,pageviews,sessions,visitors\n20241201,150,100,80\n20241202,75,50,40&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;success&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;importId&#34;</span>: <span style="color:#e6db74">&#34;import_1702484923_x7k2m9p4q&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;recordsProcessed&#34;</span>: <span style="color:#ae81ff">30</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;recordsStored&#34;</span>: <span style="color:#ae81ff">30</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;dateRange&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;start&#34;</span>: <span style="color:#e6db74">&#34;2024-12-01&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;end&#34;</span>: <span style="color:#e6db74">&#34;2024-12-30&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;days&#34;</span>: <span style="color:#ae81ff">30</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Successfully imported 30 days of historical data&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="error-responses">Error Responses</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Status</th>
+          <th>Error</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>400</td>
+          <td><code>siteId is required</code></td>
+          <td>Missing site ID</td>
+      </tr>
+      <tr>
+          <td>400</td>
+          <td><code>data is required</code></td>
+          <td>Missing import data</td>
+      </tr>
+      <tr>
+          <td>400</td>
+          <td><code>Invalid format</code></td>
+          <td>Unsupported format specified</td>
+      </tr>
+      <tr>
+          <td>400</td>
+          <td><code>Failed to parse data</code></td>
+          <td>Data could not be parsed</td>
+      </tr>
+      <tr>
+          <td>403</td>
+          <td><code>Site not found or access denied</code></td>
+          <td>User doesn&rsquo;t own the site</td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="get-import-history">Get Import History</h2>
+<p>Retrieve a list of previous imports.</p>
+<p><strong>GET</strong> <code>/.netlify/functions/import</code></p>
+<h3 id="example-request-1">Example Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X GET https://yourdomain.com/.netlify/functions/import <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_JWT_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="response">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;imports&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;import_1702484923_x7k2m9p4q&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;siteId&#34;</span>: <span style="color:#e6db74">&#34;site_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;source&#34;</span>: <span style="color:#e6db74">&#34;google-analytics&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;recordCount&#34;</span>: <span style="color:#ae81ff">30</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;importedAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-13T15:22:03.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;supportedFormats&#34;</span>: [<span style="color:#e6db74">&#34;csv&#34;</span>, <span style="color:#e6db74">&#34;json&#34;</span>, <span style="color:#e6db74">&#34;ga4-api&#34;</span>, <span style="color:#e6db74">&#34;ua-csv&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h2 id="delete-import">Delete Import</h2>
+<p>Remove imported data from your analytics.</p>
+<p><strong>DELETE</strong> <code>/.netlify/functions/import?importId=IMPORT_ID</code></p>
+<h3 id="query-parameters">Query Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>importId</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>The import ID to delete</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="example-request-2">Example Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X DELETE <span style="color:#e6db74">&#34;https://yourdomain.com/.netlify/functions/import?importId=import_1702484923_x7k2m9p4q&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_JWT_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="success-response-1">Success Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;success&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;deletedRecords&#34;</span>: <span style="color:#ae81ff">30</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Successfully deleted import and 30 historical records&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="error-responses-1">Error Responses</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Status</th>
+          <th>Error</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>400</td>
+          <td><code>importId is required</code></td>
+          <td>Missing import ID</td>
+      </tr>
+      <tr>
+          <td>403</td>
+          <td><code>Access denied</code></td>
+          <td>User doesn&rsquo;t own this import</td>
+      </tr>
+      <tr>
+          <td>404</td>
+          <td><code>Import not found</code></td>
+          <td>Import ID doesn&rsquo;t exist</td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="field-mapping">Field Mapping</h2>
+<p>The Import API automatically maps Google Analytics fields to ZTA fields:</p>
+<h3 id="ga4-fields">GA4 Fields</h3>
+<table>
+  <thead>
+      <tr>
+          <th>GA4 Field</th>
+          <th>ZTA Field</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>date</code></td>
+          <td><code>date</code></td>
+      </tr>
+      <tr>
+          <td><code>pagePath</code></td>
+          <td><code>page</code></td>
+      </tr>
+      <tr>
+          <td><code>pageTitle</code></td>
+          <td><code>title</code></td>
+      </tr>
+      <tr>
+          <td><code>screenPageViews</code></td>
+          <td><code>pageviews</code></td>
+      </tr>
+      <tr>
+          <td><code>sessions</code></td>
+          <td><code>sessions</code></td>
+      </tr>
+      <tr>
+          <td><code>totalUsers</code></td>
+          <td><code>visitors</code></td>
+      </tr>
+      <tr>
+          <td><code>newUsers</code></td>
+          <td><code>new_visitors</code></td>
+      </tr>
+      <tr>
+          <td><code>bounceRate</code></td>
+          <td><code>bounce_rate</code></td>
+      </tr>
+      <tr>
+          <td><code>averageSessionDuration</code></td>
+          <td><code>avg_duration</code></td>
+      </tr>
+      <tr>
+          <td><code>sessionSource</code></td>
+          <td><code>source</code></td>
+      </tr>
+      <tr>
+          <td><code>sessionMedium</code></td>
+          <td><code>medium</code></td>
+      </tr>
+      <tr>
+          <td><code>country</code></td>
+          <td><code>country</code></td>
+      </tr>
+      <tr>
+          <td><code>region</code></td>
+          <td><code>region</code></td>
+      </tr>
+      <tr>
+          <td><code>city</code></td>
+          <td><code>city</code></td>
+      </tr>
+      <tr>
+          <td><code>deviceCategory</code></td>
+          <td><code>device</code></td>
+      </tr>
+      <tr>
+          <td><code>browser</code></td>
+          <td><code>browser</code></td>
+      </tr>
+      <tr>
+          <td><code>operatingSystem</code></td>
+          <td><code>os</code></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="universal-analytics-fields">Universal Analytics Fields</h3>
+<table>
+  <thead>
+      <tr>
+          <th>UA Field</th>
+          <th>ZTA Field</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>ga:date</code></td>
+          <td><code>date</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:pagePath</code></td>
+          <td><code>page</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:pageTitle</code></td>
+          <td><code>title</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:pageviews</code></td>
+          <td><code>pageviews</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:sessions</code></td>
+          <td><code>sessions</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:users</code></td>
+          <td><code>visitors</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:newUsers</code></td>
+          <td><code>new_visitors</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:bounceRate</code></td>
+          <td><code>bounce_rate</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:avgSessionDuration</code></td>
+          <td><code>avg_duration</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:source</code></td>
+          <td><code>source</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:medium</code></td>
+          <td><code>medium</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:country</code></td>
+          <td><code>country</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:region</code></td>
+          <td><code>region</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:city</code></td>
+          <td><code>city</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:deviceCategory</code></td>
+          <td><code>device</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:browser</code></td>
+          <td><code>browser</code></td>
+      </tr>
+      <tr>
+          <td><code>ga:operatingSystem</code></td>
+          <td><code>os</code></td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="date-format-handling">Date Format Handling</h2>
+<p>The API automatically normalizes dates to <code>YYYY-MM-DD</code> format:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Input Format</th>
+          <th>Example</th>
+          <th>Normalized</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>YYYYMMDD</td>
+          <td><code>20241201</code></td>
+          <td><code>2024-12-01</code></td>
+      </tr>
+      <tr>
+          <td>MM/DD/YYYY</td>
+          <td><code>12/01/2024</code></td>
+          <td><code>2024-12-01</code></td>
+      </tr>
+      <tr>
+          <td>YYYY-MM-DD</td>
+          <td><code>2024-12-01</code></td>
+          <td><code>2024-12-01</code></td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="how-to-export-from-google-analytics">How to Export from Google Analytics</h2>
+<h3 id="ga4-export">GA4 Export</h3>
+<ol>
+<li>Go to <strong>Reports</strong> &gt; Select your report</li>
+<li>Click <strong>Share this report</strong> (share icon)</li>
+<li>Select <strong>Download file</strong> &gt; <strong>Download CSV</strong> or <strong>Download JSON</strong></li>
+<li>Upload the file to ZTA using the Import feature</li>
+</ol>
+<h3 id="ga4-api-export">GA4 API Export</h3>
+<p>Use the <a href="https://developers.google.com/analytics/devguides/reporting/data/v1">GA4 Data API</a>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">// Example: Export data via GA4 API
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">analyticsDataClient</span>.<span style="color:#a6e22e">runReport</span>({
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">property</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;properties/YOUR_PROPERTY_ID&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">dateRanges</span><span style="color:#f92672">:</span> [{ <span style="color:#a6e22e">startDate</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;2024-01-01&#39;</span>, <span style="color:#a6e22e">endDate</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;2024-12-31&#39;</span> }],
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">dimensions</span><span style="color:#f92672">:</span> [{ <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;date&#39;</span> }, { <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;pagePath&#39;</span> }],
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">metrics</span><span style="color:#f92672">:</span> [{ <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;screenPageViews&#39;</span> }, { <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;sessions&#39;</span> }]
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Send response directly to ZTA Import API
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;/.netlify/functions/import&#39;</span>, {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">method</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;POST&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;Bearer YOUR_TOKEN&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Content-Type&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;application/json&#39;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">body</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">stringify</span>({
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">siteId</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;your_site_id&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">format</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;ga4-api&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">response</span>
+</span></span><span style="display:flex;"><span>  })
+</span></span><span style="display:flex;"><span>});
+</span></span></code></pre></div><hr>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Start with a test import</strong> - Import a small date range first to verify mapping</li>
+<li><strong>Use consistent date ranges</strong> - Avoid overlapping imports to prevent duplicate data</li>
+<li><strong>Keep your export files</strong> - Store original GA exports as backup</li>
+<li><strong>Review imported data</strong> - Check your ZTA dashboard after import to verify accuracy</li>
+<li><strong>Delete and re-import if needed</strong> - Use the delete endpoint to remove and reimport data</li>
+</ol>
+<hr>
+<h2 id="dashboard-import-feature">Dashboard Import Feature</h2>
+<p>You can also import data directly from the ZTA dashboard:</p>
+<ol>
+<li>Log in to your dashboard</li>
+<li>Click the <strong>Import GA</strong> button in the toolbar</li>
+<li>Select your export file (CSV or JSON)</li>
+<li>Preview the data mapping</li>
+<li>Click <strong>Import</strong> to complete</li>
+</ol>
+<p>The dashboard provides:</p>
+<ul>
+<li>File upload with drag-and-drop</li>
+<li>Data preview before import</li>
+<li>Import history view</li>
+<li>One-click delete for imports</li>
+</ul>
+
+        </div>
+
+        
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+          
+          <a href="/docs/api/gsc/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Google Search Console API
+          </a>
+          
+
+          
+          <a href="/docs/api/public-stats/" class="btn btn-outline-primary">
+            Public Stats<i class="fas fa-arrow-right ms-2"></i>
+          </a>
+          
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-body h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+.docs-body h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.docs-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.docs-body code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+.docs-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.docs-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+.docs-body th, .docs-body td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+.docs-body th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+.docs-body .alert {
+  margin: 1.5rem 0;
+}
+
+ 
+[data-theme="dark"] .docs-sidebar .nav-link {
+  color: #d4d4d8;
+}
+[data-theme="dark"] .docs-sidebar .nav-link:hover,
+[data-theme="dark"] .docs-sidebar .nav-link.active {
+  color: #60a5fa;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .docs-sidebar h6.text-muted {
+  color: #9ca3af !important;
+}
+[data-theme="dark"] .docs-content h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-content .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .docs-body {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body h2 {
+  color: var(--zta-text, #e9ecef);
+  border-bottom-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .docs-body h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .docs-body th,
+[data-theme="dark"] .docs-body td {
+  border-color: var(--zta-border, #495057);
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body th {
+  background: var(--zta-bg-tertiary, #2c3034);
+}
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  color: #d4d4d8;
+  border-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--zta-bg-tertiary, #2c3034);
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>

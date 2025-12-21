@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>GDPR on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/gdpr/</link>
+    <description>Recent content in GDPR on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 13 Jan 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/gdpr/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GDPR Fines Are Real: Is Your Analytics Compliant?</title>
+      <link>http://localhost:49390/blog/gdpr-fines-are-real-is-your-analytics-compliant/</link>
+      <pubDate>Mon, 13 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/gdpr-fines-are-real-is-your-analytics-compliant/</guid>
+      <description>&lt;p&gt;In January 2022, the Austrian Data Protection Authority made a ruling that sent shockwaves through the marketing world: &lt;strong&gt;Google Analytics violates GDPR.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;That wasn&amp;rsquo;t an isolated opinion. France, Italy, and other EU regulators followed with similar rulings. And they didn&amp;rsquo;t just issue warnings—they issued orders to stop using Google Analytics entirely.&lt;/p&gt;&#xA;&lt;p&gt;If your website serves European visitors, this affects you.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-gdpr-fine-landscape&#34;&gt;The GDPR Fine Landscape&lt;/h2&gt;&#xA;&lt;p&gt;GDPR enforcement is no longer theoretical. Here are real fines from 2023-2024:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Nobody Likes Cookies: Why We&#39;ve Been Cookie-Free Since Day One</title>
+      <link>http://localhost:49390/blog/nobody-likes-cookies-cookie-free-since-day-one/</link>
+      <pubDate>Mon, 23 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/nobody-likes-cookies-cookie-free-since-day-one/</guid>
+      <description>&lt;p&gt;You know that popup. The one that appears before you can read a single word of content. &amp;ldquo;We use cookies to improve your experience. Accept All / Manage Preferences / Reject All.&amp;rdquo;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;Everyone hates it.&lt;/strong&gt; Visitors hate clicking through it. Website owners hate implementing it. Lawyers hate trying to make it compliant. And yet, billions of websites display some version of this banner every day.&lt;/p&gt;&#xA;&lt;p&gt;We decided to skip the whole thing.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

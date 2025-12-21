@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZTA Analytics - Optimized Script Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 { color: #2563eb; }
+    .test-section {
+      background: #f3f4f6;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      border-left: 4px solid #2563eb;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .success { background: #d1fae5; color: #065f46; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .info { background: #dbeafe; color: #1e40af; }
+    pre {
+      background: #1f2937;
+      color: #f3f4f6;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 ZTA Analytics - Optimized Script Test</h1>
+
+  <div class="test-section">
+    <h2>Script Information</h2>
+    <div id="script-info"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>API Tests</h2>
+    <button onclick="testPageView()">Test trackPageView()</button>
+    <button onclick="testCustomEvent()">Test track()</button>
+    <button onclick="testTrackEvent()">Test trackEvent()</button>
+    <div id="test-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Console Output</h2>
+    <div class="info">Check browser console (F12) for detailed logs</div>
+  </div>
+
+  <!-- Load the CORE optimized script -->
+  <script src="static/js/analytics.min.js" data-site-id="test-site-123" data-debug="true"></script>
+
+  <script>
+    // Display script info
+    function displayScriptInfo() {
+      const scriptEl = document.querySelector('script[src*="analytics"]');
+      const scriptSrc = scriptEl ? scriptEl.src : 'Not found';
+
+      // Check if ZTA is loaded
+      const isLoaded = typeof window.ZTA !== 'undefined';
+      const apiMethods = isLoaded ? Object.keys(window.ZTA).filter(k => typeof window.ZTA[k] === 'function') : [];
+
+      let html = '';
+
+      if (isLoaded) {
+        html += '<div class="success">✓ ZTA script loaded successfully</div>';
+      } else {
+        html += '<div class="error">✗ ZTA script failed to load</div>';
+      }
+
+      html += `<p><strong>Script URL:</strong> ${scriptSrc}</p>`;
+      html += `<p><strong>Available Methods:</strong></p>`;
+      html += `<pre>${apiMethods.join('\n')}</pre>`;
+
+      document.getElementById('script-info').innerHTML = html;
+    }
+
+    // Test pageview tracking
+    function testPageView() {
+      try {
+        ZTA.trackPageView({ test: 'pageview-test' });
+        addResult('success', 'trackPageView() executed successfully');
+      } catch (err) {
+        addResult('error', 'trackPageView() failed: ' + err.message);
+      }
+    }
+
+    // Test custom event tracking
+    function testCustomEvent() {
+      try {
+        ZTA.track('button_click', {
+          label: 'Test Button',
+          value: 42
+        });
+        addResult('success', 'track() executed successfully');
+      } catch (err) {
+        addResult('error', 'track() failed: ' + err.message);
+      }
+    }
+
+    // Test traditional event tracking
+    function testTrackEvent() {
+      try {
+        ZTA.trackEvent('test', 'click', 'Test Label', 100);
+        addResult('success', 'trackEvent() executed successfully');
+      } catch (err) {
+        addResult('error', 'trackEvent() failed: ' + err.message);
+      }
+    }
+
+    function addResult(type, message) {
+      const results = document.getElementById('test-results');
+      const div = document.createElement('div');
+      div.className = 'status ' + type;
+      div.textContent = message;
+      results.appendChild(div);
+    }
+
+    // Run on load
+    window.addEventListener('load', () => {
+      displayScriptInfo();
+
+      // Auto-run a test
+      setTimeout(() => {
+        addResult('info', 'Running automatic pageview test...');
+        testPageView();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

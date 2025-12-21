@@ -1,0 +1,105 @@
+{{ define "main"}}
+
+<section id="inner-page-hero-section">
+  <div class="site-container-1340">
+    <div class="row">
+      <div class="col-12">
+        <h4>About</h4>
+        <h1>Zero Trust Analytics</h1>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="policies-main-section">
+  <div class="site-container-1340">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-9">
+        <div align="left">
+
+          <h2>What is Zero Trust?</h2>
+
+          <p>Zero Trust is a security framework built on one core principle: <strong>never trust, always verify</strong>. In a traditional security model, everything inside a network is trusted by default. Zero Trust flips this assumption on its head.</p>
+
+          <p>With Zero Trust, every request for access is treated as potentially hostile, regardless of where it originates. This means:</p>
+
+          <ul>
+            <li><strong>No implicit trust</strong> - Every user, device, and connection must prove its legitimacy</li>
+            <li><strong>Least privilege access</strong> - Users and systems only get the minimum access needed</li>
+            <li><strong>Continuous verification</strong> - Trust is never permanent; it must be re-earned constantly</li>
+            <li><strong>Assume breach</strong> - Design systems assuming attackers are already inside</li>
+          </ul>
+
+          <h2>Zero Trust Applied to Analytics</h2>
+
+          <p>We apply these same principles to web analytics. Traditional analytics platforms collect massive amounts of personal data, trusting that it will be used responsibly. We take a different approach:</p>
+
+          <ul>
+            <li><strong>No personal data collection</strong> - We don't collect IP addresses, user agents for fingerprinting, or any personally identifiable information</li>
+            <li><strong>No cookies</strong> - We don't use cookies or any client-side storage to track users across sessions</li>
+            <li><strong>No cross-site tracking</strong> - Your visitors' behavior on your site stays on your site</li>
+            <li><strong>Data minimization</strong> - We only collect what's absolutely necessary for meaningful analytics</li>
+            <li><strong>Privacy by design</strong> - Privacy isn't an afterthought; it's baked into every decision we make</li>
+          </ul>
+
+          <h2>Why Privacy-Focused Analytics?</h2>
+
+          <p>The internet has become a surveillance machine. Every click, scroll, and hover is tracked, analyzed, and monetized. Users are the product, and their attention is sold to the highest bidder.</p>
+
+          <p>We believe there's a better way. You can understand how your website performs without compromising your visitors' privacy. You can make data-driven decisions without building detailed profiles of individual users.</p>
+
+          <p>Privacy-focused analytics is not just good ethics - it's good business:</p>
+
+          <ul>
+            <li><strong>GDPR & CCPA compliant</strong> - No cookie banners needed, no consent management headaches</li>
+            <li><strong>Faster page loads</strong> - Our lightweight script doesn't slow down your site</li>
+            <li><strong>Build trust</strong> - Show your visitors you respect their privacy</li>
+            <li><strong>Future-proof</strong> - As privacy regulations tighten, you're already ahead</li>
+          </ul>
+
+          <h2>Our Team</h2>
+
+          <p>{{ .Site.Params.CompanyName }} was founded by a team of privacy advocates, security professionals, and developers who were tired of the status quo.</p>
+
+          <p>We've seen firsthand how traditional analytics platforms harvest user data at scale. We've watched as companies build detailed profiles of individuals without their knowledge or meaningful consent. And we decided to build something different.</p>
+
+          <p>Our team is committed to:</p>
+
+          <ul>
+            <li><strong>Transparency</strong> - We're open about what we collect and why</li>
+            <li><strong>Security</strong> - Your analytics data is encrypted and protected</li>
+            <li><strong>Privacy</strong> - We practice what we preach; we don't track you either</li>
+            <li><strong>Simplicity</strong> - Analytics should be easy to understand and act on</li>
+          </ul>
+
+          <h2>Our Promise</h2>
+
+          <p>We will never:</p>
+
+          <ul>
+            <li>Sell your data or your visitors' data</li>
+            <li>Use your analytics for advertising purposes</li>
+            <li>Share data with third parties</li>
+            <li>Track users across different websites</li>
+            <li>Collect more data than absolutely necessary</li>
+          </ul>
+
+          <p>We will always:</p>
+
+          <ul>
+            <li>Put privacy first in every decision</li>
+            <li>Be transparent about our practices</li>
+            <li>Give you full control over your data</li>
+            <li>Keep improving our privacy protections</li>
+          </ul>
+
+          <p class="mt-5"><strong>Ready to try privacy-focused analytics?</strong></p>
+          <p><a href="/register/" class="btn btn-primary">Get Started Free</a></p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{{ end }}

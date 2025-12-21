@@ -1,0 +1,37 @@
+[build]
+  publish = "public"
+  command = "npm install && npm run build && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify"
+  functions = "netlify/functions"
+
+[dev]
+  command = "hugo server -w"
+  targetPort = 1313
+  port = 8888
+  autoLaunch = false
+
+[context.production.environment]
+  HUGO_VERSION = "0.147.4"
+
+[functions]
+  node_bundler = "esbuild"
+
+# API redirects
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# CORS for analytics script
+[[headers]]
+  for = "/js/analytics.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Site-ID"
+

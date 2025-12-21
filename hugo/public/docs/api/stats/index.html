@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Stats Endpoint
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Stats Endpoint">
+
+
+<meta name="description" content="Retrieve analytics data for your sites">
+<meta name="summary" content="Overview
+The Stats endpoint returns aggregated analytics data for a site over a specified time period.
+Endpoint
+GET /api/stats
+Requires authentication. See Authentication.
+Parameters
+
+  
+      
+          Parameter
+          Type
+          Required
+          Description
+      
+  
+  
+      
+          siteId
+          string
+          Yes
+          Your Site ID
+      
+      
+          period
+          string
+          No
+          Time period: 24h, 7d, 30d, 90d, 365d (default: 7d)
+      
+      
+          startDate
+          string
+          No
+          Custom start date (ISO 8601)
+      
+      
+          endDate
+          string
+          No
+          Custom end date (ISO 8601)
+      
+  
+
+Example Request
+curl &#34;https://ztas.io/api/stats?siteId=site_abc123&amp;period=30d&#34; \
+  -H &#34;Authorization: Bearer YOUR_TOKEN&#34;
+Response
+{
+  &#34;summary&#34;: {
+    &#34;pageviews&#34;: 12543,
+    &#34;uniqueVisitors&#34;: 4821,
+    &#34;sessions&#34;: 5432,
+    &#34;bounceRate&#34;: 42.5,
+    &#34;avgSessionDuration&#34;: 185,
+    &#34;avgTimeOnPage&#34;: 67
+  },
+  &#34;timeseries&#34;: [
+    {
+      &#34;date&#34;: &#34;2024-12-01&#34;,
+      &#34;pageviews&#34;: 412,
+      &#34;uniqueVisitors&#34;: 156
+    },
+    {
+      &#34;date&#34;: &#34;2024-12-02&#34;,
+      &#34;pageviews&#34;: 389,
+      &#34;uniqueVisitors&#34;: 142
+    }
+  ],
+  &#34;topPages&#34;: [
+    { &#34;path&#34;: &#34;/&#34;, &#34;pageviews&#34;: 3421, &#34;uniqueVisitors&#34;: 2100 },
+    { &#34;path&#34;: &#34;/pricing&#34;, &#34;pageviews&#34;: 1234, &#34;uniqueVisitors&#34;: 890 },
+    { &#34;path&#34;: &#34;/blog/getting-started&#34;, &#34;pageviews&#34;: 876, &#34;uniqueVisitors&#34;: 654 }
+  ],
+  &#34;topReferrers&#34;: [
+    { &#34;domain&#34;: &#34;google.com&#34;, &#34;visits&#34;: 2341 },
+    { &#34;domain&#34;: &#34;twitter.com&#34;, &#34;visits&#34;: 543 },
+    { &#34;domain&#34;: &#34;(direct)&#34;, &#34;visits&#34;: 1234 }
+  ],
+  &#34;devices&#34;: {
+    &#34;desktop&#34;: 65.4,
+    &#34;mobile&#34;: 32.1,
+    &#34;tablet&#34;: 2.5
+  },
+  &#34;browsers&#34;: [
+    { &#34;name&#34;: &#34;Chrome&#34;, &#34;percentage&#34;: 58.2 },
+    { &#34;name&#34;: &#34;Safari&#34;, &#34;percentage&#34;: 24.1 },
+    { &#34;name&#34;: &#34;Firefox&#34;, &#34;percentage&#34;: 10.3 }
+  ],
+  &#34;countries&#34;: [
+    { &#34;code&#34;: &#34;US&#34;, &#34;name&#34;: &#34;United States&#34;, &#34;visits&#34;: 3421 },
+    { &#34;code&#34;: &#34;GB&#34;, &#34;name&#34;: &#34;United Kingdom&#34;, &#34;visits&#34;: 876 },
+    { &#34;code&#34;: &#34;CA&#34;, &#34;name&#34;: &#34;Canada&#34;, &#34;visits&#34;: 543 }
+  ],
+  &#34;trafficSources&#34;: {
+    &#34;direct&#34;: 34.2,
+    &#34;organic&#34;: 28.5,
+    &#34;referral&#34;: 21.3,
+    &#34;social&#34;: 12.1,
+    &#34;paid&#34;: 3.9
+  }
+}
+Response Fields
+Summary
+
+  
+      
+          Field
+          Type
+          Description
+      
+  
+  
+      
+          pageviews
+          number
+          Total page views
+      
+      
+          uniqueVisitors
+          number
+          Unique visitors (based on anonymous hash)
+      
+      
+          sessions
+          number
+          Total sessions
+      
+      
+          bounceRate
+          number
+          Bounce rate percentage
+      
+      
+          avgSessionDuration
+          number
+          Average session duration in seconds
+      
+      
+          avgTimeOnPage
+          number
+          Average time on page in seconds
+      
+  
+
+Timeseries
+Daily breakdown of pageviews and visitors. Useful for charting trends." >
+<meta name="date" content="0001-01-01 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Stats Endpoint">
+
+<meta property="og:date" content="0001-01-01 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Retrieve analytics data for your sites">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/api/stats/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/api/stats/">
+
+<meta name="twitter:title" content="Stats Endpoint">
+
+<meta name="twitter:description" content="Retrieve analytics data for your sites">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/api/stats/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/docs/" class="text-decoration-none">Docs</a></li>
+        
+        
+        <li class="breadcrumb-item"><a href="/docs/api/" class="text-decoration-none">API Reference</a></li>
+        
+        
+        <li class="breadcrumb-item active" aria-current="page">Stats Endpoint</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link ">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link ">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link ">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link ">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link ">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link ">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link ">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link active fw-bold">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link ">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link ">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link ">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link ">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link ">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <article class="docs-content">
+        <h1 class="mb-4">Stats Endpoint</h1>
+        
+        <p class="lead text-muted mb-4">Retrieve analytics data for your sites</p>
+        
+
+        <div class="docs-body">
+          <h2 id="overview">Overview</h2>
+<p>The Stats endpoint returns aggregated analytics data for a site over a specified time period.</p>
+<h2 id="endpoint">Endpoint</h2>
+<pre tabindex="0"><code>GET /api/stats
+</code></pre><p><strong>Requires authentication.</strong> See <a href="/docs/api/authentication/">Authentication</a>.</p>
+<h2 id="parameters">Parameters</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>siteId</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Your Site ID</td>
+      </tr>
+      <tr>
+          <td><code>period</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Time period: <code>24h</code>, <code>7d</code>, <code>30d</code>, <code>90d</code>, <code>365d</code> (default: <code>7d</code>)</td>
+      </tr>
+      <tr>
+          <td><code>startDate</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Custom start date (ISO 8601)</td>
+      </tr>
+      <tr>
+          <td><code>endDate</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Custom end date (ISO 8601)</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="example-request">Example Request</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/stats?siteId=site_abc123&amp;period=30d&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h2 id="response">Response</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;summary&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">12543</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">4821</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;sessions&#34;</span>: <span style="color:#ae81ff">5432</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;bounceRate&#34;</span>: <span style="color:#ae81ff">42.5</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;avgSessionDuration&#34;</span>: <span style="color:#ae81ff">185</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;avgTimeOnPage&#34;</span>: <span style="color:#ae81ff">67</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;timeseries&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;2024-12-01&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">412</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">156</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;2024-12-02&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">389</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">142</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;topPages&#34;</span>: [
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/&#34;</span>, <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">3421</span>, <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">2100</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/pricing&#34;</span>, <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">1234</span>, <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">890</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/blog/getting-started&#34;</span>, <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">876</span>, <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">654</span> }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;topReferrers&#34;</span>: [
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;google.com&#34;</span>, <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">2341</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;twitter.com&#34;</span>, <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">543</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;(direct)&#34;</span>, <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">1234</span> }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;devices&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;desktop&#34;</span>: <span style="color:#ae81ff">65.4</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;mobile&#34;</span>: <span style="color:#ae81ff">32.1</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;tablet&#34;</span>: <span style="color:#ae81ff">2.5</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;browsers&#34;</span>: [
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Chrome&#34;</span>, <span style="color:#f92672">&#34;percentage&#34;</span>: <span style="color:#ae81ff">58.2</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Safari&#34;</span>, <span style="color:#f92672">&#34;percentage&#34;</span>: <span style="color:#ae81ff">24.1</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Firefox&#34;</span>, <span style="color:#f92672">&#34;percentage&#34;</span>: <span style="color:#ae81ff">10.3</span> }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;countries&#34;</span>: [
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;US&#34;</span>, <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;United States&#34;</span>, <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">3421</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;GB&#34;</span>, <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;United Kingdom&#34;</span>, <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">876</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;CA&#34;</span>, <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Canada&#34;</span>, <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">543</span> }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;trafficSources&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;direct&#34;</span>: <span style="color:#ae81ff">34.2</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;organic&#34;</span>: <span style="color:#ae81ff">28.5</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;referral&#34;</span>: <span style="color:#ae81ff">21.3</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;social&#34;</span>: <span style="color:#ae81ff">12.1</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;paid&#34;</span>: <span style="color:#ae81ff">3.9</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="response-fields">Response Fields</h2>
+<h3 id="summary">Summary</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>pageviews</code></td>
+          <td>number</td>
+          <td>Total page views</td>
+      </tr>
+      <tr>
+          <td><code>uniqueVisitors</code></td>
+          <td>number</td>
+          <td>Unique visitors (based on anonymous hash)</td>
+      </tr>
+      <tr>
+          <td><code>sessions</code></td>
+          <td>number</td>
+          <td>Total sessions</td>
+      </tr>
+      <tr>
+          <td><code>bounceRate</code></td>
+          <td>number</td>
+          <td>Bounce rate percentage</td>
+      </tr>
+      <tr>
+          <td><code>avgSessionDuration</code></td>
+          <td>number</td>
+          <td>Average session duration in seconds</td>
+      </tr>
+      <tr>
+          <td><code>avgTimeOnPage</code></td>
+          <td>number</td>
+          <td>Average time on page in seconds</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="timeseries">Timeseries</h3>
+<p>Daily breakdown of pageviews and visitors. Useful for charting trends.</p>
+<h3 id="top-pages">Top Pages</h3>
+<p>Most visited pages, sorted by pageview count.</p>
+<h3 id="top-referrers">Top Referrers</h3>
+<p>Traffic sources by referring domain. <code>(direct)</code> indicates no referrer.</p>
+<h3 id="devices-browsers-countries">Devices, Browsers, Countries</h3>
+<p>Breakdowns by device type, browser, and geographic location.</p>
+<h2 id="custom-date-range">Custom Date Range</h2>
+<p>For custom date ranges, use <code>startDate</code> and <code>endDate</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/stats?siteId=site_abc123&amp;startDate=2024-11-01&amp;endDate=2024-11-30&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h2 id="error-responses">Error Responses</h2>
+<h3 id="400-bad-request">400 Bad Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Site ID required&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="403-forbidden">403 Forbidden</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Access denied&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>You don&rsquo;t own this site.</p>
+
+        </div>
+
+        
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+          
+          <a href="/docs/api/realtime/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Realtime Endpoint
+          </a>
+          
+
+          
+          <a href="/docs/api/track/" class="btn btn-outline-primary">
+            Track Endpoint<i class="fas fa-arrow-right ms-2"></i>
+          </a>
+          
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-body h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+.docs-body h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.docs-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.docs-body code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+.docs-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.docs-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+.docs-body th, .docs-body td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+.docs-body th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+.docs-body .alert {
+  margin: 1.5rem 0;
+}
+
+ 
+[data-theme="dark"] .docs-sidebar .nav-link {
+  color: #d4d4d8;
+}
+[data-theme="dark"] .docs-sidebar .nav-link:hover,
+[data-theme="dark"] .docs-sidebar .nav-link.active {
+  color: #60a5fa;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .docs-sidebar h6.text-muted {
+  color: #9ca3af !important;
+}
+[data-theme="dark"] .docs-content h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-content .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .docs-body {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body h2 {
+  color: var(--zta-text, #e9ecef);
+  border-bottom-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .docs-body h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .docs-body th,
+[data-theme="dark"] .docs-body td {
+  border-color: var(--zta-border, #495057);
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body th {
+  background: var(--zta-bg-tertiary, #2c3034);
+}
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  color: #d4d4d8;
+  border-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--zta-bg-tertiary, #2c3034);
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>
