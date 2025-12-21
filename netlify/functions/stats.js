@@ -1,65 +1,82 @@
-import { authenticateRequest } from './lib/auth.js';
+import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
 import { getUserSites } from './lib/storage.js';
 import { getStats } from './lib/turso.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError, ValidationError, ForbiddenError } from './lib/error-handler.js';
+import { validateRequest, statsQuerySchema, validateDateRangeInData } from './lib/schemas.js';
 
 export default async function handler(req, context) {
+  const origin = req.headers.get('origin');
+  const logger = createFunctionLogger('stats', req, context);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }
-    });
+    return corsPreflightResponse(origin, 'GET, OPTIONS');
   }
 
   if (req.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.warn('Invalid HTTP method', { method: req.method });
+    return Errors.methodNotAllowed();
   }
 
   // Authenticate
   const auth = authenticateRequest(Object.fromEntries(req.headers));
   if (auth.error) {
+    logger.warn('Authentication failed', {
+      error: auth.error,
+      status: auth.status
+    });
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,
-      headers: { 'Content-Type': 'application/json' }
+      headers: getSecurityHeaders(origin)
     });
   }
 
+  logger.info('Stats request authenticated', {
+    userId: auth.user.id
+  });
+
   try {
     const url = new URL(req.url);
-    const siteId = url.searchParams.get('siteId');
-    const period = url.searchParams.get('period') || '7d';
-    const customStart = url.searchParams.get('startDate');
-    const customEnd = url.searchParams.get('endDate');
+    const queryParams = {
+      siteId: url.searchParams.get('siteId'),
+      period: url.searchParams.get('period'),
+      startDate: url.searchParams.get('startDate'),
+      endDate: url.searchParams.get('endDate')
+    };
 
-    if (!siteId) {
-      return new Response(JSON.stringify({ error: 'Site ID required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    // SECURITY: Comprehensive input validation with sanitization
+    const validated = validateRequest(statsQuerySchema, queryParams, logger);
+    const { siteId, period, startDate: customStart, endDate: customEnd } = validated;
+
+    logger.debug('Input validation successful', { siteId, period });
 
     // Verify user owns this site
     const userSites = await getUserSites(auth.user.id);
     if (!userSites.includes(siteId)) {
-      return new Response(JSON.stringify({ error: 'Access denied' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
+      logger.warn('Access denied - user does not own site', {
+        userId: auth.user.id,
+        siteId,
+        userSiteCount: userSites.length
       });
+      return Errors.forbidden('Access denied');
     }
+
+    logger.debug('Site ownership verified', {
+      userId: auth.user.id,
+      siteId,
+      period,
+      hasCustomDates: !!(customStart && customEnd)
+    });
 
     // Calculate date range
     let endDate, startDate;
 
     if (customStart && customEnd) {
-      startDate = new Date(customStart);
-      endDate = new Date(customEnd);
+      // Additional validation for custom date range
+      const dateRangeValidation = validateDateRangeInData({ startDate: customStart, endDate: customEnd });
+      startDate = dateRangeValidation.startDate || new Date(customStart);
+      endDate = dateRangeValidation.endDate || new Date(customEnd);
     } else {
       endDate = new Date();
       startDate = new Date();
@@ -89,22 +106,25 @@ export default async function handler(req, context) {
     const startStr = startDate.toISOString().replace('T', ' ').split('.')[0];
     const endStr = endDate.toISOString().replace('T', ' ').split('.')[0];
 
+    logger.info('Querying stats from database', {
+      siteId,
+      startDate: startStr,
+      endDate: endStr,
+      period
+    });
+
     // Query database for stats
     const stats = await getStats(siteId, startStr, endStr);
 
-    return new Response(JSON.stringify(stats), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+    logger.info('Stats query successful', {
+      siteId,
+      hasData: !!stats,
+      resultKeys: stats ? Object.keys(stats) : []
     });
+
+    return successResponse(stats, 200, origin);
   } catch (err) {
-    console.error('Stats error:', err.message, err.stack);
-    return new Response(JSON.stringify({ error: 'Internal error', debug: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return handleError(err, logger, origin);
   }
 }
 

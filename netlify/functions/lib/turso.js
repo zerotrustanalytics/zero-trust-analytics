@@ -6,11 +6,12 @@
  */
 
 import { createClient } from '@libsql/client';
+import { Config } from './config.js';
 
-// Initialize Turso client
+// Initialize Turso client with validated configuration
 const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN
+  url: Config.database.url,
+  authToken: Config.database.authToken
 });
 
 /**

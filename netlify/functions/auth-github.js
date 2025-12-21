@@ -1,50 +1,62 @@
+import { corsPreflightResponse, Errors } from './lib/auth.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
+
 // GitHub OAuth configuration
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || `${process.env.URL}/api/auth/callback/github`;
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('auth-github', req, context);
+  const origin = req.headers.get('origin');
+
+  logger.info('GitHub OAuth flow initiated');
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: { 'Access-Control-Allow-Origin': '*' }
-    });
+    return corsPreflightResponse(origin, 'GET, OPTIONS');
   }
 
   if (!GITHUB_CLIENT_ID) {
-    return new Response(JSON.stringify({ error: 'GitHub OAuth not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.error('GitHub OAuth not configured - missing client ID');
+    return Errors.internalError('GitHub OAuth not configured');
   }
 
-  // Get plan from query params (for signup flow)
-  const url = new URL(req.url);
-  const plan = url.searchParams.get('plan') || 'pro';
+  try {
+    // Get plan from query params (for signup flow)
+    const url = new URL(req.url);
+    const plan = url.searchParams.get('plan') || 'pro';
 
-  // Generate state for CSRF protection (include plan)
-  const stateData = JSON.stringify({ csrf: crypto.randomUUID(), plan });
-  const state = Buffer.from(stateData).toString('base64');
+    logger.debug('OAuth state generated', { plan });
 
-  // Store state in cookie for verification on callback
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`;
+    // Generate state for CSRF protection (include plan)
+    const stateData = JSON.stringify({ csrf: crypto.randomUUID(), plan });
+    const state = Buffer.from(stateData).toString('base64');
 
-  // Build GitHub authorization URL
-  const params = new URLSearchParams({
-    client_id: GITHUB_CLIENT_ID,
-    redirect_uri: GITHUB_REDIRECT_URI,
-    scope: 'user:email',
-    state: state
-  });
+    // Store state in cookie for verification on callback
+    const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`;
 
-  const authUrl = `https://github.com/login/oauth/authorize?${params}`;
+    // Build GitHub authorization URL
+    const params = new URLSearchParams({
+      client_id: GITHUB_CLIENT_ID,
+      redirect_uri: GITHUB_REDIRECT_URI,
+      scope: 'user:email',
+      state: state
+    });
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      'Location': authUrl,
-      'Set-Cookie': stateCookie
-    }
-  });
+    const authUrl = `https://github.com/login/oauth/authorize?${params}`;
+
+    logger.info('Redirecting to GitHub OAuth', { redirectUri: GITHUB_REDIRECT_URI });
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': authUrl,
+        'Set-Cookie': stateCookie
+      }
+    });
+  } catch (err) {
+    logger.error('GitHub OAuth initiation failed', err);
+    return handleError(err, logger, origin);
+  }
 }
 
 export const config = {

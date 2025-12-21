@@ -2,24 +2,22 @@ import crypto from 'crypto';
 import { getUser, createPasswordResetToken } from './lib/storage.js';
 import { sendPasswordResetEmail } from './lib/email.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
+import { corsPreflightResponse, Errors, getSecurityHeaders } from './lib/auth.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('auth-forgot', req, context);
+  const origin = req.headers.get('origin');
+
+  logger.info('Password reset request received');
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    });
+    return corsPreflightResponse(origin, 'POST, OPTIONS');
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return Errors.methodNotAllowed();
   }
 
   // Rate limit by IP - strict limit for password reset (3 per minute)
@@ -28,6 +26,7 @@ export default async function handler(req, context) {
   const rateLimit = checkRateLimit(rateLimitKey, { limit: 3, windowMs: 60000 });
 
   if (!rateLimit.allowed) {
+    logger.warn('Password reset rate limit exceeded');
     return rateLimitResponse(rateLimit);
   }
 
@@ -35,29 +34,25 @@ export default async function handler(req, context) {
     const { email } = await req.json();
 
     if (!email) {
-      return new Response(JSON.stringify({ error: 'Email is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.warn('Password reset failed - no email provided');
+      return Errors.validationError('Email is required');
     }
 
     // Always return success to prevent email enumeration
-    const successResponse = () => new Response(JSON.stringify({
+    const safeResponse = () => new Response(JSON.stringify({
       success: true,
       message: 'If an account with that email exists, we sent a password reset link.'
     }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers: getSecurityHeaders(origin)
     });
 
     // Check if user exists (silently)
     const user = await getUser(email);
     if (!user) {
+      logger.info('Password reset requested for non-existent user');
       // Return success even if user doesn't exist (security)
-      return successResponse();
+      return safeResponse();
     }
 
     // Generate secure token
@@ -66,25 +61,23 @@ export default async function handler(req, context) {
     // Store token
     await createPasswordResetToken(email, token);
 
-    // Build reset URL
-    const baseUrl = process.env.URL || 'https://zta.io';
-    const resetUrl = `${baseUrl}/reset/?token=${token}`;
+    // Build reset URL - points to Next.js reset-password page
+    const baseUrl = process.env.URL || 'https://ztas.io';
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
     // Send email
     try {
       await sendPasswordResetEmail(email, resetUrl);
+      logger.info('Password reset email sent successfully', { userId: user.id });
     } catch (emailError) {
-      console.error('Failed to send password reset email:', emailError);
+      logger.error('Failed to send password reset email', emailError, { userId: user.id });
       // Still return success to prevent enumeration
     }
 
-    return successResponse();
+    return safeResponse();
   } catch (err) {
-    console.error('Forgot password error:', err);
-    return new Response(JSON.stringify({ error: 'An error occurred' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.error('Password reset request failed', err);
+    return handleError(err, logger, origin);
   }
 }
 
