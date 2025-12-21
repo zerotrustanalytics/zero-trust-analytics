@@ -223,7 +223,11 @@ export function Chart({
           {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
         </div>
       )}
-      <div style={{ height }}>
+      <div
+        style={{ height }}
+        role="img"
+        aria-label={title ? `${title} chart with ${data.length} data points` : `Chart with ${data.length} data points`}
+      >
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>

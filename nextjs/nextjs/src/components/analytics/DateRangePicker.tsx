@@ -73,10 +73,11 @@ export function DateRangePicker({
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Quick select buttons for common ranges */}
-      <div className="hidden md:flex items-center gap-1 p-1 bg-secondary rounded-lg">
+      <div className="hidden md:flex items-center gap-1 p-1 bg-secondary rounded-lg" role="group" aria-label="Date range options">
         {allowedRanges.slice(0, 5).map((range) => (
           <button
             key={range}
+            type="button"
             onClick={() => handleRangeSelect(range)}
             className={clsx(
               'px-3 py-1.5 text-sm rounded-md transition-colors',
@@ -84,12 +85,14 @@ export function DateRangePicker({
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
+            aria-pressed={value === range}
           >
             {rangeShortLabels[range]}
           </button>
         ))}
         {allowedRanges.includes('custom') && (
           <button
+            type="button"
             onClick={() => setIsOpen(!isOpen)}
             className={clsx(
               'px-3 py-1.5 text-sm rounded-md transition-colors',
@@ -97,8 +100,12 @@ export function DateRangePicker({
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
+            aria-pressed={value === 'custom'}
+            aria-expanded={isOpen}
+            aria-haspopup="dialog"
+            aria-label="Select custom date range"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -116,6 +123,9 @@ export function DateRangePicker({
           variant="outline"
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2"
+          aria-expanded={isOpen}
+          aria-haspopup="dialog"
+          aria-label={`Date range: ${rangeLabels[value]}. Click to change.`}
         >
           {rangeLabels[value]}
           <svg
@@ -123,6 +133,7 @@ export function DateRangePicker({
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -131,14 +142,19 @@ export function DateRangePicker({
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-background border border-border rounded-lg shadow-lg z-10">
+        <div
+          className="absolute right-0 mt-2 w-64 bg-background border border-border rounded-lg shadow-lg z-10"
+          role="dialog"
+          aria-label="Date range picker"
+        >
           <div className="p-2">
-            <div className="md:hidden space-y-1">
+            <div className="md:hidden space-y-1" role="listbox" aria-label="Preset date ranges">
               {allowedRanges
                 .filter((r) => r !== 'custom')
                 .map((range) => (
                   <button
                     key={range}
+                    type="button"
                     onClick={() => handleRangeSelect(range)}
                     className={clsx(
                       'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
@@ -146,11 +162,13 @@ export function DateRangePicker({
                         ? 'bg-primary/10 text-primary'
                         : 'text-muted-foreground hover:bg-secondary'
                     )}
+                    role="option"
+                    aria-selected={value === range}
                   >
                     {rangeLabels[range]}
                   </button>
                 ))}
-              <div className="border-t border-border my-2" />
+              <div className="border-t border-border my-2" aria-hidden="true" />
             </div>
 
             <p className="px-3 py-2 text-sm font-medium text-foreground">Custom Range</p>

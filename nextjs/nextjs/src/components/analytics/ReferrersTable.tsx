@@ -90,6 +90,7 @@ export function ReferrersTable({
                       width={16}
                       height={16}
                       className="flex-shrink-0"
+                      aria-hidden="true"
                     />
                   ) : (
                     <svg
@@ -97,6 +98,7 @@ export function ReferrersTable({
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -119,7 +121,14 @@ export function ReferrersTable({
                   )}
                 </div>
               </div>
-              <div className="h-1 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-1 bg-secondary rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={Math.round(barWidth)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`${referrer.source}: ${percentage.toFixed(1)}% of total visits`}
+              >
                 <div
                   className="h-full bg-primary rounded-full transition-all duration-300"
                   style={{ width: `${barWidth}%` }}

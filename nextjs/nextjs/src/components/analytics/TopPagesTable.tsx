@@ -81,7 +81,14 @@ export function TopPagesTable({
                   )}
                 </div>
               </div>
-              <div className="h-1 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-1 bg-secondary rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={Math.round(barWidth)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`${page.path}: ${percentage.toFixed(1)}% of total views`}
+              >
                 <div
                   className="h-full bg-primary rounded-full transition-all duration-300"
                   style={{ width: `${barWidth}%` }}
