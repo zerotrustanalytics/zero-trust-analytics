@@ -64,6 +64,15 @@ export async function updateUser(email, updates) {
   return updated;
 }
 
+// Delete user account (GDPR Article 17 - Right to Erasure)
+export async function deleteUser(email) {
+  const users = store(STORES.USERS);
+  const user = await getUser(email);
+  if (!user) return false;
+  await users.delete(email);
+  return true;
+}
+
 // Create user from OAuth provider (no password)
 export async function createOAuthUser(email, provider, providerId, name = null, plan = 'pro') {
   const users = store(STORES.USERS);
@@ -1062,6 +1071,24 @@ export async function updateApiKeyName(keyId, userId, newName) {
 
   const { keyHash, ...safeKey } = apiKey;
   return safeKey;
+}
+
+// Delete all API keys for a user (GDPR Article 17 - Right to Erasure)
+export async function deleteAllUserApiKeys(userId) {
+  const apiKeys = store(STORES.API_KEYS);
+  const userKeysKey = `user_keys_${userId}`;
+  const keyIds = await apiKeys.get(userKeysKey, { type: 'json' }) || [];
+
+  let deletedCount = 0;
+  for (const keyId of keyIds) {
+    await apiKeys.delete(keyId);
+    deletedCount++;
+  }
+
+  // Delete the user's key index
+  await apiKeys.delete(userKeysKey);
+
+  return deletedCount;
 }
 
 // Simple hash function for API keys
