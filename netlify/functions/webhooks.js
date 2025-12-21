@@ -1,7 +1,13 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getUserSites, createWebhook, getSiteWebhooks, updateWebhook, deleteWebhook, getWebhook, recordWebhookDelivery, WebhookEvents } from './lib/storage.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('webhooks', req, context);
+
+  logger.info('Webhooks request received', { method: req.method });
+
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -60,11 +66,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('List webhooks error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to list webhooks' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('List webhooks failed', err);
+      return handleError(err, logger);
     }
   }
 
@@ -193,11 +196,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('Create webhook error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to create webhook' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Create webhook failed', err);
+      return handleError(err, logger);
     }
   }
 
@@ -232,11 +232,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('Update webhook error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to update webhook' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Update webhook failed', err);
+      return handleError(err, logger);
     }
   }
 
@@ -270,11 +267,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('Delete webhook error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to delete webhook' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Delete webhook failed', err);
+      return handleError(err, logger);
     }
   }
 

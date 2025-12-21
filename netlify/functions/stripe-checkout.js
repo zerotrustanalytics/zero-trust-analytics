@@ -1,34 +1,33 @@
 import Stripe from 'stripe';
-import { authenticateRequest } from './lib/auth.js';
+import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
 import { getUser } from './lib/storage.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('stripe-checkout', req, context);
+  const origin = req.headers.get('origin');
+
+  logger.info('Stripe checkout request received');
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }
-    });
+    return corsPreflightResponse(origin, 'POST, OPTIONS');
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.warn('Invalid HTTP method', { method: req.method });
+    return Errors.methodNotAllowed();
   }
 
   // Authenticate
   const auth = authenticateRequest(Object.fromEntries(req.headers));
   if (auth.error) {
+    logger.warn('Authentication failed', { error: auth.error });
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,
-      headers: { 'Content-Type': 'application/json' }
+      headers: getSecurityHeaders(origin)
     });
   }
 
@@ -37,11 +36,11 @@ export default async function handler(req, context) {
 
     // Check if already subscribed
     if (user.subscription && user.subscription.status === 'active') {
-      return new Response(JSON.stringify({ error: 'Already subscribed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.warn('Checkout failed - already subscribed', { userId: user.id });
+      return Errors.badRequest('Already subscribed');
     }
+
+    logger.info('Creating Stripe checkout session', { userId: user.id });
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -62,19 +61,11 @@ export default async function handler(req, context) {
       }
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    logger.info('Stripe checkout session created successfully', { userId: user.id, sessionId: session.id });
+    return successResponse({ url: session.url }, 200, origin);
   } catch (err) {
-    console.error('Stripe checkout error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to create checkout session' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.error('Stripe checkout failed', err, { userId: auth.user.id });
+    return handleError(err, logger, origin);
   }
 }
 

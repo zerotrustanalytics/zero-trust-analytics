@@ -1,24 +1,25 @@
-import { authenticateRequest } from './lib/auth.js';
+import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
 import { createApiKey, getUserApiKeys, revokeApiKey, updateApiKeyName } from './lib/storage.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('api-keys', req, context);
+  const origin = req.headers.get('origin');
+
+  logger.info('API keys request received', { method: req.method });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }
-    });
+    return corsPreflightResponse(origin, 'GET, POST, PATCH, DELETE, OPTIONS');
   }
 
   // Authenticate request
   const auth = authenticateRequest(req.headers);
   if (auth.error) {
+    logger.warn('Authentication failed', { error: auth.error });
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,
-      headers: { 'Content-Type': 'application/json' }
+      headers: getSecurityHeaders(origin)
     });
   }
 
@@ -28,21 +29,11 @@ export default async function handler(req, context) {
   if (req.method === 'GET') {
     try {
       const keys = await getUserApiKeys(userId);
-
-      return new Response(JSON.stringify({ keys }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-
+      logger.info('API keys retrieved successfully', { userId, count: keys.length });
+      return successResponse({ keys }, 200, origin);
     } catch (err) {
-      console.error('List API keys error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to list API keys' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('List API keys failed', err, { userId });
+      return handleError(err, logger, origin);
     }
   }
 
@@ -60,25 +51,17 @@ export default async function handler(req, context) {
         perms.push('read');
       }
 
+      logger.info('Creating API key', { userId, permissions: perms });
       const apiKey = await createApiKey(userId, name, perms);
 
-      return new Response(JSON.stringify({
+      logger.info('API key created successfully', { userId, keyId: apiKey.id });
+      return successResponse({
         key: apiKey,
         message: 'API key created. Save the key now - you won\'t be able to see it again!'
-      }), {
-        status: 201,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-
+      }, 201, origin);
     } catch (err) {
-      console.error('Create API key error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to create API key' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Create API key failed', err, { userId });
+      return handleError(err, logger, origin);
     }
   }
 
@@ -89,35 +72,23 @@ export default async function handler(req, context) {
       const { keyId, name } = body;
 
       if (!keyId || !name) {
-        return new Response(JSON.stringify({ error: 'Key ID and name required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        logger.warn('Update API key failed - missing parameters', { userId });
+        return Errors.validationError('Key ID and name required');
       }
 
+      logger.info('Updating API key', { userId, keyId });
       const updated = await updateApiKeyName(keyId, userId, name);
 
       if (!updated) {
-        return new Response(JSON.stringify({ error: 'API key not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        logger.warn('Update API key failed - not found', { userId, keyId });
+        return Errors.notFound('API key not found');
       }
 
-      return new Response(JSON.stringify({ key: updated }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-
+      logger.info('API key updated successfully', { userId, keyId });
+      return successResponse({ key: updated }, 200, origin);
     } catch (err) {
-      console.error('Update API key error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to update API key' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Update API key failed', err, { userId });
+      return handleError(err, logger, origin);
     }
   }
 
@@ -127,43 +98,29 @@ export default async function handler(req, context) {
     const keyId = url.searchParams.get('keyId');
 
     if (!keyId) {
-      return new Response(JSON.stringify({ error: 'Key ID required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.warn('Revoke API key failed - missing key ID', { userId });
+      return Errors.validationError('Key ID required');
     }
 
     try {
+      logger.info('Revoking API key', { userId, keyId });
       const success = await revokeApiKey(keyId, userId);
 
       if (!success) {
-        return new Response(JSON.stringify({ error: 'API key not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        logger.warn('Revoke API key failed - not found', { userId, keyId });
+        return Errors.notFound('API key not found');
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-
+      logger.info('API key revoked successfully', { userId, keyId });
+      return successResponse({ success: true }, 200, origin);
     } catch (err) {
-      console.error('Revoke API key error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to revoke API key' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Revoke API key failed', err, { userId });
+      return handleError(err, logger, origin);
     }
   }
 
-  return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-    status: 405,
-    headers: { 'Content-Type': 'application/json' }
-  });
+  logger.warn('Invalid HTTP method', { method: req.method });
+  return Errors.methodNotAllowed();
 }
 
 export const config = {

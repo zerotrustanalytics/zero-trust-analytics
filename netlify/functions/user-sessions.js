@@ -1,7 +1,13 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getUserSessions, revokeSession, revokeAllSessions } from './lib/storage.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('user-sessions', req, context);
+
+  logger.info('User sessions request received', { method: req.method });
+
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -16,6 +22,7 @@ export default async function handler(req, context) {
   // Authenticate request
   const auth = authenticateRequest(req.headers);
   if (auth.error) {
+    logger.warn('Authentication failed', { error: auth.error });
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,
       headers: { 'Content-Type': 'application/json' }
@@ -28,6 +35,7 @@ export default async function handler(req, context) {
   if (req.method === 'GET') {
     try {
       const sessions = await getUserSessions(userId);
+      logger.info('Sessions retrieved successfully', { userId, count: sessions.length });
 
       // Get current session from token (simplified - in production would track session ID in JWT)
       const currentUserAgent = req.headers.get('user-agent') || '';
@@ -50,11 +58,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('Get sessions error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to get sessions' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Get sessions failed', err, { userId });
+      return handleError(err, logger);
     }
   }
 
@@ -66,6 +71,7 @@ export default async function handler(req, context) {
 
     try {
       if (revokeAll) {
+        logger.info('Revoking all sessions except current', { userId });
         // Revoke all sessions except current
         const currentUserAgent = req.headers.get('user-agent') || '';
         const sessions = await getUserSessions(userId);
@@ -73,6 +79,7 @@ export default async function handler(req, context) {
 
         const count = await revokeAllSessions(userId, currentSession?.id);
 
+        logger.info('All sessions revoked successfully', { userId, count });
         return new Response(JSON.stringify({
           success: true,
           message: `Revoked ${count} session(s)`
@@ -85,16 +92,19 @@ export default async function handler(req, context) {
         });
 
       } else if (sessionId) {
+        logger.info('Revoking specific session', { userId, sessionId });
         // Revoke specific session
         const success = await revokeSession(sessionId, userId);
 
         if (!success) {
+          logger.warn('Session revocation failed - not found', { userId, sessionId });
           return new Response(JSON.stringify({ error: 'Session not found' }), {
             status: 404,
             headers: { 'Content-Type': 'application/json' }
           });
         }
 
+        logger.info('Session revoked successfully', { userId, sessionId });
         return new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: {
@@ -104,6 +114,7 @@ export default async function handler(req, context) {
         });
 
       } else {
+        logger.warn('Session revocation failed - missing parameter', { userId });
         return new Response(JSON.stringify({ error: 'Session ID or all=true required' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
@@ -111,14 +122,12 @@ export default async function handler(req, context) {
       }
 
     } catch (err) {
-      console.error('Revoke session error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to revoke session' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Revoke session failed', err, { userId });
+      return handleError(err, logger);
     }
   }
 
+  logger.warn('Invalid HTTP method', { method: req.method });
   return new Response(JSON.stringify({ error: 'Method not allowed' }), {
     status: 405,
     headers: { 'Content-Type': 'application/json' }

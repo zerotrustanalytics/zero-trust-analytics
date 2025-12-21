@@ -1,0 +1,1546 @@
+openapi: 3.0.3
+info:
+  title: Zero Trust Analytics API
+  description: |
+    Privacy-first analytics API with zero-trust security principles.
+
+    ## Authentication
+    Most endpoints require Bearer token authentication. Include the JWT token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    ## Rate Limiting
+    All endpoints are rate-limited to prevent abuse:
+    - Auth endpoints: 5-10 requests/minute per IP
+    - Tracking: 1000 requests/minute per IP
+    - Analytics queries: Standard rate limits apply
+
+    ## CSRF Protection
+    State-changing operations (POST/PUT/DELETE) require a CSRF token in the `X-CSRF-Token` header.
+
+    ## Error Responses
+    All error responses follow this format:
+    ```json
+    {
+      "error": "Error message",
+      "details": ["Optional array of detailed error messages"]
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Zero Trust Analytics
+    url: https://ztas.io
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://ztas.io/api
+    description: Production server
+  - url: http://localhost:8888/api
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User authentication and account management
+  - name: Sites
+    description: Site management operations
+  - name: Analytics
+    description: Analytics tracking and statistics
+  - name: User
+    description: User account information
+  - name: Billing
+    description: Stripe billing integration
+
+security:
+  - BearerAuth: []
+  - CSRFToken: []
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user account
+      description: |
+        Creates a new user account with email and password. Passwords must meet strong security requirements:
+        - At least 12 characters
+        - One uppercase letter
+        - One lowercase letter
+        - One number
+        - One special character
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 12
+                  example: SecureP@ssw0rd123
+                plan:
+                  type: string
+                  enum: [solo, starter, pro, business, scale]
+                  default: pro
+                  description: Subscription plan (defaults to pro if not specified)
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                weakPassword:
+                  value:
+                    error: "Password does not meet requirements"
+                    details:
+                      - "Password must be at least 12 characters"
+                      - "Password must contain at least one special character"
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Email already registered"
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+      x-rate-limit:
+        limit: 5
+        window: 60000
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login to user account
+      description: Authenticate with email and password. Returns JWT token or 2FA challenge if enabled.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: SecureP@ssw0rd123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AuthResponse'
+                  - $ref: '#/components/schemas/TwoFactorChallenge'
+              examples:
+                success:
+                  value:
+                    success: true
+                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    csrfToken: "a1b2c3d4e5f6..."
+                    user:
+                      id: "user_123"
+                      email: "user@example.com"
+                      subscription:
+                        status: "active"
+                        plan: "pro"
+                twoFactorRequired:
+                  value:
+                    success: true
+                    requires_2fa: true
+                    tempToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Invalid credentials"
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+      x-rate-limit:
+        limit: 10
+        window: 60000
+
+  /auth/forgot:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      description: |
+        Sends a password reset email if the account exists. Always returns success to prevent email enumeration attacks.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: Reset email sent (or would be sent if account exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "If an account with that email exists, we sent a password reset link."
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+      x-rate-limit:
+        limit: 3
+        window: 60000
+
+  /auth/reset:
+    post:
+      tags:
+        - Authentication
+      summary: Reset password with token
+      description: Resets password using the token received via email.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+              properties:
+                token:
+                  type: string
+                  description: Reset token from email
+                  example: "a1b2c3d4e5f6g7h8i9j0..."
+                newPassword:
+                  type: string
+                  format: password
+                  minLength: 12
+                  example: "NewSecureP@ssw0rd123"
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Password reset successful"
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+
+  /auth/verify-reset-token:
+    get:
+      tags:
+        - Authentication
+      summary: Verify password reset token
+      description: Validates a password reset token before allowing password change.
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Reset token to verify
+          example: "a1b2c3d4e5f6g7h8i9j0..."
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  email:
+                    type: string
+                    format: email
+                    example: "user@example.com"
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Invalid or expired token"
+
+  /auth/2fa:
+    post:
+      tags:
+        - Authentication
+      summary: Two-factor authentication operations
+      description: |
+        Handles multiple 2FA operations based on the `action` parameter:
+        - `setup`: Generate TOTP secret and QR code
+        - `verify`: Verify TOTP code and enable 2FA
+        - `disable`: Disable 2FA (requires code)
+        - `validate`: Validate 2FA code during login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/TwoFactorSetup'
+                - $ref: '#/components/schemas/TwoFactorVerify'
+                - $ref: '#/components/schemas/TwoFactorDisable'
+                - $ref: '#/components/schemas/TwoFactorValidate'
+            examples:
+              setup:
+                value:
+                  action: "setup"
+              verify:
+                value:
+                  action: "verify"
+                  code: "123456"
+              disable:
+                value:
+                  action: "disable"
+                  code: "123456"
+              validate:
+                value:
+                  action: "validate"
+                  tempToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  code: "123456"
+      responses:
+        '200':
+          description: 2FA operation successful
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TwoFactorSetupResponse'
+                  - $ref: '#/components/schemas/TwoFactorOperationResponse'
+                  - $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid code or token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/google:
+    get:
+      tags:
+        - Authentication
+      summary: Initiate Google OAuth
+      description: Redirects to Google OAuth consent screen
+      security: []
+      responses:
+        '302':
+          description: Redirect to Google OAuth
+
+  /auth/github:
+    get:
+      tags:
+        - Authentication
+      summary: Initiate GitHub OAuth
+      description: Redirects to GitHub OAuth consent screen
+      security: []
+      responses:
+        '302':
+          description: Redirect to GitHub OAuth
+
+  /auth/oauth-callback:
+    get:
+      tags:
+        - Authentication
+      summary: OAuth callback handler
+      description: Handles OAuth callbacks from Google and GitHub
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to dashboard with auth token
+        '400':
+          description: OAuth error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sites/list:
+    get:
+      tags:
+        - Sites
+      summary: List user's sites
+      description: Returns all sites owned by the authenticated user
+      responses:
+        '200':
+          description: Sites retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  sites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Site'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sites/create:
+    post:
+      tags:
+        - Sites
+      summary: Create a new site
+      description: Creates a new site for tracking analytics
+      security:
+        - BearerAuth: []
+        - CSRFToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domain
+              properties:
+                domain:
+                  type: string
+                  description: Site domain (protocol and trailing slash will be normalized)
+                  example: "example.com"
+      responses:
+        '201':
+          description: Site created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  site:
+                    $ref: '#/components/schemas/Site'
+                  embedCode:
+                    type: string
+                    example: '<script src="https://ztas.io/js/analytics.js" data-site-id="site_abc123"></script>'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: CSRF token invalid or missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sites/update:
+    post:
+      tags:
+        - Sites
+      summary: Update site settings
+      description: Updates site configuration (domain, nickname, etc.)
+      security:
+        - BearerAuth: []
+        - CSRFToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - siteId
+              properties:
+                siteId:
+                  type: string
+                  example: "site_abc123"
+                domain:
+                  type: string
+                  example: "newdomain.com"
+                nickname:
+                  type: string
+                  example: "My Blog"
+      responses:
+        '200':
+          description: Site updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  site:
+                    $ref: '#/components/schemas/Site'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied or CSRF token invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sites/delete:
+    post:
+      tags:
+        - Sites
+      summary: Delete a site
+      description: Permanently deletes a site and all associated analytics data
+      security:
+        - BearerAuth: []
+        - CSRFToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - siteId
+              properties:
+                siteId:
+                  type: string
+                  example: "site_abc123"
+      responses:
+        '200':
+          description: Site deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Site deleted successfully"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied or CSRF token invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sites/share:
+    post:
+      tags:
+        - Sites
+      summary: Create public share link
+      description: Creates a shareable public link for site analytics
+      security:
+        - BearerAuth: []
+        - CSRFToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - siteId
+              properties:
+                siteId:
+                  type: string
+                  example: "site_abc123"
+                allowedPeriods:
+                  type: array
+                  items:
+                    type: string
+                    enum: [24h, 7d, 30d, 90d, 365d]
+                  example: ["7d", "30d"]
+                expiresAt:
+                  type: string
+                  format: date-time
+                  description: Optional expiration date
+      responses:
+        '200':
+          description: Share link created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  shareToken:
+                    type: string
+                    example: "share_xyz789"
+                  url:
+                    type: string
+                    example: "https://ztas.io/public?token=share_xyz789"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied or CSRF token invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /track:
+    post:
+      tags:
+        - Analytics
+      summary: Track analytics events
+      description: |
+        Tracks analytics events with zero-trust privacy. Supports both single events and batch processing.
+        All PII is hashed before storage. Bot traffic is automatically filtered.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/SingleTrackingEvent'
+                - $ref: '#/components/schemas/BatchTrackingEvents'
+            examples:
+              pageview:
+                value:
+                  siteId: "site_abc123"
+                  type: "pageview"
+                  path: "/blog/article"
+                  referrer: "https://google.com"
+                  sessionId: "sess_xyz789"
+                  isNewVisitor: true
+              batch:
+                value:
+                  siteId: "site_abc123"
+                  batch: true
+                  events:
+                    - type: "pageview"
+                      path: "/home"
+                      sessionId: "sess_xyz789"
+                    - type: "engagement"
+                      path: "/home"
+                      timeOnPage: 45
+                      sessionId: "sess_xyz789"
+      responses:
+        '200':
+          description: Events tracked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                    description: Number of events processed (for batch requests)
+                    example: 2
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Origin not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Origin not allowed"
+        '404':
+          description: Invalid site ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+      x-rate-limit:
+        limit: 1000
+        window: 60000
+
+  /stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get analytics statistics
+      description: Retrieves analytics data for a specific site and time period
+      parameters:
+        - name: siteId
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "site_abc123"
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, 90d, 365d]
+            default: 7d
+          description: Time period for statistics
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Custom start date (overrides period)
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Custom end date (overrides period)
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsStats'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied - user does not own this site
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /public-stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get public shared statistics
+      description: Retrieves analytics for publicly shared sites using a share token
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "share_xyz789"
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, 90d, 365d]
+            default: 7d
+      responses:
+        '200':
+          description: Public statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicStats'
+        '400':
+          description: Share token required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Period not allowed for this share
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid or expired share link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/status:
+    get:
+      tags:
+        - User
+      summary: Get user account status
+      description: Returns user account information including subscription status and trial information
+      responses:
+        '200':
+          description: User status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStatus'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/sessions:
+    get:
+      tags:
+        - User
+      summary: Get active user sessions
+      description: Lists all active sessions for the authenticated user
+      responses:
+        '200':
+          description: Sessions retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSession'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stripe/checkout:
+    post:
+      tags:
+        - Billing
+      summary: Create Stripe checkout session
+      description: Creates a Stripe checkout session for subscription payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priceId:
+                  type: string
+                  description: Stripe price ID (optional, uses default from env if not provided)
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    example: "https://checkout.stripe.com/pay/cs_test_..."
+        '400':
+          description: Already subscribed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Already subscribed"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stripe/portal:
+    post:
+      tags:
+        - Billing
+      summary: Create Stripe customer portal session
+      description: Creates a Stripe customer portal session for managing subscription
+      responses:
+        '200':
+          description: Portal session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    example: "https://billing.stripe.com/session/..."
+        '400':
+          description: No active subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login or registration
+    CSRFToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: CSRF token for state-changing operations
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: array
+          items:
+            type: string
+          description: Detailed validation errors
+      required:
+        - error
+
+    RateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Rate limit exceeded"
+        resetIn:
+          type: integer
+          description: Milliseconds until rate limit resets
+          example: 45000
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        token:
+          type: string
+          description: JWT authentication token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        csrfToken:
+          type: string
+          description: CSRF token for subsequent requests
+          example: "a1b2c3d4e5f6..."
+        user:
+          $ref: '#/components/schemas/User'
+
+    TwoFactorChallenge:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        requires_2fa:
+          type: boolean
+          example: true
+        tempToken:
+          type: string
+          description: Temporary token for 2FA validation (5 minute expiry)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    TwoFactorSetup:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [setup]
+
+    TwoFactorVerify:
+      type: object
+      required:
+        - action
+        - code
+      properties:
+        action:
+          type: string
+          enum: [verify]
+        code:
+          type: string
+          pattern: '^\d{6}$'
+          example: "123456"
+
+    TwoFactorDisable:
+      type: object
+      required:
+        - action
+        - code
+      properties:
+        action:
+          type: string
+          enum: [disable]
+        code:
+          type: string
+          pattern: '^\d{6}$'
+          example: "123456"
+
+    TwoFactorValidate:
+      type: object
+      required:
+        - action
+        - tempToken
+        - code
+      properties:
+        action:
+          type: string
+          enum: [validate]
+        tempToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        code:
+          type: string
+          pattern: '^\d{6}$'
+          example: "123456"
+
+    TwoFactorSetupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        secret:
+          type: string
+          description: Base32 TOTP secret
+          example: "JBSWY3DPEHPK3PXP"
+        qrCode:
+          type: string
+          description: TOTP URI for QR code generation
+          example: "otpauth://totp/Zero%20Trust%20Analytics:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Zero%20Trust%20Analytics"
+        message:
+          type: string
+          example: "Scan the QR code with your authenticator app, then verify with a code"
+
+    TwoFactorOperationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Two-factor authentication enabled successfully"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "user_123"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+
+    Subscription:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, trialing, past_due, canceled, unpaid]
+          example: "active"
+        plan:
+          type: string
+          enum: [solo, starter, pro, business, scale]
+          example: "pro"
+        currentPeriodEnd:
+          type: string
+          format: date-time
+          example: "2024-01-15T00:00:00Z"
+        cancelAtPeriodEnd:
+          type: boolean
+          example: false
+
+    Site:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "site_abc123"
+        userId:
+          type: string
+          example: "user_123"
+        domain:
+          type: string
+          example: "example.com"
+        nickname:
+          type: string
+          example: "My Blog"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+
+    SingleTrackingEvent:
+      type: object
+      required:
+        - siteId
+        - type
+      properties:
+        siteId:
+          type: string
+          example: "site_abc123"
+        type:
+          type: string
+          enum: [pageview, engagement, event, heartbeat]
+          example: "pageview"
+        path:
+          type: string
+          example: "/blog/article"
+        referrer:
+          type: string
+          format: uri
+          example: "https://google.com"
+        sessionId:
+          type: string
+          example: "sess_xyz789"
+        isNewVisitor:
+          type: boolean
+          example: true
+        landingPage:
+          type: string
+          example: "/home"
+        trafficSource:
+          type: string
+          example: "organic"
+        utm:
+          type: object
+          properties:
+            source:
+              type: string
+              example: "newsletter"
+            medium:
+              type: string
+              example: "email"
+            campaign:
+              type: string
+              example: "spring-2024"
+        timeOnPage:
+          type: integer
+          description: Time spent on page in seconds (for engagement events)
+          example: 45
+        isBounce:
+          type: boolean
+          description: Whether this was a bounce (for engagement events)
+          example: false
+        action:
+          type: string
+          description: Event action name (for custom events)
+          example: "button_click"
+        category:
+          type: string
+          description: Event category (for custom events)
+          example: "cta"
+        label:
+          type: string
+          description: Event label (for custom events)
+          example: "signup"
+        value:
+          type: number
+          description: Event value (for custom events)
+          example: 1
+
+    BatchTrackingEvents:
+      type: object
+      required:
+        - siteId
+        - batch
+        - events
+      properties:
+        siteId:
+          type: string
+          example: "site_abc123"
+        batch:
+          type: boolean
+          example: true
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [pageview, engagement, event, heartbeat]
+              path:
+                type: string
+              referrer:
+                type: string
+              sessionId:
+                type: string
+              isNewVisitor:
+                type: boolean
+              timeOnPage:
+                type: integer
+              isBounce:
+                type: boolean
+
+    AnalyticsStats:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            unique_visitors:
+              type: integer
+              example: 1523
+            pageviews:
+              type: integer
+              example: 4567
+            bounce_rate:
+              type: number
+              format: float
+              example: 45.2
+            avg_duration:
+              type: number
+              format: float
+              description: Average session duration in seconds
+              example: 185.5
+        daily:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2024-01-01"
+              visitors:
+                type: integer
+                example: 245
+              pageviews:
+                type: integer
+                example: 678
+        pages:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+                example: "/blog/article"
+              views:
+                type: integer
+                example: 456
+              unique_visitors:
+                type: integer
+                example: 234
+        referrers:
+          type: array
+          items:
+            type: object
+            properties:
+              domain:
+                type: string
+                example: "google.com"
+              visitors:
+                type: integer
+                example: 123
+        devices:
+          type: object
+          properties:
+            desktop:
+              type: integer
+              example: 800
+            mobile:
+              type: integer
+              example: 650
+            tablet:
+              type: integer
+              example: 73
+        browsers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Chrome"
+              visitors:
+                type: integer
+                example: 890
+        countries:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "US"
+              name:
+                type: string
+                example: "United States"
+              visitors:
+                type: integer
+                example: 567
+
+    PublicStats:
+      type: object
+      properties:
+        site:
+          type: object
+          properties:
+            domain:
+              type: string
+              example: "example.com"
+            nickname:
+              type: string
+              example: "My Blog"
+        period:
+          type: string
+          example: "7d"
+        allowedPeriods:
+          type: array
+          items:
+            type: string
+          example: ["7d", "30d"]
+        uniqueVisitors:
+          type: integer
+          example: 1523
+        pageviews:
+          type: integer
+          example: 4567
+        bounceRate:
+          type: number
+          example: 45.2
+        avgSessionDuration:
+          type: number
+          example: 185.5
+        pages:
+          type: array
+          items:
+            type: object
+        referrers:
+          type: array
+          items:
+            type: object
+        devices:
+          type: object
+        browsers:
+          type: array
+          items:
+            type: object
+        countries:
+          type: array
+          items:
+            type: object
+        daily:
+          type: array
+          items:
+            type: object
+
+    UserStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "user_123"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        plan:
+          type: string
+          example: "pro"
+        status:
+          type: string
+          enum: [trial, active, expired, canceled]
+          example: "trial"
+        canAccess:
+          type: boolean
+          example: true
+        trialEndsAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T00:00:00Z"
+        daysLeft:
+          type: integer
+          description: Days left in trial period
+          example: 12
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+
+    UserSession:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "sess_xyz789"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00Z"
+        lastActive:
+          type: string
+          format: date-time
+          example: "2024-01-01T14:30:00Z"
+        userAgent:
+          type: string
+          example: "Mozilla/5.0..."
+        ipHash:
+          type: string
+          description: Hashed IP address for privacy
+          example: "abc123..."

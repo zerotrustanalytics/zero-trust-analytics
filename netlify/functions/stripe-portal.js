@@ -1,34 +1,33 @@
 import Stripe from 'stripe';
-import { authenticateRequest } from './lib/auth.js';
+import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
 import { getUser } from './lib/storage.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('stripe-portal', req, context);
+  const origin = req.headers.get('origin');
+
+  logger.info('Stripe portal request received');
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }
-    });
+    return corsPreflightResponse(origin, 'POST, OPTIONS');
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.warn('Invalid HTTP method', { method: req.method });
+    return Errors.methodNotAllowed();
   }
 
   // Authenticate
   const auth = authenticateRequest(Object.fromEntries(req.headers));
   if (auth.error) {
+    logger.warn('Authentication failed', { error: auth.error });
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,
-      headers: { 'Content-Type': 'application/json' }
+      headers: getSecurityHeaders(origin)
     });
   }
 
@@ -36,11 +35,11 @@ export default async function handler(req, context) {
     const user = await getUser(auth.user.email);
 
     if (!user.subscription || !user.subscription.customerId) {
-      return new Response(JSON.stringify({ error: 'No active subscription' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.warn('Portal access failed - no active subscription', { userId: user.id });
+      return Errors.badRequest('No active subscription');
     }
+
+    logger.info('Creating Stripe portal session', { userId: user.id, customerId: user.subscription.customerId });
 
     // Create billing portal session
     const session = await stripe.billingPortal.sessions.create({
@@ -48,19 +47,11 @@ export default async function handler(req, context) {
       return_url: `${process.env.URL || 'https://zero-trust-analytics.netlify.app'}/dashboard/`
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    logger.info('Stripe portal session created successfully', { userId: user.id });
+    return successResponse({ url: session.url }, 200, origin);
   } catch (err) {
-    console.error('Stripe portal error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to create portal session' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.error('Stripe portal failed', err, { userId: auth.user.id });
+    return handleError(err, logger, origin);
   }
 }
 

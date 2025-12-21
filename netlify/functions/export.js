@@ -1,8 +1,14 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getUserSites } from './lib/storage.js';
 import { exportData } from './lib/turso.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('export', req, context);
+
+  logger.info('Export request received');
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -138,11 +144,8 @@ export default async function handler(req, context) {
       }
     });
   } catch (err) {
-    console.error('Export error:', err);
-    return new Response(JSON.stringify({ error: 'Internal error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    logger.error('Export failed', err);
+    return handleError(err, logger);
   }
 }
 

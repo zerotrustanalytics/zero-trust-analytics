@@ -1,7 +1,13 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getUserSites, createAlert, getSiteAlerts, updateAlert, deleteAlert, getTrafficBaseline } from './lib/storage.js';
+import { createFunctionLogger } from './lib/logger.js';
+import { handleError } from './lib/error-handler.js';
 
 export default async function handler(req, context) {
+  const logger = createFunctionLogger('alerts', req, context);
+
+  logger.info('Alerts request received', { method: req.method });
+
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -61,11 +67,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('List alerts error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to list alerts' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('List alerts failed', err);
+      return handleError(err, logger);
     }
   }
 
@@ -113,11 +116,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('Create alert error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to create alert' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Create alert failed', err);
+      return handleError(err, logger);
     }
   }
 
@@ -152,11 +152,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('Update alert error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to update alert' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Update alert failed', err);
+      return handleError(err, logger);
     }
   }
 
@@ -190,11 +187,8 @@ export default async function handler(req, context) {
       });
 
     } catch (err) {
-      console.error('Delete alert error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to delete alert' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      logger.error('Delete alert failed', err);
+      return handleError(err, logger);
     }
   }
 
