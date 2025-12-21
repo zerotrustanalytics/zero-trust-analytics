@@ -69,25 +69,25 @@ const OPTIONAL_VARS = {
   },
   RATE_LIMIT_LOGIN_MAX: {
     description: 'Maximum login attempts per window',
-    default: '10',
+    default: '5', // Stricter for brute force protection
     validator: (value) => !isNaN(parseInt(value)) && parseInt(value) > 0,
     errorMessage: 'RATE_LIMIT_LOGIN_MAX must be a positive integer'
   },
   RATE_LIMIT_LOGIN_WINDOW: {
     description: 'Login rate limit window in milliseconds',
-    default: '60000', // 1 minute
+    default: '900000', // 15 minutes - enterprise security standard
     validator: (value) => !isNaN(parseInt(value)) && parseInt(value) > 0,
     errorMessage: 'RATE_LIMIT_LOGIN_WINDOW must be a positive integer'
   },
   RATE_LIMIT_REGISTER_MAX: {
     description: 'Maximum registration attempts per window',
-    default: '5',
+    default: '3', // Stricter for spam protection
     validator: (value) => !isNaN(parseInt(value)) && parseInt(value) > 0,
     errorMessage: 'RATE_LIMIT_REGISTER_MAX must be a positive integer'
   },
   RATE_LIMIT_REGISTER_WINDOW: {
     description: 'Registration rate limit window in milliseconds',
-    default: '60000', // 1 minute
+    default: '3600000', // 1 hour - enterprise security standard
     validator: (value) => !isNaN(parseInt(value)) && parseInt(value) > 0,
     errorMessage: 'RATE_LIMIT_REGISTER_WINDOW must be a positive integer'
   },
@@ -232,10 +232,10 @@ try {
       NODE_ENV: 'test',
       RATE_LIMIT_MAX: '100',
       RATE_LIMIT_WINDOW: '900000',
-      RATE_LIMIT_LOGIN_MAX: '10',
-      RATE_LIMIT_LOGIN_WINDOW: '60000',
-      RATE_LIMIT_REGISTER_MAX: '5',
-      RATE_LIMIT_REGISTER_WINDOW: '60000',
+      RATE_LIMIT_LOGIN_MAX: '5',
+      RATE_LIMIT_LOGIN_WINDOW: '900000',
+      RATE_LIMIT_REGISTER_MAX: '3',
+      RATE_LIMIT_REGISTER_WINDOW: '3600000',
       RATE_LIMIT_TRACK_MAX: '1000',
       RATE_LIMIT_TRACK_WINDOW: '60000',
       RATE_LIMIT_API_MAX: '100',
