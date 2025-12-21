@@ -45,6 +45,8 @@ export function SiteCard({
       hover
       data-testid="site-card"
       className="group"
+      role="article"
+      aria-label={`Site: ${site.name}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
@@ -57,34 +59,37 @@ export function SiteCard({
               'px-2 py-0.5 text-xs font-medium rounded-full',
               statusColors[site.status]
             )}
+            role="status"
+            aria-label={`Status: ${statusLabels[site.status]}`}
           >
             {statusLabels[site.status]}
           </span>
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      {/* Statistics with proper accessibility */}
+      <dl className="grid grid-cols-3 gap-4 mb-4">
         <div className="text-center">
-          <div className="text-2xl font-bold text-foreground">
+          <dt className="text-xs text-muted-foreground order-2">Pageviews</dt>
+          <dd className="text-2xl font-bold text-foreground order-1">
             {site.pageviews.toLocaleString()}
-          </div>
-          <div className="text-xs text-muted-foreground">Pageviews</div>
+          </dd>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-foreground">
+          <dt className="text-xs text-muted-foreground order-2">Visitors</dt>
+          <dd className="text-2xl font-bold text-foreground order-1">
             {site.visitors.toLocaleString()}
-          </div>
-          <div className="text-xs text-muted-foreground">Visitors</div>
+          </dd>
         </div>
         {site.bounceRate !== undefined && (
           <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">
+            <dt className="text-xs text-muted-foreground order-2">Bounce</dt>
+            <dd className="text-2xl font-bold text-foreground order-1">
               {site.bounceRate}%
-            </div>
-            <div className="text-xs text-muted-foreground">Bounce</div>
+            </dd>
           </div>
         )}
-      </div>
+      </dl>
 
       <div className="flex gap-2 pt-4 border-t border-border">
         <Link
@@ -105,8 +110,9 @@ export function SiteCard({
           variant="outline"
           size="sm"
           onClick={() => onShowSnippet?.(site.id)}
+          aria-label={`View tracking code for ${site.name}`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -114,13 +120,15 @@ export function SiteCard({
               d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
             />
           </svg>
+          <span className="sr-only">View tracking code</span>
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onSettings?.(site.id)}
+          aria-label={`Settings for ${site.name}`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -134,6 +142,7 @@ export function SiteCard({
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
+          <span className="sr-only">Settings</span>
         </Button>
       </div>
     </Card>
