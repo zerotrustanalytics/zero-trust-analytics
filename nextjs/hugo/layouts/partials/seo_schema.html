@@ -1,0 +1,176 @@
+<!-- Primary Meta Tags -->
+{{ if .Params.PageTitle }}
+    <meta name="title" content="{{ .Params.PageTitle }}">
+{{ else }}
+    <meta name="title" content="{{ .Title }}">
+{{ end}}
+
+<meta name="description" content="{{ .Description }}">
+<meta name="summary" content="{{ .Summary }}" >
+<meta name="date" content="{{ .Date }}" >
+
+<!-- Open Graph / Facebook -->
+{{ if .Params.PageTitle}}
+<meta name="og:title" content="{{ .Params.PageTitle }}">
+{{ else }}
+<meta name="og:title" content="{{ .Title }}">
+{{ end }}
+<meta property="og:date" content="{{ .Date }}" />
+<meta property="og:description" content="{{ .Description }}">
+
+<meta property="og:image" content="{{ .Site.BaseURL }}{{ .Params.seoimage | default "images/brand/share.png" }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ .Site.Title }}" />
+<meta property="og:type" content="website">
+
+{{- if or (eq site.BaseURL "https://ztas.io/") (eq site.BaseURL "https://zerotrustanalytics.com/") -}}
+  {{- if .Params.noIndex -}}
+<meta name="robots" content="noindex, nofollow">
+  {{- else -}}
+<meta name="robots" content="index, follow">
+  {{- end -}}
+{{- else -}}
+<meta name="robots" content="noindex, nofollow">
+{{- end -}}
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="{{ .Permalink }}">
+{{ if .Params.PageTitle}}
+<meta name="twitter:title" content="{{ .Params.PageTitle }}">
+{{ else }}
+<meta name="twitter:title" content="{{ .Title }}">
+{{ end}}
+<meta name="twitter:description" content="{{ .Description }}">
+<meta name="twitter:image" content="{{ .Site.BaseURL }}{{ .Params.image | default "images/brand/share.png" }}">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "{{ .Site.BaseURL }}",
+  "logo": "{{ .Site.BaseURL }}images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+{{ if .IsHome }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Zero Trust Analytics?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Zero Trust Analytics is a privacy-first web analytics platform that uses cryptographic hashing to track website traffic without storing any personal data. We never use cookies, and our system is designed so we mathematically cannot identify individual users."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Zero Trust Analytics GDPR compliant?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, Zero Trust Analytics is fully GDPR and CCPA compliant by design. We don't collect or store any personal data, which means no consent banners are required. Our privacy-first architecture ensures compliance without extra configuration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need cookie consent banners with Zero Trust Analytics?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Zero Trust Analytics is completely cookie-free. Since we don't use cookies or store any personal data, you don't need consent banners for analytics. This can improve your conversion rates by 5-10%."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does Zero Trust Analytics compare to Google Analytics?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Unlike Google Analytics, Zero Trust Analytics never collects personal data, doesn't require cookies, is fully GDPR compliant without consent banners, and has a lightweight 3KB script (vs 45KB+ for GA). We provide essential metrics without surveillance."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What's included in the free trial?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "All plans include a 14-day free trial with full access to all features. No credit card required. You can track unlimited websites and access real-time analytics, custom events, and API access during the trial."
+      }
+    }
+  ]
+}
+</script>
+{{ end }}
+
+{{ if .Section | eq "blog" }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{{ .Title }}",
+  "description": "{{ .Description }}",
+  "datePublished": "{{ .Date.Format "2006-01-02" }}",
+  "dateModified": "{{ .Lastmod.Format "2006-01-02" }}",
+  "author": {
+    "@type": "Organization",
+    "name": "Zero Trust Analytics"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Zero Trust Analytics",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "{{ .Site.BaseURL }}images/logo.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "{{ .Permalink }}"
+  }
+}
+</script>
+{{ end }}

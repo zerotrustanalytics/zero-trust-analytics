@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Sitemap: https://ztas.io/sitemap.xml
+
+# Disallow private areas
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /admin/

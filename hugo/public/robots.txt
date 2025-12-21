@@ -1,0 +1,4 @@
+User-agent: *
+sitemap: http://localhost:49390/sitemap.xml
+Disallow: /tags
+Disallow: /provenance

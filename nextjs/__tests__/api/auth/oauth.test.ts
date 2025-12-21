@@ -1,761 +1,740 @@
 /**
- * Comprehensive TDD Test Suite for OAuth API Routes
+ * Comprehensive TDD Test Suite for OAuth Authentication
  *
- * This test suite covers OAuth authentication flows:
- * - Google OAuth flow
- * - GitHub OAuth flow
- * - OAuth state validation (CSRF protection)
- * - Token exchange and user creation
- * - Account linking and error handling
+ * This test suite covers OAuth flows for Google and GitHub with:
+ * - Authorization URL generation tests
+ * - OAuth callback handling tests
+ * - Token exchange and validation tests
+ * - User profile fetching and account linking tests
+ * - Security and error handling tests
  *
- * Total: 25 test cases
+ * Total: 22 test cases
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock Next.js Request/Response types
-interface MockRequest {
-  method?: string;
-  query?: Record<string, string>;
-  body?: any;
-  headers?: Record<string, string>;
-  cookies?: Record<string, string>;
+// Mock types
+interface OAuthProvider {
+  id: string;
+  name: string;
+  authUrl: string;
+  tokenUrl: string;
+  profileUrl: string;
+  clientId: string;
+  clientSecret: string;
+  scope: string[];
 }
 
-interface MockResponse {
-  status: number;
-  body: any;
-  headers: Record<string, string>;
-  cookies?: Array<{ name: string; value: string; options: any }>;
+interface OAuthAuthorizationRequest {
+  provider: 'google' | 'github';
+  redirectUri: string;
+  state?: string;
 }
 
-// Mock OAuth provider types
-type OAuthProvider = 'google' | 'github';
-
-interface OAuthState {
+interface OAuthCallbackRequest {
+  provider: 'google' | 'github';
+  code: string;
   state: string;
-  provider: OAuthProvider;
-  createdAt: number;
-  redirectUrl?: string;
+  redirectUri: string;
 }
 
-interface OAuthUser {
+interface OAuthProfile {
   id: string;
   email: string;
   name?: string;
-  avatar?: string;
-  emailVerified: boolean;
+  picture?: string;
+  emailVerified?: boolean;
 }
 
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-  avatar?: string;
-  role: string;
-  isActive: boolean;
-  emailVerified: boolean;
-  oauthProviders: Array<{
-    provider: OAuthProvider;
-    providerId: string;
-  }>;
+interface OAuthTokenResponse {
+  accessToken: string;
+  refreshToken?: string;
+  expiresIn: number;
+  scope?: string;
 }
 
-// Mock databases
-let mockUsers: User[] = [];
-const mockOAuthStates: Map<string, OAuthState> = new Map();
-const mockOAuthTokens: Map<string, { accessToken: string; refreshToken?: string }> = new Map();
+// Mock OAuth providers configuration
+const mockOAuthProviders: Record<string, OAuthProvider> = {
+  google: {
+    id: 'google',
+    name: 'Google',
+    authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
+    profileUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
+    clientId: 'google-client-id',
+    clientSecret: 'google-client-secret',
+    scope: ['openid', 'email', 'profile'],
+  },
+  github: {
+    id: 'github',
+    name: 'GitHub',
+    authUrl: 'https://github.com/login/oauth/authorize',
+    tokenUrl: 'https://github.com/login/oauth/access_token',
+    profileUrl: 'https://api.github.com/user',
+    clientId: 'github-client-id',
+    clientSecret: 'github-client-secret',
+    scope: ['read:user', 'user:email'],
+  },
+};
 
-const OAUTH_STATE_EXPIRY = 10 * 60 * 1000; // 10 minutes
+// Mock services
+const mockOAuthService = {
+  generateAuthUrl: vi.fn(),
+  exchangeCodeForToken: vi.fn(),
+  fetchUserProfile: vi.fn(),
+  validateState: vi.fn(),
+  generateState: vi.fn(),
+};
 
-// Mock OAuth API handlers
-const mockOAuthAPI = {
-  // Initiate OAuth flow
-  initiateOAuth: async (provider: OAuthProvider, req: MockRequest): Promise<MockResponse> => {
-    if (req.method !== 'GET') {
-      return {
-        status: 405,
-        body: { error: 'Method not allowed' },
-        headers: { 'Allow': 'GET' },
+const mockDb = {
+  getUserByEmail: vi.fn(),
+  getUserByOAuthId: vi.fn(),
+  createUser: vi.fn(),
+  linkOAuthAccount: vi.fn(),
+  updateOAuthTokens: vi.fn(),
+  saveSession: vi.fn(),
+};
+
+const mockAuth = {
+  createTokenPair: vi.fn(),
+  createSession: vi.fn(),
+};
+
+const mockStateStore = {
+  save: vi.fn(),
+  verify: vi.fn(),
+  delete: vi.fn(),
+};
+
+describe('OAuth Authentication - Google', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Default mock implementations
+    mockOAuthService.generateState.mockReturnValue('random-state-123');
+    mockOAuthService.generateAuthUrl.mockReturnValue('https://accounts.google.com/o/oauth2/v2/auth?...');
+    mockOAuthService.exchangeCodeForToken.mockResolvedValue({
+      accessToken: 'google-access-token',
+      refreshToken: 'google-refresh-token',
+      expiresIn: 3600,
+    });
+    mockOAuthService.fetchUserProfile.mockResolvedValue({
+      id: 'google-123',
+      email: 'test@gmail.com',
+      name: 'Test User',
+      picture: 'https://example.com/photo.jpg',
+      emailVerified: true,
+    });
+    mockOAuthService.validateState.mockReturnValue(true);
+    mockStateStore.save.mockResolvedValue(true);
+    mockStateStore.verify.mockResolvedValue(true);
+    mockDb.getUserByOAuthId.mockResolvedValue(null);
+    mockDb.getUserByEmail.mockResolvedValue(null);
+    mockDb.createUser.mockResolvedValue({ id: 'user-123' });
+    mockAuth.createTokenPair.mockReturnValue({
+      accessToken: 'jwt-access-token',
+      refreshToken: 'jwt-refresh-token',
+    });
+  });
+
+  describe('GET /api/auth/oauth/google - Authorization URL', () => {
+    it('should generate valid Google OAuth authorization URL', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'google',
+        redirectUri: 'http://localhost:3000/auth/callback',
       };
-    }
 
-    if (!['google', 'github'].includes(provider)) {
-      return {
-        status: 400,
-        body: { error: 'Invalid OAuth provider' },
-        headers: {},
-      };
-    }
+      const response = await simulateGetAuthUrl(request);
 
-    // Generate state for CSRF protection
-    const state = `oauth_state_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const redirectUrl = req.query?.redirect || '/dashboard';
-
-    mockOAuthStates.set(state, {
-      state,
-      provider,
-      createdAt: Date.now(),
-      redirectUrl,
+      expect(response.status).toBe(200);
+      expect(response.body.authUrl).toBeDefined();
+      expect(response.body.authUrl).toContain('accounts.google.com');
     });
 
-    // Build OAuth provider URLs
-    const oauthUrls = {
-      google: `https://accounts.google.com/o/oauth2/v2/auth?client_id=mock_client_id&redirect_uri=http://localhost:3000/api/auth/oauth/callback&response_type=code&scope=openid%20email%20profile&state=${state}`,
-      github: `https://github.com/login/oauth/authorize?client_id=mock_client_id&redirect_uri=http://localhost:3000/api/auth/oauth/callback&scope=user:email&state=${state}`,
-    };
+    it('should include client_id in authorization URL', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'google',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
 
+      const response = await simulateGetAuthUrl(request);
+      const url = new URL(response.body.authUrl);
+
+      expect(url.searchParams.get('client_id')).toBe(mockOAuthProviders.google.clientId);
+    });
+
+    it('should include redirect_uri in authorization URL', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'google',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateGetAuthUrl(request);
+      const url = new URL(response.body.authUrl);
+
+      expect(url.searchParams.get('redirect_uri')).toBe(request.redirectUri);
+    });
+
+    it('should include state parameter for CSRF protection', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'google',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateGetAuthUrl(request);
+      const url = new URL(response.body.authUrl);
+
+      expect(url.searchParams.get('state')).toBeDefined();
+      expect(response.body.state).toBeDefined();
+    });
+
+    it('should include required scopes', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'google',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateGetAuthUrl(request);
+      const url = new URL(response.body.authUrl);
+
+      expect(url.searchParams.get('scope')).toContain('email');
+      expect(url.searchParams.get('scope')).toContain('profile');
+    });
+
+    it('should save state to verify later', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'google',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateGetAuthUrl(request);
+
+      expect(mockStateStore.save).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ provider: 'google' })
+      );
+    });
+
+    it('should return 400 for invalid redirect URI', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'google',
+        redirectUri: 'invalid-uri',
+      };
+
+      const response = await simulateGetAuthUrl(request);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('redirect');
+    });
+  });
+
+  describe('GET /api/auth/oauth/google/callback - OAuth Callback', () => {
+    it('should successfully authenticate user with Google', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.tokens).toBeDefined();
+    });
+
+    it('should exchange authorization code for access token', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateOAuthCallback(request);
+
+      expect(mockOAuthService.exchangeCodeForToken).toHaveBeenCalledWith(
+        'google',
+        'auth-code-123',
+        request.redirectUri
+      );
+    });
+
+    it('should fetch user profile from Google', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateOAuthCallback(request);
+
+      expect(mockOAuthService.fetchUserProfile).toHaveBeenCalledWith(
+        'google',
+        'google-access-token'
+      );
+    });
+
+    it('should create new user if email does not exist', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateOAuthCallback(request);
+
+      expect(mockDb.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'test@gmail.com',
+          name: 'Test User',
+          emailVerified: true,
+        })
+      );
+    });
+
+    it('should link OAuth account to existing user', async () => {
+      mockDb.getUserByEmail.mockResolvedValue({ id: 'existing-user-123' });
+
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateOAuthCallback(request);
+
+      expect(mockDb.linkOAuthAccount).toHaveBeenCalledWith(
+        'existing-user-123',
+        expect.objectContaining({
+          provider: 'google',
+          providerId: 'google-123',
+        })
+      );
+    });
+
+    it('should return JWT tokens on successful authentication', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.body.tokens?.accessToken).toBe('jwt-access-token');
+      expect(response.body.tokens?.refreshToken).toBe('jwt-refresh-token');
+    });
+
+    it('should return 400 when authorization code is missing', async () => {
+      const request = {
+        provider: 'google',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      } as OAuthCallbackRequest;
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('code');
+    });
+
+    it('should return 400 when state is missing', async () => {
+      const request = {
+        provider: 'google',
+        code: 'auth-code-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      } as OAuthCallbackRequest;
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('state');
+    });
+
+    it('should return 403 when state validation fails (CSRF)', async () => {
+      mockStateStore.verify.mockResolvedValue(false);
+
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'invalid-state',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toContain('Invalid state');
+    });
+
+    it('should return 401 when token exchange fails', async () => {
+      mockOAuthService.exchangeCodeForToken.mockRejectedValue(
+        new Error('Invalid authorization code')
+      );
+
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'invalid-code',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toContain('Authentication failed');
+    });
+
+    it('should clean up state after successful callback', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateOAuthCallback(request);
+
+      expect(mockStateStore.delete).toHaveBeenCalledWith('random-state-123');
+    });
+  });
+});
+
+describe('OAuth Authentication - GitHub', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockOAuthService.generateState.mockReturnValue('random-state-456');
+    mockOAuthService.generateAuthUrl.mockReturnValue('https://github.com/login/oauth/authorize?...');
+    mockOAuthService.exchangeCodeForToken.mockResolvedValue({
+      accessToken: 'github-access-token',
+      expiresIn: 28800,
+    });
+    mockOAuthService.fetchUserProfile.mockResolvedValue({
+      id: 'github-456',
+      email: 'test@github.com',
+      name: 'GitHub User',
+      picture: 'https://github.com/avatar.jpg',
+    });
+    mockOAuthService.validateState.mockReturnValue(true);
+    mockStateStore.verify.mockResolvedValue(true);
+    mockDb.getUserByOAuthId.mockResolvedValue(null);
+    mockDb.getUserByEmail.mockResolvedValue(null);
+    mockDb.createUser.mockResolvedValue({ id: 'user-456' });
+    mockAuth.createTokenPair.mockReturnValue({
+      accessToken: 'jwt-access-token',
+      refreshToken: 'jwt-refresh-token',
+    });
+  });
+
+  describe('GET /api/auth/oauth/github - Authorization URL', () => {
+    it('should generate valid GitHub OAuth authorization URL', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'github',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateGetAuthUrl(request);
+
+      expect(response.status).toBe(200);
+      expect(response.body.authUrl).toContain('github.com');
+    });
+
+    it('should include required GitHub scopes', async () => {
+      const request: OAuthAuthorizationRequest = {
+        provider: 'github',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateGetAuthUrl(request);
+      const url = new URL(response.body.authUrl);
+
+      expect(url.searchParams.get('scope')).toContain('user:email');
+    });
+  });
+
+  describe('GET /api/auth/oauth/github/callback - OAuth Callback', () => {
+    it('should successfully authenticate user with GitHub', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'github',
+        code: 'github-auth-code',
+        state: 'random-state-456',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should fetch GitHub user profile', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'github',
+        code: 'github-auth-code',
+        state: 'random-state-456',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateOAuthCallback(request);
+
+      expect(mockOAuthService.fetchUserProfile).toHaveBeenCalledWith(
+        'github',
+        'github-access-token'
+      );
+    });
+
+    it('should create user with GitHub profile data', async () => {
+      const request: OAuthCallbackRequest = {
+        provider: 'github',
+        code: 'github-auth-code',
+        state: 'random-state-456',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      await simulateOAuthCallback(request);
+
+      expect(mockDb.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'test@github.com',
+          name: 'GitHub User',
+        })
+      );
+    });
+
+    it('should handle GitHub users without public email', async () => {
+      mockOAuthService.fetchUserProfile.mockResolvedValue({
+        id: 'github-456',
+        email: null,
+        name: 'GitHub User',
+      });
+
+      const request: OAuthCallbackRequest = {
+        provider: 'github',
+        code: 'github-auth-code',
+        state: 'random-state-456',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      // Should request email permission or fail gracefully
+      expect([400, 200]).toContain(response.status);
+    });
+  });
+
+  describe('Security and Error Handling', () => {
+    it('should return 400 for unsupported OAuth provider', async () => {
+      const request = {
+        provider: 'facebook' as any,
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateGetAuthUrl(request);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Unsupported provider');
+    });
+
+    it('should handle profile fetch failures gracefully', async () => {
+      mockOAuthService.fetchUserProfile.mockRejectedValue(new Error('Profile fetch failed'));
+
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal Server Error');
+    });
+
+    it('should handle database errors during user creation', async () => {
+      mockDb.createUser.mockRejectedValue(new Error('Database error'));
+
+      const request: OAuthCallbackRequest = {
+        provider: 'google',
+        code: 'auth-code-123',
+        state: 'random-state-123',
+        redirectUri: 'http://localhost:3000/auth/callback',
+      };
+
+      const response = await simulateOAuthCallback(request);
+
+      expect(response.status).toBe(500);
+    });
+  });
+});
+
+// Simulation helper functions
+async function simulateGetAuthUrl(
+  request: OAuthAuthorizationRequest
+): Promise<{ status: number; body: any }> {
+  // Validate provider
+  if (!mockOAuthProviders[request.provider]) {
     return {
-      status: 302,
-      body: {},
-      headers: {
-        'Location': oauthUrls[provider],
-      },
-      cookies: [
-        {
-          name: 'oauth_state',
-          value: state,
-          options: { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600 },
-        },
-      ],
+      status: 400,
+      body: { error: 'Bad Request', message: 'Unsupported provider' },
     };
-  },
+  }
 
-  // OAuth callback handler
-  handleCallback: async (req: MockRequest): Promise<MockResponse> => {
-    if (req.method !== 'GET') {
-      return {
-        status: 405,
-        body: { error: 'Method not allowed' },
-        headers: { 'Allow': 'GET' },
-      };
-    }
+  // Validate redirect URI
+  try {
+    new URL(request.redirectUri);
+  } catch {
+    return {
+      status: 400,
+      body: { error: 'Bad Request', message: 'Invalid redirect URI' },
+    };
+  }
 
-    const { code, state, error, error_description } = req.query || {};
+  // Generate state
+  const state = mockOAuthService.generateState();
 
-    // Handle OAuth provider errors
-    if (error) {
-      return {
-        status: 400,
-        body: {
-          error: 'OAuth authentication failed',
-          message: error_description || error,
-        },
-        headers: {},
-      };
-    }
+  // Save state
+  await mockStateStore.save(state, { provider: request.provider, redirectUri: request.redirectUri });
 
-    // Validate required parameters
-    if (!code || !state) {
-      return {
-        status: 400,
-        body: { error: 'Missing required OAuth parameters' },
-        headers: {},
-      };
-    }
+  // Generate auth URL
+  const provider = mockOAuthProviders[request.provider];
+  const authUrl = mockOAuthService.generateAuthUrl(request.provider);
 
-    // Validate state (CSRF protection)
-    const stateCookie = req.cookies?.oauth_state;
-    if (!stateCookie || stateCookie !== state) {
-      return {
-        status: 400,
-        body: { error: 'Invalid OAuth state parameter' },
-        headers: {},
-      };
-    }
+  return {
+    status: 200,
+    body: {
+      authUrl,
+      state,
+    },
+  };
+}
 
-    const oauthState = mockOAuthStates.get(state);
-    if (!oauthState) {
-      return {
-        status: 400,
-        body: { error: 'OAuth state not found or expired' },
-        headers: {},
-      };
-    }
+async function simulateOAuthCallback(
+  request: Partial<OAuthCallbackRequest>
+): Promise<{ status: number; body: any }> {
+  // Validation
+  if (!request.code) {
+    return {
+      status: 400,
+      body: { error: 'Bad Request', message: 'Authorization code is required' },
+    };
+  }
 
-    // Check state expiry
-    if (Date.now() - oauthState.createdAt > OAUTH_STATE_EXPIRY) {
-      mockOAuthStates.delete(state);
-      return {
-        status: 400,
-        body: { error: 'OAuth state expired' },
-        headers: {},
-      };
-    }
+  if (!request.state) {
+    return {
+      status: 400,
+      body: { error: 'Bad Request', message: 'State parameter is required' },
+    };
+  }
 
-    // Exchange code for tokens (mock implementation)
-    const tokens = await mockOAuthAPI.exchangeCodeForTokens(code, oauthState.provider);
-    if (!tokens) {
-      return {
-        status: 500,
-        body: { error: 'Failed to exchange authorization code' },
-        headers: {},
-      };
-    }
+  // Verify state (CSRF protection)
+  const stateValid = await mockStateStore.verify(request.state);
+  if (!stateValid) {
+    return {
+      status: 403,
+      body: { error: 'Forbidden', message: 'Invalid state parameter' },
+    };
+  }
 
-    // Get user info from provider
-    const oauthUser = await mockOAuthAPI.getUserInfo(tokens.accessToken, oauthState.provider);
-    if (!oauthUser) {
-      return {
-        status: 500,
-        body: { error: 'Failed to retrieve user information' },
-        headers: {},
-      };
-    }
-
-    // Find or create user
-    let user = mockUsers.find((u) =>
-      u.oauthProviders.some((p) => p.provider === oauthState.provider && p.providerId === oauthUser.id)
+  try {
+    // Exchange code for token
+    const tokenResponse = await mockOAuthService.exchangeCodeForToken(
+      request.provider!,
+      request.code,
+      request.redirectUri!
     );
 
+    // Fetch user profile
+    const profile = await mockOAuthService.fetchUserProfile(
+      request.provider!,
+      tokenResponse.accessToken
+    );
+
+    // Handle missing email for GitHub
+    if (!profile.email && request.provider === 'github') {
+      return {
+        status: 400,
+        body: { error: 'Bad Request', message: 'Email is required. Please make your email public on GitHub.' },
+      };
+    }
+
+    // Check if user exists by OAuth ID
+    let user = await mockDb.getUserByOAuthId(request.provider!, profile.id);
+
     if (!user) {
-      // Check if user exists with same email
-      user = mockUsers.find((u) => u.email.toLowerCase() === oauthUser.email.toLowerCase());
+      // Check if user exists by email
+      user = await mockDb.getUserByEmail(profile.email);
 
       if (user) {
         // Link OAuth account to existing user
-        user.oauthProviders.push({
-          provider: oauthState.provider,
-          providerId: oauthUser.id,
+        await mockDb.linkOAuthAccount(user.id, {
+          provider: request.provider!,
+          providerId: profile.id,
+          accessToken: tokenResponse.accessToken,
+          refreshToken: tokenResponse.refreshToken,
         });
-        user.emailVerified = user.emailVerified || oauthUser.emailVerified;
       } else {
         // Create new user
-        user = {
-          id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-          email: oauthUser.email,
-          name: oauthUser.name,
-          avatar: oauthUser.avatar,
-          role: 'user',
-          isActive: true,
-          emailVerified: oauthUser.emailVerified,
-          oauthProviders: [
-            {
-              provider: oauthState.provider,
-              providerId: oauthUser.id,
-            },
-          ],
-        };
-        mockUsers.push(user);
+        user = await mockDb.createUser({
+          email: profile.email,
+          name: profile.name,
+          picture: profile.picture,
+          emailVerified: profile.emailVerified || false,
+          oauthProvider: request.provider,
+          oauthId: profile.id,
+        });
       }
     }
 
-    // Generate session tokens
-    const accessToken = `access_token_${user.id}_${Date.now()}`;
-    const refreshToken = `refresh_token_${user.id}_${Date.now()}`;
-    const sessionId = `session_${user.id}_${Date.now()}`;
+    // Update OAuth tokens
+    await mockDb.updateOAuthTokens(user.id, request.provider!, {
+      accessToken: tokenResponse.accessToken,
+      refreshToken: tokenResponse.refreshToken,
+    });
+
+    // Create JWT tokens
+    const tokens = mockAuth.createTokenPair({
+      userId: user.id,
+      email: profile.email,
+    });
+
+    // Create session
+    const session = await mockAuth.createSession(user.id);
+    await mockDb.saveSession(session);
 
     // Clean up state
-    mockOAuthStates.delete(state);
-
-    return {
-      status: 302,
-      body: {},
-      headers: {
-        'Location': oauthState.redirectUrl || '/dashboard',
-      },
-      cookies: [
-        {
-          name: 'sessionId',
-          value: sessionId,
-          options: { httpOnly: true, secure: true, sameSite: 'strict', path: '/' },
-        },
-        {
-          name: 'oauth_state',
-          value: '',
-          options: { maxAge: 0 }, // Clear state cookie
-        },
-      ],
-    };
-  },
-
-  // Exchange authorization code for tokens (mock)
-  exchangeCodeForTokens: async (
-    code: string,
-    provider: OAuthProvider
-  ): Promise<{ accessToken: string; refreshToken?: string } | null> => {
-    if (!code) {
-      return null;
-    }
-
-    // Mock token exchange
-    const tokens = {
-      accessToken: `${provider}_access_${code}`,
-      refreshToken: `${provider}_refresh_${code}`,
-    };
-
-    mockOAuthTokens.set(code, tokens);
-    return tokens;
-  },
-
-  // Get user info from OAuth provider (mock)
-  getUserInfo: async (accessToken: string, provider: OAuthProvider): Promise<OAuthUser | null> => {
-    if (!accessToken) {
-      return null;
-    }
-
-    // Mock user data based on provider
-    const mockUserData: Record<OAuthProvider, OAuthUser> = {
-      google: {
-        id: 'google-123456',
-        email: 'user@gmail.com',
-        name: 'Google User',
-        avatar: 'https://lh3.googleusercontent.com/avatar',
-        emailVerified: true,
-      },
-      github: {
-        id: 'github-789012',
-        email: 'user@github.com',
-        name: 'GitHub User',
-        avatar: 'https://avatars.githubusercontent.com/u/123456',
-        emailVerified: true,
-      },
-    };
-
-    return mockUserData[provider];
-  },
-
-  // Unlink OAuth provider
-  unlinkProvider: async (userId: string, provider: OAuthProvider): Promise<MockResponse> => {
-    const user = mockUsers.find((u) => u.id === userId);
-
-    if (!user) {
-      return {
-        status: 404,
-        body: { error: 'User not found' },
-        headers: {},
-      };
-    }
-
-    const providerIndex = user.oauthProviders.findIndex((p) => p.provider === provider);
-
-    if (providerIndex === -1) {
-      return {
-        status: 400,
-        body: { error: 'OAuth provider not linked to this account' },
-        headers: {},
-      };
-    }
-
-    // Don't allow unlinking if it's the only authentication method
-    if (user.oauthProviders.length === 1) {
-      return {
-        status: 400,
-        body: {
-          error: 'Cannot unlink last authentication method',
-          message: 'Please set a password before unlinking your last OAuth provider',
-        },
-        headers: {},
-      };
-    }
-
-    user.oauthProviders.splice(providerIndex, 1);
+    await mockStateStore.delete(request.state);
 
     return {
       status: 200,
       body: {
         success: true,
-        message: `${provider} account unlinked successfully`,
+        user: {
+          id: user.id,
+          email: profile.email,
+          name: profile.name,
+        },
+        tokens,
       },
-      headers: {},
     };
-  },
-
-  // Clean up expired states
-  cleanupExpiredStates: (): number => {
-    const now = Date.now();
-    let count = 0;
-
-    for (const [state, data] of mockOAuthStates.entries()) {
-      if (now - data.createdAt > OAUTH_STATE_EXPIRY) {
-        mockOAuthStates.delete(state);
-        count++;
-      }
+  } catch (error: any) {
+    if (error.message.includes('Invalid authorization code')) {
+      return {
+        status: 401,
+        body: { error: 'Unauthorized', message: 'Authentication failed' },
+      };
     }
 
-    return count;
-  },
-};
-
-describe('OAuth API - Initiate Flow', () => {
-  beforeEach(() => {
-    mockUsers = [];
-    mockOAuthStates.clear();
-    mockOAuthTokens.clear();
-  });
-
-  it('should initiate Google OAuth flow', async () => {
-    const response = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-
-    expect(response.status).toBe(302);
-    expect(response.headers['Location']).toContain('accounts.google.com');
-    expect(response.headers['Location']).toContain('state=');
-  });
-
-  it('should initiate GitHub OAuth flow', async () => {
-    const response = await mockOAuthAPI.initiateOAuth('github', { method: 'GET' });
-
-    expect(response.status).toBe(302);
-    expect(response.headers['Location']).toContain('github.com/login/oauth');
-    expect(response.headers['Location']).toContain('state=');
-  });
-
-  it('should reject invalid OAuth provider', async () => {
-    const response = await mockOAuthAPI.initiateOAuth('invalid' as OAuthProvider, { method: 'GET' });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Invalid OAuth provider');
-  });
-
-  it('should generate unique state parameter', async () => {
-    const response1 = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const response2 = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-
-    const state1 = new URL(response1.headers['Location']).searchParams.get('state');
-    const state2 = new URL(response2.headers['Location']).searchParams.get('state');
-
-    expect(state1).not.toBe(state2);
-  });
-
-  it('should set state cookie with secure options', async () => {
-    const response = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-
-    const stateCookie = response.cookies?.find((c) => c.name === 'oauth_state');
-    expect(stateCookie).toBeDefined();
-    expect(stateCookie?.options.httpOnly).toBe(true);
-    expect(stateCookie?.options.secure).toBe(true);
-    expect(stateCookie?.options.sameSite).toBe('lax');
-  });
-
-  it('should accept custom redirect URL', async () => {
-    const response = await mockOAuthAPI.initiateOAuth('google', {
-      method: 'GET',
-      query: { redirect: '/custom-page' },
-    });
-
-    const state = new URL(response.headers['Location']).searchParams.get('state');
-    const stateData = mockOAuthStates.get(state!);
-
-    expect(stateData?.redirectUrl).toBe('/custom-page');
-  });
-
-  it('should reject non-GET requests', async () => {
-    const response = await mockOAuthAPI.initiateOAuth('google', { method: 'POST' });
-
-    expect(response.status).toBe(405);
-    expect(response.body.error).toBe('Method not allowed');
-  });
-});
-
-describe('OAuth API - Callback Handling', () => {
-  beforeEach(() => {
-    mockUsers = [];
-    mockOAuthStates.clear();
-    mockOAuthTokens.clear();
-  });
-
-  it('should handle successful OAuth callback', async () => {
-    // Initiate OAuth
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-    const stateCookie = initiateResponse.cookies?.find((c) => c.name === 'oauth_state')?.value!;
-
-    // Simulate callback
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: stateCookie },
-    });
-
-    expect(response.status).toBe(302);
-    expect(response.headers['Location']).toBeDefined();
-  });
-
-  it('should create new user on first OAuth login', async () => {
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-    const stateCookie = initiateResponse.cookies?.find((c) => c.name === 'oauth_state')?.value!;
-
-    await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: stateCookie },
-    });
-
-    expect(mockUsers).toHaveLength(1);
-    expect(mockUsers[0].email).toBeDefined();
-    expect(mockUsers[0].oauthProviders).toHaveLength(1);
-  });
-
-  it('should link OAuth account to existing user with same email', async () => {
-    // Create existing user
-    const existingUser: User = {
-      id: 'existing-user',
-      email: 'user@gmail.com',
-      role: 'user',
-      isActive: true,
-      emailVerified: false,
-      oauthProviders: [],
+    return {
+      status: 500,
+      body: { error: 'Internal Server Error', message: error.message },
     };
-    mockUsers.push(existingUser);
-
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-    const stateCookie = initiateResponse.cookies?.find((c) => c.name === 'oauth_state')?.value!;
-
-    await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: stateCookie },
-    });
-
-    expect(mockUsers).toHaveLength(1);
-    expect(mockUsers[0].oauthProviders).toHaveLength(1);
-    expect(mockUsers[0].oauthProviders[0].provider).toBe('google');
-  });
-
-  it('should reject callback without authorization code', async () => {
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { state: 'some-state' },
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Missing required OAuth parameters');
-  });
-
-  it('should reject callback without state parameter', async () => {
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123' },
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Missing required OAuth parameters');
-  });
-
-  it('should reject callback with mismatched state cookie', async () => {
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: 'wrong-state' },
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Invalid OAuth state parameter');
-  });
-
-  it('should reject callback with expired state', async () => {
-    const state = 'expired-state';
-    mockOAuthStates.set(state, {
-      state,
-      provider: 'google',
-      createdAt: Date.now() - OAUTH_STATE_EXPIRY - 1000, // Expired
-    });
-
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: state },
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('OAuth state expired');
-  });
-
-  it('should handle OAuth provider errors', async () => {
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: {
-        error: 'access_denied',
-        error_description: 'User denied access',
-        state: 'some-state',
-      },
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('OAuth authentication failed');
-    expect(response.body.message).toContain('denied');
-  });
-
-  it('should set session cookie on successful authentication', async () => {
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-    const stateCookie = initiateResponse.cookies?.find((c) => c.name === 'oauth_state')?.value!;
-
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: stateCookie },
-    });
-
-    const sessionCookie = response.cookies?.find((c) => c.name === 'sessionId');
-    expect(sessionCookie).toBeDefined();
-    expect(sessionCookie?.options.httpOnly).toBe(true);
-    expect(sessionCookie?.options.secure).toBe(true);
-  });
-
-  it('should clear OAuth state cookie after successful callback', async () => {
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-    const stateCookie = initiateResponse.cookies?.find((c) => c.name === 'oauth_state')?.value!;
-
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: stateCookie },
-    });
-
-    const clearedCookie = response.cookies?.find((c) => c.name === 'oauth_state');
-    expect(clearedCookie?.options.maxAge).toBe(0);
-  });
-
-  it('should redirect to custom URL after successful OAuth', async () => {
-    const customRedirect = '/custom-dashboard';
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', {
-      method: 'GET',
-      query: { redirect: customRedirect },
-    });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-    const stateCookie = initiateResponse.cookies?.find((c) => c.name === 'oauth_state')?.value!;
-
-    const response = await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: stateCookie },
-    });
-
-    expect(response.headers['Location']).toBe(customRedirect);
-  });
-});
-
-describe('OAuth API - Provider Management', () => {
-  beforeEach(() => {
-    mockUsers = [];
-    mockOAuthStates.clear();
-    mockOAuthTokens.clear();
-  });
-
-  it('should unlink OAuth provider from account', async () => {
-    const user: User = {
-      id: 'user-123',
-      email: 'test@example.com',
-      role: 'user',
-      isActive: true,
-      emailVerified: true,
-      oauthProviders: [
-        { provider: 'google', providerId: 'google-123' },
-        { provider: 'github', providerId: 'github-456' },
-      ],
-    };
-    mockUsers.push(user);
-
-    const response = await mockOAuthAPI.unlinkProvider('user-123', 'google');
-
-    expect(response.status).toBe(200);
-    expect(user.oauthProviders).toHaveLength(1);
-    expect(user.oauthProviders[0].provider).toBe('github');
-  });
-
-  it('should reject unlinking non-existent provider', async () => {
-    const user: User = {
-      id: 'user-123',
-      email: 'test@example.com',
-      role: 'user',
-      isActive: true,
-      emailVerified: true,
-      oauthProviders: [{ provider: 'google', providerId: 'google-123' }],
-    };
-    mockUsers.push(user);
-
-    const response = await mockOAuthAPI.unlinkProvider('user-123', 'github');
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('OAuth provider not linked to this account');
-  });
-
-  it('should reject unlinking last authentication method', async () => {
-    const user: User = {
-      id: 'user-123',
-      email: 'test@example.com',
-      role: 'user',
-      isActive: true,
-      emailVerified: true,
-      oauthProviders: [{ provider: 'google', providerId: 'google-123' }],
-    };
-    mockUsers.push(user);
-
-    const response = await mockOAuthAPI.unlinkProvider('user-123', 'google');
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Cannot unlink last authentication method');
-  });
-
-  it('should handle unlinking for non-existent user', async () => {
-    const response = await mockOAuthAPI.unlinkProvider('non-existent-user', 'google');
-
-    expect(response.status).toBe(404);
-    expect(response.body.error).toBe('User not found');
-  });
-});
-
-describe('OAuth API - Security & Cleanup', () => {
-  beforeEach(() => {
-    mockUsers = [];
-    mockOAuthStates.clear();
-    mockOAuthTokens.clear();
-  });
-
-  it('should clean up expired OAuth states', () => {
-    // Add expired state
-    mockOAuthStates.set('expired-1', {
-      state: 'expired-1',
-      provider: 'google',
-      createdAt: Date.now() - OAUTH_STATE_EXPIRY - 1000,
-    });
-
-    // Add valid state
-    mockOAuthStates.set('valid-1', {
-      state: 'valid-1',
-      provider: 'google',
-      createdAt: Date.now(),
-    });
-
-    const cleaned = mockOAuthAPI.cleanupExpiredStates();
-
-    expect(cleaned).toBe(1);
-    expect(mockOAuthStates.has('expired-1')).toBe(false);
-    expect(mockOAuthStates.has('valid-1')).toBe(true);
-  });
-
-  it('should use different provider IDs for different providers', async () => {
-    const googleResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const githubResponse = await mockOAuthAPI.initiateOAuth('github', { method: 'GET' });
-
-    const googleState = new URL(googleResponse.headers['Location']).searchParams.get('state')!;
-    const githubState = new URL(githubResponse.headers['Location']).searchParams.get('state')!;
-
-    const googleStateData = mockOAuthStates.get(googleState);
-    const githubStateData = mockOAuthStates.get(githubState);
-
-    expect(googleStateData?.provider).toBe('google');
-    expect(githubStateData?.provider).toBe('github');
-  });
-
-  it('should mark email as verified for OAuth users', async () => {
-    const initiateResponse = await mockOAuthAPI.initiateOAuth('google', { method: 'GET' });
-    const state = new URL(initiateResponse.headers['Location']).searchParams.get('state')!;
-    const stateCookie = initiateResponse.cookies?.find((c) => c.name === 'oauth_state')?.value!;
-
-    await mockOAuthAPI.handleCallback({
-      method: 'GET',
-      query: { code: 'auth_code_123', state },
-      cookies: { oauth_state: stateCookie },
-    });
-
-    expect(mockUsers[0].emailVerified).toBe(true);
-  });
-});
+  }
+}

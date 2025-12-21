@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Trust on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/trust/</link>
+    <description>Recent content in Trust on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 10 Mar 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/trust/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Zero Knowledge: &#39;I Can&#39;t Look&#39; vs &#39;I Promise Not to Look&#39;</title>
+      <link>http://localhost:49390/blog/zero-knowledge-i-cant-look-vs-i-wont-look/</link>
+      <pubDate>Mon, 10 Mar 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/zero-knowledge-i-cant-look-vs-i-wont-look/</guid>
+      <description>&lt;p&gt;Every tech company has a privacy policy. They all say some version of:&lt;/p&gt;&#xA;&lt;blockquote&gt;&#xA;&lt;p&gt;&amp;ldquo;We take your privacy seriously. We promise to protect your data. We won&amp;rsquo;t sell your information.&amp;rdquo;&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;p&gt;&lt;strong&gt;How&amp;rsquo;s that working out?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-promise-problem&#34;&gt;The Promise Problem&lt;/h2&gt;&#xA;&lt;p&gt;Privacy promises get broken. Constantly.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-acquisition-problem&#34;&gt;The Acquisition Problem&lt;/h3&gt;&#xA;&lt;p&gt;Company A has great privacy practices. They get acquired by Company B. Privacy policy changes. Your data flows to new hands.&lt;/p&gt;&#xA;&lt;p&gt;This isn&amp;rsquo;t theoretical:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;WhatsApp promised end-to-end encryption privacy. Then Facebook bought them.&lt;/li&gt;&#xA;&lt;li&gt;Fitbit promised health data protection. Then Google bought them.&lt;/li&gt;&#xA;&lt;li&gt;Countless startups with great intentions get absorbed by data-hungry giants.&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Promises don&amp;rsquo;t survive acquisitions.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>The Hidden Cost of &#39;Free&#39; Analytics</title>
+      <link>http://localhost:49390/blog/the-hidden-cost-of-free-analytics/</link>
+      <pubDate>Mon, 27 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/the-hidden-cost-of-free-analytics/</guid>
+      <description>&lt;p&gt;&amp;ldquo;Why would I pay for analytics when Google Analytics is free?&amp;rdquo;&lt;/p&gt;&#xA;&lt;p&gt;It&amp;rsquo;s the most common objection we hear. And on the surface, it makes sense. Why pay $10-30/month when you can pay $0?&lt;/p&gt;&#xA;&lt;p&gt;But Google Analytics isn&amp;rsquo;t free. &lt;strong&gt;You&amp;rsquo;re paying—just not with money.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;how-free-products-make-money&#34;&gt;How &amp;ldquo;Free&amp;rdquo; Products Make Money&lt;/h2&gt;&#xA;&lt;p&gt;Google&amp;rsquo;s annual revenue: &lt;strong&gt;$307 billion&lt;/strong&gt; (2023).&lt;/p&gt;&#xA;&lt;p&gt;Google Analytics users: &lt;strong&gt;Millions of websites&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;p&gt;Google Analytics revenue: &lt;strong&gt;$0&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;p&gt;If the math doesn&amp;rsquo;t add up, it&amp;rsquo;s because you&amp;rsquo;re not seeing the whole business model.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>How Bitcoin Inspired Us to Build Zero Trust Analytics</title>
+      <link>http://localhost:49390/blog/how-bitcoin-inspired-zero-trust-analytics/</link>
+      <pubDate>Mon, 06 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/how-bitcoin-inspired-zero-trust-analytics/</guid>
+      <description>&lt;p&gt;In 2008, a pseudonymous developer named Satoshi Nakamoto published a whitepaper that changed how we think about trust in digital systems. Bitcoin wasn&amp;rsquo;t just a new form of money—it was a proof of concept that you could build systems where no single party needs to be trusted.&lt;/p&gt;&#xA;&lt;p&gt;That idea stuck with us. And when we built Zero Trust Analytics, we borrowed heavily from Bitcoin&amp;rsquo;s philosophical playbook.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-bitcoin-insight-dont-trust-verify&#34;&gt;The Bitcoin Insight: Don&amp;rsquo;t Trust, Verify&lt;/h2&gt;&#xA;&lt;p&gt;Traditional banking works on trust. You trust your bank to hold your money. You trust payment processors to transfer it. You trust regulators to oversee them. Layer upon layer of trust.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

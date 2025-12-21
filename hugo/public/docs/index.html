@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Documentation
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Documentation">
+
+
+<meta name="description" content="Complete guide to integrating Zero Trust Analytics">
+<meta name="summary" content="Welcome to the Zero Trust Analytics documentation. Here you&rsquo;ll find everything you need to integrate privacy-first analytics into your website or application.
+What is Zero Trust Analytics?
+Zero Trust Analytics is a privacy-first website analytics platform that gives you actionable insights without compromising your visitors&rsquo; privacy. We don&rsquo;t use cookies, we don&rsquo;t store IP addresses, and we don&rsquo;t track users across the web.
+Key Features
+
+No cookies - No consent banners needed
+No IP logging - IPs are hashed with a daily rotating salt
+GDPR/CCPA compliant - By design, not by checkbox
+Lightweight - Under 3KB script, won&rsquo;t slow your site
+Real-time analytics - See who&rsquo;s on your site right now
+Custom events - Track clicks, forms, and custom actions
+API access - Build your own dashboards and integrations
+
+Getting Started
+The fastest way to get started is to follow our Quick Start Guide. You&rsquo;ll be tracking visitors in under 5 minutes." >
+<meta name="date" content="2025-12-12 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Documentation">
+
+<meta property="og:date" content="2025-12-12 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Complete guide to integrating Zero Trust Analytics">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/">
+
+<meta name="twitter:title" content="Documentation">
+
+<meta name="twitter:description" content="Complete guide to integrating Zero Trust Analytics">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<section class="bg-dark text-white py-5">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-3">Developer Documentation</h1>
+        <p class="lead mb-0">Everything you need to integrate Zero Trust Analytics into your website or application.</p>
+      </div>
+      <div class="col-lg-6 mt-4 mt-lg-0">
+        <div class="d-flex gap-3 justify-content-lg-end align-items-center flex-wrap">
+          
+          <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="docs-search" class="form-control border-0" placeholder="Search docs..." onkeyup="filterDocs()">
+          </div>
+          <a href="/register/" class="btn btn-primary">Get API Key</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link active fw-bold">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <div class="docs-content">
+        <p>Welcome to the Zero Trust Analytics documentation. Here you&rsquo;ll find everything you need to integrate privacy-first analytics into your website or application.</p>
+<h2 id="what-is-zero-trust-analytics">What is Zero Trust Analytics?</h2>
+<p>Zero Trust Analytics is a privacy-first website analytics platform that gives you actionable insights without compromising your visitors&rsquo; privacy. We don&rsquo;t use cookies, we don&rsquo;t store IP addresses, and we don&rsquo;t track users across the web.</p>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li><strong>No cookies</strong> - No consent banners needed</li>
+<li><strong>No IP logging</strong> - IPs are hashed with a daily rotating salt</li>
+<li><strong>GDPR/CCPA compliant</strong> - By design, not by checkbox</li>
+<li><strong>Lightweight</strong> - Under 3KB script, won&rsquo;t slow your site</li>
+<li><strong>Real-time analytics</strong> - See who&rsquo;s on your site right now</li>
+<li><strong>Custom events</strong> - Track clicks, forms, and custom actions</li>
+<li><strong>API access</strong> - Build your own dashboards and integrations</li>
+</ul>
+<h2 id="getting-started">Getting Started</h2>
+<p>The fastest way to get started is to follow our <a href="/docs/quickstart/">Quick Start Guide</a>. You&rsquo;ll be tracking visitors in under 5 minutes.</p>
+<p>If you prefer to understand the details first, check out:</p>
+<ul>
+<li><a href="/docs/installation/">Installation</a> - Different ways to add the tracking script</li>
+<li><a href="/docs/privacy-model/">Privacy Model</a> - How we protect visitor privacy</li>
+<li><a href="/docs/api/authentication/">API Reference</a> - Build custom integrations</li>
+</ul>
+
+
+        
+        <div class="row g-4 mt-4">
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-primary bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-rocket text-primary fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">Quick Start</h5>
+                </div>
+                <p class="card-text text-muted">Get up and running in under 5 minutes with our simple integration guide.</p>
+                <a href="/docs/quickstart/" class="btn btn-outline-primary btn-sm">Start Now</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-success bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-code text-success fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">API Reference</h5>
+                </div>
+                <p class="card-text text-muted">Full API documentation for building custom integrations.</p>
+                <a href="/docs/api/authentication/" class="btn btn-outline-success btn-sm">View API</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-warning bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-bolt text-warning fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">Custom Events</h5>
+                </div>
+                <p class="card-text text-muted">Track button clicks, form submissions, and custom user interactions.</p>
+                <a href="/docs/custom-events/" class="btn btn-outline-warning btn-sm">Learn More</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-info bg-opacity-10 rounded p-3 me-3">
+                    <i class="fas fa-shield-alt text-info fa-lg"></i>
+                  </div>
+                  <h5 class="card-title mb-0">Privacy Model</h5>
+                </div>
+                <p class="card-text text-muted">Understand how we protect visitor privacy with zero-knowledge analytics.</p>
+                <a href="/docs/privacy-model/" class="btn btn-outline-info btn-sm">Read More</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-item.filtered { display: none; }
+.docs-card-filtered { display: none !important; }
+</style>
+
+
+<div id="docs-search-results" class="container pb-5" style="display: none;">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="mb-0">Search Results</h4>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearDocsSearch()">Clear Search</button>
+      </div>
+      <div id="docs-results-list"></div>
+      <div id="docs-no-results" class="text-center py-5" style="display: none;">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No documentation found</h5>
+        <p class="text-muted">Try a different search term</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const docsIndex = [
+  
+  {
+    title: "\"Stats API Reference\"",
+    description: "\"Public API for accessing analytics data programmatically\"",
+    url: "\"http://localhost:49390/docs/api/stats-api/\"",
+    content: "\"Stats API The Stats API provides programmatic access to your analytics data for external integrations, custom dashboards, and third-party tools.\\nAuthentication All Stats API requests require authentication using an API key. API keys can be created in your account dashboard under Settings \\u0026amp;gt; API Keys.\\nCreating an API Key Navigate to Settings \\u0026amp;gt; API Keys Click Create New API Key Give your key a descriptive name (e.g., \\u0026amp;ldquo;WordPress Plugin\\u0026amp;rdquo;, \\u0026amp;ldquo;Looker Studio\\u0026amp;rdquo;) Select …\""
+  },
+  
+  {
+    title: "\"Quick Start\"",
+    description: "\"Get Zero Trust Analytics running on your site in under 5 minutes\"",
+    url: "\"http://localhost:49390/docs/quickstart/\"",
+    content: "\"Step 1: Create an Account Sign up for a free account at ztas.io/register. No credit card required.\\nStep 2: Add Your Site After logging in, click \\u0026amp;ldquo;Add Site\\u0026amp;rdquo; and enter your website\\u0026amp;rsquo;s domain (e.g., example.com).\\nYou\\u0026amp;rsquo;ll receive a unique Site ID that looks like this:\\nsite_abc123xyz Step 3: Add the Tracking Script Copy this script and paste it just before the closing \\u0026amp;lt;/head\\u0026amp;gt; tag on your website:\\n\\u0026amp;lt;script defer data-site=\\u0026amp;#34;YOUR_SITE_ID\\u0026amp;#34; …\""
+  },
+  
+  {
+    title: "\"Installation\"",
+    description: "\"Different ways to install Zero Trust Analytics on your website\"",
+    url: "\"http://localhost:49390/docs/installation/\"",
+    content: "\"Standard Installation Add this script to your HTML, just before the closing \\u0026amp;lt;/head\\u0026amp;gt; tag:\\n\\u0026amp;lt;script defer data-site=\\u0026amp;#34;YOUR_SITE_ID\\u0026amp;#34; src=\\u0026amp;#34;https://ztas.io/js/analytics.js\\u0026amp;#34;\\u0026amp;gt;\\u0026amp;lt;/script\\u0026amp;gt; The defer attribute ensures the script doesn\\u0026amp;rsquo;t block page rendering.\\nWordPress Option 1: Theme Header Add the script to your theme\\u0026amp;rsquo;s header.php file, just before \\u0026amp;lt;/head\\u0026amp;gt;:\\n\\u0026amp;lt;script defer data-site=\\u0026amp;#34;YOUR_SITE_ID\\u0026amp;#34; …\""
+  },
+  
+  {
+    title: "\"Tracking Script\"",
+    description: "\"Complete reference for the Zero Trust Analytics tracking script\"",
+    url: "\"http://localhost:49390/docs/tracking-script/\"",
+    content: "\"Script Attributes The tracking script supports several configuration options via data-* attributes:\\n\\u0026amp;lt;script defer data-site=\\u0026amp;#34;YOUR_SITE_ID\\u0026amp;#34; data-honor-dnt=\\u0026amp;#34;true\\u0026amp;#34; data-exclude=\\u0026amp;#34;/admin/*,/preview/*\\u0026amp;#34; src=\\u0026amp;#34;https://ztas.io/js/analytics.js\\u0026amp;#34;\\u0026amp;gt; \\u0026amp;lt;/script\\u0026amp;gt; Available Attributes Attribute Required Description data-site Yes Your unique Site ID data-honor-dnt No Respect Do Not Track browser setting (default: false) data-exclude No Comma-separated URL patterns to …\""
+  },
+  
+  {
+    title: "\"Custom Events\"",
+    description: "\"Track button clicks, form submissions, and custom user interactions\"",
+    url: "\"http://localhost:49390/docs/custom-events/\"",
+    content: "\"Overview Custom events let you track specific user interactions beyond pageviews. Track button clicks, form submissions, purchases, downloads, and any other actions.\\nBasic Usage Call zta.track() to send a custom event:\\nzta.track(\\u0026amp;#39;signup_click\\u0026amp;#39;) Event with Properties Add context with the second parameter:\\nzta.track(\\u0026amp;#39;purchase\\u0026amp;#39;, { category: \\u0026amp;#39;ecommerce\\u0026amp;#39;, label: \\u0026amp;#39;Premium Plan\\u0026amp;#39;, value: 29 }) Properties Property Type Description category string Event grouping (e.g., …\""
+  },
+  
+  {
+    title: "\"SPA Support\"",
+    description: "\"Using Zero Trust Analytics with React, Vue, Next.js, and other single-page applications\"",
+    url: "\"http://localhost:49390/docs/spa-support/\"",
+    content: "\"Automatic SPA Detection Our tracking script automatically detects single-page application navigation using the History API. No additional configuration needed for most SPAs.\\nManual Page Tracking If automatic detection doesn\\u0026amp;rsquo;t work for your setup, manually track page views:\\n// Call after each route change zta.trackPageview() // Optionally specify a custom path zta.trackPageview(\\u0026amp;#39;/custom/path\\u0026amp;#39;) React Router import { useEffect } from \\u0026amp;#39;react\\u0026amp;#39; import { useLocation } from …\""
+  },
+  
+  {
+    title: "\"Authentication\"",
+    description: "\"How to authenticate with the Zero Trust Analytics API\"",
+    url: "\"http://localhost:49390/docs/api/authentication/\"",
+    content: "\"Overview The Zero Trust Analytics API uses JWT (JSON Web Tokens) for authentication. You\\u0026amp;rsquo;ll need to obtain a token by logging in, then include it in subsequent requests.\\nGetting a Token Login Endpoint POST /api/auth/login Request Body:\\n{ \\u0026amp;#34;email\\u0026amp;#34;: \\u0026amp;#34;you@example.com\\u0026amp;#34;, \\u0026amp;#34;password\\u0026amp;#34;: \\u0026amp;#34;your-password\\u0026amp;#34; } Response:\\n{ \\u0026amp;#34;token\\u0026amp;#34;: \\u0026amp;#34;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\\u0026amp;#34;, \\u0026amp;#34;user\\u0026amp;#34;: { \\u0026amp;#34;id\\u0026amp;#34;: \\u0026amp;#34;user_abc123\\u0026amp;#34;, \\u0026amp;#34;email\\u0026amp;#34;: …\""
+  },
+  
+  {
+    title: "\"Track Endpoint\"",
+    description: "\"Send pageview and event data to Zero Trust Analytics\"",
+    url: "\"http://localhost:49390/docs/api/track/\"",
+    content: "\"Overview The Track endpoint receives pageview and event data from your website. This is what the tracking script uses internally, but you can also call it directly for server-side tracking.\\nEndpoint POST /api/track Note: This endpoint doesn\\u0026amp;rsquo;t require authentication - it uses your Site ID for authorization.\\nRequest Headers Content-Type: application/json Request Body Pageview { \\u0026amp;#34;type\\u0026amp;#34;: \\u0026amp;#34;pageview\\u0026amp;#34;, \\u0026amp;#34;siteId\\u0026amp;#34;: \\u0026amp;#34;site_abc123\\u0026amp;#34;, \\u0026amp;#34;path\\u0026amp;#34;: …\""
+  },
+  
+  {
+    title: "\"Stats Endpoint\"",
+    description: "\"Retrieve analytics data for your sites\"",
+    url: "\"http://localhost:49390/docs/api/stats/\"",
+    content: "\"Overview The Stats endpoint returns aggregated analytics data for a site over a specified time period.\\nEndpoint GET /api/stats Requires authentication. See Authentication.\\nParameters Parameter Type Required Description siteId string Yes Your Site ID period string No Time period: 24h, 7d, 30d, 90d, 365d (default: 7d) startDate string No Custom start date (ISO 8601) endDate string No Custom end date (ISO 8601) Example Request curl …\""
+  },
+  
+  {
+    title: "\"Realtime Endpoint\"",
+    description: "\"Get live visitor data for your site\"",
+    url: "\"http://localhost:49390/docs/api/realtime/\"",
+    content: "\"Overview The Realtime endpoint returns live data about visitors currently on your site.\\nEndpoint GET /api/realtime Requires authentication. See Authentication.\\nParameters Parameter Type Required Description siteId string Yes Your Site ID Example Request curl \\u0026amp;#34;https://ztas.io/api/realtime?siteId=site_abc123\\u0026amp;#34; \\\\ -H \\u0026amp;#34;Authorization: Bearer YOUR_TOKEN\\u0026amp;#34; Response { \\u0026amp;#34;activeVisitors\\u0026amp;#34;: 23, \\u0026amp;#34;pageviewsLast5Min\\u0026amp;#34;: 47, \\u0026amp;#34;pageBreakdown\\u0026amp;#34;: { \\u0026amp;#34;/\\u0026amp;#34;: 8, …\""
+  },
+  
+  {
+    title: "\"Export Endpoint\"",
+    description: "\"Export your analytics data as JSON or CSV\"",
+    url: "\"http://localhost:49390/docs/api/export/\"",
+    content: "\"Overview The Export endpoint lets you download your analytics data for offline analysis, backups, or integration with other tools.\\nEndpoint GET /api/export Requires authentication. See Authentication.\\nParameters Parameter Type Required Description siteId string Yes Your Site ID format string No Output format: json or csv (default: json) type string No Data type: summary, pageviews, events (default: summary) period string No Time period: 7d, 30d, 90d, 365d (default: 30d) limit number No Max rows …\""
+  },
+  
+  {
+    title: "\"Privacy Model\"",
+    description: "\"How Zero Trust Analytics protects visitor privacy\"",
+    url: "\"http://localhost:49390/docs/privacy-model/\"",
+    content: "\"The Zero Trust Principle Our name comes from the \\u0026amp;ldquo;Zero Trust\\u0026amp;rdquo; security model: never trust, always verify, never store what you don\\u0026amp;rsquo;t need.\\nApplied to analytics, this means:\\nWe never trust that we need personal data (we don\\u0026amp;rsquo;t) We verify that no PII leaks into our systems We store only anonymous, aggregated data How We Anonymize Visitors IP Address Handling When a visitor loads your page, their IP address is processed like this:\\n1. IP arrives: 192.168.1.100 2. Combined with …\""
+  },
+  
+  {
+    title: "\"Webhooks\"",
+    description: "\"Receive real-time event notifications via webhooks\"",
+    url: "\"http://localhost:49390/docs/api/webhooks/\"",
+    content: "\"Overview Webhooks allow you to receive real-time HTTP notifications when events occur in your Zero Trust Analytics account. Instead of polling the API, webhooks push data to your server instantly when events happen.\\nCommon use cases:\\nSend notifications to Slack when traffic spikes Trigger automation workflows on goal completions Sync analytics data to your own database Monitor site health in real-time Endpoint GET /api/webhooks POST /api/webhooks DELETE /api/webhooks Requires authentication. See …\""
+  },
+  
+  {
+    title: "\"Data Collected\"",
+    description: "\"Exactly what data Zero Trust Analytics collects (and doesn't)\"",
+    url: "\"http://localhost:49390/docs/data-collected/\"",
+    content: "\"What We Collect Page View Data Data Point Example Purpose Page path /blog/my-article Know which pages are popular Referrer domain google.com Understand traffic sources UTM parameters source=twitter Track marketing campaigns Timestamp 2024-12-10T14:30:00Z Time-based analysis Session Data Data Point Example Purpose Session ID sess_abc123 Group pageviews into sessions Duration 185 seconds Measure engagement Bounce true/false Identify single-page visits Pages per session 3.2 Measure depth of …\""
+  },
+  
+  {
+    title: "\"Teams\"",
+    description: "\"Manage team members and collaborate on analytics\"",
+    url: "\"http://localhost:49390/docs/api/teams/\"",
+    content: "\"Overview The Teams API allows you to invite team members, manage access permissions, and collaborate on your analytics sites. Team members can view analytics data, manage sites, and configure settings based on their role.\\nRoles:\\nOwner - Full access, can delete sites and manage billing Admin - Can manage sites, invite members, and configure settings Member - Can view analytics and create reports Viewer - Read-only access to analytics data Endpoints GET /api/teams POST /api/teams DELETE /api/teams …\""
+  },
+  
+  {
+    title: "\"GDPR \\u0026 CCPA Compliance\"",
+    description: "\"How Zero Trust Analytics helps you stay compliant\"",
+    url: "\"http://localhost:49390/docs/gdpr-ccpa/\"",
+    content: "\"GDPR Compliance The General Data Protection Regulation (GDPR) protects the personal data of EU residents. Here\\u0026amp;rsquo;s how Zero Trust Analytics helps you comply:\\nNo Personal Data = No GDPR Concerns GDPR applies to \\u0026amp;ldquo;personal data\\u0026amp;rdquo; - information that can identify an individual. Because we don\\u0026amp;rsquo;t collect personal data, most GDPR requirements don\\u0026amp;rsquo;t apply:\\nGDPR Requirement Our Status Consent for data collection Not required - no personal data collected Cookie consent banner Not …\""
+  },
+  
+  {
+    title: "\"Goals\"",
+    description: "\"Track conversions and measure success with goals\"",
+    url: "\"http://localhost:49390/docs/api/goals/\"",
+    content: "\"Overview Goals help you track conversions and measure the success of your website. Define specific actions you want visitors to take (newsletter signup, purchase, download, etc.) and track how many visitors complete them.\\nGoal types:\\nPageview goals - Triggered when a specific page is viewed Event goals - Triggered when a custom event fires Duration goals - Triggered when time on site exceeds a threshold Endpoints GET /api/goals POST /api/goals DELETE /api/goals Requires authentication. See …\""
+  },
+  
+  {
+    title: "\"Funnels\"",
+    description: "\"Analyze user conversion paths and identify drop-off points\"",
+    url: "\"http://localhost:49390/docs/api/funnels/\"",
+    content: "\"Overview Funnels help you understand how visitors move through your conversion paths and identify where they drop off. Define a series of steps (pageviews, events, goals) and track how many visitors complete each step.\\nUse cases:\\nE-commerce checkout flow Signup process Onboarding completion Content engagement path Lead generation funnel Endpoints GET /api/funnels POST /api/funnels DELETE /api/funnels Requires authentication. See Authentication.\\nList Funnels Get all funnels configured for a site. …\""
+  },
+  
+  {
+    title: "\"Alerts\"",
+    description: "\"Get notified when metrics exceed thresholds or anomalies occur\"",
+    url: "\"http://localhost:49390/docs/api/alerts/\"",
+    content: "\"Overview Alerts notify you when important metrics exceed thresholds or when anomalies are detected. Set up email, Slack, or webhook notifications to stay informed about traffic spikes, conversion drops, and unusual activity.\\nAlert types:\\nThreshold alerts - Triggered when a metric crosses a threshold Anomaly alerts - Triggered when unusual patterns are detected Comparison alerts - Triggered when metrics change significantly period-over-period Endpoints GET /api/alerts POST /api/alerts DELETE …\""
+  },
+  
+  {
+    title: "\"Heatmaps\"",
+    description: "\"Visualize user interactions with click and scroll heatmaps\"",
+    url: "\"http://localhost:49390/docs/api/heatmaps/\"",
+    content: "\"Overview Heatmaps visualize how users interact with your website by tracking clicks, scrolls, and mouse movements. Identify which elements get the most attention, where users get stuck, and how far they scroll down the page.\\nHeatmap types:\\nClick heatmaps - Show where users click on the page Scroll heatmaps - Show how far users scroll down Move heatmaps - Show where users move their mouse Attention heatmaps - Combine scroll and time data to show engaged areas Endpoint GET /api/heatmaps Requires …\""
+  },
+  
+  {
+    title: "\"API Keys\"",
+    description: "\"Manage API keys for programmatic access\"",
+    url: "\"http://localhost:49390/docs/api/api-keys/\"",
+    content: "\"Overview API keys provide an alternative to JWT tokens for programmatic access to the Zero Trust Analytics API. They\\u0026amp;rsquo;re ideal for server-side integrations, scripts, and long-running applications where user authentication isn\\u0026amp;rsquo;t practical.\\nKey features:\\nLong-lived authentication (no expiration) Scoped permissions (read-only, full access, etc.) Easy to rotate and revoke Multiple keys per account for different integrations Endpoints GET /api/api-keys POST /api/api-keys DELETE …\""
+  },
+  
+  {
+    title: "\"Sites\"",
+    description: "\"Manage your websites and analytics properties\"",
+    url: "\"http://localhost:49390/docs/api/sites/\"",
+    content: "\"Overview The Sites API allows you to create, list, update, and delete websites (analytics properties) in your Zero Trust Analytics account. Each site has a unique ID used for tracking and data retrieval.\\nEndpoints GET /api/sites POST /api/sites DELETE /api/sites Requires authentication. See Authentication.\\nList Sites Get all sites in your account.\\nRequest curl \\u0026amp;#34;https://ztas.io/api/sites\\u0026amp;#34; \\\\ -H \\u0026amp;#34;Authorization: Bearer YOUR_TOKEN\\u0026amp;#34; Response { \\u0026amp;#34;sites\\u0026amp;#34;: [ { \\u0026amp;#34;id\\u0026amp;#34;: …\""
+  },
+  
+  {
+    title: "\"Activity Log\"",
+    description: "\"Audit trail of all account and site activities\"",
+    url: "\"http://localhost:49390/docs/api/activity-log/\"",
+    content: "\"Overview The Activity Log provides a complete audit trail of all actions performed on your Zero Trust Analytics account. Track who did what, when they did it, and from where. Essential for security, compliance, and debugging.\\nLogged activities:\\nUser logins and logouts Site creation, updates, and deletion Team member invitations and removals API key creation and revocation Goal and funnel changes Alert triggers Settings modifications Data exports Endpoint GET /api/activity-log Requires …\""
+  },
+  
+  {
+    title: "\"Annotations\"",
+    description: "\"Add context to your analytics charts with visual annotations\"",
+    url: "\"http://localhost:49390/docs/api/annotations/\"",
+    content: "\"Overview Chart annotations allow you to mark important events on your analytics charts - product launches, marketing campaigns, site changes, and other significant moments. Annotations appear as visual markers with customizable colors and icons, making it easy to correlate events with traffic changes.\\nUse cases:\\nProduct Launches - Mark release dates to measure impact on traffic Marketing Campaigns - Track campaign start dates and measure effectiveness Site Changes - Document redesigns, …\""
+  },
+  
+  {
+    title: "\"Sessions\"",
+    description: "\"Manage active user sessions and enhance account security\"",
+    url: "\"http://localhost:49390/docs/api/sessions/\"",
+    content: "\"Overview The Sessions API allows you to view and manage your active login sessions across different devices and browsers. This is a critical security feature that helps you monitor account access and revoke sessions from untrusted devices.\\nSecurity benefits:\\nView all active sessions - See where you\\u0026amp;rsquo;re logged in Identify suspicious logins - Detect unauthorized access Revoke access remotely - Sign out from lost or stolen devices Bulk revocation - Sign out from all devices except current one …\""
+  },
+  
+  {
+    title: "\"Account\"",
+    description: "\"Check subscription status and account information\"",
+    url: "\"http://localhost:49390/docs/api/account/\"",
+    content: "\"Overview The Account API provides information about your user account, subscription status, and plan details. Use this endpoint to check trial status, plan limits, and billing information.\\nKey information:\\nPlan type - Free, Pro, Business, or Enterprise Subscription status - Active, trialing, past_due, or canceled Trial period - Days remaining in trial Access control - Whether you can access the platform Endpoint GET /api/user/status Requires authentication. See Authentication.\\nGet Account Status …\""
+  },
+  
+  {
+    title: "\"Invite\"",
+    description: "\"Accept and manage team invitations\"",
+    url: "\"http://localhost:49390/docs/api/invite/\"",
+    content: "\"Overview The Invite API allows users to view and respond to team invitations. When a team owner or admin invites you to join their team, you\\u0026amp;rsquo;ll receive an email with an invitation link. Use this API to view invitation details, accept, or decline the invitation.\\nInvitation flow:\\nInvitation sent - Team owner/admin sends invitation (see Teams) Email received - You receive invitation email with unique token View details - Preview invitation details before accepting Accept or decline - Join the …\""
+  },
+  
+  {
+    title: "\"Billing\"",
+    description: "\"Stripe integration endpoints for subscription management and payment processing\"",
+    url: "\"http://localhost:49390/docs/api/billing/\"",
+    content: "\"Billing API The billing API provides Stripe integration for subscription management, payment processing, and webhook handling. All billing operations use Stripe as the payment processor.\\nEndpoints Create Checkout Session Create a Stripe checkout session for subscription purchase.\\nEndpoint: POST /api/stripe/checkout\\nAuthentication: Required (Bearer token)\\nRequest Headers:\\nAuthorization: Bearer \\u0026amp;lt;jwt_token\\u0026amp;gt; Content-Type: application/json Response (Success):\\n{ \\u0026amp;#34;url\\u0026amp;#34;: …\""
+  },
+  
+  {
+    title: "\"Public Stats\"",
+    description: "\"Public dashboard statistics endpoint with share token authentication\"",
+    url: "\"http://localhost:49390/docs/api/public-stats/\"",
+    content: "\"Public Stats API The public stats API allows shared access to analytics dashboards using secure share tokens. This enables you to share specific analytics data with clients, stakeholders, or the public without requiring authentication.\\nEndpoint Get Public Statistics Retrieve analytics statistics for a shared dashboard.\\nEndpoint: GET /api/public/stats\\nAuthentication: Share token (query parameter)\\nQuery Parameters:\\nParameter Type Required Description token string Yes Valid share token for the …\""
+  },
+  
+  {
+    title: "\"Google Analytics Import API\"",
+    description: "\"Import historical data from Google Analytics to ensure seamless data continuity when switching to Zero Trust Analytics.\"",
+    url: "\"http://localhost:49390/docs/api/import/\"",
+    content: "\"Google Analytics Import API Import historical analytics data from Google Analytics (GA4 or Universal Analytics) to maintain data continuity when switching to Zero Trust Analytics.\\nOverview The Import API allows you to:\\nImport data from GA4 exports (CSV or JSON) Import data from Universal Analytics exports Import data directly from GA4 API responses View import history Delete imported data if needed Endpoint: /.netlify/functions/import\\nAuthentication: Required (JWT token in Authorization header) …\""
+  },
+  
+  {
+    title: "\"Google Search Console API\"",
+    description: "\"Connect Google Search Console to view search performance data alongside your analytics.\"",
+    url: "\"http://localhost:49390/docs/api/gsc/\"",
+    content: "\"Google Search Console Integration Connect your Google Search Console account to view search performance data directly in your Zero Trust Analytics dashboard.\\nOverview The GSC integration allows you to:\\nView total clicks, impressions, CTR, and average position See top search queries driving traffic Analyze top-performing pages Track search performance over time All without leaving your analytics dashboard Endpoint: /.netlify/functions/gsc\\nAuthentication: Required (JWT token in Authorization …\""
+  },
+  
+  {
+    title: "\"Self-Hosting Guide\"",
+    description: "\"Complete guide to self-hosting Zero Trust Analytics using Docker\"",
+    url: "\"http://localhost:49390/docs/self-hosting/\"",
+    content: "\"Self-Hosting Zero Trust Analytics Take full control of your analytics data by hosting Zero Trust Analytics on your own infrastructure. This guide will help you deploy and manage your own instance using Docker.\\nWhy Self-Host? Complete Data Control: Your analytics data never leaves your infrastructure No Usage Limits: Track unlimited sites and pageviews Customization: Modify the platform to fit your needs Cost Savings: Free for unlimited use (just pay for hosting) Privacy Compliance: Keep data in …\""
+  },
+  
+];
+
+function filterDocs() {
+  const searchTerm = document.getElementById('docs-search').value.toLowerCase().trim();
+  const resultsContainer = document.getElementById('docs-search-results');
+  const resultsList = document.getElementById('docs-results-list');
+  const noResults = document.getElementById('docs-no-results');
+  const mainContent = document.querySelector('.container.py-5 > .row');
+
+  if (!searchTerm) {
+    clearDocsSearch();
+    return;
+  }
+
+  
+  const matches = docsIndex.filter(doc =>
+    doc.title.toLowerCase().includes(searchTerm) ||
+    doc.description.toLowerCase().includes(searchTerm) ||
+    doc.content.toLowerCase().includes(searchTerm)
+  );
+
+  
+  mainContent.style.display = 'none';
+  resultsContainer.style.display = 'block';
+
+  if (matches.length === 0) {
+    resultsList.innerHTML = '';
+    noResults.style.display = 'block';
+    return;
+  }
+
+  noResults.style.display = 'none';
+
+  
+  resultsList.innerHTML = matches.map(doc => `
+    <a href="${doc.url}" class="text-decoration-none">
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title text-primary mb-1">${highlightMatch(doc.title, searchTerm)}</h5>
+          <p class="card-text text-muted mb-0">${highlightMatch(doc.description || doc.content.substring(0, 150) + '...', searchTerm)}</p>
+        </div>
+      </div>
+    </a>
+  `).join('');
+}
+
+function highlightMatch(text, term) {
+  if (!term) return text;
+  const regex = new RegExp(`(${term})`, 'gi');
+  return text.replace(regex, '<mark>$1</mark>');
+}
+
+function clearDocsSearch() {
+  document.getElementById('docs-search').value = '';
+  document.getElementById('docs-search-results').style.display = 'none';
+  document.querySelector('.container.py-5 > .row').style.display = 'flex';
+}
+
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    clearDocsSearch();
+  }
+});
+</script>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>

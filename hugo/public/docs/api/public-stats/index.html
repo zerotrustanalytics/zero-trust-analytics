@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Public Stats
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Public Stats">
+
+
+<meta name="description" content="Public dashboard statistics endpoint with share token authentication">
+<meta name="summary" content="Public Stats API
+The public stats API allows shared access to analytics dashboards using secure share tokens. This enables you to share specific analytics data with clients, stakeholders, or the public without requiring authentication.
+Endpoint
+Get Public Statistics
+Retrieve analytics statistics for a shared dashboard.
+Endpoint: GET /api/public/stats
+Authentication: Share token (query parameter)
+Query Parameters:
+
+  
+      
+          Parameter
+          Type
+          Required
+          Description
+      
+  
+  
+      
+          token
+          string
+          Yes
+          Valid share token for the dashboard
+      
+      
+          period
+          string
+          No
+          Time period for stats (default: 7d)
+      
+  
+
+Supported Periods:" >
+<meta name="date" content="0001-01-01 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Public Stats">
+
+<meta property="og:date" content="0001-01-01 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Public dashboard statistics endpoint with share token authentication">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/api/public-stats/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/api/public-stats/">
+
+<meta name="twitter:title" content="Public Stats">
+
+<meta name="twitter:description" content="Public dashboard statistics endpoint with share token authentication">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/api/public-stats/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/docs/" class="text-decoration-none">Docs</a></li>
+        
+        
+        <li class="breadcrumb-item"><a href="/docs/api/" class="text-decoration-none">API Reference</a></li>
+        
+        
+        <li class="breadcrumb-item active" aria-current="page">Public Stats</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link ">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link ">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link ">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link ">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link ">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link ">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link ">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link ">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link ">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link ">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link ">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link ">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link ">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <article class="docs-content">
+        <h1 class="mb-4">Public Stats</h1>
+        
+        <p class="lead text-muted mb-4">Public dashboard statistics endpoint with share token authentication</p>
+        
+
+        <div class="docs-body">
+          <h1 id="public-stats-api">Public Stats API</h1>
+<p>The public stats API allows shared access to analytics dashboards using secure share tokens. This enables you to share specific analytics data with clients, stakeholders, or the public without requiring authentication.</p>
+<h2 id="endpoint">Endpoint</h2>
+<h3 id="get-public-statistics">Get Public Statistics</h3>
+<p>Retrieve analytics statistics for a shared dashboard.</p>
+<p><strong>Endpoint:</strong> <code>GET /api/public/stats</code></p>
+<p><strong>Authentication:</strong> Share token (query parameter)</p>
+<p><strong>Query Parameters:</strong></p>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>token</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Valid share token for the dashboard</td>
+      </tr>
+      <tr>
+          <td><code>period</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Time period for stats (default: <code>7d</code>)</td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Supported Periods:</strong></p>
+<ul>
+<li><code>24h</code> - Last 24 hours</li>
+<li><code>7d</code> - Last 7 days (default)</li>
+<li><code>30d</code> - Last 30 days</li>
+<li><code>90d</code> - Last 90 days</li>
+<li><code>365d</code> - Last 365 days</li>
+</ul>
+<p><strong>Note:</strong> Available periods may be restricted by the share token configuration. If a period is not allowed, the API will return a 403 error.</p>
+<p><strong>Response (Success):</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;site&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;nickname&#34;</span>: <span style="color:#e6db74">&#34;My Website&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;period&#34;</span>: <span style="color:#e6db74">&#34;7d&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;allowedPeriods&#34;</span>: [<span style="color:#e6db74">&#34;24h&#34;</span>, <span style="color:#e6db74">&#34;7d&#34;</span>, <span style="color:#e6db74">&#34;30d&#34;</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">1250</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">3480</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;bounceRate&#34;</span>: <span style="color:#ae81ff">42.5</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;avgSessionDuration&#34;</span>: <span style="color:#ae81ff">185.3</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;pages&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">850</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">620</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/about&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">420</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">380</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;referrers&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;source&#34;</span>: <span style="color:#e6db74">&#34;google.com&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">450</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;source&#34;</span>: <span style="color:#e6db74">&#34;direct&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;visits&#34;</span>: <span style="color:#ae81ff">380</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;devices&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;desktop&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">720</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;mobile&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">480</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;tablet&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">50</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;browsers&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Chrome&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">680</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Safari&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">320</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Firefox&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">180</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;countries&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;US&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;United States&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">580</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;GB&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;United Kingdom&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">240</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;daily&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;2025-12-05&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">485</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">168</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;2025-12-06&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">512</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;uniqueVisitors&#34;</span>: <span style="color:#ae81ff">182</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>Response (Error - Missing Token):</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Share token required&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>Response (Error - Invalid Token):</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Invalid or expired share link&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>Response (Error - Period Not Allowed):</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Period not allowed for this share&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>200</code> - Statistics retrieved successfully</li>
+<li><code>400</code> - Missing share token</li>
+<li><code>403</code> - Period not allowed for this share token</li>
+<li><code>404</code> - Invalid or expired share token</li>
+<li><code>500</code> - Internal server error</li>
+</ul>
+<hr>
+<h2 id="share-tokens">Share Tokens</h2>
+<p>Share tokens are secure, randomly generated identifiers that grant access to specific dashboard statistics.</p>
+<h3 id="token-features">Token Features</h3>
+<p><strong>Security:</strong></p>
+<ul>
+<li>Tokens are unique and unguessable</li>
+<li>Can be revoked at any time by the dashboard owner</li>
+<li>Optional expiration dates</li>
+<li>No authentication required (token acts as authentication)</li>
+</ul>
+<p><strong>Access Control:</strong></p>
+<ul>
+<li>Tokens are tied to specific sites/dashboards</li>
+<li>Can restrict available time periods</li>
+<li>Read-only access (no modifications)</li>
+<li>Limited to analytics data only</li>
+</ul>
+<p><strong>Permissions:</strong>
+Share tokens may restrict which time periods are accessible. The <code>allowedPeriods</code> field in the response indicates which periods can be queried.</p>
+<hr>
+<h2 id="example-usage">Example Usage</h2>
+<h3 id="basic-request">Basic Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">shareToken</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;abc123def456ghi789&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">period</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;30d&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">`/api/public/stats?token=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">shareToken</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">period</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">stats</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">`Unique visitors: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">uniqueVisitors</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">`Pageviews: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">pageviews</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">`Bounce rate: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">bounceRate</span><span style="color:#e6db74">}</span><span style="color:#e6db74">%`</span>);
+</span></span></code></pre></div><h3 id="with-error-handling">With Error Handling</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">fetchPublicStats</span>(<span style="color:#a6e22e">token</span>, <span style="color:#a6e22e">period</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;7d&#39;</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">url</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">URL</span>(<span style="color:#e6db74">&#39;/api/public/stats&#39;</span>, window.<span style="color:#a6e22e">location</span>.<span style="color:#a6e22e">origin</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">url</span>.<span style="color:#a6e22e">searchParams</span>.<span style="color:#a6e22e">set</span>(<span style="color:#e6db74">&#39;token&#39;</span>, <span style="color:#a6e22e">token</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">url</span>.<span style="color:#a6e22e">searchParams</span>.<span style="color:#a6e22e">set</span>(<span style="color:#e6db74">&#39;period&#39;</span>, <span style="color:#a6e22e">period</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#a6e22e">url</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">ok</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> Error(<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">error</span> <span style="color:#f92672">||</span> <span style="color:#e6db74">&#39;Failed to fetch stats&#39;</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">data</span>;
+</span></span><span style="display:flex;"><span>  } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">error</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#39;Error fetching public stats:&#39;</span>, <span style="color:#a6e22e">error</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">throw</span> <span style="color:#a6e22e">error</span>;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Usage
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">fetchPublicStats</span>(<span style="color:#e6db74">&#39;your-share-token&#39;</span>, <span style="color:#e6db74">&#39;30d&#39;</span>)
+</span></span><span style="display:flex;"><span>  .<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">stats</span> =&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;Stats loaded:&#39;</span>, <span style="color:#a6e22e">stats</span>);
+</span></span><span style="display:flex;"><span>  })
+</span></span><span style="display:flex;"><span>  .<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">error</span> =&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#39;Failed to load stats:&#39;</span>, <span style="color:#a6e22e">error</span>.<span style="color:#a6e22e">message</span>);
+</span></span><span style="display:flex;"><span>  });
+</span></span></code></pre></div><h3 id="checking-allowed-periods">Checking Allowed Periods</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">stats</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetchPublicStats</span>(<span style="color:#a6e22e">token</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Check which periods are available
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">allowedPeriods</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;Available periods:&#39;</span>, <span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">allowedPeriods</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Verify period is allowed before requesting
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">allowedPeriods</span>.<span style="color:#a6e22e">includes</span>(<span style="color:#e6db74">&#39;90d&#39;</span>)) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">quarterlyStats</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetchPublicStats</span>(<span style="color:#a6e22e">token</span>, <span style="color:#e6db74">&#39;90d&#39;</span>);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h2 id="data-insights">Data Insights</h2>
+<h3 id="summary-metrics">Summary Metrics</h3>
+<p>The API provides key performance indicators:</p>
+<ul>
+<li><strong>Unique Visitors</strong> - Count of distinct users in the period</li>
+<li><strong>Pageviews</strong> - Total page views across all visitors</li>
+<li><strong>Bounce Rate</strong> - Percentage of single-page sessions</li>
+<li><strong>Average Session Duration</strong> - Mean session length in seconds</li>
+</ul>
+<h3 id="detailed-breakdowns">Detailed Breakdowns</h3>
+<p><strong>Pages:</strong>
+Top performing pages with pageviews and unique visitor counts.</p>
+<p><strong>Referrers:</strong>
+Traffic sources showing where visitors came from.</p>
+<p><strong>Devices:</strong>
+Device type distribution (desktop, mobile, tablet).</p>
+<p><strong>Browsers:</strong>
+Browser usage statistics.</p>
+<p><strong>Countries:</strong>
+Geographic distribution of visitors by country code.</p>
+<p><strong>Daily Stats:</strong>
+Time-series data showing daily pageviews and unique visitors.</p>
+<hr>
+<h2 id="caching">Caching</h2>
+<p>The public stats endpoint implements caching for performance:</p>
+<ul>
+<li><strong>Cache-Control:</strong> <code>public, max-age=300</code> (5 minutes)</li>
+<li>Stats are cached for 5 minutes</li>
+<li>Reduces load on the database</li>
+<li>Improves response times for frequently accessed dashboards</li>
+</ul>
+<p>Client applications should respect cache headers for optimal performance.</p>
+<hr>
+<h2 id="cors-support">CORS Support</h2>
+<p>The public stats endpoint supports CORS with:</p>
+<ul>
+<li><code>Access-Control-Allow-Origin: *</code></li>
+<li><code>Access-Control-Allow-Methods: GET, OPTIONS</code></li>
+<li><code>Access-Control-Allow-Headers: Content-Type</code></li>
+</ul>
+<p>This allows the API to be accessed from any domain, making it suitable for embedding in external websites or applications.</p>
+<hr>
+<h2 id="use-cases">Use Cases</h2>
+<h3 id="public-dashboard-embedding">Public Dashboard Embedding</h3>
+<p>Embed analytics on external websites:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span>&lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">id</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;public-stats&#34;</span>&gt;&lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#f92672">script</span>&gt;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">loadStats</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">stats</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetchPublicStats</span>(<span style="color:#e6db74">&#39;your-token&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    document.<span style="color:#a6e22e">getElementById</span>(<span style="color:#e6db74">&#39;public-stats&#39;</span>).<span style="color:#a6e22e">innerHTML</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">`
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &lt;h3&gt;Website Statistics&lt;/h3&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &lt;p&gt;Unique Visitors: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">uniqueVisitors</span>.<span style="color:#a6e22e">toLocaleString</span>()<span style="color:#e6db74">}</span><span style="color:#e6db74">&lt;/p&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &lt;p&gt;Pageviews: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">pageviews</span>.<span style="color:#a6e22e">toLocaleString</span>()<span style="color:#e6db74">}</span><span style="color:#e6db74">&lt;/p&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &lt;p&gt;Bounce Rate: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">stats</span>.<span style="color:#a6e22e">bounceRate</span><span style="color:#e6db74">}</span><span style="color:#e6db74">%&lt;/p&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    `</span>;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">loadStats</span>();
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">script</span>&gt;
+</span></span></code></pre></div><h3 id="client-reporting">Client Reporting</h3>
+<p>Share analytics with clients without giving them account access:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">// Generate report for client
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">clientStats</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetchPublicStats</span>(<span style="color:#a6e22e">clientToken</span>, <span style="color:#e6db74">&#39;30d&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Display in dashboard
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">renderClientReport</span>({
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">siteName</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">clientStats</span>.<span style="color:#a6e22e">site</span>.<span style="color:#a6e22e">domain</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">metrics</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">visitors</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">clientStats</span>.<span style="color:#a6e22e">uniqueVisitors</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">views</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">clientStats</span>.<span style="color:#a6e22e">pageviews</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bounce</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">clientStats</span>.<span style="color:#a6e22e">bounceRate</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">topPages</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">clientStats</span>.<span style="color:#a6e22e">pages</span>.<span style="color:#a6e22e">slice</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>),
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">traffic</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">clientStats</span>.<span style="color:#a6e22e">referrers</span>
+</span></span><span style="display:flex;"><span>});
+</span></span></code></pre></div><h3 id="public-transparency">Public Transparency</h3>
+<p>Display site metrics publicly:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">// Show real-time stats on about page
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">publicStats</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetchPublicStats</span>(<span style="color:#e6db74">&#39;public-token&#39;</span>, <span style="color:#e6db74">&#39;24h&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>document.<span style="color:#a6e22e">getElementById</span>(<span style="color:#e6db74">&#39;live-stats&#39;</span>).<span style="color:#a6e22e">innerHTML</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">`
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &lt;p&gt;In the last 24 hours:&lt;/p&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &lt;ul&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &lt;li&gt;</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">publicStats</span>.<span style="color:#a6e22e">uniqueVisitors</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> visitors&lt;/li&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &lt;li&gt;</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">publicStats</span>.<span style="color:#a6e22e">pageviews</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> page views&lt;/li&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &lt;li&gt;</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">publicStats</span>.<span style="color:#a6e22e">countries</span>.<span style="color:#a6e22e">length</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> countries&lt;/li&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &lt;/ul&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">`</span>;
+</span></span></code></pre></div><hr>
+<h2 id="security-considerations">Security Considerations</h2>
+<ol>
+<li><strong>Token Protection</strong> - Treat share tokens as secrets if the data is sensitive</li>
+<li><strong>Token Rotation</strong> - Regularly rotate tokens for sensitive dashboards</li>
+<li><strong>Period Restrictions</strong> - Limit available periods to control data exposure</li>
+<li><strong>Expiration</strong> - Set expiration dates for time-limited sharing</li>
+<li><strong>Monitoring</strong> - Track token usage to detect unauthorized access</li>
+<li><strong>Revocation</strong> - Revoke tokens immediately when access should end</li>
+</ol>
+<hr>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use specific periods</strong> instead of always defaulting to 7d</li>
+<li><strong>Check <code>allowedPeriods</code></strong> before requesting different time ranges</li>
+<li><strong>Handle errors gracefully</strong> with user-friendly messages</li>
+<li><strong>Respect cache headers</strong> to reduce server load</li>
+<li><strong>Update periodically</strong> rather than on every page load</li>
+<li><strong>Display site name</strong> from <code>site.domain</code> or <code>site.nickname</code></li>
+<li><strong>Format numbers</strong> for readability (e.g., 1,250 instead of 1250)</li>
+</ol>
+<hr>
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><a href="/docs/features/dashboard/">Dashboard Features</a></li>
+<li><a href="/docs/guides/sharing/">Sharing Dashboards</a></li>
+<li><a href="/docs/privacy/">Analytics Privacy</a></li>
+</ul>
+
+        </div>
+
+        
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+          
+          <a href="/docs/api/import/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Google Analytics Import API
+          </a>
+          
+
+          
+          <a href="/docs/api/billing/" class="btn btn-outline-primary">
+            Billing<i class="fas fa-arrow-right ms-2"></i>
+          </a>
+          
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-body h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+.docs-body h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.docs-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.docs-body code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+.docs-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.docs-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+.docs-body th, .docs-body td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+.docs-body th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+.docs-body .alert {
+  margin: 1.5rem 0;
+}
+
+ 
+[data-theme="dark"] .docs-sidebar .nav-link {
+  color: #d4d4d8;
+}
+[data-theme="dark"] .docs-sidebar .nav-link:hover,
+[data-theme="dark"] .docs-sidebar .nav-link.active {
+  color: #60a5fa;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .docs-sidebar h6.text-muted {
+  color: #9ca3af !important;
+}
+[data-theme="dark"] .docs-content h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-content .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .docs-body {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body h2 {
+  color: var(--zta-text, #e9ecef);
+  border-bottom-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .docs-body h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .docs-body th,
+[data-theme="dark"] .docs-body td {
+  border-color: var(--zta-border, #495057);
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body th {
+  background: var(--zta-bg-tertiary, #2c3034);
+}
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  color: #d4d4d8;
+  border-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--zta-bg-tertiary, #2c3034);
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>

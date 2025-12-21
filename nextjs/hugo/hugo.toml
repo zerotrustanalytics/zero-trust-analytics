@@ -1,0 +1,16 @@
+baseURL = 'https://zero-trust-analytics.netlify.app/'
+languageCode = 'en-us'
+title = 'Zero Trust Analytics'
+enableRobotsTXT = true
+
+[params]
+CompanyName = 'Zero Trust Analytics'
+repoName = 'zero-trust-analytics'
+tagline = 'Privacy-focused analytics that respects your users'
+price = '$10/month'
+
+[environments.development]
+baseURL = 'http://localhost:1313/'
+
+[environments.production]
+baseURL = 'https://zero-trust-analytics.netlify.app/'

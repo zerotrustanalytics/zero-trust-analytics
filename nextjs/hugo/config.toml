@@ -1,0 +1,21 @@
+baseURL = "https://ztas.io/"
+title = "Zero Trust Analytics"
+languageCode = "en-us"
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[params]
+  CompanyName = "Zero Trust Analytics"
+  description = "Privacy-first website analytics without cookies"
+
+[outputs]
+  home = ["HTML", "RSS"]
+  section = ["HTML", "RSS", "JSON"]
+  page = ["HTML"]

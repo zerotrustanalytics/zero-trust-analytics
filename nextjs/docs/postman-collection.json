@@ -1,0 +1,659 @@
+{
+  "info": {
+    "name": "Zero Trust Analytics API",
+    "description": "Privacy-first analytics API with zero-trust security principles",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://ztas.io/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "siteId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "    pm.collectionVariables.set('csrfToken', response.csrfToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecureP@ssw0rd123\",\n  \"plan\": \"pro\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('authToken', response.token);",
+                  "        pm.collectionVariables.set('csrfToken', response.csrfToken);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecureP@ssw0rd123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"RESET_TOKEN_HERE\",\n  \"newPassword\": \"NewSecureP@ssw0rd123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset"]
+            }
+          }
+        },
+        {
+          "name": "Verify Reset Token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-reset-token?token=RESET_TOKEN_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-reset-token"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "RESET_TOKEN_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2FA Setup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"setup\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa"]
+            }
+          }
+        },
+        {
+          "name": "2FA Verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"verify\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa"]
+            }
+          }
+        },
+        {
+          "name": "2FA Disable",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"disable\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa"]
+            }
+          }
+        },
+        {
+          "name": "2FA Validate",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"validate\",\n  \"tempToken\": \"TEMP_TOKEN_HERE\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sites",
+      "item": [
+        {
+          "name": "List Sites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sites/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "list"]
+            }
+          }
+        },
+        {
+          "name": "Create Site",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('siteId', response.site.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"domain\": \"example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sites/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "create"]
+            }
+          }
+        },
+        {
+          "name": "Update Site",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteId\": \"{{siteId}}\",\n  \"domain\": \"newdomain.com\",\n  \"nickname\": \"My Awesome Blog\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sites/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "update"]
+            }
+          }
+        },
+        {
+          "name": "Delete Site",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteId\": \"{{siteId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sites/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "delete"]
+            }
+          }
+        },
+        {
+          "name": "Create Share Link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteId\": \"{{siteId}}\",\n  \"allowedPeriods\": [\"7d\", \"30d\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sites/share",
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "share"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Track Pageview",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteId\": \"{{siteId}}\",\n  \"type\": \"pageview\",\n  \"path\": \"/blog/article\",\n  \"referrer\": \"https://google.com\",\n  \"sessionId\": \"sess_xyz789\",\n  \"isNewVisitor\": true,\n  \"landingPage\": \"/home\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/track",
+              "host": ["{{baseUrl}}"],
+              "path": ["track"]
+            }
+          }
+        },
+        {
+          "name": "Track Batch Events",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteId\": \"{{siteId}}\",\n  \"batch\": true,\n  \"events\": [\n    {\n      \"type\": \"pageview\",\n      \"path\": \"/home\",\n      \"sessionId\": \"sess_xyz789\",\n      \"isNewVisitor\": true\n    },\n    {\n      \"type\": \"engagement\",\n      \"path\": \"/home\",\n      \"sessionId\": \"sess_xyz789\",\n      \"timeOnPage\": 45,\n      \"isBounce\": false\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/track",
+              "host": ["{{baseUrl}}"],
+              "path": ["track"]
+            }
+          }
+        },
+        {
+          "name": "Track Custom Event",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteId\": \"{{siteId}}\",\n  \"type\": \"event\",\n  \"path\": \"/signup\",\n  \"action\": \"button_click\",\n  \"category\": \"cta\",\n  \"label\": \"signup\",\n  \"value\": 1,\n  \"sessionId\": \"sess_xyz789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/track",
+              "host": ["{{baseUrl}}"],
+              "path": ["track"]
+            }
+          }
+        },
+        {
+          "name": "Get Stats (7 days)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats?siteId={{siteId}}&period=7d",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats"],
+              "query": [
+                {
+                  "key": "siteId",
+                  "value": "{{siteId}}"
+                },
+                {
+                  "key": "period",
+                  "value": "7d"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stats (30 days)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats?siteId={{siteId}}&period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats"],
+              "query": [
+                {
+                  "key": "siteId",
+                  "value": "{{siteId}}"
+                },
+                {
+                  "key": "period",
+                  "value": "30d"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stats (Custom Date Range)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats?siteId={{siteId}}&startDate=2024-01-01T00:00:00Z&endDate=2024-01-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats"],
+              "query": [
+                {
+                  "key": "siteId",
+                  "value": "{{siteId}}"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31T23:59:59Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Stats",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public-stats?token=SHARE_TOKEN_HERE&period=7d",
+              "host": ["{{baseUrl}}"],
+              "path": ["public-stats"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "SHARE_TOKEN_HERE"
+                },
+                {
+                  "key": "period",
+                  "value": "7d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get User Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get User Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "sessions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "item": [
+        {
+          "name": "Create Checkout Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/stripe/checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["stripe", "checkout"]
+            }
+          }
+        },
+        {
+          "name": "Create Customer Portal Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/stripe/portal",
+              "host": ["{{baseUrl}}"],
+              "path": ["stripe", "portal"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

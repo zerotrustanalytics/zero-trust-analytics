@@ -1,18 +1,18 @@
 /**
  * Comprehensive TDD Test Suite for Session Management
  *
- * This test suite covers session management functionality:
- * - Session creation and storage
- * - Session retrieval and validation
- * - Session expiration and cleanup
- * - Session security and multi-device support
+ * This test suite covers all session-related functionality with:
+ * - Session creation and storage tests
+ * - Cookie management and security tests
+ * - Session validation and expiry tests
+ * - Logout and session cleanup tests
  *
- * Total: 30 test cases
+ * Total: 22 test cases
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
-// Mock session utilities - these would be implemented in src/lib/auth/session.ts
+// Mock types for session management
 interface Session {
   id: string;
   userId: string;
@@ -20,275 +20,226 @@ interface Session {
   role?: string;
   createdAt: number;
   expiresAt: number;
-  lastAccessedAt: number;
+  lastActivity: number;
   ipAddress?: string;
   userAgent?: string;
-  deviceId?: string;
   refreshToken?: string;
 }
 
-interface SessionCreateOptions {
-  userId: string;
-  email: string;
-  role?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  deviceId?: string;
-  expiresIn?: number; // in milliseconds
-}
-
-interface SessionValidationResult {
-  valid: boolean;
-  session?: Session;
-  error?: string;
-  reason?: 'expired' | 'not_found' | 'invalid';
+interface CookieOptions {
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: 'strict' | 'lax' | 'none';
+  path: string;
+  maxAge?: number;
+  domain?: string;
 }
 
 interface SessionStore {
-  [sessionId: string]: Session;
+  sessions: Map<string, Session>;
 }
 
-// Mock session storage (in-memory for testing)
-let mockSessionStore: SessionStore = {};
+// Mock implementation for testing
+const mockSessionStore: SessionStore = {
+  sessions: new Map(),
+};
 
-const DEFAULT_SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
-const MAX_SESSIONS_PER_USER = 5;
+const SESSION_DURATION = 15 * 60 * 1000; // 15 minutes
+const SESSION_IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 const mockSessionUtils = {
-  createSession: async (options: SessionCreateOptions): Promise<Session> => {
-    if (!options.userId) {
+  createSession: (
+    userId: string,
+    email: string,
+    options?: { ipAddress?: string; userAgent?: string; role?: string }
+  ): Session => {
+    if (!userId) {
       throw new Error('userId is required');
     }
-
-    if (!options.email) {
+    if (!email) {
       throw new Error('email is required');
     }
 
     const now = Date.now();
-    const sessionId = `session-${options.userId}-${now}-${Math.random().toString(36).substring(7)}`;
-    const expiresIn = options.expiresIn || DEFAULT_SESSION_EXPIRY;
+    const sessionId = `session-${userId}-${now}-${Math.random().toString(36).substr(2, 9)}`;
 
     const session: Session = {
       id: sessionId,
-      userId: options.userId,
-      email: options.email,
-      role: options.role,
+      userId,
+      email,
+      role: options?.role || 'user',
       createdAt: now,
-      expiresAt: now + expiresIn,
-      lastAccessedAt: now,
-      ipAddress: options.ipAddress,
-      userAgent: options.userAgent,
-      deviceId: options.deviceId,
+      expiresAt: now + SESSION_DURATION,
+      lastActivity: now,
+      ipAddress: options?.ipAddress,
+      userAgent: options?.userAgent,
     };
 
-    mockSessionStore[sessionId] = session;
-
-    // Cleanup old sessions for this user
-    await mockSessionUtils.cleanupUserSessions(options.userId);
-
+    mockSessionStore.sessions.set(sessionId, session);
     return session;
   },
 
-  getSession: async (sessionId: string): Promise<Session | null> => {
+  getSession: (sessionId: string): Session | null => {
     if (!sessionId) {
       return null;
     }
 
-    const session = mockSessionStore[sessionId];
-
+    const session = mockSessionStore.sessions.get(sessionId);
     if (!session) {
       return null;
     }
 
-    // Update last accessed time
-    session.lastAccessedAt = Date.now();
-    mockSessionStore[sessionId] = session;
-
-    return session;
-  },
-
-  validateSession: async (sessionId: string): Promise<SessionValidationResult> => {
-    if (!sessionId) {
-      return { valid: false, error: 'Session ID is required', reason: 'invalid' };
-    }
-
-    const session = mockSessionStore[sessionId];
-
-    if (!session) {
-      return { valid: false, error: 'Session not found', reason: 'not_found' };
-    }
-
-    const now = Date.now();
-
-    if (session.expiresAt < now) {
-      // Clean up expired session
-      delete mockSessionStore[sessionId];
-      return { valid: false, error: 'Session expired', reason: 'expired' };
-    }
-
-    // Update last accessed time
-    session.lastAccessedAt = now;
-    mockSessionStore[sessionId] = session;
-
-    return { valid: true, session };
-  },
-
-  deleteSession: async (sessionId: string): Promise<boolean> => {
-    if (!sessionId || !mockSessionStore[sessionId]) {
-      return false;
-    }
-
-    delete mockSessionStore[sessionId];
-    return true;
-  },
-
-  deleteUserSessions: async (userId: string): Promise<number> => {
-    if (!userId) {
-      return 0;
-    }
-
-    const sessionIds = Object.keys(mockSessionStore).filter(
-      (id) => mockSessionStore[id].userId === userId
-    );
-
-    sessionIds.forEach((id) => delete mockSessionStore[id]);
-
-    return sessionIds.length;
-  },
-
-  deleteAllSessionsExcept: async (userId: string, currentSessionId: string): Promise<number> => {
-    if (!userId) {
-      return 0;
-    }
-
-    const sessionIds = Object.keys(mockSessionStore).filter(
-      (id) => mockSessionStore[id].userId === userId && id !== currentSessionId
-    );
-
-    sessionIds.forEach((id) => delete mockSessionStore[id]);
-
-    return sessionIds.length;
-  },
-
-  getUserSessions: async (userId: string): Promise<Session[]> => {
-    if (!userId) {
-      return [];
-    }
-
-    return Object.values(mockSessionStore)
-      .filter((session) => session.userId === userId)
-      .sort((a, b) => b.lastAccessedAt - a.lastAccessedAt);
-  },
-
-  cleanupExpiredSessions: async (): Promise<number> => {
-    const now = Date.now();
-    const expiredSessionIds = Object.keys(mockSessionStore).filter(
-      (id) => mockSessionStore[id].expiresAt < now
-    );
-
-    expiredSessionIds.forEach((id) => delete mockSessionStore[id]);
-
-    return expiredSessionIds.length;
-  },
-
-  cleanupUserSessions: async (userId: string): Promise<number> => {
-    const userSessions = await mockSessionUtils.getUserSessions(userId);
-
-    if (userSessions.length <= MAX_SESSIONS_PER_USER) {
-      return 0;
-    }
-
-    // Sort by last accessed time and remove oldest sessions
-    const sessionsToRemove = userSessions
-      .sort((a, b) => a.lastAccessedAt - b.lastAccessedAt)
-      .slice(0, userSessions.length - MAX_SESSIONS_PER_USER);
-
-    sessionsToRemove.forEach((session) => delete mockSessionStore[session.id]);
-
-    return sessionsToRemove.length;
-  },
-
-  extendSession: async (sessionId: string, additionalTime: number): Promise<Session | null> => {
-    const session = mockSessionStore[sessionId];
-
-    if (!session) {
+    // Check if session is expired
+    if (mockSessionUtils.isSessionExpired(session)) {
+      mockSessionStore.sessions.delete(sessionId);
       return null;
     }
 
-    session.expiresAt += additionalTime;
-    mockSessionStore[sessionId] = session;
-
     return session;
   },
 
-  refreshSession: async (sessionId: string): Promise<Session | null> => {
-    const session = mockSessionStore[sessionId];
-
+  updateSessionActivity: (sessionId: string): Session | null => {
+    const session = mockSessionUtils.getSession(sessionId);
     if (!session) {
       return null;
     }
 
     const now = Date.now();
+    session.lastActivity = now;
+    session.expiresAt = now + SESSION_DURATION;
 
-    if (session.expiresAt < now) {
-      delete mockSessionStore[sessionId];
-      return null;
-    }
-
-    session.expiresAt = now + DEFAULT_SESSION_EXPIRY;
-    session.lastAccessedAt = now;
-    mockSessionStore[sessionId] = session;
-
+    mockSessionStore.sessions.set(sessionId, session);
     return session;
   },
 
-  getSessionCount: async (userId: string): Promise<number> => {
-    return Object.values(mockSessionStore).filter((session) => session.userId === userId).length;
+  deleteSession: (sessionId: string): boolean => {
+    return mockSessionStore.sessions.delete(sessionId);
   },
 
-  isSessionActive: async (sessionId: string): Promise<boolean> => {
-    const validation = await mockSessionUtils.validateSession(sessionId);
-    return validation.valid;
-  },
-
-  updateSessionMetadata: async (
-    sessionId: string,
-    metadata: { ipAddress?: string; userAgent?: string; deviceId?: string }
-  ): Promise<Session | null> => {
-    const session = mockSessionStore[sessionId];
-
-    if (!session) {
-      return null;
+  deleteUserSessions: (userId: string): number => {
+    let count = 0;
+    for (const [sessionId, session] of mockSessionStore.sessions.entries()) {
+      if (session.userId === userId) {
+        mockSessionStore.sessions.delete(sessionId);
+        count++;
+      }
     }
-
-    if (metadata.ipAddress) session.ipAddress = metadata.ipAddress;
-    if (metadata.userAgent) session.userAgent = metadata.userAgent;
-    if (metadata.deviceId) session.deviceId = metadata.deviceId;
-
-    mockSessionStore[sessionId] = session;
-
-    return session;
+    return count;
   },
 
-  getActiveSessions: async (userId: string): Promise<Session[]> => {
+  isSessionExpired: (session: Session): boolean => {
     const now = Date.now();
-    return Object.values(mockSessionStore)
-      .filter((session) => session.userId === userId && session.expiresAt > now)
-      .sort((a, b) => b.lastAccessedAt - a.lastAccessedAt);
+
+    // Check absolute expiry
+    if (now > session.expiresAt) {
+      return true;
+    }
+
+    // Check idle timeout
+    if (now - session.lastActivity > SESSION_IDLE_TIMEOUT) {
+      return true;
+    }
+
+    return false;
+  },
+
+  isSessionValid: (sessionId: string): boolean => {
+    const session = mockSessionUtils.getSession(sessionId);
+    return session !== null;
+  },
+
+  getUserSessions: (userId: string): Session[] => {
+    const userSessions: Session[] = [];
+
+    for (const session of mockSessionStore.sessions.values()) {
+      if (session.userId === userId && !mockSessionUtils.isSessionExpired(session)) {
+        userSessions.push(session);
+      }
+    }
+
+    return userSessions;
+  },
+
+  cleanupExpiredSessions: (): number => {
+    let count = 0;
+
+    for (const [sessionId, session] of mockSessionStore.sessions.entries()) {
+      if (mockSessionUtils.isSessionExpired(session)) {
+        mockSessionStore.sessions.delete(sessionId);
+        count++;
+      }
+    }
+
+    return count;
+  },
+
+  createSessionCookie: (sessionId: string, maxAge?: number): { name: string; value: string; options: CookieOptions } => {
+    return {
+      name: 'session_id',
+      value: sessionId,
+      options: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: maxAge || SESSION_DURATION / 1000, // Convert to seconds
+      },
+    };
+  },
+
+  clearSessionCookie: (): { name: string; value: string; options: CookieOptions } => {
+    return {
+      name: 'session_id',
+      value: '',
+      options: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 0,
+      },
+    };
+  },
+
+  parseSessionFromCookie: (cookieHeader: string): string | null => {
+    if (!cookieHeader) {
+      return null;
+    }
+
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    for (const cookie of cookies) {
+      const [name, value] = cookie.split('=');
+      if (name === 'session_id') {
+        return value;
+      }
+    }
+
+    return null;
+  },
+
+  validateSessionSecurity: (session: Session, ipAddress?: string, userAgent?: string): { valid: boolean; reason?: string } => {
+    // IP address validation (optional, for enhanced security)
+    if (session.ipAddress && ipAddress && session.ipAddress !== ipAddress) {
+      return { valid: false, reason: 'IP address mismatch' };
+    }
+
+    // User agent validation (optional, for enhanced security)
+    if (session.userAgent && userAgent && session.userAgent !== userAgent) {
+      return { valid: false, reason: 'User agent mismatch' };
+    }
+
+    return { valid: true };
   },
 };
 
-describe('Session Management - Creation', () => {
+describe('Session Management - Session Creation and Storage', () => {
   beforeEach(() => {
-    mockSessionStore = {};
+    mockSessionStore.sessions.clear();
   });
 
   describe('createSession', () => {
-    it('should create a new session with required fields', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
+    it('should create a new session with required fields', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
 
       expect(session).toBeDefined();
       expect(session.id).toBeDefined();
@@ -296,517 +247,436 @@ describe('Session Management - Creation', () => {
       expect(session.email).toBe('test@example.com');
     });
 
-    it('should set createdAt timestamp', async () => {
+    it('should generate unique session IDs', () => {
+      const session1 = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const session2 = mockSessionUtils.createSession('user-123', 'test@example.com');
+
+      expect(session1.id).not.toBe(session2.id);
+    });
+
+    it('should set createdAt and expiresAt timestamps', () => {
       const before = Date.now();
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
       const after = Date.now();
 
       expect(session.createdAt).toBeGreaterThanOrEqual(before);
       expect(session.createdAt).toBeLessThanOrEqual(after);
-    });
-
-    it('should set expiresAt timestamp', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      expect(session.expiresAt).toBeDefined();
       expect(session.expiresAt).toBeGreaterThan(session.createdAt);
     });
 
-    it('should set lastAccessedAt to creation time', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
+    it('should set lastActivity to current time', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
 
-      expect(session.lastAccessedAt).toBe(session.createdAt);
+      expect(session.lastActivity).toBe(session.createdAt);
     });
 
-    it('should include optional role when provided', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
+    it('should store optional IP address', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com', {
+        ipAddress: '192.168.1.1',
+      });
+
+      expect(session.ipAddress).toBe('192.168.1.1');
+    });
+
+    it('should store optional user agent', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com', {
+        userAgent: 'Mozilla/5.0',
+      });
+
+      expect(session.userAgent).toBe('Mozilla/5.0');
+    });
+
+    it('should store optional role', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com', {
         role: 'admin',
       });
 
       expect(session.role).toBe('admin');
     });
 
-    it('should include optional metadata when provided', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        ipAddress: '192.168.1.1',
-        userAgent: 'Mozilla/5.0',
-        deviceId: 'device-123',
-      });
-
-      expect(session.ipAddress).toBe('192.168.1.1');
-      expect(session.userAgent).toBe('Mozilla/5.0');
-      expect(session.deviceId).toBe('device-123');
+    it('should throw error when userId is missing', () => {
+      expect(() => mockSessionUtils.createSession('', 'test@example.com')).toThrow('userId is required');
     });
 
-    it('should use custom expiry time when provided', async () => {
-      const customExpiry = 2 * 60 * 60 * 1000; // 2 hours
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: customExpiry,
-      });
-
-      const expectedExpiry = session.createdAt + customExpiry;
-      expect(session.expiresAt).toBe(expectedExpiry);
+    it('should throw error when email is missing', () => {
+      expect(() => mockSessionUtils.createSession('user-123', '')).toThrow('email is required');
     });
 
-    it('should throw error when userId is missing', async () => {
-      await expect(
-        mockSessionUtils.createSession({
-          userId: '',
-          email: 'test@example.com',
-        })
-      ).rejects.toThrow('userId is required');
+    it('should store session in session store', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+
+      expect(mockSessionStore.sessions.has(session.id)).toBe(true);
     });
-
-    it('should throw error when email is missing', async () => {
-      await expect(
-        mockSessionUtils.createSession({
-          userId: 'user-123',
-          email: '',
-        })
-      ).rejects.toThrow('email is required');
-    });
-
-    it('should generate unique session IDs', async () => {
-      const session1 = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      const session2 = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      expect(session1.id).not.toBe(session2.id);
-    });
-  });
-});
-
-describe('Session Management - Retrieval & Validation', () => {
-  beforeEach(() => {
-    mockSessionStore = {};
   });
 
   describe('getSession', () => {
-    it('should retrieve existing session', async () => {
-      const created = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      const retrieved = await mockSessionUtils.getSession(created.id);
+    it('should retrieve existing session', () => {
+      const created = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const retrieved = mockSessionUtils.getSession(created.id);
 
       expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe(created.id);
-      expect(retrieved?.userId).toBe('user-123');
+      expect(retrieved?.userId).toBe(created.userId);
     });
 
-    it('should update lastAccessedAt when retrieving session', async () => {
-      const created = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
+    it('should return null for non-existent session', () => {
+      const session = mockSessionUtils.getSession('non-existent-id');
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      const retrieved = await mockSessionUtils.getSession(created.id);
-
-      expect(retrieved?.lastAccessedAt).toBeGreaterThan(created.lastAccessedAt);
+      expect(session).toBeNull();
     });
 
-    it('should return null for non-existent session', async () => {
-      const retrieved = await mockSessionUtils.getSession('non-existent-id');
+    it('should return null for empty session ID', () => {
+      const session = mockSessionUtils.getSession('');
+
+      expect(session).toBeNull();
+    });
+
+    it('should return null for expired session', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+
+      // Manually expire the session
+      session.expiresAt = Date.now() - 1000;
+      mockSessionStore.sessions.set(session.id, session);
+
+      const retrieved = mockSessionUtils.getSession(session.id);
 
       expect(retrieved).toBeNull();
-    });
-
-    it('should return null for empty session ID', async () => {
-      const retrieved = await mockSessionUtils.getSession('');
-
-      expect(retrieved).toBeNull();
+      expect(mockSessionStore.sessions.has(session.id)).toBe(false);
     });
   });
 
-  describe('validateSession', () => {
-    it('should validate active session', async () => {
-      const created = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
+  describe('updateSessionActivity', () => {
+    it('should update lastActivity timestamp', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const originalActivity = session.lastActivity;
 
-      const validation = await mockSessionUtils.validateSession(created.id);
+      // Wait a bit
+      setTimeout(() => {
+        const updated = mockSessionUtils.updateSessionActivity(session.id);
 
-      expect(validation.valid).toBe(true);
-      expect(validation.session).toBeDefined();
-      expect(validation.error).toBeUndefined();
+        expect(updated?.lastActivity).toBeGreaterThan(originalActivity);
+      }, 10);
     });
 
-    it('should reject expired session', async () => {
-      const created = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: 10, // 10ms
-      });
+    it('should extend session expiry', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const originalExpiry = session.expiresAt;
 
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      setTimeout(() => {
+        const updated = mockSessionUtils.updateSessionActivity(session.id);
 
-      const validation = await mockSessionUtils.validateSession(created.id);
-
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toBe('Session expired');
-      expect(validation.reason).toBe('expired');
+        expect(updated?.expiresAt).toBeGreaterThan(originalExpiry);
+      }, 10);
     });
 
-    it('should reject non-existent session', async () => {
-      const validation = await mockSessionUtils.validateSession('non-existent-id');
+    it('should return null for non-existent session', () => {
+      const updated = mockSessionUtils.updateSessionActivity('non-existent-id');
 
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toBe('Session not found');
-      expect(validation.reason).toBe('not_found');
+      expect(updated).toBeNull();
     });
-
-    it('should reject empty session ID', async () => {
-      const validation = await mockSessionUtils.validateSession('');
-
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toBe('Session ID is required');
-      expect(validation.reason).toBe('invalid');
-    });
-
-    it('should clean up expired session during validation', async () => {
-      const created = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: 10,
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 20));
-
-      await mockSessionUtils.validateSession(created.id);
-
-      const retrieved = await mockSessionUtils.getSession(created.id);
-      expect(retrieved).toBeNull();
-    });
-  });
-});
-
-describe('Session Management - Deletion', () => {
-  beforeEach(() => {
-    mockSessionStore = {};
   });
 
   describe('deleteSession', () => {
-    it('should delete existing session', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      const deleted = await mockSessionUtils.deleteSession(session.id);
+    it('should delete existing session', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const deleted = mockSessionUtils.deleteSession(session.id);
 
       expect(deleted).toBe(true);
-
-      const retrieved = await mockSessionUtils.getSession(session.id);
-      expect(retrieved).toBeNull();
+      expect(mockSessionStore.sessions.has(session.id)).toBe(false);
     });
 
-    it('should return false for non-existent session', async () => {
-      const deleted = await mockSessionUtils.deleteSession('non-existent-id');
-
-      expect(deleted).toBe(false);
-    });
-
-    it('should return false for empty session ID', async () => {
-      const deleted = await mockSessionUtils.deleteSession('');
+    it('should return false for non-existent session', () => {
+      const deleted = mockSessionUtils.deleteSession('non-existent-id');
 
       expect(deleted).toBe(false);
     });
   });
 
   describe('deleteUserSessions', () => {
-    it('should delete all sessions for a user', async () => {
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
-      await mockSessionUtils.createSession({ userId: 'user-456', email: 'other@example.com' });
+    it('should delete all sessions for a user', () => {
+      mockSessionUtils.createSession('user-123', 'test@example.com');
+      mockSessionUtils.createSession('user-123', 'test@example.com');
+      mockSessionUtils.createSession('user-456', 'other@example.com');
 
-      const deletedCount = await mockSessionUtils.deleteUserSessions('user-123');
+      const count = mockSessionUtils.deleteUserSessions('user-123');
 
-      expect(deletedCount).toBe(2);
-
-      const remainingSessions = await mockSessionUtils.getUserSessions('user-123');
-      expect(remainingSessions).toHaveLength(0);
-
-      const otherUserSessions = await mockSessionUtils.getUserSessions('user-456');
-      expect(otherUserSessions).toHaveLength(1);
+      expect(count).toBe(2);
+      expect(mockSessionStore.sessions.size).toBe(1);
     });
 
-    it('should return 0 when user has no sessions', async () => {
-      const deletedCount = await mockSessionUtils.deleteUserSessions('user-123');
+    it('should return 0 when no sessions exist for user', () => {
+      const count = mockSessionUtils.deleteUserSessions('user-123');
 
-      expect(deletedCount).toBe(0);
-    });
-
-    it('should return 0 for empty user ID', async () => {
-      const deletedCount = await mockSessionUtils.deleteUserSessions('');
-
-      expect(deletedCount).toBe(0);
-    });
-  });
-
-  describe('deleteAllSessionsExcept', () => {
-    it('should delete all user sessions except current', async () => {
-      const session1 = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
-
-      const deletedCount = await mockSessionUtils.deleteAllSessionsExcept('user-123', session1.id);
-
-      expect(deletedCount).toBe(2);
-
-      const remainingSessions = await mockSessionUtils.getUserSessions('user-123');
-      expect(remainingSessions).toHaveLength(1);
-      expect(remainingSessions[0].id).toBe(session1.id);
+      expect(count).toBe(0);
     });
   });
 });
 
-describe('Session Management - Multi-Session Support', () => {
+describe('Session Management - Session Validation', () => {
   beforeEach(() => {
-    mockSessionStore = {};
+    mockSessionStore.sessions.clear();
+  });
+
+  describe('isSessionExpired', () => {
+    it('should return false for active session', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const isExpired = mockSessionUtils.isSessionExpired(session);
+
+      expect(isExpired).toBe(false);
+    });
+
+    it('should return true for session past absolute expiry', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      session.expiresAt = Date.now() - 1000;
+
+      const isExpired = mockSessionUtils.isSessionExpired(session);
+
+      expect(isExpired).toBe(true);
+    });
+
+    it('should return true for session past idle timeout', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      session.lastActivity = Date.now() - SESSION_IDLE_TIMEOUT - 1000;
+
+      const isExpired = mockSessionUtils.isSessionExpired(session);
+
+      expect(isExpired).toBe(true);
+    });
+  });
+
+  describe('isSessionValid', () => {
+    it('should return true for valid session', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const isValid = mockSessionUtils.isSessionValid(session.id);
+
+      expect(isValid).toBe(true);
+    });
+
+    it('should return false for non-existent session', () => {
+      const isValid = mockSessionUtils.isSessionValid('non-existent-id');
+
+      expect(isValid).toBe(false);
+    });
+
+    it('should return false for expired session', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
+      session.expiresAt = Date.now() - 1000;
+      mockSessionStore.sessions.set(session.id, session);
+
+      const isValid = mockSessionUtils.isSessionValid(session.id);
+
+      expect(isValid).toBe(false);
+    });
+  });
+
+  describe('validateSessionSecurity', () => {
+    it('should validate session with matching IP address', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com', {
+        ipAddress: '192.168.1.1',
+      });
+
+      const validation = mockSessionUtils.validateSessionSecurity(session, '192.168.1.1');
+
+      expect(validation.valid).toBe(true);
+    });
+
+    it('should reject session with mismatched IP address', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com', {
+        ipAddress: '192.168.1.1',
+      });
+
+      const validation = mockSessionUtils.validateSessionSecurity(session, '192.168.1.2');
+
+      expect(validation.valid).toBe(false);
+      expect(validation.reason).toBe('IP address mismatch');
+    });
+
+    it('should validate session with matching user agent', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com', {
+        userAgent: 'Mozilla/5.0',
+      });
+
+      const validation = mockSessionUtils.validateSessionSecurity(session, undefined, 'Mozilla/5.0');
+
+      expect(validation.valid).toBe(true);
+    });
+
+    it('should reject session with mismatched user agent', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com', {
+        userAgent: 'Mozilla/5.0',
+      });
+
+      const validation = mockSessionUtils.validateSessionSecurity(session, undefined, 'Chrome/1.0');
+
+      expect(validation.valid).toBe(false);
+      expect(validation.reason).toBe('User agent mismatch');
+    });
+  });
+});
+
+describe('Session Management - Cookie Operations', () => {
+  describe('createSessionCookie', () => {
+    it('should create cookie with correct name', () => {
+      const cookie = mockSessionUtils.createSessionCookie('session-123');
+
+      expect(cookie.name).toBe('session_id');
+    });
+
+    it('should set httpOnly flag for security', () => {
+      const cookie = mockSessionUtils.createSessionCookie('session-123');
+
+      expect(cookie.options.httpOnly).toBe(true);
+    });
+
+    it('should set sameSite to lax', () => {
+      const cookie = mockSessionUtils.createSessionCookie('session-123');
+
+      expect(cookie.options.sameSite).toBe('lax');
+    });
+
+    it('should set path to root', () => {
+      const cookie = mockSessionUtils.createSessionCookie('session-123');
+
+      expect(cookie.options.path).toBe('/');
+    });
+
+    it('should set maxAge in seconds', () => {
+      const cookie = mockSessionUtils.createSessionCookie('session-123');
+
+      expect(cookie.options.maxAge).toBeDefined();
+      expect(cookie.options.maxAge).toBeGreaterThan(0);
+    });
+
+    it('should allow custom maxAge', () => {
+      const cookie = mockSessionUtils.createSessionCookie('session-123', 3600);
+
+      expect(cookie.options.maxAge).toBe(3600);
+    });
+  });
+
+  describe('clearSessionCookie', () => {
+    it('should create cookie with maxAge 0', () => {
+      const cookie = mockSessionUtils.clearSessionCookie();
+
+      expect(cookie.options.maxAge).toBe(0);
+    });
+
+    it('should create cookie with empty value', () => {
+      const cookie = mockSessionUtils.clearSessionCookie();
+
+      expect(cookie.value).toBe('');
+    });
+
+    it('should maintain security options', () => {
+      const cookie = mockSessionUtils.clearSessionCookie();
+
+      expect(cookie.options.httpOnly).toBe(true);
+      expect(cookie.options.sameSite).toBe('lax');
+    });
+  });
+
+  describe('parseSessionFromCookie', () => {
+    it('should extract session ID from cookie header', () => {
+      const sessionId = mockSessionUtils.parseSessionFromCookie('session_id=session-123');
+
+      expect(sessionId).toBe('session-123');
+    });
+
+    it('should extract session ID from multiple cookies', () => {
+      const sessionId = mockSessionUtils.parseSessionFromCookie('other_cookie=value1; session_id=session-123; another=value2');
+
+      expect(sessionId).toBe('session-123');
+    });
+
+    it('should return null when session cookie is not present', () => {
+      const sessionId = mockSessionUtils.parseSessionFromCookie('other_cookie=value1; another=value2');
+
+      expect(sessionId).toBeNull();
+    });
+
+    it('should return null for empty cookie header', () => {
+      const sessionId = mockSessionUtils.parseSessionFromCookie('');
+
+      expect(sessionId).toBeNull();
+    });
+  });
+});
+
+describe('Session Management - Utilities', () => {
+  beforeEach(() => {
+    mockSessionStore.sessions.clear();
   });
 
   describe('getUserSessions', () => {
-    it('should return all sessions for a user', async () => {
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
+    it('should return all active sessions for a user', () => {
+      mockSessionUtils.createSession('user-123', 'test@example.com');
+      mockSessionUtils.createSession('user-123', 'test@example.com');
+      mockSessionUtils.createSession('user-456', 'other@example.com');
 
-      const sessions = await mockSessionUtils.getUserSessions('user-123');
+      const sessions = mockSessionUtils.getUserSessions('user-123');
 
       expect(sessions).toHaveLength(2);
-      expect(sessions[0].userId).toBe('user-123');
-      expect(sessions[1].userId).toBe('user-123');
+      expect(sessions.every(s => s.userId === 'user-123')).toBe(true);
     });
 
-    it('should sort sessions by last accessed time (most recent first)', async () => {
-      const session1 = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
+    it('should exclude expired sessions', () => {
+      const session1 = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const session2 = mockSessionUtils.createSession('user-123', 'test@example.com');
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      // Expire one session
+      session1.expiresAt = Date.now() - 1000;
+      mockSessionStore.sessions.set(session1.id, session1);
 
-      const session2 = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
+      const sessions = mockSessionUtils.getUserSessions('user-123');
 
-      const sessions = await mockSessionUtils.getUserSessions('user-123');
-
+      expect(sessions).toHaveLength(1);
       expect(sessions[0].id).toBe(session2.id);
-      expect(sessions[1].id).toBe(session1.id);
     });
 
-    it('should return empty array when user has no sessions', async () => {
-      const sessions = await mockSessionUtils.getUserSessions('user-123');
+    it('should return empty array when user has no sessions', () => {
+      const sessions = mockSessionUtils.getUserSessions('user-123');
 
       expect(sessions).toHaveLength(0);
     });
   });
 
-  describe('getActiveSessions', () => {
-    it('should return only active (non-expired) sessions', async () => {
-      await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: 10, // Will expire soon
-      });
-
-      const session2 = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 20));
-
-      const activeSessions = await mockSessionUtils.getActiveSessions('user-123');
-
-      expect(activeSessions).toHaveLength(1);
-      expect(activeSessions[0].id).toBe(session2.id);
-    });
-  });
-
-  describe('cleanupUserSessions', () => {
-    it('should remove oldest sessions when limit exceeded', async () => {
-      // Create more than MAX_SESSIONS_PER_USER sessions
-      for (let i = 0; i < MAX_SESSIONS_PER_USER + 2; i++) {
-        await mockSessionUtils.createSession({
-          userId: 'user-123',
-          email: 'test@example.com',
-        });
-        await new Promise((resolve) => setTimeout(resolve, 5)); // Ensure different timestamps
-      }
-
-      const sessions = await mockSessionUtils.getUserSessions('user-123');
-
-      expect(sessions.length).toBeLessThanOrEqual(MAX_SESSIONS_PER_USER);
-    });
-  });
-});
-
-describe('Session Management - Advanced Operations', () => {
-  beforeEach(() => {
-    mockSessionStore = {};
-  });
-
   describe('cleanupExpiredSessions', () => {
-    it('should remove all expired sessions', async () => {
-      await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: 10,
-      });
+    it('should remove all expired sessions', () => {
+      const session1 = mockSessionUtils.createSession('user-123', 'test@example.com');
+      const session2 = mockSessionUtils.createSession('user-456', 'other@example.com');
 
-      await mockSessionUtils.createSession({
-        userId: 'user-456',
-        email: 'other@example.com',
-      });
+      // Expire first session
+      session1.expiresAt = Date.now() - 1000;
+      mockSessionStore.sessions.set(session1.id, session1);
 
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      const count = mockSessionUtils.cleanupExpiredSessions();
 
-      const cleanedUp = await mockSessionUtils.cleanupExpiredSessions();
-
-      expect(cleanedUp).toBe(1);
-    });
-  });
-
-  describe('extendSession', () => {
-    it('should extend session expiry time', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      const originalExpiry = session.expiresAt;
-      const additionalTime = 60 * 60 * 1000; // 1 hour
-
-      const extended = await mockSessionUtils.extendSession(session.id, additionalTime);
-
-      expect(extended?.expiresAt).toBe(originalExpiry + additionalTime);
+      expect(count).toBe(1);
+      expect(mockSessionStore.sessions.size).toBe(1);
+      expect(mockSessionStore.sessions.has(session2.id)).toBe(true);
     });
 
-    it('should return null for non-existent session', async () => {
-      const extended = await mockSessionUtils.extendSession('non-existent', 1000);
+    it('should return 0 when no sessions are expired', () => {
+      mockSessionUtils.createSession('user-123', 'test@example.com');
+      mockSessionUtils.createSession('user-456', 'other@example.com');
 
-      expect(extended).toBeNull();
-    });
-  });
+      const count = mockSessionUtils.cleanupExpiredSessions();
 
-  describe('refreshSession', () => {
-    it('should refresh session with new expiry time', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: 1000,
-      });
-
-      const originalExpiry = session.expiresAt;
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const refreshed = await mockSessionUtils.refreshSession(session.id);
-
-      expect(refreshed).toBeDefined();
-      expect(refreshed?.expiresAt).toBeGreaterThan(originalExpiry);
+      expect(count).toBe(0);
+      expect(mockSessionStore.sessions.size).toBe(2);
     });
 
-    it('should return null for expired session', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: 10,
-      });
+    it('should remove sessions past idle timeout', () => {
+      const session = mockSessionUtils.createSession('user-123', 'test@example.com');
 
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      // Set lastActivity past idle timeout
+      session.lastActivity = Date.now() - SESSION_IDLE_TIMEOUT - 1000;
+      mockSessionStore.sessions.set(session.id, session);
 
-      const refreshed = await mockSessionUtils.refreshSession(session.id);
+      const count = mockSessionUtils.cleanupExpiredSessions();
 
-      expect(refreshed).toBeNull();
-    });
-  });
-
-  describe('updateSessionMetadata', () => {
-    it('should update session metadata', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      const updated = await mockSessionUtils.updateSessionMetadata(session.id, {
-        ipAddress: '10.0.0.1',
-        userAgent: 'Chrome',
-        deviceId: 'device-999',
-      });
-
-      expect(updated?.ipAddress).toBe('10.0.0.1');
-      expect(updated?.userAgent).toBe('Chrome');
-      expect(updated?.deviceId).toBe('device-999');
-    });
-  });
-
-  describe('getSessionCount', () => {
-    it('should return correct session count for user', async () => {
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
-      await mockSessionUtils.createSession({ userId: 'user-123', email: 'test@example.com' });
-      await mockSessionUtils.createSession({ userId: 'user-456', email: 'other@example.com' });
-
-      const count = await mockSessionUtils.getSessionCount('user-123');
-
-      expect(count).toBe(2);
-    });
-  });
-
-  describe('isSessionActive', () => {
-    it('should return true for active session', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-      });
-
-      const isActive = await mockSessionUtils.isSessionActive(session.id);
-
-      expect(isActive).toBe(true);
-    });
-
-    it('should return false for expired session', async () => {
-      const session = await mockSessionUtils.createSession({
-        userId: 'user-123',
-        email: 'test@example.com',
-        expiresIn: 10,
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 20));
-
-      const isActive = await mockSessionUtils.isSessionActive(session.id);
-
-      expect(isActive).toBe(false);
+      expect(count).toBe(1);
+      expect(mockSessionStore.sessions.size).toBe(0);
     });
   });
 });

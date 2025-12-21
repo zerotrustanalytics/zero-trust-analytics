@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Zero Trust Analytics Application
+  zta:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zero-trust-analytics
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist SQLite database
+      - zta-data:/app/data
+      # Optional: Mount config for easy updates
+      - ./docker/.env:/app/.env:ro
+    environment:
+      # Server Configuration
+      NODE_ENV: production
+      PORT: 3000
+      SITE_URL: ${SITE_URL:-http://localhost:3000}
+
+      # Database
+      DATABASE_PATH: /app/data/analytics.db
+
+      # Security Secrets (CHANGE THESE!)
+      HASH_SECRET: ${HASH_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+
+      # Stripe (optional - for paid subscriptions)
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
+
+      # Email Service (choose one)
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      FROM_EMAIL: ${FROM_EMAIL:-noreply@localhost}
+
+      # Optional: Analytics Configuration
+      ENABLE_REGISTRATION: ${ENABLE_REGISTRATION:-true}
+      MAX_SITES_PER_USER: ${MAX_SITES_PER_USER:-5}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - zta-network
+    depends_on:
+      - db-init
+
+  # Database initialization service
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zta-db-init
+    volumes:
+      - zta-data:/app/data
+    environment:
+      DATABASE_PATH: /app/data/analytics.db
+    command: ["node", "server/init-db.js"]
+    networks:
+      - zta-network
+    restart: "no"
+
+  # Optional: Nginx reverse proxy for SSL/HTTPS
+  nginx:
+    image: nginx:alpine
+    container_name: zta-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+      - zta-static:/usr/share/nginx/html:ro
+    depends_on:
+      - zta
+    networks:
+      - zta-network
+    profiles:
+      - with-nginx
+
+volumes:
+  # Persistent storage for SQLite database
+  zta-data:
+    driver: local
+
+  # Optional: Static files for nginx
+  zta-static:
+    driver: local
+
+networks:
+  zta-network:
+    driver: bridge

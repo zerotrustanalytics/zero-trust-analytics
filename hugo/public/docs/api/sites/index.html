@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Sites
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Sites">
+
+
+<meta name="description" content="Manage your websites and analytics properties">
+<meta name="summary" content="Overview
+The Sites API allows you to create, list, update, and delete websites (analytics properties) in your Zero Trust Analytics account. Each site has a unique ID used for tracking and data retrieval.
+Endpoints
+GET /api/sites
+POST /api/sites
+DELETE /api/sites
+Requires authentication. See Authentication.
+List Sites
+Get all sites in your account.
+Request
+curl &#34;https://ztas.io/api/sites&#34; \
+  -H &#34;Authorization: Bearer YOUR_TOKEN&#34;
+Response
+{
+  &#34;sites&#34;: [
+    {
+      &#34;id&#34;: &#34;site_abc123&#34;,
+      &#34;domain&#34;: &#34;example.com&#34;,
+      &#34;name&#34;: &#34;Example Website&#34;,
+      &#34;timezone&#34;: &#34;America/New_York&#34;,
+      &#34;public&#34;: false,
+      &#34;createdAt&#34;: &#34;2024-01-15T10:00:00.000Z&#34;,
+      &#34;stats&#34;: {
+        &#34;pageviews&#34;: 125432,
+        &#34;visitors&#34;: 45231,
+        &#34;lastPageview&#34;: &#34;2024-12-12T16:30:00.000Z&#34;
+      },
+      &#34;teamMembers&#34;: 3
+    },
+    {
+      &#34;id&#34;: &#34;site_def456&#34;,
+      &#34;domain&#34;: &#34;blog.example.com&#34;,
+      &#34;name&#34;: &#34;Example Blog&#34;,
+      &#34;timezone&#34;: &#34;America/Los_Angeles&#34;,
+      &#34;public&#34;: true,
+      &#34;createdAt&#34;: &#34;2024-03-20T14:00:00.000Z&#34;,
+      &#34;stats&#34;: {
+        &#34;pageviews&#34;: 87654,
+        &#34;visitors&#34;: 32145,
+        &#34;lastPageview&#34;: &#34;2024-12-12T16:25:00.000Z&#34;
+      },
+      &#34;teamMembers&#34;: 2
+    }
+  ]
+}
+Create Site
+Add a new website to track analytics." >
+<meta name="date" content="0001-01-01 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Sites">
+
+<meta property="og:date" content="0001-01-01 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Manage your websites and analytics properties">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/api/sites/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/api/sites/">
+
+<meta name="twitter:title" content="Sites">
+
+<meta name="twitter:description" content="Manage your websites and analytics properties">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/api/sites/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/docs/" class="text-decoration-none">Docs</a></li>
+        
+        
+        <li class="breadcrumb-item"><a href="/docs/api/" class="text-decoration-none">API Reference</a></li>
+        
+        
+        <li class="breadcrumb-item active" aria-current="page">Sites</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link ">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link ">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link ">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link ">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link ">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link ">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link ">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link ">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link ">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link ">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link ">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link ">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link ">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <article class="docs-content">
+        <h1 class="mb-4">Sites</h1>
+        
+        <p class="lead text-muted mb-4">Manage your websites and analytics properties</p>
+        
+
+        <div class="docs-body">
+          <h2 id="overview">Overview</h2>
+<p>The Sites API allows you to create, list, update, and delete websites (analytics properties) in your Zero Trust Analytics account. Each site has a unique ID used for tracking and data retrieval.</p>
+<h2 id="endpoints">Endpoints</h2>
+<pre tabindex="0"><code>GET /api/sites
+POST /api/sites
+DELETE /api/sites
+</code></pre><p><strong>Requires authentication.</strong> See <a href="/docs/api/authentication/">Authentication</a>.</p>
+<h2 id="list-sites">List Sites</h2>
+<p>Get all sites in your account.</p>
+<h3 id="request">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/sites&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="response">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;sites&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;site_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Example Website&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;timezone&#34;</span>: <span style="color:#e6db74">&#34;America/New_York&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;public&#34;</span>: <span style="color:#66d9ef">false</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-01-15T10:00:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;stats&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">125432</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;visitors&#34;</span>: <span style="color:#ae81ff">45231</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;lastPageview&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T16:30:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>      },
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;teamMembers&#34;</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;site_def456&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;blog.example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Example Blog&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;timezone&#34;</span>: <span style="color:#e6db74">&#34;America/Los_Angeles&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;public&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-03-20T14:00:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;stats&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">87654</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;visitors&#34;</span>: <span style="color:#ae81ff">32145</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;lastPageview&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T16:25:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>      },
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;teamMembers&#34;</span>: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="create-site">Create Site</h2>
+<p>Add a new website to track analytics.</p>
+<h3 id="request-1">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/sites&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;domain&#34;: &#34;newsite.com&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;New Site&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;timezone&#34;: &#34;America/New_York&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;public&#34;: false
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="parameters">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>domain</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Website domain (without protocol)</td>
+      </tr>
+      <tr>
+          <td><code>name</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Friendly name for the site (defaults to domain)</td>
+      </tr>
+      <tr>
+          <td><code>timezone</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Timezone for date/time display (default: UTC)</td>
+      </tr>
+      <tr>
+          <td><code>public</code></td>
+          <td>boolean</td>
+          <td>No</td>
+          <td>Make stats publicly viewable (default: false)</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="domain-format">Domain Format</h3>
+<p>Domains should be provided without protocol or path:</p>
+<p>✅ Good:</p>
+<ul>
+<li><code>example.com</code></li>
+<li><code>www.example.com</code></li>
+<li><code>blog.example.com</code></li>
+</ul>
+<p>❌ Bad:</p>
+<ul>
+<li><code>https://example.com</code></li>
+<li><code>example.com/</code></li>
+<li><code>example.com/blog</code></li>
+</ul>
+<h3 id="timezone">Timezone</h3>
+<p>Use IANA timezone identifiers:</p>
+<ul>
+<li><code>America/New_York</code></li>
+<li><code>America/Los_Angeles</code></li>
+<li><code>America/Chicago</code></li>
+<li><code>Europe/London</code></li>
+<li><code>Europe/Paris</code></li>
+<li><code>Asia/Tokyo</code></li>
+<li><code>UTC</code></li>
+</ul>
+<p><a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">Full list of timezones</a></p>
+<h3 id="response-1">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;site&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;site_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;newsite.com&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;New Site&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;timezone&#34;</span>: <span style="color:#e6db74">&#34;America/New_York&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;public&#34;</span>: <span style="color:#66d9ef">false</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T16:00:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;trackingCode&#34;</span>: <span style="color:#e6db74">&#34;&lt;script async src=\&#34;https://cdn.ztas.io/track.js\&#34; data-site-id=\&#34;site_abc123\&#34;&gt;&lt;/script&gt;&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>Important:</strong> Save the <code>trackingCode</code> - you&rsquo;ll need to add it to your website to start collecting analytics.</p>
+<h2 id="update-site">Update Site</h2>
+<p>Modify site settings.</p>
+<h3 id="request-2">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X PATCH <span style="color:#e6db74">&#34;https://ztas.io/api/sites&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;id&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Updated Name&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;timezone&#34;: &#34;America/Los_Angeles&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;public&#34;: true
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="parameters-1">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>id</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Site ID to update</td>
+      </tr>
+      <tr>
+          <td><code>name</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>New site name</td>
+      </tr>
+      <tr>
+          <td><code>timezone</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>New timezone</td>
+      </tr>
+      <tr>
+          <td><code>public</code></td>
+          <td>boolean</td>
+          <td>No</td>
+          <td>Change public visibility</td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Note:</strong> You cannot change the domain after creation. Delete and recreate the site if needed.</p>
+<h3 id="response-2">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;site&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;site_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Updated Name&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;timezone&#34;</span>: <span style="color:#e6db74">&#34;America/Los_Angeles&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;public&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;updatedAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T16:00:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="delete-site">Delete Site</h2>
+<p>Permanently delete a site and all its analytics data.</p>
+<h3 id="request-3">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X DELETE <span style="color:#e6db74">&#34;https://ztas.io/api/sites?id=site_abc123&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="parameters-2">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>id</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Site ID to delete</td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Warning:</strong> This action is irreversible. All analytics data, goals, funnels, and settings will be permanently deleted.</p>
+<h3 id="response-3">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;success&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Site deleted successfully&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="get-site-details">Get Site Details</h2>
+<p>Get detailed information about a specific site.</p>
+<h3 id="request-4">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/sites/site_abc123&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="response-4">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;site&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;site_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;domain&#34;</span>: <span style="color:#e6db74">&#34;example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Example Website&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;timezone&#34;</span>: <span style="color:#e6db74">&#34;America/New_York&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;public&#34;</span>: <span style="color:#66d9ef">false</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-01-15T10:00:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;owner&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;user_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;email&#34;</span>: <span style="color:#e6db74">&#34;owner@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Alice Johnson&#34;</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;stats&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">125432</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;visitors&#34;</span>: <span style="color:#ae81ff">45231</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;sessions&#34;</span>: <span style="color:#ae81ff">67543</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;bounceRate&#34;</span>: <span style="color:#ae81ff">42.5</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;avgSessionDuration&#34;</span>: <span style="color:#ae81ff">185</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;lastPageview&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T16:30:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;team&#34;</span>: [
+</span></span><span style="display:flex;"><span>      {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;user_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;email&#34;</span>: <span style="color:#e6db74">&#34;owner@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;role&#34;</span>: <span style="color:#e6db74">&#34;owner&#34;</span>
+</span></span><span style="display:flex;"><span>      },
+</span></span><span style="display:flex;"><span>      {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;user_def456&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;email&#34;</span>: <span style="color:#e6db74">&#34;admin@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;role&#34;</span>: <span style="color:#e6db74">&#34;admin&#34;</span>
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>    ],
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;goals&#34;</span>: <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;funnels&#34;</span>: <span style="color:#ae81ff">2</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;alerts&#34;</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="public-sites">Public Sites</h2>
+<p>Make your analytics data publicly viewable:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X PATCH <span style="color:#e6db74">&#34;https://ztas.io/api/sites&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;id&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;public&#34;: true
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><p>When <code>public</code> is <code>true</code>:</p>
+<ul>
+<li>Anyone can view analytics at <code>https://ztas.io/public/site_abc123</code></li>
+<li>No authentication required</li>
+<li>Read-only access</li>
+<li>Great for open-source projects and transparency</li>
+</ul>
+<p><strong>Public dashboard URL:</strong> <code>https://ztas.io/public/{siteId}</code></p>
+<h2 id="tracking-code">Tracking Code</h2>
+<p>After creating a site, add the tracking code to your website:</p>
+<h3 id="standard-installation">Standard Installation</h3>
+<p>Add before the closing <code>&lt;/head&gt;</code> tag:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span><span style="color:#75715e">&lt;!DOCTYPE html&gt;</span>
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#f92672">html</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#f92672">head</span>&gt;
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#f92672">title</span>&gt;My Website&lt;/<span style="color:#f92672">title</span>&gt;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">&lt;!-- Zero Trust Analytics --&gt;</span>
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#f92672">script</span> <span style="color:#a6e22e">async</span> <span style="color:#a6e22e">src</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;https://cdn.ztas.io/track.js&#34;</span> <span style="color:#a6e22e">data-site-id</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;site_abc123&#34;</span>&gt;&lt;/<span style="color:#f92672">script</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">head</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#f92672">body</span>&gt;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">&lt;!-- Your content --&gt;</span>
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">body</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">html</span>&gt;
+</span></span></code></pre></div><h3 id="nextjs">Next.js</h3>
+<p>Add to <code>pages/_app.js</code> or <code>app/layout.js</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">import</span> <span style="color:#a6e22e">Script</span> <span style="color:#a6e22e">from</span> <span style="color:#e6db74">&#39;next/script&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">default</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">App</span>({ <span style="color:#a6e22e">Component</span>, <span style="color:#a6e22e">pageProps</span> }) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;&gt;</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">Script</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">src</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;https://cdn.ztas.io/track.js&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">data</span><span style="color:#f92672">-</span><span style="color:#a6e22e">site</span><span style="color:#f92672">-</span><span style="color:#a6e22e">id</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;site_abc123&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">strategy</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;afterInteractive&#34;</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">Component</span> {...<span style="color:#a6e22e">pageProps</span>} <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/&gt;</span>
+</span></span><span style="display:flex;"><span>  )
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="react">React</h3>
+<p>Add to your main component:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">import</span> { <span style="color:#a6e22e">useEffect</span> } <span style="color:#a6e22e">from</span> <span style="color:#e6db74">&#39;react&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">App</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">useEffect</span>(() =&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">script</span> <span style="color:#f92672">=</span> document.<span style="color:#a6e22e">createElement</span>(<span style="color:#e6db74">&#39;script&#39;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">script</span>.<span style="color:#a6e22e">src</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;https://cdn.ztas.io/track.js&#39;</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">script</span>.<span style="color:#a6e22e">setAttribute</span>(<span style="color:#e6db74">&#39;data-site-id&#39;</span>, <span style="color:#e6db74">&#39;site_abc123&#39;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">script</span>.<span style="color:#66d9ef">async</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    document.<span style="color:#a6e22e">head</span>.<span style="color:#a6e22e">appendChild</span>(<span style="color:#a6e22e">script</span>);
+</span></span><span style="display:flex;"><span>  }, []);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span><span style="color:#f92672">&gt;</span><span style="color:#a6e22e">Your</span> <span style="color:#a6e22e">app</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="wordpress">WordPress</h3>
+<p>Add to your theme&rsquo;s <code>header.php</code> before <code>&lt;/head&gt;</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">script</span> <span style="color:#a6e22e">async</span> <span style="color:#a6e22e">src</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;https://cdn.ztas.io/track.js&#34;</span> <span style="color:#a6e22e">data</span><span style="color:#f92672">-</span><span style="color:#a6e22e">site</span><span style="color:#f92672">-</span><span style="color:#a6e22e">id</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;site_abc123&#34;</span><span style="color:#f92672">&gt;&lt;/</span><span style="color:#a6e22e">script</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span> <span style="color:#a6e22e">wp_head</span>(); <span style="color:#75715e">?&gt;</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>Or use the Zero Trust Analytics WordPress plugin.</p>
+<h2 id="site-limits">Site Limits</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Plan</th>
+          <th>Max Sites</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Free</td>
+          <td>3</td>
+      </tr>
+      <tr>
+          <td>Pro</td>
+          <td>10</td>
+      </tr>
+      <tr>
+          <td>Business</td>
+          <td>50</td>
+      </tr>
+      <tr>
+          <td>Enterprise</td>
+          <td>Unlimited</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="site-settings">Site Settings</h2>
+<h3 id="exclude-paths">Exclude Paths</h3>
+<p>Exclude certain paths from tracking:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X PATCH <span style="color:#e6db74">&#34;https://ztas.io/api/sites&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;id&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;settings&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;excludePaths&#34;: [&#34;/admin&#34;, &#34;/dashboard&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="ignore-query-parameters">Ignore Query Parameters</h3>
+<p>Ignore specific query parameters in URLs:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X PATCH <span style="color:#e6db74">&#34;https://ztas.io/api/sites&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;id&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;settings&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;ignoreParams&#34;: [&#34;utm_source&#34;, &#34;utm_medium&#34;, &#34;fbclid&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="data-retention">Data Retention</h3>
+<p>Configure how long to keep analytics data:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X PATCH <span style="color:#e6db74">&#34;https://ztas.io/api/sites&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;id&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;settings&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;dataRetention&#34;: 365
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><table>
+  <thead>
+      <tr>
+          <th>Plan</th>
+          <th>Default Retention</th>
+          <th>Max Retention</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Free</td>
+          <td>90 days</td>
+          <td>90 days</td>
+      </tr>
+      <tr>
+          <td>Pro</td>
+          <td>1 year</td>
+          <td>2 years</td>
+      </tr>
+      <tr>
+          <td>Business</td>
+          <td>2 years</td>
+          <td>5 years</td>
+      </tr>
+      <tr>
+          <td>Enterprise</td>
+          <td>2 years</td>
+          <td>Unlimited</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="data-export">Data Export</h2>
+<p>Export all site data before deleting:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/sites/site_abc123/export&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><p>Returns a download URL for a ZIP file containing:</p>
+<ul>
+<li>All pageview data (CSV)</li>
+<li>Custom events (CSV)</li>
+<li>Goals and funnels (JSON)</li>
+<li>Site settings (JSON)</li>
+</ul>
+<p>See <a href="/docs/api/export/">Export API</a> for more details.</p>
+<h2 id="verify-domain-ownership">Verify Domain Ownership</h2>
+<p>For certain features (custom domains, SSO), you may need to verify domain ownership:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/sites/site_abc123/verify&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><p>Returns a TXT record to add to your DNS:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;verification&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;TXT&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;_zta-verify&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;zta-verify=abc123def456&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Add this TXT record to your DNS, then verify:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/sites/site_abc123/verify&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h2 id="error-responses">Error Responses</h2>
+<h3 id="400-bad-request">400 Bad Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Domain is required&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Invalid domain format&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Invalid timezone&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="403-forbidden">403 Forbidden</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Site limit reached. Upgrade to create more sites.&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Only the site owner can delete this site&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="404-not-found">404 Not Found</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Site not found&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="409-conflict">409 Conflict</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;A site with this domain already exists&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="best-practices">Best Practices</h2>
+<h3 id="1-use-descriptive-names">1. Use Descriptive Names</h3>
+<p>Make it easy to identify sites:</p>
+<p>✅ Good: &ldquo;Marketing Website&rdquo;, &ldquo;Product Documentation&rdquo;, &ldquo;Blog&rdquo;
+✗ Bad: &ldquo;Site 1&rdquo;, &ldquo;Test&rdquo;, &ldquo;ABC&rdquo;</p>
+<h3 id="2-set-the-correct-timezone">2. Set the Correct Timezone</h3>
+<p>Match your business timezone for accurate daily reports:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;timezone&#34;</span>: <span style="color:#e6db74">&#34;America/New_York&#34;</span>  <span style="color:#75715e"># If your team is in NYC</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="3-one-site-per-domain">3. One Site Per Domain</h3>
+<p>Create separate sites for:</p>
+<ul>
+<li><code>example.com</code> (main site)</li>
+<li><code>blog.example.com</code> (blog)</li>
+<li><code>app.example.com</code> (application)</li>
+</ul>
+<p>Don&rsquo;t combine them into one site unless they share the same navigation.</p>
+<h3 id="4-use-public-sites-for-transparency">4. Use Public Sites for Transparency</h3>
+<p>Show your metrics publicly:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;public&#34;</span>: true
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>Great for:</p>
+<ul>
+<li>Open-source projects</li>
+<li>Transparency initiatives</li>
+<li>Building trust</li>
+</ul>
+<h3 id="5-configure-exclusions-early">5. Configure Exclusions Early</h3>
+<p>Exclude admin and internal pages:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;settings&#34;</span>: <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;excludePaths&#34;</span>: <span style="color:#f92672">[</span><span style="color:#e6db74">&#34;/admin&#34;</span>, <span style="color:#e6db74">&#34;/dashboard&#34;</span>, <span style="color:#e6db74">&#34;/internal&#34;</span><span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="6-test-tracking-before-launch">6. Test Tracking Before Launch</h3>
+<p>Verify tracking works:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Send a test pageview</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/track&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;pageview&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;path&#34;: &#34;/test&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Check realtime stats</span>
+</span></span><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/realtime?siteId=site_abc123&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h2 id="example-multi-site-management">Example: Multi-Site Management</h2>
+<p>Manage multiple client sites:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">API_KEY</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;zta_live_abc123...&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Create sites for all clients
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">clients</span> <span style="color:#f92672">=</span> [
+</span></span><span style="display:flex;"><span>  { <span style="color:#a6e22e">domain</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;client1.com&#39;</span>, <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;Client 1&#39;</span> },
+</span></span><span style="display:flex;"><span>  { <span style="color:#a6e22e">domain</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;client2.com&#39;</span>, <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;Client 2&#39;</span> },
+</span></span><span style="display:flex;"><span>  { <span style="color:#a6e22e">domain</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;client3.com&#39;</span>, <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;Client 3&#39;</span> }
+</span></span><span style="display:flex;"><span>];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">const</span> <span style="color:#a6e22e">client</span> <span style="color:#66d9ef">of</span> <span style="color:#a6e22e">clients</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;https://ztas.io/api/sites&#39;</span>, {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">method</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;POST&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">API_KEY</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#39;Content-Type&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;application/json&#39;</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">body</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">stringify</span>({
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">domain</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">domain</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">name</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">timezone</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;America/New_York&#39;</span>
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>  });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">`Created site for </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">name</span><span style="color:#e6db74">}</span><span style="color:#e6db74">: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">site</span>.<span style="color:#a6e22e">id</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// List all sites
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">sitesResponse</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;https://ztas.io/api/sites&#39;</span>, {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">API_KEY</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> }
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">sites</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">sitesResponse</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">`Total sites: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">sites</span>.<span style="color:#a6e22e">sites</span>.<span style="color:#a6e22e">length</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>);
+</span></span></code></pre></div><h2 id="example-site-backup">Example: Site Backup</h2>
+<p>Backup all site configurations:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> requests
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>API_KEY <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;zta_live_abc123...&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Get all sites</span>
+</span></span><span style="display:flex;"><span>response <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>get(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;https://ztas.io/api/sites&#39;</span>,
+</span></span><span style="display:flex;"><span>    headers<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;Authorization&#39;</span>: <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Bearer </span><span style="color:#e6db74">{</span>API_KEY<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>}
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sites <span style="color:#f92672">=</span> response<span style="color:#f92672">.</span>json()[<span style="color:#e6db74">&#39;sites&#39;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Save to file</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#39;sites_backup.json&#39;</span>, <span style="color:#e6db74">&#39;w&#39;</span>) <span style="color:#66d9ef">as</span> f:
+</span></span><span style="display:flex;"><span>    json<span style="color:#f92672">.</span>dump(sites, f, indent<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Backed up </span><span style="color:#e6db74">{</span>len(sites)<span style="color:#e6db74">}</span><span style="color:#e6db74"> sites&#34;</span>)
+</span></span></code></pre></div>
+        </div>
+
+        
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+          
+          <a href="/docs/api/activity-log/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Activity Log
+          </a>
+          
+
+          
+          <a href="/docs/api/api-keys/" class="btn btn-outline-primary">
+            API Keys<i class="fas fa-arrow-right ms-2"></i>
+          </a>
+          
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-body h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+.docs-body h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.docs-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.docs-body code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+.docs-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.docs-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+.docs-body th, .docs-body td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+.docs-body th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+.docs-body .alert {
+  margin: 1.5rem 0;
+}
+
+ 
+[data-theme="dark"] .docs-sidebar .nav-link {
+  color: #d4d4d8;
+}
+[data-theme="dark"] .docs-sidebar .nav-link:hover,
+[data-theme="dark"] .docs-sidebar .nav-link.active {
+  color: #60a5fa;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .docs-sidebar h6.text-muted {
+  color: #9ca3af !important;
+}
+[data-theme="dark"] .docs-content h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-content .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .docs-body {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body h2 {
+  color: var(--zta-text, #e9ecef);
+  border-bottom-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .docs-body h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .docs-body th,
+[data-theme="dark"] .docs-body td {
+  border-color: var(--zta-border, #495057);
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body th {
+  background: var(--zta-bg-tertiary, #2c3034);
+}
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  color: #d4d4d8;
+  border-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--zta-bg-tertiary, #2c3034);
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>
