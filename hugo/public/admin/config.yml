@@ -1,0 +1,66 @@
+backend:
+  name: git-gateway
+  branch: main
+
+publish_mode: editorial_workflow
+
+media_folder: "static/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  # Blog Posts
+  - name: "blog"
+    label: "Blog Posts"
+    folder: "content/blog"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Author", name: "author", widget: "string", default: "Zero Trust Analytics Team" }
+      - { label: "Category", name: "category", widget: "select", options: ["Privacy", "HIPAA Compliance", "GDPR", "Analytics", "Industry", "Product Updates", "Technical"] }
+      - { label: "Tags", name: "tags", widget: "list" }
+      - { label: "Featured Image", name: "image", widget: "image", required: false }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # Documentation
+  - name: "docs"
+    label: "Documentation"
+    folder: "content/docs"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "string" }
+      - { label: "Weight (Sort Order)", name: "weight", widget: "number", default: 10 }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # API Documentation
+  - name: "api-docs"
+    label: "API Documentation"
+    folder: "content/docs/api"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "string" }
+      - { label: "Weight (Sort Order)", name: "weight", widget: "number", default: 10 }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # Site Settings
+  - name: "settings"
+    label: "Site Settings"
+    files:
+      - name: "config"
+        label: "Site Configuration"
+        file: "config.toml"
+        fields:
+          - { label: "Site Title", name: "title", widget: "string" }
+          - label: "Parameters"
+            name: "params"
+            widget: "object"
+            fields:
+              - { label: "Company Name", name: "CompanyName", widget: "string" }
+              - { label: "Tagline", name: "tagline", widget: "string" }
+              - { label: "Price", name: "price", widget: "string" }

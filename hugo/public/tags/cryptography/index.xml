@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cryptography on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/cryptography/</link>
+    <description>Recent content in Cryptography on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jan 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/cryptography/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>How Bitcoin Inspired Us to Build Zero Trust Analytics</title>
+      <link>http://localhost:49390/blog/how-bitcoin-inspired-zero-trust-analytics/</link>
+      <pubDate>Mon, 06 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/how-bitcoin-inspired-zero-trust-analytics/</guid>
+      <description>&lt;p&gt;In 2008, a pseudonymous developer named Satoshi Nakamoto published a whitepaper that changed how we think about trust in digital systems. Bitcoin wasn&amp;rsquo;t just a new form of money—it was a proof of concept that you could build systems where no single party needs to be trusted.&lt;/p&gt;&#xA;&lt;p&gt;That idea stuck with us. And when we built Zero Trust Analytics, we borrowed heavily from Bitcoin&amp;rsquo;s philosophical playbook.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-bitcoin-insight-dont-trust-verify&#34;&gt;The Bitcoin Insight: Don&amp;rsquo;t Trust, Verify&lt;/h2&gt;&#xA;&lt;p&gt;Traditional banking works on trust. You trust your bank to hold your money. You trust payment processors to transfer it. You trust regulators to oversee them. Layer upon layer of trust.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What Is Zero Knowledge? The Security Concept Behind ZTA.io</title>
+      <link>http://localhost:49390/blog/what-is-zero-knowledge-origins-and-history/</link>
+      <pubDate>Mon, 30 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/what-is-zero-knowledge-origins-and-history/</guid>
+      <description>&lt;p&gt;When we named our company &amp;ldquo;Zero Trust Analytics,&amp;rdquo; we weren&amp;rsquo;t just picking cool words. We were committing to a specific security philosophy with deep roots in cryptography and systems design.&lt;/p&gt;&#xA;&lt;p&gt;Let me explain what Zero Knowledge means and why it matters for your privacy.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-original-zero-knowledge-proofs&#34;&gt;The Original Zero Knowledge Proofs&lt;/h2&gt;&#xA;&lt;p&gt;The concept of &amp;ldquo;zero knowledge&amp;rdquo; comes from cryptography. In 1985, three MIT researchers—Goldwasser, Micali, and Rackoff—published a groundbreaking paper on &amp;ldquo;zero-knowledge proofs.&amp;rdquo;&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

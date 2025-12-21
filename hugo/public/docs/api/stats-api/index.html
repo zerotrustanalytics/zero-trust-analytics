@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Stats API Reference
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Stats API Reference">
+
+
+<meta name="description" content="Public API for accessing analytics data programmatically">
+<meta name="summary" content="Stats API
+The Stats API provides programmatic access to your analytics data for external integrations, custom dashboards, and third-party tools.
+Authentication
+All Stats API requests require authentication using an API key. API keys can be created in your account dashboard under Settings &gt; API Keys.
+Creating an API Key
+
+Navigate to Settings &gt; API Keys
+Click Create New API Key
+Give your key a descriptive name (e.g., &ldquo;WordPress Plugin&rdquo;, &ldquo;Looker Studio&rdquo;)
+Select permissions (read, write, admin)
+Save the API key immediately - you won&rsquo;t be able to see it again!
+
+Using Your API Key
+Include your API key in the Authorization header using the Bearer token format:" >
+<meta name="date" content="2024-12-12 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Stats API Reference">
+
+<meta property="og:date" content="2024-12-12 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Public API for accessing analytics data programmatically">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/api/stats-api/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/api/stats-api/">
+
+<meta name="twitter:title" content="Stats API Reference">
+
+<meta name="twitter:description" content="Public API for accessing analytics data programmatically">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/api/stats-api/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/docs/" class="text-decoration-none">Docs</a></li>
+        
+        
+        <li class="breadcrumb-item"><a href="/docs/api/" class="text-decoration-none">API Reference</a></li>
+        
+        
+        <li class="breadcrumb-item active" aria-current="page">Stats API Reference</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link ">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link ">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link ">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link ">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link ">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link ">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link ">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link ">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link ">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link ">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link ">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link ">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link ">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <article class="docs-content">
+        <h1 class="mb-4">Stats API Reference</h1>
+        
+        <p class="lead text-muted mb-4">Public API for accessing analytics data programmatically</p>
+        
+
+        <div class="docs-body">
+          <h1 id="stats-api">Stats API</h1>
+<p>The Stats API provides programmatic access to your analytics data for external integrations, custom dashboards, and third-party tools.</p>
+<h2 id="authentication">Authentication</h2>
+<p>All Stats API requests require authentication using an API key. API keys can be created in your account dashboard under <strong>Settings &gt; API Keys</strong>.</p>
+<h3 id="creating-an-api-key">Creating an API Key</h3>
+<ol>
+<li>Navigate to <strong>Settings &gt; API Keys</strong></li>
+<li>Click <strong>Create New API Key</strong></li>
+<li>Give your key a descriptive name (e.g., &ldquo;WordPress Plugin&rdquo;, &ldquo;Looker Studio&rdquo;)</li>
+<li>Select permissions (read, write, admin)</li>
+<li>Save the API key immediately - you won&rsquo;t be able to see it again!</li>
+</ol>
+<h3 id="using-your-api-key">Using Your API Key</h3>
+<p>Include your API key in the <code>Authorization</code> header using the Bearer token format:</p>
+<pre tabindex="0"><code>Authorization: Bearer zta_your_api_key_here
+</code></pre><h2 id="base-url">Base URL</h2>
+<pre tabindex="0"><code>https://your-domain.netlify.app/api/stats-api
+</code></pre><h2 id="rate-limits">Rate Limits</h2>
+<ul>
+<li><strong>100 requests per minute</strong> per API key</li>
+<li>Rate limit headers are included in all responses:
+<ul>
+<li><code>X-RateLimit-Limit</code>: Maximum requests per window</li>
+<li><code>X-RateLimit-Remaining</code>: Remaining requests in current window</li>
+<li><code>X-RateLimit-Reset</code>: Unix timestamp when the rate limit resets</li>
+</ul>
+</li>
+</ul>
+<p>When rate limited, you&rsquo;ll receive a <code>429 Too Many Requests</code> response with a <code>Retry-After</code> header.</p>
+<h2 id="request-format">Request Format</h2>
+<p>All requests use the GET method with query parameters:</p>
+<pre tabindex="0"><code>GET /api/stats-api?site_id=xxx&amp;period=7d&amp;metrics=visitors,pageviews
+</code></pre><h3 id="required-parameters">Required Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>site_id</code></td>
+          <td>string</td>
+          <td>Your site identifier (required)</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>period</code></td>
+          <td>string</td>
+          <td><code>7d</code></td>
+          <td>Time period (see Period Options)</td>
+      </tr>
+      <tr>
+          <td><code>date_from</code></td>
+          <td>string</td>
+          <td>-</td>
+          <td>Start date for custom period (YYYY-MM-DD)</td>
+      </tr>
+      <tr>
+          <td><code>date_to</code></td>
+          <td>string</td>
+          <td>-</td>
+          <td>End date for custom period (YYYY-MM-DD)</td>
+      </tr>
+      <tr>
+          <td><code>metrics</code></td>
+          <td>string</td>
+          <td><code>visitors,pageviews</code></td>
+          <td>Comma-separated metrics (see Metrics)</td>
+      </tr>
+      <tr>
+          <td><code>property</code></td>
+          <td>string</td>
+          <td>-</td>
+          <td>Property breakdown (see Properties)</td>
+      </tr>
+      <tr>
+          <td><code>filters</code></td>
+          <td>string</td>
+          <td>-</td>
+          <td>Filter results (see Filters)</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="period-options">Period Options</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Period</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>realtime</code></td>
+          <td>Last 5 minutes</td>
+      </tr>
+      <tr>
+          <td><code>day</code></td>
+          <td>Today (since midnight)</td>
+      </tr>
+      <tr>
+          <td><code>7d</code></td>
+          <td>Last 7 days</td>
+      </tr>
+      <tr>
+          <td><code>30d</code></td>
+          <td>Last 30 days</td>
+      </tr>
+      <tr>
+          <td><code>6mo</code></td>
+          <td>Last 6 months</td>
+      </tr>
+      <tr>
+          <td><code>12mo</code></td>
+          <td>Last 12 months</td>
+      </tr>
+      <tr>
+          <td><code>custom</code></td>
+          <td>Custom date range (requires <code>date_from</code> and <code>date_to</code>)</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="metrics">Metrics</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Metric</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>visitors</code></td>
+          <td>Unique visitors</td>
+      </tr>
+      <tr>
+          <td><code>pageviews</code></td>
+          <td>Total pageviews</td>
+      </tr>
+      <tr>
+          <td><code>bounce_rate</code></td>
+          <td>Bounce rate percentage</td>
+      </tr>
+      <tr>
+          <td><code>visit_duration</code></td>
+          <td>Average visit duration in seconds</td>
+      </tr>
+      <tr>
+          <td><code>views_per_visit</code></td>
+          <td>Average pageviews per visit</td>
+      </tr>
+  </tbody>
+</table>
+<p>You can request multiple metrics by separating them with commas:</p>
+<pre tabindex="0"><code>metrics=visitors,pageviews,bounce_rate
+</code></pre><h2 id="properties-breakdowns">Properties (Breakdowns)</h2>
+<p>Use the <code>property</code> parameter to break down metrics by a specific dimension:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Property</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>page</code></td>
+          <td>Break down by page URL</td>
+      </tr>
+      <tr>
+          <td><code>source</code></td>
+          <td>Break down by referrer/traffic source</td>
+      </tr>
+      <tr>
+          <td><code>country</code></td>
+          <td>Break down by country</td>
+      </tr>
+      <tr>
+          <td><code>device</code></td>
+          <td>Break down by device type</td>
+      </tr>
+      <tr>
+          <td><code>browser</code></td>
+          <td>Break down by browser</td>
+      </tr>
+      <tr>
+          <td><code>os</code></td>
+          <td>Break down by operating system</td>
+      </tr>
+  </tbody>
+</table>
+<p>Example:</p>
+<pre tabindex="0"><code>GET /api/stats-api?site_id=xxx&amp;period=7d&amp;property=page&amp;metrics=visitors,pageviews
+</code></pre><h2 id="filters">Filters</h2>
+<p>Filter results using the <code>filters</code> parameter. Multiple filters can be combined with semicolons.</p>
+<h3 id="filter-syntax">Filter Syntax</h3>
+<pre tabindex="0"><code>property==value
+</code></pre><h3 id="wildcard-support">Wildcard Support</h3>
+<p>Use <code>*</code> for wildcard matching:</p>
+<pre tabindex="0"><code>filters=page==/blog/*
+</code></pre><h3 id="multiple-filters">Multiple Filters</h3>
+<p>Combine filters with semicolons:</p>
+<pre tabindex="0"><code>filters=page==/blog/*;country==US
+</code></pre><h2 id="response-format">Response Format</h2>
+<p>All successful responses return JSON with the following structure:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;results&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;2024-12-11&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;visitors&#34;</span>: <span style="color:#ae81ff">150</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">420</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;2024-12-10&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;visitors&#34;</span>: <span style="color:#ae81ff">145</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">398</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;query&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;site_id&#34;</span>: <span style="color:#e6db74">&#34;xxx&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;period&#34;</span>: <span style="color:#e6db74">&#34;7d&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;metrics&#34;</span>: [<span style="color:#e6db74">&#34;visitors&#34;</span>, <span style="color:#e6db74">&#34;pageviews&#34;</span>]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="response-fields">Response Fields</h3>
+<ul>
+<li><code>results</code>: Array of data points (time series or property breakdown)</li>
+<li><code>query</code>: Echo of your query parameters for verification</li>
+</ul>
+<h3 id="property-breakdown-response">Property Breakdown Response</h3>
+<p>When using the <code>property</code> parameter, results are grouped by that property:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;results&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;page&#34;</span>: <span style="color:#e6db74">&#34;/&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;visitors&#34;</span>: <span style="color:#ae81ff">520</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">850</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;page&#34;</span>: <span style="color:#e6db74">&#34;/blog&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;visitors&#34;</span>: <span style="color:#ae81ff">310</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;pageviews&#34;</span>: <span style="color:#ae81ff">645</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;query&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;site_id&#34;</span>: <span style="color:#e6db74">&#34;xxx&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;period&#34;</span>: <span style="color:#e6db74">&#34;7d&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;property&#34;</span>: <span style="color:#e6db74">&#34;page&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;metrics&#34;</span>: [<span style="color:#e6db74">&#34;visitors&#34;</span>, <span style="color:#e6db74">&#34;pageviews&#34;</span>]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="error-responses">Error Responses</h2>
+<p>All errors return JSON with an <code>error</code> field:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Error message description&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="http-status-codes">HTTP Status Codes</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Code</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>200</code></td>
+          <td>Success</td>
+      </tr>
+      <tr>
+          <td><code>400</code></td>
+          <td>Bad Request (invalid parameters)</td>
+      </tr>
+      <tr>
+          <td><code>401</code></td>
+          <td>Unauthorized (missing or invalid API key)</td>
+      </tr>
+      <tr>
+          <td><code>403</code></td>
+          <td>Forbidden (no access to this site)</td>
+      </tr>
+      <tr>
+          <td><code>405</code></td>
+          <td>Method Not Allowed (use GET only)</td>
+      </tr>
+      <tr>
+          <td><code>429</code></td>
+          <td>Too Many Requests (rate limit exceeded)</td>
+      </tr>
+      <tr>
+          <td><code>500</code></td>
+          <td>Internal Server Error</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="code-examples">Code Examples</h2>
+<h3 id="curl">cURL</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X GET <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  <span style="color:#e6db74">&#39;https://your-domain.netlify.app/api/stats-api?site_id=xxx&amp;period=7d&amp;metrics=visitors,pageviews&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#39;Authorization: Bearer zta_your_api_key_here&#39;</span>
+</span></span></code></pre></div><h3 id="javascript-nodejs">JavaScript (Node.js)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">fetch</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">require</span>(<span style="color:#e6db74">&#39;node-fetch&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getStats</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;https://your-domain.netlify.app/api/stats-api?site_id=xxx&amp;period=7d&amp;metrics=visitors,pageviews&#39;</span>,
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;Bearer zta_your_api_key_here&#39;</span>
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">data</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">getStats</span>();
+</span></span></code></pre></div><h3 id="javascript-browser">JavaScript (Browser)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;https://your-domain.netlify.app/api/stats-api?site_id=xxx&amp;period=7d&amp;metrics=visitors,pageviews&#39;</span>, {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;Bearer zta_your_api_key_here&#39;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span>  .<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">response</span> =&gt; <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>())
+</span></span><span style="display:flex;"><span>  .<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">data</span> =&gt; <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">data</span>))
+</span></span><span style="display:flex;"><span>  .<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">error</span> =&gt; <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#39;Error:&#39;</span>, <span style="color:#a6e22e">error</span>));
+</span></span></code></pre></div><h3 id="python">Python</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> requests
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>url <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;https://your-domain.netlify.app/api/stats-api&#39;</span>
+</span></span><span style="display:flex;"><span>params <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;site_id&#39;</span>: <span style="color:#e6db74">&#39;xxx&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;period&#39;</span>: <span style="color:#e6db74">&#39;7d&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;metrics&#39;</span>: <span style="color:#e6db74">&#39;visitors,pageviews&#39;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>headers <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Authorization&#39;</span>: <span style="color:#e6db74">&#39;Bearer zta_your_api_key_here&#39;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>response <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>get(url, params<span style="color:#f92672">=</span>params, headers<span style="color:#f92672">=</span>headers)
+</span></span><span style="display:flex;"><span>data <span style="color:#f92672">=</span> response<span style="color:#f92672">.</span>json()
+</span></span><span style="display:flex;"><span>print(data)
+</span></span></code></pre></div><h3 id="python-with-error-handling">Python (with error handling)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> requests
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> datetime <span style="color:#f92672">import</span> datetime, timedelta
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ZTAClient</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, api_key, base_url<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;https://your-domain.netlify.app&#39;</span>):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>api_key <span style="color:#f92672">=</span> api_key
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>base_url <span style="color:#f92672">=</span> base_url
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>session <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>Session()
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>session<span style="color:#f92672">.</span>headers<span style="color:#f92672">.</span>update({
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;Authorization&#39;</span>: <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Bearer </span><span style="color:#e6db74">{</span>api_key<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_stats</span>(self, site_id, period<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;7d&#39;</span>, metrics<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, <span style="color:#f92672">**</span>kwargs):
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Get stats for a site
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Args:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            site_id (str): Site identifier
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            period (str): Time period (realtime, day, 7d, 30d, 6mo, 12mo, custom)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            metrics (list): List of metrics to retrieve
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            **kwargs: Additional query parameters
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Returns:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            dict: Stats data
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        params <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;site_id&#39;</span>: site_id,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;period&#39;</span>: period
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> metrics:
+</span></span><span style="display:flex;"><span>            params[<span style="color:#e6db74">&#39;metrics&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;,&#39;</span><span style="color:#f92672">.</span>join(metrics)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        params<span style="color:#f92672">.</span>update(kwargs)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        response <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>session<span style="color:#f92672">.</span>get(
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>base_url<span style="color:#e6db74">}</span><span style="color:#e6db74">/api/stats-api&#39;</span>,
+</span></span><span style="display:flex;"><span>            params<span style="color:#f92672">=</span>params
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        response<span style="color:#f92672">.</span>raise_for_status()
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> response<span style="color:#f92672">.</span>json()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Usage</span>
+</span></span><span style="display:flex;"><span>client <span style="color:#f92672">=</span> ZTAClient(<span style="color:#e6db74">&#39;zta_your_api_key_here&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Get basic stats</span>
+</span></span><span style="display:flex;"><span>stats <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>get_stats(<span style="color:#e6db74">&#39;site_xxx&#39;</span>, period<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;7d&#39;</span>, metrics<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;visitors&#39;</span>, <span style="color:#e6db74">&#39;pageviews&#39;</span>])
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Total visitors: </span><span style="color:#e6db74">{</span>sum(r[<span style="color:#e6db74">&#39;visitors&#39;</span>] <span style="color:#66d9ef">for</span> r <span style="color:#f92672">in</span> stats[<span style="color:#e6db74">&#39;results&#39;</span>])<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Get page breakdown</span>
+</span></span><span style="display:flex;"><span>pages <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>get_stats(<span style="color:#e6db74">&#39;site_xxx&#39;</span>, period<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;30d&#39;</span>, property<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;page&#39;</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Top page: </span><span style="color:#e6db74">{</span>pages[<span style="color:#e6db74">&#39;results&#39;</span>][<span style="color:#ae81ff">0</span>][<span style="color:#e6db74">&#39;page&#39;</span>]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Custom date range</span>
+</span></span><span style="display:flex;"><span>stats <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>get_stats(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;site_xxx&#39;</span>,
+</span></span><span style="display:flex;"><span>    period<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;custom&#39;</span>,
+</span></span><span style="display:flex;"><span>    date_from<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;2024-12-01&#39;</span>,
+</span></span><span style="display:flex;"><span>    date_to<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;2024-12-10&#39;</span>,
+</span></span><span style="display:flex;"><span>    metrics<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;visitors&#39;</span>, <span style="color:#e6db74">&#39;pageviews&#39;</span>, <span style="color:#e6db74">&#39;bounce_rate&#39;</span>]
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h3 id="php">PHP</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getStats</span>($apiKey, $siteId, $period <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;7d&#39;</span>, $metrics <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;visitors,pageviews&#39;</span>) {
+</span></span><span style="display:flex;"><span>    $url <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;https://your-domain.netlify.app/api/stats-api?&#39;</span> <span style="color:#f92672">.</span> <span style="color:#a6e22e">http_build_query</span>([
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#39;site_id&#39;</span> <span style="color:#f92672">=&gt;</span> $siteId,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#39;period&#39;</span> <span style="color:#f92672">=&gt;</span> $period,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#39;metrics&#39;</span> <span style="color:#f92672">=&gt;</span> $metrics
+</span></span><span style="display:flex;"><span>    ]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    $options <span style="color:#f92672">=</span> [
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#39;http&#39;</span> <span style="color:#f92672">=&gt;</span> [
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;header&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#34;Authorization: Bearer </span><span style="color:#e6db74">$apiKey\r\n</span><span style="color:#e6db74">&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;method&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;GET&#39;</span>
+</span></span><span style="display:flex;"><span>        ]
+</span></span><span style="display:flex;"><span>    ];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    $context <span style="color:#f92672">=</span> <span style="color:#a6e22e">stream_context_create</span>($options);
+</span></span><span style="display:flex;"><span>    $response <span style="color:#f92672">=</span> <span style="color:#a6e22e">file_get_contents</span>($url, <span style="color:#66d9ef">false</span>, $context);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">json_decode</span>($response, <span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Usage
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>$apiKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;zta_your_api_key_here&#39;</span>;
+</span></span><span style="display:flex;"><span>$siteId <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;xxx&#39;</span>;
+</span></span><span style="display:flex;"><span>$stats <span style="color:#f92672">=</span> <span style="color:#a6e22e">getStats</span>($apiKey, $siteId, <span style="color:#e6db74">&#39;7d&#39;</span>, <span style="color:#e6db74">&#39;visitors,pageviews&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">print_r</span>($stats);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">?&gt;</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><h3 id="ruby">Ruby</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-ruby" data-lang="ruby"><span style="display:flex;"><span>require <span style="color:#e6db74">&#39;net/http&#39;</span>
+</span></span><span style="display:flex;"><span>require <span style="color:#e6db74">&#39;json&#39;</span>
+</span></span><span style="display:flex;"><span>require <span style="color:#e6db74">&#39;uri&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ZTAClient</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>(api_key, base_url <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;https://your-domain.netlify.app&#39;</span>)
+</span></span><span style="display:flex;"><span>    @api_key <span style="color:#f92672">=</span> api_key
+</span></span><span style="display:flex;"><span>    @base_url <span style="color:#f92672">=</span> base_url
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_stats</span>(site_id, <span style="color:#e6db74">period</span>: <span style="color:#e6db74">&#39;7d&#39;</span>, <span style="color:#e6db74">metrics</span>: <span style="color:#66d9ef">nil</span>, <span style="color:#f92672">**</span>options)
+</span></span><span style="display:flex;"><span>    params <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">site_id</span>: site_id,
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">period</span>: period
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    params<span style="color:#f92672">[</span><span style="color:#e6db74">:metrics</span><span style="color:#f92672">]</span> <span style="color:#f92672">=</span> metrics<span style="color:#f92672">.</span>join(<span style="color:#e6db74">&#39;,&#39;</span>) <span style="color:#66d9ef">if</span> metrics
+</span></span><span style="display:flex;"><span>    params<span style="color:#f92672">.</span>merge!(options)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    uri <span style="color:#f92672">=</span> <span style="color:#66d9ef">URI</span>(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">#{</span>@base_url<span style="color:#e6db74">}</span><span style="color:#e6db74">/api/stats-api&#34;</span>)
+</span></span><span style="display:flex;"><span>    uri<span style="color:#f92672">.</span>query <span style="color:#f92672">=</span> <span style="color:#66d9ef">URI</span><span style="color:#f92672">.</span>encode_www_form(params)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    request <span style="color:#f92672">=</span> <span style="color:#66d9ef">Net</span><span style="color:#f92672">::</span><span style="color:#66d9ef">HTTP</span><span style="color:#f92672">::</span><span style="color:#66d9ef">Get</span><span style="color:#f92672">.</span>new(uri)
+</span></span><span style="display:flex;"><span>    request<span style="color:#f92672">[</span><span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">]</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Bearer </span><span style="color:#e6db74">#{</span>@api_key<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    response <span style="color:#f92672">=</span> <span style="color:#66d9ef">Net</span><span style="color:#f92672">::</span><span style="color:#66d9ef">HTTP</span><span style="color:#f92672">.</span>start(uri<span style="color:#f92672">.</span>hostname, uri<span style="color:#f92672">.</span>port, <span style="color:#e6db74">use_ssl</span>: <span style="color:#66d9ef">true</span>) <span style="color:#66d9ef">do</span> <span style="color:#f92672">|</span>http<span style="color:#f92672">|</span>
+</span></span><span style="display:flex;"><span>      http<span style="color:#f92672">.</span>request(request)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">JSON</span><span style="color:#f92672">.</span>parse(response<span style="color:#f92672">.</span>body)
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Usage</span>
+</span></span><span style="display:flex;"><span>client <span style="color:#f92672">=</span> <span style="color:#66d9ef">ZTAClient</span><span style="color:#f92672">.</span>new(<span style="color:#e6db74">&#39;zta_your_api_key_here&#39;</span>)
+</span></span><span style="display:flex;"><span>stats <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>get_stats(<span style="color:#e6db74">&#39;site_xxx&#39;</span>, <span style="color:#e6db74">period</span>: <span style="color:#e6db74">&#39;7d&#39;</span>, <span style="color:#e6db74">metrics</span>: <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;visitors&#39;</span>, <span style="color:#e6db74">&#39;pageviews&#39;</span><span style="color:#f92672">]</span>)
+</span></span><span style="display:flex;"><span>puts stats
+</span></span></code></pre></div><h2 id="use-cases">Use Cases</h2>
+<h3 id="wordpress-plugin">WordPress Plugin</h3>
+<p>Fetch stats to display in the WordPress admin dashboard:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">fetchStatsForWordPress</span>(<span style="color:#a6e22e">siteId</span>, <span style="color:#a6e22e">apiKey</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">`https://your-domain.netlify.app/api/stats-api?site_id=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=30d&amp;metrics=visitors,pageviews`</span>,
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Display in WordPress dashboard
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">totalVisitors</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">results</span>.<span style="color:#a6e22e">reduce</span>((<span style="color:#a6e22e">sum</span>, <span style="color:#a6e22e">day</span>) =&gt; <span style="color:#a6e22e">sum</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">day</span>.<span style="color:#a6e22e">visitors</span>, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">totalPageviews</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">results</span>.<span style="color:#a6e22e">reduce</span>((<span style="color:#a6e22e">sum</span>, <span style="color:#a6e22e">day</span>) =&gt; <span style="color:#a6e22e">sum</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">day</span>.<span style="color:#a6e22e">pageviews</span>, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> { <span style="color:#a6e22e">totalVisitors</span>, <span style="color:#a6e22e">totalPageviews</span>, <span style="color:#a6e22e">dailyStats</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">results</span> };
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="looker-studio-connector">Looker Studio Connector</h3>
+<p>Create a custom connector for Looker Studio (formerly Google Data Studio):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">// Looker Studio connector example
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getData</span>(<span style="color:#a6e22e">request</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">apiKey</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;zta_your_api_key_here&#39;</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">siteId</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">request</span>.<span style="color:#a6e22e">configParams</span>.<span style="color:#a6e22e">siteId</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">period</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">request</span>.<span style="color:#a6e22e">dateRange</span> <span style="color:#f92672">||</span> <span style="color:#e6db74">&#39;30d&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">url</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">`https://your-domain.netlify.app/api/stats-api?site_id=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">period</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;metrics=visitors,pageviews,bounce_rate`</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">UrlFetchApp</span>.<span style="color:#a6e22e">fetch</span>(<span style="color:#a6e22e">url</span>, {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> }
+</span></span><span style="display:flex;"><span>  });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">parse</span>(<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">getContentText</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Transform to Looker Studio format
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">return</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">schema</span><span style="color:#f92672">:</span> [
+</span></span><span style="display:flex;"><span>      { <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;date&#39;</span>, <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;STRING&#39;</span> },
+</span></span><span style="display:flex;"><span>      { <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;visitors&#39;</span>, <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;NUMBER&#39;</span> },
+</span></span><span style="display:flex;"><span>      { <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;pageviews&#39;</span>, <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;NUMBER&#39;</span> },
+</span></span><span style="display:flex;"><span>      { <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;bounce_rate&#39;</span>, <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;NUMBER&#39;</span> }
+</span></span><span style="display:flex;"><span>    ],
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">rows</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">results</span>.<span style="color:#a6e22e">map</span>(<span style="color:#a6e22e">row</span> =&gt; ({
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">values</span><span style="color:#f92672">:</span> [<span style="color:#a6e22e">row</span>.<span style="color:#a6e22e">date</span>, <span style="color:#a6e22e">row</span>.<span style="color:#a6e22e">visitors</span>, <span style="color:#a6e22e">row</span>.<span style="color:#a6e22e">pageviews</span>, <span style="color:#a6e22e">row</span>.<span style="color:#a6e22e">bounce_rate</span>]
+</span></span><span style="display:flex;"><span>    }))
+</span></span><span style="display:flex;"><span>  };
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="custom-dashboard">Custom Dashboard</h3>
+<p>Build a custom analytics dashboard:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">buildDashboard</span>(<span style="color:#a6e22e">siteId</span>, <span style="color:#a6e22e">apiKey</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Fetch multiple datasets in parallel
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">const</span> [<span style="color:#a6e22e">overview</span>, <span style="color:#a6e22e">pages</span>, <span style="color:#a6e22e">sources</span>, <span style="color:#a6e22e">countries</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> Promise.<span style="color:#a6e22e">all</span>([
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">`https://your-domain.netlify.app/api/stats-api?site_id=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=7d&amp;metrics=visitors,pageviews,bounce_rate`</span>, {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> }
+</span></span><span style="display:flex;"><span>    }).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">r</span> =&gt; <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">json</span>()),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">`https://your-domain.netlify.app/api/stats-api?site_id=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=7d&amp;property=page&amp;metrics=visitors,pageviews`</span>, {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> }
+</span></span><span style="display:flex;"><span>    }).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">r</span> =&gt; <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">json</span>()),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">`https://your-domain.netlify.app/api/stats-api?site_id=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=7d&amp;property=source&amp;metrics=visitors`</span>, {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> }
+</span></span><span style="display:flex;"><span>    }).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">r</span> =&gt; <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">json</span>()),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">`https://your-domain.netlify.app/api/stats-api?site_id=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=7d&amp;property=country&amp;metrics=visitors`</span>, {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> }
+</span></span><span style="display:flex;"><span>    }).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">r</span> =&gt; <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">json</span>())
+</span></span><span style="display:flex;"><span>  ]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">overview</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">overview</span>.<span style="color:#a6e22e">results</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">topPages</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">pages</span>.<span style="color:#a6e22e">results</span>.<span style="color:#a6e22e">slice</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">topSources</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">sources</span>.<span style="color:#a6e22e">results</span>.<span style="color:#a6e22e">slice</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">topCountries</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">countries</span>.<span style="color:#a6e22e">results</span>.<span style="color:#a6e22e">slice</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>)
+</span></span><span style="display:flex;"><span>  };
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="best-practices">Best Practices</h2>
+<h3 id="1-cache-responses">1. Cache Responses</h3>
+<p>To avoid hitting rate limits, cache API responses:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">cache</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Map</span>();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">CACHE_TTL</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">60</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">1000</span>; <span style="color:#75715e">// 5 minutes
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getCachedStats</span>(<span style="color:#a6e22e">siteId</span>, <span style="color:#a6e22e">apiKey</span>, <span style="color:#a6e22e">period</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;7d&#39;</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">cacheKey</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">`</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">:</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">period</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">cached</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">cache</span>.<span style="color:#a6e22e">get</span>(<span style="color:#a6e22e">cacheKey</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">cached</span> <span style="color:#f92672">&amp;&amp;</span> Date.<span style="color:#a6e22e">now</span>() <span style="color:#f92672">-</span> <span style="color:#a6e22e">cached</span>.<span style="color:#a6e22e">timestamp</span> <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">CACHE_TTL</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">cached</span>.<span style="color:#a6e22e">data</span>;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">`https://your-domain.netlify.app/api/stats-api?site_id=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">siteId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">&amp;period=</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">period</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>,
+</span></span><span style="display:flex;"><span>    { <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> } }
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">cache</span>.<span style="color:#a6e22e">set</span>(<span style="color:#a6e22e">cacheKey</span>, { <span style="color:#a6e22e">data</span>, <span style="color:#a6e22e">timestamp</span><span style="color:#f92672">:</span> Date.<span style="color:#a6e22e">now</span>() });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">data</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="2-handle-rate-limits-gracefully">2. Handle Rate Limits Gracefully</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">fetchWithRetry</span>(<span style="color:#a6e22e">url</span>, <span style="color:#a6e22e">options</span>, <span style="color:#a6e22e">maxRetries</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">let</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">maxRetries</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#a6e22e">url</span>, <span style="color:#a6e22e">options</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">status</span> <span style="color:#f92672">===</span> <span style="color:#ae81ff">429</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">retryAfter</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">headers</span>.<span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;Retry-After&#39;</span>) <span style="color:#f92672">||</span> <span style="color:#ae81ff">60</span>;
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">`Rate limited. Retrying after </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">retryAfter</span><span style="color:#e6db74">}</span><span style="color:#e6db74">s...`</span>);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">await</span> <span style="color:#66d9ef">new</span> Promise(<span style="color:#a6e22e">resolve</span> =&gt; <span style="color:#a6e22e">setTimeout</span>(<span style="color:#a6e22e">resolve</span>, <span style="color:#a6e22e">retryAfter</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">1000</span>));
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">continue</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">response</span>;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> Error(<span style="color:#e6db74">&#39;Max retries exceeded&#39;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="3-batch-requests">3. Batch Requests</h3>
+<p>Minimize API calls by requesting multiple metrics at once:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">// Good: Single request
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">stats</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;https://your-domain.netlify.app/api/stats-api?site_id=xxx&amp;period=7d&amp;metrics=visitors,pageviews,bounce_rate,visit_duration&#39;</span>,
+</span></span><span style="display:flex;"><span>  { <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#39;Authorization&#39;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`Bearer </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">apiKey</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span> } }
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Avoid: Multiple requests
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">visitors</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;...&amp;metrics=visitors&#39;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">pageviews</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;...&amp;metrics=pageviews&#39;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">bounceRate</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;...&amp;metrics=bounce_rate&#39;</span>);
+</span></span></code></pre></div><h3 id="4-secure-your-api-keys">4. Secure Your API Keys</h3>
+<ul>
+<li>Never commit API keys to version control</li>
+<li>Store API keys in environment variables</li>
+<li>Rotate API keys regularly</li>
+<li>Use separate keys for different integrations</li>
+<li>Revoke unused or compromised keys immediately</li>
+</ul>
+<h2 id="support">Support</h2>
+<p>For API support or feature requests:</p>
+<ul>
+<li>Email: <a href="mailto:support@zta.io">support@zta.io</a></li>
+<li>Documentation: <a href="https://your-domain.netlify.app/docs">https://your-domain.netlify.app/docs</a></li>
+<li>GitHub Issues: <a href="https://github.com/your-repo/issues">https://github.com/your-repo/issues</a></li>
+</ul>
+
+        </div>
+
+        
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+          
+          <a href="/docs/api/authentication/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Authentication
+          </a>
+          
+
+          
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-body h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+.docs-body h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.docs-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.docs-body code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+.docs-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.docs-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+.docs-body th, .docs-body td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+.docs-body th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+.docs-body .alert {
+  margin: 1.5rem 0;
+}
+
+ 
+[data-theme="dark"] .docs-sidebar .nav-link {
+  color: #d4d4d8;
+}
+[data-theme="dark"] .docs-sidebar .nav-link:hover,
+[data-theme="dark"] .docs-sidebar .nav-link.active {
+  color: #60a5fa;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .docs-sidebar h6.text-muted {
+  color: #9ca3af !important;
+}
+[data-theme="dark"] .docs-content h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-content .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .docs-body {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body h2 {
+  color: var(--zta-text, #e9ecef);
+  border-bottom-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .docs-body h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .docs-body th,
+[data-theme="dark"] .docs-body td {
+  border-color: var(--zta-border, #495057);
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body th {
+  background: var(--zta-bg-tertiary, #2c3034);
+}
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  color: #d4d4d8;
+  border-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--zta-bg-tertiary, #2c3034);
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>

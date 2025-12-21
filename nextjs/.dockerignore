@@ -1,0 +1,76 @@
+# Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Node modules (will be installed in container)
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build artifacts
+public
+.hugo_build.lock
+resources/_gen
+
+# Development files
+.env
+.env.local
+.env.*.local
+*.log
+
+# Netlify
+.netlify
+netlify.toml
+
+# Testing
+tests
+coverage
+*.test.js
+.jest
+
+# Documentation
+*.md
+!README.md
+docs
+developerREADME.md
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Backups
+backups
+*.backup
+*.bak
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Project specific
+finish_this_jason.md
+roadmap.md
+BRANDING*.md
+PRODUCT.md
+generate-branding-assets.*

@@ -1,0 +1,126 @@
+// Zero Trust Analytics - Shared Mixins
+
+// ===========================================
+// Responsive Breakpoints
+// ===========================================
+
+@mixin media-sm {
+  @media (min-width: $breakpoint-sm) {
+    @content;
+  }
+}
+
+@mixin media-md {
+  @media (min-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin media-lg {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin media-xl {
+  @media (min-width: $breakpoint-xl) {
+    @content;
+  }
+}
+
+// ===========================================
+// Layout
+// ===========================================
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// ===========================================
+// Cards
+// ===========================================
+
+@mixin card-base {
+  background: $white;
+  border-radius: $card-border-radius;
+  box-shadow: $card-shadow;
+}
+
+@mixin card-elevated {
+  @include card-base;
+  box-shadow: $shadow-lg;
+}
+
+@mixin card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: $shadow !important;
+  }
+}
+
+// ===========================================
+// Form Controls
+// ===========================================
+
+@mixin input-base {
+  padding: $input-padding-y $input-padding-x;
+  border-radius: $input-border-radius;
+
+  &:focus {
+    box-shadow: $shadow-focus;
+  }
+}
+
+@mixin btn-base {
+  padding: $btn-padding-y $btn-padding-x;
+  font-weight: $btn-font-weight;
+}
+
+// ===========================================
+// Hero/Page Headers
+// ===========================================
+
+@mixin hero-gradient {
+  background: $gradient-primary;
+  color: $white;
+}
+
+@mixin blade-padding {
+  padding: 25px 0;
+
+  @include media-md {
+    padding: 50px 0;
+  }
+}
+
+// ===========================================
+// Text Utilities
+// ===========================================
+
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

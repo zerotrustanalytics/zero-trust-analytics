@@ -1,0 +1,93 @@
+// Zero Trust Analytics - Home Page Styles
+@import 'shared/variables';
+@import 'shared/mixins';
+
+// Hero Section
+.hero {
+  @include blade-padding;
+  @include hero-gradient;
+}
+
+// Feature Icons
+.feature-icon {
+  @include flex-center;
+  font-size: $font-size-xl;
+}
+
+// Step Numbers
+.step-number {
+  font-size: $font-size-lg;
+}
+
+// Card Hover Effects
+.card {
+  @include card-hover;
+}
+
+
+
+/* Dark mode styles for homepage */
+[data-theme="dark"] .card {
+  background-color: var(--zta-card-bg);
+  border-color: var(--zta-border);
+}
+
+[data-theme="dark"] .card-title {
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .card-text {
+  color: #d4d4d8 !important; /* Light gray for contrast */
+}
+
+/* Dark mode for "What We DON'T Collect" section */
+[data-theme="dark"] section.bg-dark .text-muted {
+  color: #d4d4d8 !important; /* Ensure readability on dark sections */
+}
+
+[data-theme="dark"] section.bg-dark h5 {
+  color: #fff;
+}
+
+/* Dark mode: How It Works section */
+[data-theme="dark"] section.bg-light .text-muted {
+  color: #9ca3af; /* Gray-400 on light dark bg */
+}
+
+/* Dark mode: Pricing table */
+[data-theme="dark"] .table-bordered {
+  border-color: var(--zta-border);
+}
+
+[data-theme="dark"] .table-bordered td,
+[data-theme="dark"] .table-bordered th {
+  border-color: var(--zta-border);
+}
+
+[data-theme="dark"] thead.table-light {
+  background-color: var(--zta-bg-tertiary) !important;
+}
+
+[data-theme="dark"] thead.table-light th {
+  background-color: var(--zta-bg-tertiary) !important;
+  color: var(--zta-text) !important;
+}
+
+[data-theme="dark"] .table-primary,
+[data-theme="dark"] td.table-primary {
+  background-color: rgba(13, 110, 253, 0.2) !important;
+  color: var(--zta-text) !important;
+}
+
+/* Dark mode: Code blocks */
+[data-theme="dark"] .card-header.bg-dark {
+  background-color: #0f172a !important; /* Slate-900 */
+}
+
+[data-theme="dark"] .card-footer.bg-light {
+  background-color: var(--zta-bg-tertiary) !important;
+}
+
+[data-theme="dark"] .card-footer .text-muted {
+  color: #d4d4d8 !important;
+}

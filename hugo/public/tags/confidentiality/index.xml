@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Confidentiality on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/confidentiality/</link>
+    <description>Recent content in Confidentiality on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 20 Jan 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/confidentiality/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Why Law Firms Should Ditch Google Analytics Immediately</title>
+      <link>http://localhost:49390/blog/why-lawyers-should-ditch-google-analytics/</link>
+      <pubDate>Mon, 20 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-lawyers-should-ditch-google-analytics/</guid>
+      <description>&lt;p&gt;You spent years in law school learning about attorney-client privilege. You&amp;rsquo;ve built systems to protect confidential communications. Your firm takes client privacy seriously.&lt;/p&gt;&#xA;&lt;p&gt;But have you looked at what your website is telling Google about your potential clients?&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-confidentiality-problem&#34;&gt;The Confidentiality Problem&lt;/h2&gt;&#xA;&lt;p&gt;When someone visits your law firm&amp;rsquo;s website, Google Analytics captures:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Their IP address (can identify them)&lt;/li&gt;&#xA;&lt;li&gt;The pages they viewed (&amp;ldquo;divorce-attorney&amp;rdquo;, &amp;ldquo;bankruptcy-lawyer&amp;rdquo;, &amp;ldquo;criminal-defense&amp;rdquo;)&lt;/li&gt;&#xA;&lt;li&gt;How long they spent on each page&lt;/li&gt;&#xA;&lt;li&gt;Where they came from (maybe a referral from another attorney)&lt;/li&gt;&#xA;&lt;li&gt;Their device and location&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Now imagine this scenario: A person researching divorce attorneys visits your website before their spouse knows they&amp;rsquo;re considering divorce. Google now has evidence that this person was researching divorce lawyers. That data exists in Google&amp;rsquo;s systems, potentially discoverable, potentially part of an advertising profile.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

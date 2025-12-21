@@ -1,0 +1,16 @@
+h1,h2,h3,h4,h6,p {
+    color: unset;
+}
+
+h1,
+.heading-h1{
+    font-size: 28px;
+    line-height: 32px;
+    font-weight: 700;
+
+
+    @media(min-width: 992px) {
+        font-size: 40px;
+        line-height: 48px;
+    }
+}

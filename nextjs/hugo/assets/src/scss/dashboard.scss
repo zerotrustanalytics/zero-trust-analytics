@@ -1,0 +1,219 @@
+// Zero Trust Analytics - Dashboard Styles
+@import 'shared/variables';
+@import 'shared/mixins';
+
+.dashboard-container {
+  padding: $spacer-xl 0;
+  min-height: calc(100vh - 200px);
+}
+
+// Stats Cards
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacer-lg;
+  margin-bottom: $spacer-xl;
+}
+
+.stat-card {
+  @include card-base;
+  padding: $card-padding;
+  text-align: center;
+
+  .stat-value {
+    font-size: $font-size-xxl + 0.5rem;
+    font-weight: $font-weight-bold;
+    color: $primary;
+    line-height: $line-height-tight;
+  }
+
+  .stat-label {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    margin-top: $spacer-sm;
+  }
+
+  .stat-change {
+    font-size: $font-size-xs;
+    margin-top: $spacer-xs;
+
+    &.positive {
+      color: $success;
+    }
+
+    &.negative {
+      color: $danger;
+    }
+  }
+}
+
+// Site Selector
+.site-selector {
+  margin-bottom: $spacer-xl;
+
+  .dropdown-toggle {
+    min-width: 250px;
+    text-align: left;
+    @include flex-between;
+  }
+}
+
+// Period Selector
+.period-selector {
+  .btn-group {
+    .btn {
+      padding: 0.375rem $spacer-md;
+    }
+  }
+}
+
+// Data Tables
+.data-table {
+  @include card-base;
+  overflow: hidden;
+
+  .table {
+    margin-bottom: 0;
+
+    th {
+      background: $bg-light;
+      border-bottom: 2px solid $gray-300;
+      font-weight: $font-weight-semibold;
+      padding: $spacer-md;
+    }
+
+    td {
+      padding: $spacer-sm + 0.125rem $spacer-md;
+      vertical-align: middle;
+    }
+  }
+}
+
+// Chart Container
+.chart-container {
+  @include card-base;
+  padding: $card-padding;
+  margin-bottom: $spacer-xl;
+  min-height: 300px;
+}
+
+// Embed Code Box
+.embed-code {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: $border-radius;
+  padding: $spacer-md;
+  font-family: $font-family-mono;
+  font-size: $font-size-sm;
+  overflow-x: auto;
+
+  code {
+    color: #9cdcfe;
+  }
+}
+
+// Loading State
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba($white, 0.8);
+  @include flex-center;
+  z-index: 9999;
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: $spacer-xxl + 1rem $spacer-xl;
+
+  .empty-icon {
+    font-size: 4rem;
+    color: $gray-300;
+    margin-bottom: $spacer-md;
+  }
+
+  h3 {
+    color: $gray-700;
+  }
+
+  p {
+    color: $text-secondary;
+    max-width: 400px;
+    margin: 0 auto $spacer-lg;
+  }
+}
+
+// Add Site Modal
+.add-site-form {
+  .form-control {
+    @include input-base;
+  }
+}
+
+
+
+/* Dark mode styles for dashboard */
+[data-theme="dark"] .dashboard-container {
+  background-color: var(--zta-bg);
+}
+
+[data-theme="dark"] .stat-card {
+  background-color: var(--zta-card-bg);
+  border: 1px solid var(--zta-border);
+}
+
+[data-theme="dark"] .stat-card .stat-label {
+  color: #d4d4d8; /* Light gray for 10:1 contrast */
+}
+
+[data-theme="dark"] .stat-card .stat-value {
+  color: #60a5fa; /* Blue-400 for good contrast */
+}
+
+[data-theme="dark"] .data-table {
+  background-color: var(--zta-card-bg);
+  border: 1px solid var(--zta-border);
+}
+
+[data-theme="dark"] .data-table .table th {
+  background-color: var(--zta-bg-tertiary);
+  border-color: var(--zta-border);
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .data-table .table td {
+  color: var(--zta-text);
+  border-color: var(--zta-border);
+}
+
+[data-theme="dark"] .chart-container {
+  background-color: var(--zta-card-bg);
+  border: 1px solid var(--zta-border);
+}
+
+[data-theme="dark"] .empty-state .empty-icon {
+  color: #6b7280; /* Gray-500 for better visibility */
+}
+
+[data-theme="dark"] .empty-state h3 {
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .empty-state p {
+  color: #d4d4d8; /* Light gray for contrast */
+}
+
+[data-theme="dark"] .site-selector .dropdown-toggle {
+  background-color: var(--zta-input-bg);
+  border-color: var(--zta-border);
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] .add-site-form .form-control {
+  background-color: var(--zta-input-bg);
+  border-color: var(--zta-border);
+  color: var(--zta-text);
+}

@@ -1,0 +1,55 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  {{ block "title" . }}
+    {{ if .Params.PageTitle}}
+      {{ .Params.PageTitle }}
+    {{ else }}
+      {{ .Params.Title }}
+    {{ end }}
+  {{ end }}
+</title>
+
+<!-- metatags -->
+{{ partial "seo_schema" . }}
+
+<!-- link -->
+<link rel="apple-touch-icon" href="{{ "apple-touch-icon.png" | relURL }}" sizes="180x180">
+<link rel="icon" href="{{ "favicon-32x32.png" | relURL }} " sizes="32x32" type="image/png">
+<link rel="icon" href="{{ "favicon-16x16.png" | relURL }}" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="{{ "safari-pinned-tab.svg" | relURL }}">
+<link rel="icon" href="{{ "favicon.ico" | relURL }}">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+<!-- CSS -->
+<link rel="stylesheet" href="{{ "src/css/bootstrap/bootstrap.min.css" | relURL }}">
+<link rel="stylesheet" href="{{ "src/css/shared.css" | relURL }}">
+{{ range .Params.css }}
+  <link rel="stylesheet" href="{{ "src/css/" | relURL }}{{ . }}">
+{{ end }}
+
+<!-- canonical -->
+{{ if not .Params.canonical }}
+  <link rel="canonical" href="{{ .Permalink }}">
+{{ end }}
+
+<!-- fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+<!-- script -->
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="{{ .Site.BaseURL }}src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+<!-- Zero Trust Analytics - eating our own dogfood -->
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>

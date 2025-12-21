@@ -1,0 +1,100 @@
+// Zero Trust Analytics - About Page Styles
+@import 'shared/variables';
+@import 'shared/mixins';
+
+#inner-page-hero-section {
+  padding: 60px 0 40px;
+  @include hero-gradient;
+
+  h4 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: $font-size-xxl + 0.5rem;
+    font-weight: $font-weight-bold;
+    margin: 0;
+
+    @include media-md {
+      font-size: 3rem;
+    }
+  }
+}
+
+#policies-main-section {
+  padding: 50px 0 80px;
+  background: $bg-light;
+
+  h2 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin-top: $spacer-xl + 0.5rem;
+    margin-bottom: $spacer-md;
+    padding-bottom: $spacer-sm;
+    border-bottom: 2px solid $primary;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  p {
+    font-size: $font-size-base;
+    line-height: $line-height-relaxed;
+    color: $gray-700;
+    margin-bottom: $spacer-md;
+  }
+
+  ul {
+    margin-bottom: $spacer-lg;
+    padding-left: 1.25rem;
+
+    li {
+      margin-bottom: $spacer-sm + 0.25rem;
+      line-height: 1.6;
+      color: $gray-700;
+
+      strong {
+        color: $text-primary;
+      }
+    }
+  }
+
+  .btn-primary {
+    padding: 12px 30px;
+    font-weight: $font-weight-medium;
+  }
+}
+
+
+
+/* Dark mode styles for about/policy pages */
+[data-theme="dark"] #policies-main-section {
+  background-color: var(--zta-bg-secondary);
+}
+
+[data-theme="dark"] #policies-main-section h2 {
+  color: var(--zta-text);
+  border-bottom-color: var(--zta-primary);
+}
+
+[data-theme="dark"] #policies-main-section p {
+  color: #d4d4d8; /* Light gray for 10:1 contrast */
+}
+
+[data-theme="dark"] #policies-main-section ul li {
+  color: #d4d4d8;
+}
+
+[data-theme="dark"] #policies-main-section ul li strong {
+  color: var(--zta-text);
+}
+
+[data-theme="dark"] #policies-main-section a {
+  color: #60a5fa; /* Blue-400 for link visibility */
+}

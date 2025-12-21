@@ -1,0 +1,155 @@
+// Zero Trust Analytics - Design System Variables
+
+// ===========================================
+// Colors
+// ===========================================
+
+// Primary palette
+$primary: #0d6efd;
+$primary-dark: #0a58ca;
+$primary-light: rgba(13, 110, 253, 0.15);
+
+// Status colors
+$success: #198754;
+$danger: #dc3545;
+$warning: #ffc107;
+$info: #0dcaf0;
+
+// Neutrals
+$white: #fff;
+$black: #000;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+
+// Semantic colors
+$text-primary: $gray-900;
+$text-secondary: $gray-600;
+$text-muted: $gray-500;
+$border-color: $gray-200;
+$bg-light: $gray-100;
+
+// ===========================================
+// Typography
+// ===========================================
+
+$font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-family-mono: 'Consolas', 'Monaco', monospace;
+
+$font-size-base: 1rem;
+$font-size-sm: 0.875rem;
+$font-size-xs: 0.75rem;
+$font-size-lg: 1.25rem;
+$font-size-xl: 1.5rem;
+$font-size-xxl: 2rem;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+$line-height-base: 1.5;
+$line-height-tight: 1.25;
+$line-height-relaxed: 1.7;
+
+// ===========================================
+// Spacing
+// ===========================================
+
+$spacer: 1rem;
+$spacer-xs: 0.25rem;
+$spacer-sm: 0.5rem;
+$spacer-md: 1rem;
+$spacer-lg: 1.5rem;
+$spacer-xl: 2rem;
+$spacer-xxl: 3rem;
+
+// ===========================================
+// Border Radius
+// ===========================================
+
+$border-radius-sm: 0.25rem;
+$border-radius: 0.5rem;
+$border-radius-lg: 1rem;
+$border-radius-pill: 50rem;
+
+// ===========================================
+// Shadows
+// ===========================================
+
+$shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+$shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+$shadow-lg: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+$shadow-focus: 0 0 0 0.2rem $primary-light;
+
+// ===========================================
+// Gradients
+// ===========================================
+
+$gradient-primary: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
+
+// ===========================================
+// Component-specific
+// ===========================================
+
+// Form controls
+$input-padding-y: 0.75rem;
+$input-padding-x: 1rem;
+$input-border-radius: $border-radius;
+
+// Cards
+$card-border-radius: $border-radius-lg;
+$card-shadow: $shadow-sm;
+$card-padding: $spacer-lg;
+
+// Buttons
+$btn-padding-y: 0.75rem;
+$btn-padding-x: 1rem;
+$btn-font-weight: $font-weight-semibold;
+
+// ===========================================
+// Breakpoints (match Bootstrap)
+// ===========================================
+
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+// ===========================================
+// CSS Custom Properties (for runtime use)
+// ===========================================
+
+:root {
+  // Colors
+  --zta-primary: #{$primary};
+  --zta-primary-dark: #{$primary-dark};
+  --zta-success: #{$success};
+  --zta-danger: #{$danger};
+  --zta-warning: #{$warning};
+
+  // Neutrals
+  --zta-white: #{$white};
+  --zta-gray-100: #{$gray-100};
+  --zta-gray-600: #{$gray-600};
+  --zta-gray-700: #{$gray-700};
+  --zta-gray-900: #{$gray-900};
+
+  // Shadows
+  --zta-shadow-sm: #{$shadow-sm};
+  --zta-shadow: #{$shadow};
+  --zta-shadow-lg: #{$shadow-lg};
+
+  // Border radius
+  --zta-radius: #{$border-radius};
+  --zta-radius-lg: #{$border-radius-lg};
+
+  // Gradient
+  --zta-gradient-primary: #{$gradient-primary};
+}

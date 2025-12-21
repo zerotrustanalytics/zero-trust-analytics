@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cost on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/cost/</link>
+    <description>Recent content in Cost on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Jan 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/cost/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The Hidden Cost of &#39;Free&#39; Analytics</title>
+      <link>http://localhost:49390/blog/the-hidden-cost-of-free-analytics/</link>
+      <pubDate>Mon, 27 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/the-hidden-cost-of-free-analytics/</guid>
+      <description>&lt;p&gt;&amp;ldquo;Why would I pay for analytics when Google Analytics is free?&amp;rdquo;&lt;/p&gt;&#xA;&lt;p&gt;It&amp;rsquo;s the most common objection we hear. And on the surface, it makes sense. Why pay $10-30/month when you can pay $0?&lt;/p&gt;&#xA;&lt;p&gt;But Google Analytics isn&amp;rsquo;t free. &lt;strong&gt;You&amp;rsquo;re paying—just not with money.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;how-free-products-make-money&#34;&gt;How &amp;ldquo;Free&amp;rdquo; Products Make Money&lt;/h2&gt;&#xA;&lt;p&gt;Google&amp;rsquo;s annual revenue: &lt;strong&gt;$307 billion&lt;/strong&gt; (2023).&lt;/p&gt;&#xA;&lt;p&gt;Google Analytics users: &lt;strong&gt;Millions of websites&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;p&gt;Google Analytics revenue: &lt;strong&gt;$0&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;p&gt;If the math doesn&amp;rsquo;t add up, it&amp;rsquo;s because you&amp;rsquo;re not seeing the whole business model.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

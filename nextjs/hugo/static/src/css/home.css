@@ -1,0 +1,114 @@
+:root {
+  --zta-primary: #0d6efd;
+  --zta-primary-dark: #0a58ca;
+  --zta-success: #198754;
+  --zta-danger: #dc3545;
+  --zta-warning: #ffc107;
+  --zta-white: #fff;
+  --zta-gray-100: #f8f9fa;
+  --zta-gray-600: #6c757d;
+  --zta-gray-700: #495057;
+  --zta-gray-900: #212529;
+  --zta-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --zta-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --zta-shadow-lg: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+  --zta-radius: 0.5rem;
+  --zta-radius-lg: 1rem;
+  --zta-gradient-primary: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+.hero {
+  padding: 25px 0;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: #fff;
+}
+@media (min-width: 768px) {
+  .hero {
+    padding: 50px 0;
+  }
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.step-number {
+  font-size: 1.25rem;
+}
+
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Dark mode styles for homepage */
+[data-theme=dark] .card {
+  background-color: var(--zta-card-bg);
+  border-color: var(--zta-border);
+}
+
+[data-theme=dark] .card-title {
+  color: var(--zta-text);
+}
+
+[data-theme=dark] .card-text {
+  color: #d4d4d8 !important; /* Light gray for contrast */
+}
+
+/* Dark mode for "What We DON'T Collect" section */
+[data-theme=dark] section.bg-dark .text-muted {
+  color: #d4d4d8 !important; /* Ensure readability on dark sections */
+}
+
+[data-theme=dark] section.bg-dark h5 {
+  color: #fff;
+}
+
+/* Dark mode: How It Works section */
+[data-theme=dark] section.bg-light .text-muted {
+  color: #9ca3af; /* Gray-400 on light dark bg */
+}
+
+/* Dark mode: Pricing table */
+[data-theme=dark] .table-bordered {
+  border-color: var(--zta-border);
+}
+
+[data-theme=dark] .table-bordered td,
+[data-theme=dark] .table-bordered th {
+  border-color: var(--zta-border);
+}
+
+[data-theme=dark] thead.table-light {
+  background-color: var(--zta-bg-tertiary) !important;
+}
+
+[data-theme=dark] thead.table-light th {
+  background-color: var(--zta-bg-tertiary) !important;
+  color: var(--zta-text) !important;
+}
+
+[data-theme=dark] .table-primary,
+[data-theme=dark] td.table-primary {
+  background-color: rgba(13, 110, 253, 0.2) !important;
+  color: var(--zta-text) !important;
+}
+
+/* Dark mode: Code blocks */
+[data-theme=dark] .card-header.bg-dark {
+  background-color: #0f172a !important; /* Slate-900 */
+}
+
+[data-theme=dark] .card-footer.bg-light {
+  background-color: var(--zta-bg-tertiary) !important;
+}
+
+[data-theme=dark] .card-footer .text-muted {
+  color: #d4d4d8 !important;
+}/*# sourceMappingURL=home.css.map */

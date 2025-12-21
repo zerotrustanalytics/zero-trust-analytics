@@ -1,0 +1,31 @@
+{
+  "id": "zta-environment",
+  "name": "Zero Trust Analytics - Production",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "https://ztas.io/api",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "siteId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
