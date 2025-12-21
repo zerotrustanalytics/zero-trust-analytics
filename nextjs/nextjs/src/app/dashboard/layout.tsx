@@ -60,8 +60,13 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
 
-      {/* Main content - offset for sidebar */}
-      <main className="md:ml-64 p-4 md:p-8 transition-all" role="main">
+      {/* Main content - offset for sidebar, skip link target */}
+      <main
+        id="main-content"
+        className="md:ml-64 p-4 md:p-8 transition-all"
+        role="main"
+        tabIndex={-1}
+      >
         {children}
       </main>
 

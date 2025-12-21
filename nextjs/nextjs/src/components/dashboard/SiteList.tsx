@@ -66,7 +66,7 @@ export function SiteList({ sites, loading, onSiteAdded }: SiteListProps) {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Your Sites</h1>
         <Button onClick={() => setShowAddModal(true)}>
-          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Add Site
@@ -80,6 +80,7 @@ export function SiteList({ sites, loading, onSiteAdded }: SiteListProps) {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
