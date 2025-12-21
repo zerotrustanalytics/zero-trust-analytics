@@ -32,10 +32,11 @@
     Access-Control-Allow-Origin = "*"
     Cache-Control = "public, max-age=3600"
 
+# Security headers for functions - CORS handled per-function
+# Do NOT use wildcard CORS here as it undermines per-function security
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Site-ID"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
 
