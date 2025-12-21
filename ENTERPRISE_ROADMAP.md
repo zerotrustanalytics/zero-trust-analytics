@@ -30,10 +30,14 @@ This document tracks the path to enterprise readiness based on comprehensive aud
 
 | Standard | Current | Target | Gaps |
 |----------|---------|--------|------|
-| **GDPR** | 70% | 100% | Missing data export, deletion endpoints |
+| **GDPR** | 95% | 100% | Cookie consent banner, privacy policy update |
 | **SOC2** | 50% | 100% | MFA enforcement, audit logs, session timeout |
 | **HIPAA** | 40% | N/A | Not suitable for PHI without major overhaul |
-| **WCAG 2.1 AA** | 60% | 100% | Focus trap, keyboard nav, color contrast |
+| **WCAG 2.1 AA** | 70% | 100% | Keyboard nav, color contrast |
+
+**GDPR Updates:**
+- ✅ Article 17 (Right to Erasure) - `/api/user/delete`
+- ✅ Article 20 (Data Portability) - `/api/user/export`
 
 ---
 
@@ -41,25 +45,30 @@ This document tracks the path to enterprise readiness based on comprehensive aud
 
 ### P0 - Ship Blockers
 
-- [ ] **CSP Headers** - Add Content-Security-Policy to all responses
+- [x] **CSP Headers** - Add Content-Security-Policy to all responses ✅
   - Location: `netlify/functions/lib/auth.js`
   - Impact: XSS defense-in-depth
+  - **COMPLETED:** Full CSP with script-src, style-src, connect-src, frame-ancestors
 
-- [ ] **CSRF Enforcement** - Validate CSRF token on all state-changing endpoints
-  - Files: `sites-create.js`, `sites-update.js`, `sites-delete.js`, etc.
+- [x] **CSRF Enforcement** - Validate CSRF token on all state-changing endpoints ✅
+  - Files: `sites-update.js`, `sites-delete.js`, `sites-share.js`, `user-delete.js`
   - Impact: Prevents cross-site request forgery
+  - **COMPLETED:** Added validateCSRFFromRequest() to all state-changing endpoints
 
-- [ ] **OAuth State Storage** - Move from cookie to server-side storage
-  - Location: `netlify/functions/auth-github.js`
+- [x] **OAuth State Storage** - Move from cookie to server-side storage ✅
+  - Location: `netlify/functions/auth-github.js`, `auth-google.js`, `auth-oauth-callback.js`
   - Impact: Prevents OAuth CSRF attacks
+  - **COMPLETED:** Server-side state with 10-min TTL, one-time use, provider verification
 
-- [ ] **GDPR Data Export** - Add user data export endpoint
+- [x] **GDPR Data Export** - Add user data export endpoint ✅
   - New file: `netlify/functions/user-export.js`
   - Impact: GDPR Article 20 compliance
+  - **COMPLETED:** Exports user profile, sites, sessions, API keys as JSON
 
-- [ ] **GDPR Data Deletion** - Add user data deletion endpoint
+- [x] **GDPR Data Deletion** - Add user data deletion endpoint ✅
   - New file: `netlify/functions/user-delete.js`
   - Impact: GDPR Article 17 compliance
+  - **COMPLETED:** Full cascade deletion with confirmation, audit logging
 
 ### Detailed Security Vulnerabilities
 
@@ -165,9 +174,10 @@ __tests__/integration/
 
 ### WCAG 2.1 AA Compliance
 
-- [ ] **Modal Focus Trap** - Users can tab outside modal
-  - Install `focus-trap-react`
-  - Implement in Modal.tsx
+- [x] **Modal Focus Trap** - Users can tab outside modal ✅
+  - Custom focus trap implementation in Modal.tsx
+  - Focus restored on close, min 44x44px touch targets
+  - **COMPLETED:** Focus trap, auto-focus, focus restoration
 
 - [ ] **Color Contrast Audit**
   - Verify all text meets 4.5:1 ratio
@@ -196,16 +206,19 @@ __tests__/integration/
 
 ### Critical Documentation Gaps
 
-- [ ] **Incident Response Plan**
-  - Severity levels (P0-P3)
-  - Escalation procedures
-  - Communication templates
-  - Postmortem template
+- [x] **Incident Response Plan** ✅
+  - Severity levels (P1-P4) with response times
+  - 5-phase response process
+  - Communication templates (status page, breach notification)
+  - Incident report template for postmortems
+  - **COMPLETED:** `docs/INCIDENT_RESPONSE.md`
 
-- [ ] **SLA Documentation**
-  - Uptime targets (99.9%)
-  - Response time targets (<200ms p95)
-  - Support response times
+- [x] **SLA Documentation** ✅
+  - 99.9% uptime commitment (Enterprise)
+  - API performance targets (P50/P99)
+  - Support response time SLAs by priority
+  - Service credit schedule
+  - **COMPLETED:** `docs/SLA.md`
 
 - [ ] **Runbooks**
   - Database failover
