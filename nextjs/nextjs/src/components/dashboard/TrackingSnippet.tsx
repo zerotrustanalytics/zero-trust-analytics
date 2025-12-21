@@ -42,17 +42,18 @@ export function TrackingSnippet({ isOpen, onClose, siteId, domain }: TrackingSni
             size="sm"
             onClick={handleCopy}
             className="absolute top-2 right-2"
+            aria-label={copied ? 'Copied to clipboard' : 'Copy tracking snippet to clipboard'}
           >
             {copied ? (
               <>
-                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Copied!
+                <span aria-hidden="true">Copied!</span>
               </>
             ) : (
               <>
-                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -60,10 +61,14 @@ export function TrackingSnippet({ isOpen, onClose, siteId, domain }: TrackingSni
                     d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                   />
                 </svg>
-                Copy
+                <span aria-hidden="true">Copy</span>
               </>
             )}
           </Button>
+          {/* Live region for screen reader announcement */}
+          <div role="status" aria-live="polite" className="sr-only">
+            {copied ? 'Tracking snippet copied to clipboard' : ''}
+          </div>
         </div>
 
         <Alert variant="info" title="Installation Instructions">

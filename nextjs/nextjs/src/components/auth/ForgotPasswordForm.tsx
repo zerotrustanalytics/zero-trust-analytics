@@ -57,6 +57,7 @@ export function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProps) {
         <p className="text-center text-sm text-muted-foreground">
           Didn&apos;t receive the email?{' '}
           <button
+            type="button"
             onClick={() => setSuccess(false)}
             className="text-primary hover:underline font-medium"
           >
