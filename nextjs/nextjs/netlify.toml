@@ -1,6 +1,5 @@
-[build]
-  command = "npm install && npm run build"
-  publish = ".next"
+# Build settings are configured in Netlify dashboard
+# to avoid conflicts with parent netlify.toml
 
 [build.environment]
   NODE_VERSION = "20"
