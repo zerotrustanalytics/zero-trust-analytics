@@ -30,3 +30,5 @@ backups/
 # Lead scraping output (contains business data)
 /leads/
 nul
+.vercel
+.env*.local

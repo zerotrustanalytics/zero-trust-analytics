@@ -15,9 +15,10 @@
   width: 100%;
   max-width: 420px;
   padding: $spacer-xl;
-  background: $white;
+  background: $white !important;
   border-radius: $card-border-radius;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  color: $text-primary;
 }
 
 // Auth Header
@@ -130,23 +131,30 @@ button[type="submit"],
     justify-content: center;
     gap: $spacer-sm;
     padding: $btn-padding-y $btn-padding-x;
-    background: $white;
-    border: 1px solid $gray-300;
+    background: $white !important;
+    border: 1px solid $gray-300 !important;
     border-radius: $border-radius;
     font-size: $font-size-sm;
     font-weight: $font-weight-medium;
-    color: $text-primary;
+    color: $text-primary !important;
     cursor: pointer;
     transition: all 0.2s ease;
+    width: auto !important;
+    height: auto !important;
 
     &:hover {
-      background: $gray-100;
-      border-color: $gray-400;
+      background: $gray-100 !important;
+      border-color: $gray-400 !important;
+      transform: none;
+      box-shadow: none;
     }
 
     svg {
-      width: 20px;
-      height: 20px;
+      width: 20px !important;
+      height: 20px !important;
+      max-width: 20px;
+      max-height: 20px;
+      flex-shrink: 0;
     }
   }
 }
