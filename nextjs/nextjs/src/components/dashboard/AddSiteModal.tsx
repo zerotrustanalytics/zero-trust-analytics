@@ -39,9 +39,18 @@ export function AddSiteModal({ isOpen, onClose, onSuccess }: AddSiteModalProps) 
 
     setLoading(true)
     try {
-      const res = await fetch('/api/sites', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const csrfToken = sessionStorage.getItem('csrfToken') || ''
+      const authToken = localStorage.getItem('token') || ''
+
+      const res = await fetch(`${apiUrl}/api/sites/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+          'X-CSRF-Token': csrfToken,
+        },
+        credentials: 'include',
         body: JSON.stringify({
           domain: cleanDomain,
           name: name || cleanDomain,
