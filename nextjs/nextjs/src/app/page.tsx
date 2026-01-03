@@ -1,3 +1,4 @@
+import { SignInButton, SignUpButton, SignedIn, SignedOut } from '@clerk/nextjs'
 import Link from 'next/link'
 
 export default function Home() {
@@ -21,18 +22,26 @@ export default function Home() {
             No cookies, GDPR compliant, under 2KB gzipped.
           </p>
           <div className="flex gap-4 justify-center">
-            <Link
-              href="/register"
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              Get Started Free
-            </Link>
-            <Link
-              href="/login"
-              className="px-6 py-3 border border-border rounded-lg hover:bg-secondary transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              Sign In
-            </Link>
+            <SignedOut>
+              <SignUpButton mode="modal">
+                <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  Get Started Free
+                </button>
+              </SignUpButton>
+              <SignInButton mode="modal">
+                <button className="px-6 py-3 border border-border rounded-lg hover:bg-secondary transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  Sign In
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <Link
+                href="/dashboard"
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                Go to Dashboard
+              </Link>
+            </SignedIn>
           </div>
         </div>
       </main>

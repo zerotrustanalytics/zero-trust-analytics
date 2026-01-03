@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
+import { UserButton } from '@clerk/nextjs'
 import { clsx } from 'clsx'
 
 interface NavItem {
@@ -116,36 +117,9 @@ const navigation: NavSection[] = [
   },
 ]
 
-interface SidebarProps {
-  onLogout?: () => void
-}
-
-export function Sidebar({ onLogout }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname()
-  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
-
-  const handleLogout = async () => {
-    try {
-      // Auth API is on Netlify (ztas.io)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      await fetch(`${apiUrl}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include'
-      })
-      // Clear local storage
-      localStorage.removeItem('token')
-      sessionStorage.removeItem('csrfToken')
-      onLogout?.()
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout failed:', error)
-      // Still redirect to login even if API fails
-      localStorage.removeItem('token')
-      sessionStorage.removeItem('csrfToken')
-      router.push('/login')
-    }
-  }
 
   return (
     <aside
@@ -247,28 +221,21 @@ export function Sidebar({ onLogout }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Footer */}
+        {/* Footer with Clerk UserButton */}
         <footer className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={clsx(
-              'flex items-center gap-3 px-4 py-2 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2',
-              collapsed ? 'w-auto' : 'w-full'
+          <div className={clsx('flex items-center', collapsed ? 'justify-center' : 'gap-3 px-4')}>
+            <UserButton
+              afterSignOutUrl="/sign-in"
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8"
+                }
+              }}
+            />
+            {!collapsed && (
+              <span className="text-sm text-muted-foreground">Account</span>
             )}
-            title={collapsed ? 'Logout' : undefined}
-            aria-label={collapsed ? 'Logout' : undefined}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            {!collapsed && <span>Logout</span>}
-          </button>
+          </div>
         </footer>
       </div>
     </aside>

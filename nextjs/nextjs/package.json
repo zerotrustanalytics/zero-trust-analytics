@@ -21,6 +21,7 @@
     "test:all": "npm run test:run && npm run test:e2e"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.36.5",
     "@libsql/client": "^0.15.15",
     "@netlify/blobs": "^10.4.4",
     "bcryptjs": "^2.4.3",
