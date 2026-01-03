@@ -21,6 +21,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             className="block text-sm font-medium text-foreground mb-1"
           >
             {label}
+            {props.required && (
+              <span className="text-destructive ml-1" aria-hidden="true">*</span>
+            )}
+            {props.required && (
+              <span className="sr-only">(required)</span>
+            )}
           </label>
         )}
         <input

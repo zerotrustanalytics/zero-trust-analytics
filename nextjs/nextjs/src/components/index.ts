@@ -9,3 +9,7 @@ export * from './dashboard'
 
 // Analytics Components
 export * from './analytics'
+
+// Shared Components
+export * from './ErrorBoundary'
+export * from './ConsentBanner'

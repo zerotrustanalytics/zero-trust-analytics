@@ -232,6 +232,38 @@ export function Chart({
           {renderChart()}
         </ResponsiveContainer>
       </div>
+      {/* Accessible data table for screen readers */}
+      <details className="mt-4">
+        <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded">
+          View data as table
+        </summary>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full text-sm border-collapse" aria-label={title || 'Chart data'}>
+            <thead>
+              <tr className="border-b border-border">
+                <th scope="col" className="text-left py-2 px-2 font-medium">Label</th>
+                <th scope="col" className="text-right py-2 px-2 font-medium">Value</th>
+                {showPrevious && (
+                  <th scope="col" className="text-right py-2 px-2 font-medium">Previous</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((point, index) => (
+                <tr key={point.label} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
+                  <td className="py-2 px-2">{point.label}</td>
+                  <td className="text-right py-2 px-2">{point.value.toLocaleString()}</td>
+                  {showPrevious && (
+                    <td className="text-right py-2 px-2">
+                      {point.previousValue?.toLocaleString() ?? '-'}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
     </Card>
   )
 }

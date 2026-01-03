@@ -171,24 +171,28 @@ export function DateRangePicker({
               <div className="border-t border-border my-2" aria-hidden="true" />
             </div>
 
-            <p className="px-3 py-2 text-sm font-medium text-foreground">Custom Range</p>
-            <div className="space-y-2 px-3 py-2">
+            <p className="px-3 py-2 text-sm font-medium text-foreground" id="custom-range-label">Custom Range</p>
+            <div className="space-y-2 px-3 py-2" role="group" aria-labelledby="custom-range-label">
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Start Date</label>
+                <label htmlFor="date-range-start" className="block text-xs text-muted-foreground mb-1">Start Date</label>
                 <input
+                  id="date-range-start"
                   type="date"
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm border border-input rounded-md bg-background"
+                  className="w-full px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  aria-describedby="custom-range-label"
                 />
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">End Date</label>
+                <label htmlFor="date-range-end" className="block text-xs text-muted-foreground mb-1">End Date</label>
                 <input
+                  id="date-range-end"
                   type="date"
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm border border-input rounded-md bg-background"
+                  className="w-full px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  aria-describedby="custom-range-label"
                 />
               </div>
               <Button
