@@ -17,7 +17,7 @@ export default async function handler(req, context) {
 
   if (req.method !== 'POST') {
     logger.warn('Invalid HTTP method', { method: req.method });
-    return Errors.methodNotAllowed();
+    return Errors.methodNotAllowed(origin);
   }
 
   // Strict rate limiting for login: Uses endpoint-specific config
@@ -49,7 +49,7 @@ export default async function handler(req, context) {
       logger.warn('Login failed - user not found', {
         hasEmail: !!email
       });
-      return Errors.unauthorized('Invalid credentials');
+      return Errors.unauthorized('Invalid credentials', origin);
     }
 
     // Verify password
@@ -58,7 +58,7 @@ export default async function handler(req, context) {
       logger.warn('Login failed - invalid password', {
         userId: user.id
       });
-      return Errors.unauthorized('Invalid credentials');
+      return Errors.unauthorized('Invalid credentials', origin);
     }
 
     logger.info('Password verified successfully', {

@@ -126,18 +126,18 @@ export function errorResponse(message, status = 400, code = null, details = null
   });
 }
 
-// Common error responses
+// Common error responses - all accept optional origin for CORS
 export const Errors = {
-  methodNotAllowed: () => errorResponse('Method not allowed', 405, ErrorCodes.METHOD_NOT_ALLOWED),
-  unauthorized: (message = 'Unauthorized') => errorResponse(message, 401, ErrorCodes.UNAUTHORIZED),
-  forbidden: (message = 'Access denied') => errorResponse(message, 403, ErrorCodes.FORBIDDEN),
-  notFound: (resource = 'Resource') => errorResponse(`${resource} not found`, 404, ErrorCodes.NOT_FOUND),
-  badRequest: (message) => errorResponse(message, 400, ErrorCodes.BAD_REQUEST),
-  validationError: (message, details = null) => errorResponse(message, 400, ErrorCodes.VALIDATION_ERROR, details),
-  internalError: (message = 'Internal server error') => errorResponse(message, 500, ErrorCodes.INTERNAL_ERROR),
-  tokenExpired: () => errorResponse('Token expired. Please log in again.', 401, ErrorCodes.TOKEN_EXPIRED),
-  csrfMissing: () => errorResponse('CSRF token is required', 403, ErrorCodes.CSRF_TOKEN_MISSING),
-  csrfInvalid: () => errorResponse('Invalid CSRF token', 403, ErrorCodes.CSRF_TOKEN_INVALID)
+  methodNotAllowed: (origin = null) => errorResponse('Method not allowed', 405, ErrorCodes.METHOD_NOT_ALLOWED, null, origin),
+  unauthorized: (message = 'Unauthorized', origin = null) => errorResponse(message, 401, ErrorCodes.UNAUTHORIZED, null, origin),
+  forbidden: (message = 'Access denied', origin = null) => errorResponse(message, 403, ErrorCodes.FORBIDDEN, null, origin),
+  notFound: (resource = 'Resource', origin = null) => errorResponse(`${resource} not found`, 404, ErrorCodes.NOT_FOUND, null, origin),
+  badRequest: (message, origin = null) => errorResponse(message, 400, ErrorCodes.BAD_REQUEST, null, origin),
+  validationError: (message, details = null, origin = null) => errorResponse(message, 400, ErrorCodes.VALIDATION_ERROR, details, origin),
+  internalError: (message = 'Internal server error', origin = null) => errorResponse(message, 500, ErrorCodes.INTERNAL_ERROR, null, origin),
+  tokenExpired: (origin = null) => errorResponse('Token expired. Please log in again.', 401, ErrorCodes.TOKEN_EXPIRED, null, origin),
+  csrfMissing: (origin = null) => errorResponse('CSRF token is required', 403, ErrorCodes.CSRF_TOKEN_MISSING, null, origin),
+  csrfInvalid: (origin = null) => errorResponse('Invalid CSRF token', 403, ErrorCodes.CSRF_TOKEN_INVALID, null, origin)
 };
 
 // Hash password
