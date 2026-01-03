@@ -18,7 +18,17 @@
   background: $white !important;
   border-radius: $card-border-radius;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  color: $text-primary;
+  color: $text-primary !important;
+
+  // Force all text to be dark inside the card
+  * {
+    color: inherit;
+  }
+
+  // Force all backgrounds to be white/light inside the card
+  .bg-background {
+    background-color: $white !important;
+  }
 }
 
 // Auth Header
@@ -29,71 +39,62 @@
   h1 {
     font-size: 1.75rem;
     font-weight: $font-weight-bold;
-    color: $text-primary;
+    color: $text-primary !important;
     margin: 0 0 $spacer-sm 0;
   }
 
   p {
-    color: $text-secondary;
+    color: $text-secondary !important;
     margin: 0;
     font-size: $font-size-base;
   }
 }
 
-// Auth Form
-.auth-form,
-.space-y-6,
-.space-y-4 {
-  .form-group,
-  .w-full {
-    margin-bottom: $spacer-md;
-  }
-}
-
 // Form Labels
-label,
-.block.text-sm {
+.auth-card label,
+.auth-card .text-sm.font-medium {
   display: block;
   font-weight: $font-weight-medium;
-  color: $text-primary;
+  color: $text-primary !important;
   margin-bottom: $spacer-xs;
   font-size: $font-size-sm;
 }
 
-// Form Inputs
-input[type="text"],
-input[type="email"],
-input[type="password"],
-.border-input {
+// Form Inputs - FORCE white background
+.auth-card input[type="text"],
+.auth-card input[type="email"],
+.auth-card input[type="password"],
+.auth-card .border-input,
+.auth-card input {
   width: 100%;
   padding: $input-padding-y $input-padding-x;
-  border: 1px solid $gray-300;
+  border: 1px solid $gray-300 !important;
   border-radius: $border-radius;
   font-size: $font-size-base;
-  color: $text-primary;
-  background: $white;
+  color: $text-primary !important;
+  background: $white !important;
+  background-color: $white !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &::placeholder {
-    color: $gray-500;
+    color: $gray-500 !important;
   }
 
   &:focus {
     outline: none;
-    border-color: $primary;
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    border-color: $primary !important;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15) !important;
   }
 }
 
-// Primary Button
-button[type="submit"],
-.btn-primary,
-.bg-primary {
+// Primary Button (Sign in)
+.auth-card button[type="submit"],
+.auth-card .btn-primary {
   width: 100%;
   padding: $btn-padding-y $btn-padding-x;
-  background: $gradient-primary;
+  background: $gradient-primary !important;
   color: $white !important;
-  border: none;
+  border: none !important;
   border-radius: $border-radius;
   font-size: $font-size-base;
   font-weight: $font-weight-semibold;
@@ -105,10 +106,6 @@ button[type="submit"],
     box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
   }
 
-  &:active {
-    transform: translateY(0);
-  }
-
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -116,75 +113,74 @@ button[type="submit"],
   }
 }
 
-// OAuth Buttons
-.flex.gap-4,
-.oauth-buttons {
-  display: flex;
-  gap: $spacer-md;
-  margin-top: $spacer-lg;
+// OAuth Buttons - FIXED sizing
+.auth-card .grid.grid-cols-2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: $spacer-md !important;
+  margin-top: $spacer-md;
 
-  button,
-  .oauth-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $spacer-sm;
-    padding: $btn-padding-y $btn-padding-x;
+  button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: $spacer-sm !important;
+    padding: 12px 16px !important;
     background: $white !important;
     border: 1px solid $gray-300 !important;
-    border-radius: $border-radius;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
+    border-radius: $border-radius !important;
+    font-size: $font-size-sm !important;
+    font-weight: $font-weight-medium !important;
     color: $text-primary !important;
     cursor: pointer;
     transition: all 0.2s ease;
-    width: auto !important;
+    width: 100% !important;
     height: auto !important;
+    min-height: 44px !important;
+    max-height: 48px !important;
 
     &:hover {
       background: $gray-100 !important;
       border-color: $gray-400 !important;
-      transform: none;
-      box-shadow: none;
+      transform: none !important;
+      box-shadow: none !important;
     }
 
     svg {
       width: 20px !important;
       height: 20px !important;
-      max-width: 20px;
-      max-height: 20px;
-      flex-shrink: 0;
+      min-width: 20px !important;
+      max-width: 20px !important;
+      min-height: 20px !important;
+      max-height: 20px !important;
+      flex-shrink: 0 !important;
     }
   }
 }
 
 // Divider "Or continue with"
-.relative.my-6,
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
+.auth-card .relative {
   margin: $spacer-lg 0;
-  color: $text-secondary;
-  font-size: $font-size-sm;
 
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid $gray-300;
+  .border-t {
+    border-color: $gray-300 !important;
   }
 
   span {
-    padding: 0 $spacer-md;
-    background: $white;
+    background: $white !important;
+    color: $text-secondary !important;
+    padding: 0 $spacer-sm;
   }
 }
 
+// Muted text
+.auth-card .text-muted-foreground {
+  color: $text-secondary !important;
+}
+
 // Links
-.text-primary,
-a.text-primary {
+.auth-card .text-primary,
+.auth-card a {
   color: $primary !important;
   text-decoration: none;
 
@@ -193,76 +189,15 @@ a.text-primary {
   }
 }
 
-// Auth Footer
-.auth-footer,
-.text-center.mt-6 {
-  text-align: center;
+// Footer text
+.auth-card .text-center.text-sm {
   margin-top: $spacer-lg;
   padding-top: $spacer-lg;
   border-top: 1px solid $gray-200;
-  color: $text-secondary;
-  font-size: $font-size-sm;
-
-  a {
-    color: $primary;
-    font-weight: $font-weight-medium;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
-
-// Forgot password link
-.flex.items-center.justify-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $spacer-md;
-
-  a {
-    font-size: $font-size-sm;
-    color: $primary;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  color: $text-secondary !important;
 }
 
 // Error states
-.auth-error,
-.text-destructive {
-  color: $danger;
-  font-size: $font-size-sm;
-  margin-top: $spacer-xs;
-}
-
-// Dark mode
-@media (prefers-color-scheme: dark) {
-  .auth-card {
-    background: $gray-900;
-
-    h1 {
-      color: $white;
-    }
-
-    p {
-      color: $gray-400;
-    }
-
-    label {
-      color: $gray-200;
-    }
-
-    input {
-      background: $gray-800;
-      border-color: $gray-700;
-      color: $white;
-
-      &::placeholder {
-        color: $gray-500;
-      }
-    }
-  }
+.auth-card .text-destructive {
+  color: $danger !important;
 }
