@@ -6,9 +6,8 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Disable functions directory inheritance
-[functions]
-  directory = ""
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [[headers]]
   for = "/*"
