@@ -127,11 +127,23 @@ export function Sidebar({ onLogout }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      // Auth API is on Netlify (ztas.io)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      await fetch(`${apiUrl}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+      // Clear local storage
+      localStorage.removeItem('token')
+      sessionStorage.removeItem('csrfToken')
       onLogout?.()
       router.push('/login')
     } catch (error) {
       console.error('Logout failed:', error)
+      // Still redirect to login even if API fails
+      localStorage.removeItem('token')
+      sessionStorage.removeItem('csrfToken')
+      router.push('/login')
     }
   }
 
