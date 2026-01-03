@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+// Hugo SCSS imports
+@import './scss/shared/shared';
+@import './scss/auth';
+@import './scss/dashboard';
+
 :root {
   --background: 255 255 255;
   --foreground: 15 23 42;
