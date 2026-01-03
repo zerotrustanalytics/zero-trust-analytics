@@ -19,15 +19,23 @@
   border-radius: $card-border-radius;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   color: $text-primary !important;
+  overflow: hidden;
+  box-sizing: border-box;
 
-  // Force all text to be dark inside the card
-  * {
-    color: inherit;
+  // Force all elements to respect box model
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
 
   // Force all backgrounds to be white/light inside the card
   .bg-background {
     background-color: $white !important;
+  }
+
+  // Ensure form fits within card
+  form, .space-y-6, .space-y-4 {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -66,7 +74,8 @@
 .auth-card input[type="password"],
 .auth-card .border-input,
 .auth-card input {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
   padding: $input-padding-y $input-padding-x;
   border: 1px solid $gray-300 !important;
   border-radius: $border-radius;
@@ -75,6 +84,7 @@
   background: $white !important;
   background-color: $white !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box !important;
 
   &::placeholder {
     color: $gray-500 !important;
@@ -85,6 +95,12 @@
     border-color: $primary !important;
     box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15) !important;
   }
+}
+
+// Input wrapper
+.auth-card .w-full {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 // Primary Button (Sign in)
@@ -100,6 +116,11 @@
   font-weight: $font-weight-semibold;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  // Force white text on button
+  &, span, * {
+    color: $white !important;
+  }
 
   &:hover {
     transform: translateY(-1px);
