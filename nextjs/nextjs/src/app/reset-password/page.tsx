@@ -34,13 +34,11 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Reset Password</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Enter your new password
-          </p>
+    <main className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1>Reset Password</h1>
+          <p>Enter your new password</p>
         </div>
 
         <Suspense fallback={<div className="text-center">Loading...</div>}>
