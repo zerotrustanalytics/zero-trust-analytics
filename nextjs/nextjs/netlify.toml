@@ -1,7 +1,6 @@
 # Next.js app build config - overrides root netlify.toml
 [build]
   command = "npm install && npm run build"
-  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
