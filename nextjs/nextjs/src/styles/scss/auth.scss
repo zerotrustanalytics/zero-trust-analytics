@@ -58,14 +58,27 @@
   }
 }
 
-// Form Labels
-.auth-card label,
-.auth-card .text-sm.font-medium {
+// Form Labels (not buttons)
+.auth-card label:not(button *),
+.auth-card .text-sm.font-medium:not(button *) {
   display: block;
   font-weight: $font-weight-medium;
-  color: $text-primary !important;
+  color: $text-primary;
   margin-bottom: $spacer-xs;
   font-size: $font-size-sm;
+}
+
+// Form spacing
+.auth-card .space-y-6 > * + * {
+  margin-top: 1.5rem !important;
+}
+
+.auth-card .space-y-4 > * + * {
+  margin-top: 1.25rem !important;
+}
+
+.auth-card form {
+  padding: $spacer-md 0;
 }
 
 // Form Inputs - FORCE white background
@@ -104,23 +117,18 @@
 }
 
 // Primary Button (Sign in)
-.auth-card button[type="submit"],
-.auth-card .btn-primary {
+.auth-card button[type="submit"] {
   width: 100%;
-  padding: $btn-padding-y $btn-padding-x;
+  padding: 14px $btn-padding-x;
   background: $gradient-primary !important;
-  color: $white !important;
+  color: #ffffff !important;
   border: none !important;
   border-radius: $border-radius;
   font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  // Force white text on button
-  &, span, * {
-    color: $white !important;
-  }
+  margin-top: $spacer-md;
 
   &:hover {
     transform: translateY(-1px);
@@ -132,6 +140,12 @@
     cursor: not-allowed;
     transform: none;
   }
+}
+
+// Ensure button text is always white
+.auth-card button[type="submit"] span,
+.auth-card button[type="submit"] * {
+  color: #ffffff !important;
 }
 
 // OAuth Buttons - FIXED sizing
