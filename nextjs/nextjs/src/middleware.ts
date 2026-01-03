@@ -11,10 +11,21 @@ const CSRF_COOKIE = 'csrf-token'
 
 // Paths that require CSRF protection (state-changing operations)
 const PROTECTED_PATHS = [
-  '/api/auth',
+  '/api/auth/logout',    // Only logout needs CSRF (prevents forced logout attacks)
+  '/api/auth/change-password',
+  '/api/auth/2fa',
   '/api/sites',
   '/api/user',
   '/api/privacy',
+]
+
+// Public auth paths that don't need CSRF (pre-authentication)
+const PUBLIC_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot',
+  '/api/auth/reset',
+  '/api/auth/verify',
 ]
 
 // Methods that require CSRF validation
@@ -33,9 +44,20 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 /**
+ * Check if path is a public auth endpoint (no CSRF needed)
+ */
+function isPublicAuthPath(pathname: string): boolean {
+  return PUBLIC_AUTH_PATHS.some(path => pathname.startsWith(path))
+}
+
+/**
  * Check if path requires CSRF protection
  */
 function requiresCsrfProtection(pathname: string): boolean {
+  // Public auth paths never need CSRF
+  if (isPublicAuthPath(pathname)) {
+    return false
+  }
   return PROTECTED_PATHS.some(path => pathname.startsWith(path))
 }
 

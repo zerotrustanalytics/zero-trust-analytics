@@ -10,7 +10,9 @@ interface OAuthButtonsProps {
 
 export function OAuthButtons({ className, disabled }: OAuthButtonsProps) {
   const handleOAuth = (provider: 'google' | 'github') => {
-    window.location.href = `/api/auth/${provider}`
+    // OAuth endpoints are on Netlify (ztas.io)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+    window.location.href = `${apiUrl}/api/auth/${provider}`
   }
 
   return (

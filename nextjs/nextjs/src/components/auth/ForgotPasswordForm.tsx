@@ -25,7 +25,9 @@ export function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProps) {
 
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/forgot', {
+      // Auth API is on Netlify (ztas.io), not Vercel
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/auth/forgot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

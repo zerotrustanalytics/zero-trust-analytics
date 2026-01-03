@@ -54,9 +54,12 @@ export function RegisterForm({ onSuccess, redirectTo = '/dashboard' }: RegisterF
 
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/register', {
+      // Auth API is on Netlify (ztas.io), not Vercel
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
 
