@@ -1,8 +1,14 @@
-# Build settings are configured in Netlify dashboard
-# to avoid conflicts with parent netlify.toml
+# Next.js app build config - overrides root netlify.toml
+[build]
+  command = "npm install && npm run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Disable functions directory inheritance
+[functions]
+  directory = ""
 
 [[headers]]
   for = "/*"
