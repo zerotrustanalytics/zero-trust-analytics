@@ -248,7 +248,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <footer className="p-4 border-t dark:border-gray-700">
+        <footer className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <button
             type="button"
             onClick={handleLogout}
