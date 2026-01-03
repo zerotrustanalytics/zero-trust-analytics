@@ -2,19 +2,25 @@
 @import 'shared/variables';
 @import 'shared/mixins';
 
+// Auth Container - full page with gradient background
 .auth-container {
-  min-height: calc(100vh - 200px);
+  min-height: 100vh;
   @include flex-center;
-  padding: $spacer-xl 0;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 50%, #084298 100%);
+  padding: $spacer-xl $spacer-md;
 }
 
+// Auth Card - white card with shadow
 .auth-card {
   width: 100%;
   max-width: 420px;
   padding: $spacer-xl;
-  @include card-elevated;
+  background: $white;
+  border-radius: $card-border-radius;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
+// Auth Header
 .auth-header {
   text-align: center;
   margin-bottom: $spacer-xl;
@@ -22,79 +28,233 @@
   h1 {
     font-size: 1.75rem;
     font-weight: $font-weight-bold;
-    margin-bottom: $spacer-sm;
+    color: $text-primary;
+    margin: 0 0 $spacer-sm 0;
   }
 
   p {
     color: $text-secondary;
+    margin: 0;
+    font-size: $font-size-base;
   }
 }
 
-.auth-form {
-  .form-label {
+// Auth Form
+.auth-form,
+.space-y-6,
+.space-y-4 {
+  .form-group,
+  .w-full {
+    margin-bottom: $spacer-md;
+  }
+}
+
+// Form Labels
+label,
+.block.text-sm {
+  display: block;
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+  margin-bottom: $spacer-xs;
+  font-size: $font-size-sm;
+}
+
+// Form Inputs
+input[type="text"],
+input[type="email"],
+input[type="password"],
+.border-input {
+  width: 100%;
+  padding: $input-padding-y $input-padding-x;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  color: $text-primary;
+  background: $white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: $gray-500;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+  }
+}
+
+// Primary Button
+button[type="submit"],
+.btn-primary,
+.bg-primary {
+  width: 100%;
+  padding: $btn-padding-y $btn-padding-x;
+  background: $gradient-primary;
+  color: $white !important;
+  border: none;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// OAuth Buttons
+.flex.gap-4,
+.oauth-buttons {
+  display: flex;
+  gap: $spacer-md;
+  margin-top: $spacer-lg;
+
+  button,
+  .oauth-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacer-sm;
+    padding: $btn-padding-y $btn-padding-x;
+    background: $white;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius;
+    font-size: $font-size-sm;
     font-weight: $font-weight-medium;
-  }
+    color: $text-primary;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-  .form-control {
-    @include input-base;
-  }
+    &:hover {
+      background: $gray-100;
+      border-color: $gray-400;
+    }
 
-  .btn-primary {
-    @include btn-base;
+    svg {
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
-.auth-footer {
+// Divider "Or continue with"
+.relative.my-6,
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: $spacer-lg 0;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid $gray-300;
+  }
+
+  span {
+    padding: 0 $spacer-md;
+    background: $white;
+  }
+}
+
+// Links
+.text-primary,
+a.text-primary {
+  color: $primary !important;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Auth Footer
+.auth-footer,
+.text-center.mt-6 {
   text-align: center;
   margin-top: $spacer-lg;
   padding-top: $spacer-lg;
-  border-top: 1px solid $border-color;
+  border-top: 1px solid $gray-200;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+
+  a {
+    color: $primary;
+    font-weight: $font-weight-medium;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
-.auth-error {
-  display: none;
+// Forgot password link
+.flex.items-center.justify-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: $spacer-md;
+
+  a {
+    font-size: $font-size-sm;
+    color: $primary;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
-
-
-/* Dark mode styles for auth pages */
-[data-theme="dark"] .auth-container {
-  background-color: var(--zta-bg);
+// Error states
+.auth-error,
+.text-destructive {
+  color: $danger;
+  font-size: $font-size-sm;
+  margin-top: $spacer-xs;
 }
 
-[data-theme="dark"] .auth-card {
-  background-color: var(--zta-card-bg);
-  border: 1px solid var(--zta-border);
-}
+// Dark mode
+@media (prefers-color-scheme: dark) {
+  .auth-card {
+    background: $gray-900;
 
-[data-theme="dark"] .auth-header h1 {
-  color: var(--zta-text);
-}
+    h1 {
+      color: $white;
+    }
 
-[data-theme="dark"] .auth-header p {
-  color: #d4d4d8; /* Light gray for 10:1 contrast */
-}
+    p {
+      color: $gray-400;
+    }
 
-[data-theme="dark"] .auth-form .form-label {
-  color: var(--zta-text);
-}
+    label {
+      color: $gray-200;
+    }
 
-[data-theme="dark"] .auth-form .form-control {
-  background-color: var(--zta-input-bg);
-  border-color: var(--zta-border);
-  color: var(--zta-text);
-}
+    input {
+      background: $gray-800;
+      border-color: $gray-700;
+      color: $white;
 
-[data-theme="dark"] .auth-form .form-control::placeholder {
-  color: #9ca3af; /* Gray-400 for placeholder contrast */
-}
-
-[data-theme="dark"] .auth-footer {
-  border-top-color: var(--zta-border);
-  color: var(--zta-text);
-}
-
-[data-theme="dark"] .auth-footer a {
-  color: #60a5fa; /* Blue-400 for link visibility */
+      &::placeholder {
+        color: $gray-500;
+      }
+    }
+  }
 }
