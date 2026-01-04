@@ -31,8 +31,8 @@ export default async function handler(req, context) {
     });
   }
 
-  // Authenticate request
-  const auth = authenticateRequest(req.headers);
+  // Authenticate request (supports Clerk and legacy JWT)
+  const auth = await authenticateRequest(req.headers);
   if (auth.error) {
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,
