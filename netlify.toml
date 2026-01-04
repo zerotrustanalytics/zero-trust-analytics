@@ -19,15 +19,25 @@
 [functions]
   node_bundler = "esbuild"
 
-# Redirect auth pages to Next.js app on Vercel
+# Redirect auth pages to Next.js app on Vercel (using Clerk)
 [[redirects]]
   from = "/login"
-  to = "https://zero-trust-analytics.vercel.app/login"
+  to = "https://zero-trust-analytics.vercel.app/sign-in"
+  status = 301
+
+[[redirects]]
+  from = "/sign-in"
+  to = "https://zero-trust-analytics.vercel.app/sign-in"
   status = 301
 
 [[redirects]]
   from = "/register"
-  to = "https://zero-trust-analytics.vercel.app/register"
+  to = "https://zero-trust-analytics.vercel.app/sign-up"
+  status = 301
+
+[[redirects]]
+  from = "/sign-up"
+  to = "https://zero-trust-analytics.vercel.app/sign-up"
   status = 301
 
 [[redirects]]
@@ -38,16 +48,6 @@
 [[redirects]]
   from = "/dashboard/*"
   to = "https://zero-trust-analytics.vercel.app/dashboard/:splat"
-  status = 301
-
-[[redirects]]
-  from = "/forgot-password"
-  to = "https://zero-trust-analytics.vercel.app/forgot-password"
-  status = 301
-
-[[redirects]]
-  from = "/reset-password"
-  to = "https://zero-trust-analytics.vercel.app/reset-password"
   status = 301
 
 # API redirects
