@@ -42,14 +42,15 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
+              "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://ztas.io https://*.ztas.io",
+              "connect-src 'self' https://ztas.io https://*.ztas.io https://*.clerk.accounts.dev https://*.clerk.com",
+              "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
-              "form-action 'self'"
+              "form-action 'self' https://*.clerk.accounts.dev https://*.clerk.com"
             ].join('; ')
           }
         ]
