@@ -27,7 +27,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl="https://ztas.io/"
+      signUpUrl="https://ztas.io/"
+      afterSignOutUrl="https://ztas.io/"
+    >
       <html lang="en" suppressHydrationWarning>
         <body className="min-h-screen bg-background font-sans antialiased">
           {/* Skip link for keyboard users - becomes visible on focus */}
