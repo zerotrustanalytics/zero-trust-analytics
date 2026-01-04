@@ -41,6 +41,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { verifyToken as verifyClerkToken } from '@clerk/backend';
 import { Config } from './config.js';
 
 // Use centralized configuration with validation
@@ -321,13 +322,38 @@ export function validateCSRFFromRequest(headers, userId) {
 }
 
 // Middleware helper - verify auth and return user
-// Note: For full invalidation checking, pass the user object to verifyToken
-export function authenticateRequest(headers, user = null) {
+// Supports both legacy JWT tokens and Clerk tokens
+export async function authenticateRequest(headers, user = null) {
   const token = getTokenFromHeader(headers);
   if (!token) {
     return { error: 'No token provided', status: 401 };
   }
 
+  // First try to verify as Clerk token
+  try {
+    const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+    if (clerkSecretKey) {
+      const verifiedToken = await verifyClerkToken(token, {
+        secretKey: clerkSecretKey,
+      });
+
+      if (verifiedToken) {
+        // Return Clerk user info in a compatible format
+        return {
+          user: {
+            id: verifiedToken.sub, // Clerk user ID
+            clerkUserId: verifiedToken.sub,
+            email: verifiedToken.email || null,
+          }
+        };
+      }
+    }
+  } catch (clerkError) {
+    // If Clerk verification fails, try legacy JWT
+    console.log('Clerk token verification failed, trying legacy JWT:', clerkError.message);
+  }
+
+  // Fall back to legacy JWT verification
   const decoded = verifyToken(token, user);
   if (!decoded) {
     return { error: 'Invalid token', status: 401 };
