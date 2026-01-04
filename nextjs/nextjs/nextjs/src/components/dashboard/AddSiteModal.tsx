@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Modal, ModalFooter, Button, Input, Alert } from '@/components/ui'
 
 interface AddSiteModalProps {
@@ -10,6 +11,7 @@ interface AddSiteModalProps {
 }
 
 export function AddSiteModal({ isOpen, onClose, onSuccess }: AddSiteModalProps) {
+  const { getToken } = useAuth()
   const [domain, setDomain] = useState('')
   const [name, setName] = useState('')
   const [error, setError] = useState('')
@@ -40,15 +42,18 @@ export function AddSiteModal({ isOpen, onClose, onSuccess }: AddSiteModalProps) 
     setLoading(true)
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      const csrfToken = sessionStorage.getItem('csrfToken') || ''
-      const authToken = localStorage.getItem('token') || ''
+      const authToken = await getToken()
+
+      if (!authToken) {
+        setError('Not authenticated. Please sign in again.')
+        return
+      }
 
       const res = await fetch(`${apiUrl}/api/sites/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
-          'X-CSRF-Token': csrfToken,
         },
         credentials: 'include',
         body: JSON.stringify({
