@@ -1,0 +1,281 @@
+{{ define "main" }}
+<!-- Breadcrumb -->
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/blog/" class="text-decoration-none">Blog</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ .Title }}</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<article class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <!-- Article Header -->
+        <header class="mb-4">
+          <!-- Category Badge -->
+          {{ with .Params.category }}
+          <a href="/blog/?category={{ . | urlize }}" class="badge bg-primary text-decoration-none mb-3">{{ . }}</a>
+          {{ end }}
+
+          <!-- Title -->
+          <h1 class="display-5 fw-bold mb-3">{{ .Title }}</h1>
+
+          <!-- Subtitle/Description -->
+          {{ with .Params.description }}
+          <p class="lead text-muted mb-4">{{ . }}</p>
+          {{ end }}
+
+          <!-- Meta Info -->
+          <div class="d-flex flex-wrap align-items-center gap-3 text-muted small mb-4">
+            <span><i class="fas fa-calendar me-1"></i>{{ .Date.Format "January 2, 2006" }}</span>
+            <span><i class="fas fa-clock me-1"></i>{{ .ReadingTime }} min read</span>
+            {{ with .Params.author }}
+            <span><i class="fas fa-user me-1"></i>{{ . }}</span>
+            {{ end }}
+          </div>
+
+          <!-- Social Share -->
+          <div class="d-flex gap-2 mb-4">
+            <a href="https://twitter.com/intent/tweet?url={{ .Permalink }}&text={{ .Title }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" aria-label="Share on Twitter (opens in new window)">
+              <i class="fab fa-twitter" aria-hidden="true"></i>
+            </a>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ .Permalink }}&title={{ .Title }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" aria-label="Share on LinkedIn (opens in new window)">
+              <i class="fab fa-linkedin" aria-hidden="true"></i>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ .Permalink }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" aria-label="Share on Facebook (opens in new window)">
+              <i class="fab fa-facebook" aria-hidden="true"></i>
+            </a>
+            <button onclick="navigator.clipboard.writeText('{{ .Permalink }}')" class="btn btn-sm btn-outline-secondary" aria-label="Copy link to clipboard">
+              <i class="fas fa-link" aria-hidden="true"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- Featured Image -->
+        {{ with .Params.image }}
+        <figure class="mb-5">
+          <img src="{{ . }}" alt="{{ $.Title }}" class="img-fluid rounded-3 shadow-sm w-100">
+          {{ with $.Params.image_caption }}
+          <figcaption class="text-muted small mt-2 text-center">{{ . }}</figcaption>
+          {{ end }}
+        </figure>
+        {{ end }}
+
+        <!-- Article Content -->
+        <div class="article-content">
+          {{ .Content }}
+        </div>
+
+        <!-- Tags -->
+        {{ with .Params.tags }}
+        <div class="mt-5 pt-4 border-top">
+          <span class="text-muted small me-2">Tags:</span>
+          {{ range . }}
+          <a href="/blog/?tag={{ . | urlize }}" class="badge bg-light text-dark text-decoration-none me-1">{{ . }}</a>
+          {{ end }}
+        </div>
+        {{ end }}
+
+        <!-- Social Share Bottom -->
+        <div class="mt-4 pt-4 border-top">
+          <p class="text-muted small mb-2">Share this article:</p>
+          <div class="d-flex gap-2">
+            <a href="https://twitter.com/intent/tweet?url={{ .Permalink }}&text={{ .Title }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+              <i class="fab fa-twitter me-1"></i>Twitter
+            </a>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ .Permalink }}&title={{ .Title }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+              <i class="fab fa-linkedin me-1"></i>LinkedIn
+            </a>
+            <a href="mailto:?subject={{ .Title }}&body=Check out this article: {{ .Permalink }}" class="btn btn-outline-primary">
+              <i class="fas fa-envelope me-1"></i>Email
+            </a>
+          </div>
+        </div>
+
+        <!-- Author Box -->
+        {{ with .Params.author }}
+        <div class="mt-5 p-4 bg-light rounded-3">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+              <i class="fas fa-user"></i>
+            </div>
+            <div>
+              <h6 class="mb-1 fw-bold">{{ . }}</h6>
+              <p class="mb-0 text-muted small">Zero Trust Analytics Team</p>
+            </div>
+          </div>
+        </div>
+        {{ end }}
+      </div>
+    </div>
+
+    <!-- Related Posts -->
+    {{ $related := where .Site.RegularPages "Section" "blog" | first 3 }}
+    {{ if gt (len $related) 1 }}
+    <div class="row justify-content-center mt-5 pt-5 border-top">
+      <div class="col-lg-10">
+        <h4 class="fw-bold mb-4">Related Articles</h4>
+        <div class="row g-4">
+          {{ range $related }}
+          {{ if ne .Permalink $.Permalink }}
+          <div class="col-md-4">
+            <a href="{{ .Permalink }}" class="text-decoration-none">
+              <div class="card h-100 border-0 shadow-sm">
+                {{ $postTitle := .Title }}
+                {{ with .Params.image }}
+                <img src="{{ . }}" class="card-img-top" alt="{{ $postTitle }}" style="height: 160px; object-fit: cover;">
+                {{ else }}
+                <div class="card-img-top bg-primary d-flex align-items-center justify-content-center" style="height: 160px;">
+                  <i class="fas fa-chart-line text-white fa-3x"></i>
+                </div>
+                {{ end }}
+                <div class="card-body">
+                  {{ with .Params.category }}
+                  <span class="badge bg-primary mb-2">{{ . }}</span>
+                  {{ end }}
+                  <h6 class="card-title text-dark">{{ .Title }}</h6>
+                  <p class="card-text small text-muted">{{ .Date.Format "January 2, 2006" }}</p>
+                </div>
+              </div>
+            </a>
+          </div>
+          {{ end }}
+          {{ end }}
+        </div>
+      </div>
+    </div>
+    {{ end }}
+  </div>
+</article>
+
+<!-- Newsletter CTA -->
+<section class="bg-primary text-white py-5">
+  <div class="container">
+    <div class="row justify-content-center text-center">
+      <div class="col-lg-6">
+        <h3 class="fw-bold mb-3">Stay Updated on Privacy-First Analytics</h3>
+        <p class="mb-4">Get the latest insights on web analytics, privacy, and GDPR compliance delivered to your inbox.</p>
+        <form class="d-flex gap-2 justify-content-center flex-wrap">
+          <label for="newsletter-email-blog-single" class="visually-hidden">Email address for newsletter</label>
+          <input type="email" id="newsletter-email-blog-single" class="form-control" placeholder="Enter your email" aria-label="Email address for newsletter subscription" style="max-width: 300px;">
+          <button type="submit" class="btn btn-light fw-bold">Subscribe</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.article-content {
+  font-size: 1.1rem;
+  line-height: 1.8;
+}
+.article-content h2 {
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+.article-content h3 {
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.article-content p {
+  margin-bottom: 1.25rem;
+}
+.article-content ul, .article-content ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+.article-content li {
+  margin-bottom: 0.5rem;
+}
+.article-content blockquote {
+  border-left: 4px solid #0d6efd;
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: #6c757d;
+}
+.article-content code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.article-content pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.article-content pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+.article-content a {
+  color: #0d6efd;
+}
+.article-content a:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode styles for blog articles */
+[data-theme="dark"] .article-content {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .article-content h2,
+[data-theme="dark"] .article-content h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .article-content blockquote {
+  color: #d4d4d8;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .article-content code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .breadcrumb-item a,
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .badge.bg-light {
+  background-color: var(--zta-bg-tertiary, #2c3034) !important;
+  color: var(--zta-text, #e9ecef) !important;
+}
+[data-theme="dark"] .card-title.text-dark {
+  color: var(--zta-text, #e9ecef) !important;
+}
+[data-theme="dark"] article h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] article .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .bg-light.rounded-3 {
+  background-color: var(--zta-bg-secondary, #212529) !important;
+}
+[data-theme="dark"] .bg-light.rounded-3 h6 {
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+{{ end }}

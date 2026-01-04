@@ -18,7 +18,7 @@ export default async function handler(req, context) {
 
   if (req.method !== 'POST') {
     logger.warn('Invalid HTTP method', { method: req.method });
-    return Errors.methodNotAllowed();
+    return Errors.methodNotAllowed(origin);
   }
 
   // Rate limiting for registration: Uses endpoint-specific config

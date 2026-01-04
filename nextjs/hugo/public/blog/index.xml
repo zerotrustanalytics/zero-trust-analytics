@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blog on Zero Trust Analytics</title>
+    <link>http://localhost:49390/blog/</link>
+    <description>Recent content in Blog on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 10 Mar 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Zero Knowledge: &#39;I Can&#39;t Look&#39; vs &#39;I Promise Not to Look&#39;</title>
+      <link>http://localhost:49390/blog/zero-knowledge-i-cant-look-vs-i-wont-look/</link>
+      <pubDate>Mon, 10 Mar 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/zero-knowledge-i-cant-look-vs-i-wont-look/</guid>
+      <description>&lt;p&gt;Every tech company has a privacy policy. They all say some version of:&lt;/p&gt;&#xA;&lt;blockquote&gt;&#xA;&lt;p&gt;&amp;ldquo;We take your privacy seriously. We promise to protect your data. We won&amp;rsquo;t sell your information.&amp;rdquo;&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;p&gt;&lt;strong&gt;How&amp;rsquo;s that working out?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-promise-problem&#34;&gt;The Promise Problem&lt;/h2&gt;&#xA;&lt;p&gt;Privacy promises get broken. Constantly.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-acquisition-problem&#34;&gt;The Acquisition Problem&lt;/h3&gt;&#xA;&lt;p&gt;Company A has great privacy practices. They get acquired by Company B. Privacy policy changes. Your data flows to new hands.&lt;/p&gt;&#xA;&lt;p&gt;This isn&amp;rsquo;t theoretical:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;WhatsApp promised end-to-end encryption privacy. Then Facebook bought them.&lt;/li&gt;&#xA;&lt;li&gt;Fitbit promised health data protection. Then Google bought them.&lt;/li&gt;&#xA;&lt;li&gt;Countless startups with great intentions get absorbed by data-hungry giants.&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Promises don&amp;rsquo;t survive acquisitions.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>For Developers: Our Pricing Model Beats Everyone (Unlimited Sites)</title>
+      <link>http://localhost:49390/blog/for-developers-unlimited-sites-beat-everyone/</link>
+      <pubDate>Mon, 03 Mar 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/for-developers-unlimited-sites-beat-everyone/</guid>
+      <description>&lt;p&gt;Let me guess your situation:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Your portfolio site&lt;/li&gt;&#xA;&lt;li&gt;That SaaS you&amp;rsquo;re building on the side&lt;/li&gt;&#xA;&lt;li&gt;The client site you&amp;rsquo;re maintaining&lt;/li&gt;&#xA;&lt;li&gt;Three abandoned projects you might resurrect&lt;/li&gt;&#xA;&lt;li&gt;A blog that gets sporadic traffic&lt;/li&gt;&#xA;&lt;li&gt;Landing pages for experiments&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;That&amp;rsquo;s 7+ sites. At $9-19 per site (Plausible, Fathom, etc.), you&amp;rsquo;re looking at $63-133/month just for basic analytics.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;Or you could pay $15/month. Total. For all of them.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-developers-analytics-problem&#34;&gt;The Developer&amp;rsquo;s Analytics Problem&lt;/h2&gt;&#xA;&lt;p&gt;We know developers because we are developers. And we know the analytics struggle:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Don&#39;t Be Someone Else&#39;s Product: Your Data Is Worth $$$</title>
+      <link>http://localhost:49390/blog/dont-be-someone-elses-product/</link>
+      <pubDate>Mon, 24 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/dont-be-someone-elses-product/</guid>
+      <description>&lt;p&gt;&amp;ldquo;If you&amp;rsquo;re not paying for the product, you are the product.&amp;rdquo;&lt;/p&gt;&#xA;&lt;p&gt;You&amp;rsquo;ve heard this before. But let&amp;rsquo;s make it concrete: &lt;strong&gt;How much is your visitors&amp;rsquo; data actually worth?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-data-economy-by-the-numbers&#34;&gt;The Data Economy by the Numbers&lt;/h2&gt;&#xA;&lt;h3 id=&#34;what-google-makes-per-user&#34;&gt;What Google Makes Per User&lt;/h3&gt;&#xA;&lt;p&gt;Google&amp;rsquo;s 2023 revenue: &lt;strong&gt;$307 billion&lt;/strong&gt;&#xA;Google&amp;rsquo;s monthly active users: ~&lt;strong&gt;4.3 billion&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;That&amp;rsquo;s roughly &lt;strong&gt;$71 per user per year&lt;/strong&gt; in revenue generated from data.&lt;/p&gt;&#xA;&lt;p&gt;But that&amp;rsquo;s the average across all services. For advertising specifically:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Agencies Are Switching to Unlimited-Site Analytics</title>
+      <link>http://localhost:49390/blog/why-agencies-are-switching-to-unlimited-site-analytics/</link>
+      <pubDate>Mon, 17 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-agencies-are-switching-to-unlimited-site-analytics/</guid>
+      <description>&lt;p&gt;You manage 50 client websites. Each one needs analytics. Traditional pricing models make this expensive:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Google Analytics is &amp;ldquo;free&amp;rdquo; but creates compliance nightmares&lt;/li&gt;&#xA;&lt;li&gt;Plausible charges per site ($9 × 50 = $450/month)&lt;/li&gt;&#xA;&lt;li&gt;Fathom charges per site with pageview limits&lt;/li&gt;&#xA;&lt;li&gt;Most tools get expensive quickly at scale&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;strong&gt;There has to be a better way.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-agency-analytics-problem&#34;&gt;The Agency Analytics Problem&lt;/h2&gt;&#xA;&lt;p&gt;Marketing agencies have unique analytics needs:&lt;/p&gt;&#xA;&lt;h3 id=&#34;scale&#34;&gt;Scale&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Dozens or hundreds of client sites&lt;/li&gt;&#xA;&lt;li&gt;New clients onboarding constantly&lt;/li&gt;&#xA;&lt;li&gt;Varying traffic levels across sites&lt;/li&gt;&#xA;&lt;li&gt;Need consistent reporting&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;client-expectations&#34;&gt;Client Expectations&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Clients want privacy-friendly options&lt;/li&gt;&#xA;&lt;li&gt;GDPR/CCPA questions come up in sales calls&lt;/li&gt;&#xA;&lt;li&gt;&amp;ldquo;What data are you collecting?&amp;rdquo; is a common concern&lt;/li&gt;&#xA;&lt;li&gt;Cookie banners frustrate clients&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;margin-pressure&#34;&gt;Margin Pressure&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Clients expect analytics as part of the package&lt;/li&gt;&#xA;&lt;li&gt;Per-site costs eat into margins&lt;/li&gt;&#xA;&lt;li&gt;Can&amp;rsquo;t easily pass costs through&lt;/li&gt;&#xA;&lt;li&gt;Need predictable expenses&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Traditional per-site pricing doesn&amp;rsquo;t work for this model.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Privacy-First Analytics for Therapists and Counselors</title>
+      <link>http://localhost:49390/blog/privacy-first-analytics-for-therapists-and-counselors/</link>
+      <pubDate>Mon, 10 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/privacy-first-analytics-for-therapists-and-counselors/</guid>
+      <description>&lt;p&gt;You&amp;rsquo;ve built a practice on trust. Clients share their deepest fears, traumas, and struggles because they trust you&amp;rsquo;ll protect that vulnerability.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;Does your website honor that same trust?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-unique-privacy-needs-of-mental-health-practices&#34;&gt;The Unique Privacy Needs of Mental Health Practices&lt;/h2&gt;&#xA;&lt;p&gt;Mental health professionals face heightened privacy concerns:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;The mere fact someone sought mental health services can be stigmatizing&lt;/li&gt;&#xA;&lt;li&gt;Topics clients research (depression, anxiety, trauma, addiction) are deeply personal&lt;/li&gt;&#xA;&lt;li&gt;Confidentiality is foundational to therapeutic relationships&lt;/li&gt;&#xA;&lt;li&gt;Breaches can cause significant harm&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Standard website analytics weren&amp;rsquo;t designed with these concerns in mind.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Consent Banners Are Killing Your Conversion Rate</title>
+      <link>http://localhost:49390/blog/consent-banners-are-killing-your-conversion-rate/</link>
+      <pubDate>Mon, 03 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/consent-banners-are-killing-your-conversion-rate/</guid>
+      <description>&lt;p&gt;You&amp;rsquo;ve spent thousands on your website. Carefully crafted copy. Beautiful design. Optimized user flows. A/B tested everything.&lt;/p&gt;&#xA;&lt;p&gt;Then a visitor arrives and immediately sees a giant popup asking about cookies.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;How much is that interruption costing you?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-data-on-consent-banner-impact&#34;&gt;The Data on Consent Banner Impact&lt;/h2&gt;&#xA;&lt;p&gt;Studies on cookie consent banners consistently show negative impacts:&lt;/p&gt;&#xA;&lt;h3 id=&#34;bounce-rate-increases&#34;&gt;Bounce Rate Increases&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;A study of 5 million sessions found consent banners &lt;strong&gt;increased bounce rates by 3-5%&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;li&gt;Mobile bounce rates are even higher (smaller screens, more intrusive banners)&lt;/li&gt;&#xA;&lt;li&gt;Users who reject cookies often leave entirely&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;engagement-drops&#34;&gt;Engagement Drops&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Average time on site &lt;strong&gt;decreases 5-10%&lt;/strong&gt; when banners are present&lt;/li&gt;&#xA;&lt;li&gt;Page views per session drop&lt;/li&gt;&#xA;&lt;li&gt;Return visits decrease (users remember the annoyance)&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;conversion-impact&#34;&gt;Conversion Impact&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Lead generation forms see &lt;strong&gt;2-4% fewer completions&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;li&gt;E-commerce conversion rates drop &lt;strong&gt;0.5-2%&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;li&gt;Newsletter signups decrease significantly&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;the-math&#34;&gt;The Math&lt;/h3&gt;&#xA;&lt;p&gt;If your site gets 10,000 monthly visitors:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>The Hidden Cost of &#39;Free&#39; Analytics</title>
+      <link>http://localhost:49390/blog/the-hidden-cost-of-free-analytics/</link>
+      <pubDate>Mon, 27 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/the-hidden-cost-of-free-analytics/</guid>
+      <description>&lt;p&gt;&amp;ldquo;Why would I pay for analytics when Google Analytics is free?&amp;rdquo;&lt;/p&gt;&#xA;&lt;p&gt;It&amp;rsquo;s the most common objection we hear. And on the surface, it makes sense. Why pay $10-30/month when you can pay $0?&lt;/p&gt;&#xA;&lt;p&gt;But Google Analytics isn&amp;rsquo;t free. &lt;strong&gt;You&amp;rsquo;re paying—just not with money.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;how-free-products-make-money&#34;&gt;How &amp;ldquo;Free&amp;rdquo; Products Make Money&lt;/h2&gt;&#xA;&lt;p&gt;Google&amp;rsquo;s annual revenue: &lt;strong&gt;$307 billion&lt;/strong&gt; (2023).&lt;/p&gt;&#xA;&lt;p&gt;Google Analytics users: &lt;strong&gt;Millions of websites&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;p&gt;Google Analytics revenue: &lt;strong&gt;$0&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;p&gt;If the math doesn&amp;rsquo;t add up, it&amp;rsquo;s because you&amp;rsquo;re not seeing the whole business model.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Law Firms Should Ditch Google Analytics Immediately</title>
+      <link>http://localhost:49390/blog/why-lawyers-should-ditch-google-analytics/</link>
+      <pubDate>Mon, 20 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-lawyers-should-ditch-google-analytics/</guid>
+      <description>&lt;p&gt;You spent years in law school learning about attorney-client privilege. You&amp;rsquo;ve built systems to protect confidential communications. Your firm takes client privacy seriously.&lt;/p&gt;&#xA;&lt;p&gt;But have you looked at what your website is telling Google about your potential clients?&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-confidentiality-problem&#34;&gt;The Confidentiality Problem&lt;/h2&gt;&#xA;&lt;p&gt;When someone visits your law firm&amp;rsquo;s website, Google Analytics captures:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Their IP address (can identify them)&lt;/li&gt;&#xA;&lt;li&gt;The pages they viewed (&amp;ldquo;divorce-attorney&amp;rdquo;, &amp;ldquo;bankruptcy-lawyer&amp;rdquo;, &amp;ldquo;criminal-defense&amp;rdquo;)&lt;/li&gt;&#xA;&lt;li&gt;How long they spent on each page&lt;/li&gt;&#xA;&lt;li&gt;Where they came from (maybe a referral from another attorney)&lt;/li&gt;&#xA;&lt;li&gt;Their device and location&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Now imagine this scenario: A person researching divorce attorneys visits your website before their spouse knows they&amp;rsquo;re considering divorce. Google now has evidence that this person was researching divorce lawyers. That data exists in Google&amp;rsquo;s systems, potentially discoverable, potentially part of an advertising profile.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>GDPR Fines Are Real: Is Your Analytics Compliant?</title>
+      <link>http://localhost:49390/blog/gdpr-fines-are-real-is-your-analytics-compliant/</link>
+      <pubDate>Mon, 13 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/gdpr-fines-are-real-is-your-analytics-compliant/</guid>
+      <description>&lt;p&gt;In January 2022, the Austrian Data Protection Authority made a ruling that sent shockwaves through the marketing world: &lt;strong&gt;Google Analytics violates GDPR.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;That wasn&amp;rsquo;t an isolated opinion. France, Italy, and other EU regulators followed with similar rulings. And they didn&amp;rsquo;t just issue warnings—they issued orders to stop using Google Analytics entirely.&lt;/p&gt;&#xA;&lt;p&gt;If your website serves European visitors, this affects you.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-gdpr-fine-landscape&#34;&gt;The GDPR Fine Landscape&lt;/h2&gt;&#xA;&lt;p&gt;GDPR enforcement is no longer theoretical. Here are real fines from 2023-2024:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>How Bitcoin Inspired Us to Build Zero Trust Analytics</title>
+      <link>http://localhost:49390/blog/how-bitcoin-inspired-zero-trust-analytics/</link>
+      <pubDate>Mon, 06 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/how-bitcoin-inspired-zero-trust-analytics/</guid>
+      <description>&lt;p&gt;In 2008, a pseudonymous developer named Satoshi Nakamoto published a whitepaper that changed how we think about trust in digital systems. Bitcoin wasn&amp;rsquo;t just a new form of money—it was a proof of concept that you could build systems where no single party needs to be trusted.&lt;/p&gt;&#xA;&lt;p&gt;That idea stuck with us. And when we built Zero Trust Analytics, we borrowed heavily from Bitcoin&amp;rsquo;s philosophical playbook.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-bitcoin-insight-dont-trust-verify&#34;&gt;The Bitcoin Insight: Don&amp;rsquo;t Trust, Verify&lt;/h2&gt;&#xA;&lt;p&gt;Traditional banking works on trust. You trust your bank to hold your money. You trust payment processors to transfer it. You trust regulators to oversee them. Layer upon layer of trust.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What Is Zero Knowledge? The Security Concept Behind ZTA.io</title>
+      <link>http://localhost:49390/blog/what-is-zero-knowledge-origins-and-history/</link>
+      <pubDate>Mon, 30 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/what-is-zero-knowledge-origins-and-history/</guid>
+      <description>&lt;p&gt;When we named our company &amp;ldquo;Zero Trust Analytics,&amp;rdquo; we weren&amp;rsquo;t just picking cool words. We were committing to a specific security philosophy with deep roots in cryptography and systems design.&lt;/p&gt;&#xA;&lt;p&gt;Let me explain what Zero Knowledge means and why it matters for your privacy.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-original-zero-knowledge-proofs&#34;&gt;The Original Zero Knowledge Proofs&lt;/h2&gt;&#xA;&lt;p&gt;The concept of &amp;ldquo;zero knowledge&amp;rdquo; comes from cryptography. In 1985, three MIT researchers—Goldwasser, Micali, and Rackoff—published a groundbreaking paper on &amp;ldquo;zero-knowledge proofs.&amp;rdquo;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Nobody Likes Cookies: Why We&#39;ve Been Cookie-Free Since Day One</title>
+      <link>http://localhost:49390/blog/nobody-likes-cookies-cookie-free-since-day-one/</link>
+      <pubDate>Mon, 23 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/nobody-likes-cookies-cookie-free-since-day-one/</guid>
+      <description>&lt;p&gt;You know that popup. The one that appears before you can read a single word of content. &amp;ldquo;We use cookies to improve your experience. Accept All / Manage Preferences / Reject All.&amp;rdquo;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;Everyone hates it.&lt;/strong&gt; Visitors hate clicking through it. Website owners hate implementing it. Lawyers hate trying to make it compliant. And yet, billions of websites display some version of this banner every day.&lt;/p&gt;&#xA;&lt;p&gt;We decided to skip the whole thing.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Google Is Tracking Your Patients (And You Might Be Liable)</title>
+      <link>http://localhost:49390/blog/google-is-tracking-your-patients/</link>
+      <pubDate>Mon, 16 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/google-is-tracking-your-patients/</guid>
+      <description>&lt;p&gt;Every time a patient visits your practice&amp;rsquo;s website, something invisible happens. A small piece of code sends their IP address, browser information, and the pages they viewed to Google&amp;rsquo;s servers. If they&amp;rsquo;re researching &amp;ldquo;dental implants&amp;rdquo; or &amp;ldquo;anxiety medication,&amp;rdquo; that behavior is now part of their advertising profile.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;This is a HIPAA problem.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-connection-between-ip-addresses-and-phi&#34;&gt;The Connection Between IP Addresses and PHI&lt;/h2&gt;&#xA;&lt;p&gt;Under HIPAA, Protected Health Information (PHI) includes any information that:&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;Relates to health care&lt;/li&gt;&#xA;&lt;li&gt;Can identify an individual&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;p&gt;When someone visits a healthcare website, their visit relates to healthcare. And their IP address—which Google Analytics captures—can identify them. Google literally runs the world&amp;rsquo;s largest identity resolution system. They can connect that IP to a real person.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Google Analytics Is a HIPAA Risk for Dental Practices</title>
+      <link>http://localhost:49390/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/</link>
+      <pubDate>Mon, 09 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/</guid>
+      <description>&lt;p&gt;If you run a dental practice, chances are your website has Google Analytics installed. It&amp;rsquo;s the industry standard, after all. But here&amp;rsquo;s something that might keep you up at night: &lt;strong&gt;Google Analytics may be putting your practice at risk of HIPAA violations.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-hidden-problem-with-google-analytics&#34;&gt;The Hidden Problem with Google Analytics&lt;/h2&gt;&#xA;&lt;p&gt;Every time someone visits your dental website, Google Analytics captures their IP address. That IP address is sent to Google&amp;rsquo;s servers, where it&amp;rsquo;s stored and processed alongside data from millions of other websites.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

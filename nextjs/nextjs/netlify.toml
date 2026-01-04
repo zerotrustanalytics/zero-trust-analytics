@@ -1,16 +1,37 @@
-# Next.js app build config - overrides root netlify.toml
 [build]
-  command = "npm install && npm run build"
+  publish = "public"
+  command = "npm install && npm run build && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify -s ../hugo -d ../nextjs/public"
+  functions = "netlify/functions"
 
-[build.environment]
-  NODE_VERSION = "20"
+[dev]
+  command = "hugo server -w -s ../hugo"
+  targetPort = 1313
+  port = 8888
+  autoLaunch = false
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+[context.production.environment]
+  HUGO_VERSION = "0.147.4"
+
+[functions]
+  node_bundler = "esbuild"
+
+# API redirects
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# CORS for analytics script
+[[headers]]
+  for = "/js/analytics.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=3600"
 
 [[headers]]
-  for = "/*"
+  for = "/.netlify/functions/*"
   [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Site-ID"
+

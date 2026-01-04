@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=49390&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>
+  
+    
+      Alerts
+    
+  
+</title>
+
+
+
+
+    <meta name="title" content="Alerts">
+
+
+<meta name="description" content="Get notified when metrics exceed thresholds or anomalies occur">
+<meta name="summary" content="Overview
+Alerts notify you when important metrics exceed thresholds or when anomalies are detected. Set up email, Slack, or webhook notifications to stay informed about traffic spikes, conversion drops, and unusual activity.
+Alert types:
+
+Threshold alerts - Triggered when a metric crosses a threshold
+Anomaly alerts - Triggered when unusual patterns are detected
+Comparison alerts - Triggered when metrics change significantly period-over-period
+
+Endpoints
+GET /api/alerts
+POST /api/alerts
+DELETE /api/alerts
+Requires authentication. See Authentication." >
+<meta name="date" content="0001-01-01 00:00:00 &#43;0000 UTC" >
+
+
+
+<meta name="og:title" content="Alerts">
+
+<meta property="og:date" content="0001-01-01 00:00:00 &#43;0000 UTC" />
+<meta property="og:description" content="Get notified when metrics exceed thresholds or anomalies occur">
+
+<meta property="og:image" content="http://localhost:49390/images/brand/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="http://localhost:49390/docs/api/alerts/">
+<meta property="og:site_name" content="Zero Trust Analytics" />
+<meta property="og:type" content="website"><meta name="robots" content="noindex, nofollow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:49390/docs/api/alerts/">
+
+<meta name="twitter:title" content="Alerts">
+
+<meta name="twitter:description" content="Get notified when metrics exceed thresholds or anomalies occur">
+<meta name="twitter:image" content="http://localhost:49390/images/brand/share.png">
+<meta name="twitter:site" content="@ZeroTrustHQ">
+<meta name="twitter:creator" content="@ZeroTrustHQ">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Zero Trust Analytics",
+  "url": "http:\/\/localhost:49390\/",
+  "logo": "http:\/\/localhost:49390\/images/logo.png",
+  "description": "Privacy-first web analytics that never stores personal data. GDPR/CCPA compliant by design.",
+  "sameAs": [
+    "https://github.com/zerotrustanalytics"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zero Trust Analytics",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "5",
+    "highPrice": "199",
+    "priceCurrency": "USD",
+    "offerCount": "5"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  },
+  "description": "Privacy-first web analytics with zero data collection. Cookie-free, GDPR compliant, lightweight script under 2KB gzipped.",
+  "featureList": [
+    "Cookie-free tracking",
+    "GDPR/CCPA compliant",
+    "Real-time analytics",
+    "Unlimited websites",
+    "Custom events",
+    "API access"
+  ]
+}
+</script>
+
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/favicon-32x32.png " sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="mask-icon" href="/safari-pinned-tab.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="theme-color" content="#2563eb">
+
+
+<link rel="stylesheet" href="/src/css/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="/src/css/shared.css">
+
+
+
+
+  <link rel="canonical" href="http://localhost:49390/docs/api/alerts/">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+</noscript>
+
+
+
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script defer type="text/javascript" src="http://localhost:49390/src/js/site.js"></script>
+<script src="https://kit.fontawesome.com/902c9ed551.js" crossorigin="anonymous"></script>
+
+
+
+<script src="https://zerotrustanalytics.com/js/analytics.js" data-site-id="site_zta_production"></script>
+  </head>
+  <body>
+    
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#primary-nav" class="skip-link">Skip to navigation</a>
+
+    <div id="main-container">
+      <header role="banner">
+  <nav id="primary-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand text-primary" href="/" aria-label="Zero Trust Analytics - Home">
+        <strong>Zero Trust Analytics</strong>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center" role="menubar">
+          
+          <li class="nav-item me-2" role="none">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm rounded-pill px-2"
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              </svg>
+              <svg id="theme-icon-light" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#features" role="menuitem">Features</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/#pricing" role="menuitem">Pricing</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/blog/" role="menuitem">Blog</a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="/about/" role="menuitem">About</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link" href="/login/" role="menuitem">Login</a>
+          </li>
+          <li class="nav-item auth-logged-out" role="none">
+            <a class="nav-link btn btn-primary text-white px-3" href="/register/" role="menuitem">Get Started</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <a class="nav-link" href="/dashboard/" role="menuitem">Dashboard</a>
+          </li>
+          <li class="nav-item auth-logged-in d-none" role="none">
+            <button
+              type="button"
+              class="nav-link btn btn-link"
+              onclick="logout()"
+              role="menuitem"
+            >Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+
+      <main id="main-content" class="main-content-area" role="main">
+        
+
+<nav class="bg-light py-2 border-bottom">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="/docs/" class="text-decoration-none">Docs</a></li>
+        
+        
+        <li class="breadcrumb-item"><a href="/docs/api/" class="text-decoration-none">API Reference</a></li>
+        
+        
+        <li class="breadcrumb-item active" aria-current="page">Alerts</li>
+      </ol>
+    </nav>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row">
+    
+    <div class="col-lg-3 mb-4">
+      <nav class="docs-sidebar sticky-top" style="top: 20px;">
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Getting Started</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/" class="nav-link">Overview</a></li>
+          <li class="nav-item"><a href="/docs/quickstart/" class="nav-link ">Quick Start</a></li>
+          <li class="nav-item"><a href="/docs/installation/" class="nav-link ">Installation</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Tracking</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/tracking-script/" class="nav-link ">Tracking Script</a></li>
+          <li class="nav-item"><a href="/docs/custom-events/" class="nav-link ">Custom Events</a></li>
+          <li class="nav-item"><a href="/docs/spa-support/" class="nav-link ">SPA Support</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">API Reference</h6>
+        <ul class="nav flex-column mb-4">
+          <li class="nav-item"><a href="/docs/api/authentication/" class="nav-link ">Authentication</a></li>
+          <li class="nav-item"><a href="/docs/api/track/" class="nav-link ">Track Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/stats/" class="nav-link ">Stats Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/realtime/" class="nav-link ">Realtime Endpoint</a></li>
+          <li class="nav-item"><a href="/docs/api/export/" class="nav-link ">Export Endpoint</a></li>
+        </ul>
+
+        <h6 class="text-uppercase text-muted fw-bold mb-3">Privacy</h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="/docs/privacy-model/" class="nav-link ">Privacy Model</a></li>
+          <li class="nav-item"><a href="/docs/data-collected/" class="nav-link ">Data Collected</a></li>
+          <li class="nav-item"><a href="/docs/gdpr-ccpa/" class="nav-link ">GDPR & CCPA</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="col-lg-9">
+      <article class="docs-content">
+        <h1 class="mb-4">Alerts</h1>
+        
+        <p class="lead text-muted mb-4">Get notified when metrics exceed thresholds or anomalies occur</p>
+        
+
+        <div class="docs-body">
+          <h2 id="overview">Overview</h2>
+<p>Alerts notify you when important metrics exceed thresholds or when anomalies are detected. Set up email, Slack, or webhook notifications to stay informed about traffic spikes, conversion drops, and unusual activity.</p>
+<p><strong>Alert types:</strong></p>
+<ul>
+<li><strong>Threshold alerts</strong> - Triggered when a metric crosses a threshold</li>
+<li><strong>Anomaly alerts</strong> - Triggered when unusual patterns are detected</li>
+<li><strong>Comparison alerts</strong> - Triggered when metrics change significantly period-over-period</li>
+</ul>
+<h2 id="endpoints">Endpoints</h2>
+<pre tabindex="0"><code>GET /api/alerts
+POST /api/alerts
+DELETE /api/alerts
+</code></pre><p><strong>Requires authentication.</strong> See <a href="/docs/api/authentication/">Authentication</a>.</p>
+<h2 id="list-alerts">List Alerts</h2>
+<p>Get all alerts configured for a site.</p>
+<h3 id="request">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/alerts?siteId=site_abc123&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="parameters">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>siteId</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Site ID to list alerts for</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="response">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;alerts&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;alert_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Traffic Spike&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;threshold&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;condition&#34;</span>: <span style="color:#e6db74">&#34;pageviews &gt; 1000&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;metric&#34;</span>: <span style="color:#e6db74">&#34;pageviews&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;operator&#34;</span>: <span style="color:#e6db74">&#34;&gt;&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;threshold&#34;</span>: <span style="color:#ae81ff">1000</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;period&#34;</span>: <span style="color:#e6db74">&#34;1h&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;notifications&#34;</span>: [<span style="color:#e6db74">&#34;email&#34;</span>, <span style="color:#e6db74">&#34;slack&#34;</span>],
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;lastTriggered&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T15:30:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;triggerCount&#34;</span>: <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-01-15T10:00:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;alert_def456&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Conversion Drop&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;comparison&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;condition&#34;</span>: <span style="color:#e6db74">&#34;conversionRate &lt; -20%&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;metric&#34;</span>: <span style="color:#e6db74">&#34;conversionRate&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;operator&#34;</span>: <span style="color:#e6db74">&#34;&lt;&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;threshold&#34;</span>: <span style="color:#ae81ff">-20</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;compareWith&#34;</span>: <span style="color:#e6db74">&#34;previous_period&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;period&#34;</span>: <span style="color:#e6db74">&#34;24h&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;notifications&#34;</span>: [<span style="color:#e6db74">&#34;email&#34;</span>],
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;lastTriggered&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;triggerCount&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-02-20T14:00:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="create-alert">Create Alert</h2>
+<p>Create a new alert to monitor metrics.</p>
+<h3 id="threshold-alert">Threshold Alert</h3>
+<p>Triggered when a metric crosses a threshold:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Traffic Spike&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;threshold&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;pageviews&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&gt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 1000,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;1h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;, &#34;slack&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="comparison-alert">Comparison Alert</h3>
+<p>Triggered when a metric changes significantly compared to a previous period:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Conversion Drop&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;comparison&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;conversionRate&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&lt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: -20,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;compareWith&#34;: &#34;previous_period&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;24h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;, &#34;webhook&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="anomaly-alert">Anomaly Alert</h3>
+<p>Triggered when unusual patterns are detected using machine learning:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Traffic Anomaly&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;anomaly&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;pageviews&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;sensitivity&#34;: &#34;medium&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="parameters-1">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>siteId</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Site ID for the alert</td>
+      </tr>
+      <tr>
+          <td><code>name</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Alert name (max 100 characters)</td>
+      </tr>
+      <tr>
+          <td><code>type</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Alert type: <code>threshold</code>, <code>comparison</code>, or <code>anomaly</code></td>
+      </tr>
+      <tr>
+          <td><code>metric</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Metric to monitor (see below)</td>
+      </tr>
+      <tr>
+          <td><code>notifications</code></td>
+          <td>array</td>
+          <td>Yes</td>
+          <td>Array of notification channels</td>
+      </tr>
+      <tr>
+          <td><strong>Threshold alerts:</strong></td>
+          <td></td>
+          <td></td>
+          <td></td>
+      </tr>
+      <tr>
+          <td><code>operator</code></td>
+          <td>string</td>
+          <td>Conditional</td>
+          <td>Operator: <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code> (required for threshold)</td>
+      </tr>
+      <tr>
+          <td><code>threshold</code></td>
+          <td>number</td>
+          <td>Conditional</td>
+          <td>Threshold value (required for threshold)</td>
+      </tr>
+      <tr>
+          <td><code>period</code></td>
+          <td>string</td>
+          <td>Conditional</td>
+          <td>Time period: <code>1h</code>, <code>24h</code>, <code>7d</code> (required for threshold)</td>
+      </tr>
+      <tr>
+          <td><strong>Comparison alerts:</strong></td>
+          <td></td>
+          <td></td>
+          <td></td>
+      </tr>
+      <tr>
+          <td><code>operator</code></td>
+          <td>string</td>
+          <td>Conditional</td>
+          <td>Operator: <code>&gt;</code>, <code>&lt;</code> (required for comparison)</td>
+      </tr>
+      <tr>
+          <td><code>threshold</code></td>
+          <td>number</td>
+          <td>Conditional</td>
+          <td>Percentage change threshold (required for comparison)</td>
+      </tr>
+      <tr>
+          <td><code>compareWith</code></td>
+          <td>string</td>
+          <td>Conditional</td>
+          <td><code>previous_period</code>, <code>previous_week</code>, <code>previous_month</code></td>
+      </tr>
+      <tr>
+          <td><code>period</code></td>
+          <td>string</td>
+          <td>Conditional</td>
+          <td>Time period to compare: <code>1h</code>, <code>24h</code>, <code>7d</code></td>
+      </tr>
+      <tr>
+          <td><strong>Anomaly alerts:</strong></td>
+          <td></td>
+          <td></td>
+          <td></td>
+      </tr>
+      <tr>
+          <td><code>sensitivity</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>Sensitivity: <code>low</code>, <code>medium</code>, <code>high</code> (default: <code>medium</code>)</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="metrics">Metrics</h3>
+<p>Monitor these metrics:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Metric</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>pageviews</code></td>
+          <td>Total page views</td>
+      </tr>
+      <tr>
+          <td><code>uniqueVisitors</code></td>
+          <td>Unique visitors</td>
+      </tr>
+      <tr>
+          <td><code>sessions</code></td>
+          <td>Total sessions</td>
+      </tr>
+      <tr>
+          <td><code>bounceRate</code></td>
+          <td>Bounce rate percentage</td>
+      </tr>
+      <tr>
+          <td><code>avgSessionDuration</code></td>
+          <td>Average session duration (seconds)</td>
+      </tr>
+      <tr>
+          <td><code>conversionRate</code></td>
+          <td>Overall conversion rate</td>
+      </tr>
+      <tr>
+          <td><code>goal.{goalId}.completions</code></td>
+          <td>Specific goal completions</td>
+      </tr>
+      <tr>
+          <td><code>goal.{goalId}.conversionRate</code></td>
+          <td>Specific goal conversion rate</td>
+      </tr>
+      <tr>
+          <td><code>funnel.{funnelId}.conversionRate</code></td>
+          <td>Specific funnel conversion rate</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="notification-channels">Notification Channels</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Channel</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>email</code></td>
+          <td>Email notification to account email</td>
+      </tr>
+      <tr>
+          <td><code>slack</code></td>
+          <td>Slack notification (requires Slack integration)</td>
+      </tr>
+      <tr>
+          <td><code>webhook</code></td>
+          <td>HTTP POST to a webhook URL</td>
+      </tr>
+      <tr>
+          <td><code>sms</code></td>
+          <td>SMS notification (Enterprise only)</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="response-1">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;alert&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;alert_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Traffic Spike&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;threshold&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;condition&#34;</span>: <span style="color:#e6db74">&#34;pageviews &gt; 1000&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;metric&#34;</span>: <span style="color:#e6db74">&#34;pageviews&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;operator&#34;</span>: <span style="color:#e6db74">&#34;&gt;&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;threshold&#34;</span>: <span style="color:#ae81ff">1000</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;period&#34;</span>: <span style="color:#e6db74">&#34;1h&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;notifications&#34;</span>: [<span style="color:#e6db74">&#34;email&#34;</span>, <span style="color:#e6db74">&#34;slack&#34;</span>],
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T16:00:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="delete-alert">Delete Alert</h2>
+<p>Remove an alert and stop monitoring.</p>
+<h3 id="request-1">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X DELETE <span style="color:#e6db74">&#34;https://ztas.io/api/alerts?id=alert_abc123&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="parameters-2">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>id</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Alert ID to delete</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="response-2">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;success&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Alert deleted successfully&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="enabledisable-alert">Enable/Disable Alert</h2>
+<p>Toggle an alert on or off without deleting it.</p>
+<h3 id="request-2">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X PATCH <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;id&#34;: &#34;alert_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;enabled&#34;: false
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="parameters-3">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>id</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Alert ID</td>
+      </tr>
+      <tr>
+          <td><code>enabled</code></td>
+          <td>boolean</td>
+          <td>Yes</td>
+          <td>Enable or disable the alert</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="response-3">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;alert&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;alert_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;updatedAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T16:00:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="alert-history">Alert History</h2>
+<p>Get the history of alert triggers.</p>
+<h3 id="request-3">Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://ztas.io/api/alerts/alert_abc123/history?limit=50&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span>
+</span></span></code></pre></div><h3 id="parameters-4">Parameters</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>limit</code></td>
+          <td>number</td>
+          <td>No</td>
+          <td>Maximum number of entries (default: 50, max: 100)</td>
+      </tr>
+      <tr>
+          <td><code>offset</code></td>
+          <td>number</td>
+          <td>No</td>
+          <td>Offset for pagination (default: 0)</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="response-4">Response</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;alert&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;alert_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Traffic Spike&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;history&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;trigger_xyz789&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;triggeredAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T15:30:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;metric&#34;</span>: <span style="color:#e6db74">&#34;pageviews&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#ae81ff">1543</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;threshold&#34;</span>: <span style="color:#ae81ff">1000</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;condition&#34;</span>: <span style="color:#e6db74">&#34;pageviews &gt; 1000&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;notificationsSent&#34;</span>: [<span style="color:#e6db74">&#34;email&#34;</span>, <span style="color:#e6db74">&#34;slack&#34;</span>],
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;acknowledged&#34;</span>: <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;trigger_abc456&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;triggeredAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-11T10:15:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;metric&#34;</span>: <span style="color:#e6db74">&#34;pageviews&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#ae81ff">1234</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;threshold&#34;</span>: <span style="color:#ae81ff">1000</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;condition&#34;</span>: <span style="color:#e6db74">&#34;pageviews &gt; 1000&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;notificationsSent&#34;</span>: [<span style="color:#e6db74">&#34;email&#34;</span>, <span style="color:#e6db74">&#34;slack&#34;</span>],
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;acknowledged&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;acknowledgedBy&#34;</span>: <span style="color:#e6db74">&#34;user_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;acknowledgedAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-11T10:20:00.000Z&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;pagination&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;total&#34;</span>: <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;limit&#34;</span>: <span style="color:#ae81ff">50</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;offset&#34;</span>: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="notification-examples">Notification Examples</h2>
+<h3 id="email-notification">Email Notification</h3>
+<pre tabindex="0"><code>Subject: 🚨 Alert: Traffic Spike
+
+Your site example.com has triggered an alert.
+
+Alert: Traffic Spike
+Condition: pageviews &gt; 1000
+Current Value: 1,543 pageviews
+Time: Dec 12, 2024 at 3:30 PM
+
+View details: https://ztas.io/dashboard/site_abc123/alerts/alert_abc123
+</code></pre><h3 id="slack-notification">Slack Notification</h3>
+<pre tabindex="0"><code>🚨 Alert: Traffic Spike
+
+*example.com* has triggered an alert
+
+• Condition: pageviews &gt; 1000
+• Current Value: 1,543 pageviews
+• Time: Dec 12, 2024 at 3:30 PM
+
+&lt;https://ztas.io/dashboard/site_abc123/alerts/alert_abc123|View details&gt;
+</code></pre><h3 id="webhook-notification">Webhook Notification</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>POST https://your-server.com/webhook
+</span></span><span style="display:flex;"><span>Content-Type: application/json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;event&#34;</span>: <span style="color:#e6db74">&#34;alert&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;timestamp&#34;</span>: <span style="color:#e6db74">&#34;2024-12-12T15:30:00.000Z&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;data&#34;</span>: <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;siteId&#34;</span>: <span style="color:#e6db74">&#34;site_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;alertId&#34;</span>: <span style="color:#e6db74">&#34;alert_abc123&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;alertName&#34;</span>: <span style="color:#e6db74">&#34;Traffic Spike&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;condition&#34;</span>: <span style="color:#e6db74">&#34;pageviews &gt; 1000&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;metric&#34;</span>: <span style="color:#e6db74">&#34;pageviews&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;currentValue&#34;</span>: 1543,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;threshold&#34;</span>: 1000,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;operator&#34;</span>: <span style="color:#e6db74">&#34;&gt;&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="alert-examples">Alert Examples</h2>
+<h3 id="traffic-monitoring">Traffic Monitoring</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># High traffic alert</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;High Traffic&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;threshold&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;pageviews&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&gt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 10000,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;1h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;, &#34;slack&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Low traffic alert</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Low Traffic&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;threshold&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;pageviews&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&lt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 100,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;24h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="conversion-monitoring">Conversion Monitoring</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Low conversion rate</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Low Conversion Rate&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;threshold&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;conversionRate&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&lt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 2,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;24h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;, &#34;slack&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Conversion drop compared to last week</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Conversion Drop&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;comparison&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;conversionRate&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&lt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: -20,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;compareWith&#34;: &#34;previous_week&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;7d&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="goal-monitoring">Goal Monitoring</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Goal completion threshold</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Newsletter Signups&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;threshold&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;goal.goal_abc123.completions&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&gt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 50,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;24h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;, &#34;slack&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="bounce-rate-monitoring">Bounce Rate Monitoring</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># High bounce rate</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;High Bounce Rate&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;threshold&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;bounceRate&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&gt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 70,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;24h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;email&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h2 id="alert-limits">Alert Limits</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Plan</th>
+          <th>Max Alerts</th>
+          <th>Notification Channels</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Free</td>
+          <td>2</td>
+          <td>Email only</td>
+      </tr>
+      <tr>
+          <td>Pro</td>
+          <td>20</td>
+          <td>Email, Slack, Webhook</td>
+      </tr>
+      <tr>
+          <td>Business</td>
+          <td>100</td>
+          <td>Email, Slack, Webhook</td>
+      </tr>
+      <tr>
+          <td>Enterprise</td>
+          <td>Unlimited</td>
+          <td>Email, Slack, Webhook, SMS</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="cool-down-period">Cool-down Period</h2>
+<p>To prevent alert fatigue, alerts have a cool-down period after triggering:</p>
+<ul>
+<li><strong>Threshold alerts</strong>: 1 hour cool-down</li>
+<li><strong>Comparison alerts</strong>: 24 hour cool-down</li>
+<li><strong>Anomaly alerts</strong>: 6 hour cool-down</li>
+</ul>
+<p>During the cool-down period, the alert won&rsquo;t trigger again even if the condition is still met.</p>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-set-realistic-thresholds">1. Set Realistic Thresholds</h3>
+<p>Avoid alert fatigue by setting thresholds that matter:</p>
+<p>✅ Good: Alert when traffic drops 50% (unusual event)
+✗ Bad: Alert when traffic changes by 5% (normal variation)</p>
+<h3 id="2-use-comparison-alerts-for-trends">2. Use Comparison Alerts for Trends</h3>
+<p>Monitor period-over-period changes to catch trends:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Alert if conversions drop 20% compared to last week</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;comparison&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;metric&#34;</span>: <span style="color:#e6db74">&#34;conversionRate&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;operator&#34;</span>: <span style="color:#e6db74">&#34;&lt;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;threshold&#34;</span>: -20,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;compareWith&#34;</span>: <span style="color:#e6db74">&#34;previous_week&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="3-combine-with-webhooks">3. Combine with Webhooks</h3>
+<p>Integrate alerts with your workflow tools:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Send alert to PagerDuty</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;name&#34;: &#34;Critical Traffic Drop&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;type&#34;: &#34;threshold&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;metric&#34;: &#34;pageviews&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;operator&#34;: &#34;&lt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 10,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;period&#34;: &#34;1h&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;notifications&#34;: [&#34;webhook&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Configure webhook in webhook settings</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://ztas.io/api/webhooks&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;siteId&#34;: &#34;site_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;url&#34;: &#34;https://events.pagerduty.com/integration/...&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;events&#34;: [&#34;alert&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><h3 id="4-monitor-business-hours-only">4. Monitor Business Hours Only</h3>
+<p>For B2B sites, alert only during business hours to reduce noise:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># This feature requires Enterprise plan</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Business Hours Traffic&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;schedule&#34;</span>: <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;days&#34;</span>: <span style="color:#f92672">[</span><span style="color:#e6db74">&#34;monday&#34;</span>, <span style="color:#e6db74">&#34;tuesday&#34;</span>, <span style="color:#e6db74">&#34;wednesday&#34;</span>, <span style="color:#e6db74">&#34;thursday&#34;</span>, <span style="color:#e6db74">&#34;friday&#34;</span><span style="color:#f92672">]</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;hours&#34;</span>: <span style="color:#e6db74">&#34;9-17&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;timezone&#34;</span>: <span style="color:#e6db74">&#34;America/New_York&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="5-test-your-alerts">5. Test Your Alerts</h3>
+<p>Verify alerts work correctly before relying on them:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Temporarily lower threshold to trigger alert</span>
+</span></span><span style="display:flex;"><span>curl -X PATCH <span style="color:#e6db74">&#34;https://ztas.io/api/alerts&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Authorization: Bearer YOUR_TOKEN&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;id&#34;: &#34;alert_abc123&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;threshold&#34;: 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Check that notification arrives</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Then restore original threshold</span>
+</span></span></code></pre></div><h2 id="slack-integration">Slack Integration</h2>
+<p>Connect Slack to receive alert notifications:</p>
+<ol>
+<li>Go to Settings → Integrations → Slack</li>
+<li>Click &ldquo;Add to Slack&rdquo;</li>
+<li>Select the channel for notifications</li>
+<li>Add <code>slack</code> to alert notifications</li>
+</ol>
+<h2 id="error-responses">Error Responses</h2>
+<h3 id="400-bad-request">400 Bad Request</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Alert name is required&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Invalid alert type. Must be: threshold, comparison, or anomaly&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Invalid metric: invalid_metric&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Threshold is required for threshold alerts&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="403-forbidden">403 Forbidden</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Alert limit reached. Upgrade to create more alerts.&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;SMS notifications require Enterprise plan&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="404-not-found">404 Not Found</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Alert not found&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;error&#34;</span>: <span style="color:#e6db74">&#34;Goal not found: goal_abc123&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+        </div>
+
+        
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+          
+          <a href="/docs/api/heatmaps/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Heatmaps
+          </a>
+          
+
+          
+          <a href="/docs/api/funnels/" class="btn btn-outline-primary">
+            Funnels<i class="fas fa-arrow-right ms-2"></i>
+          </a>
+          
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<style>
+.docs-sidebar .nav-link {
+  color: #495057;
+  padding: 0.5rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+.docs-sidebar .nav-link:hover {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-sidebar .nav-link.active {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+.docs-body h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+.docs-body h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.docs-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.docs-body code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+.docs-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.docs-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+.docs-body th, .docs-body td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+.docs-body th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+.docs-body .alert {
+  margin: 1.5rem 0;
+}
+
+ 
+[data-theme="dark"] .docs-sidebar .nav-link {
+  color: #d4d4d8;
+}
+[data-theme="dark"] .docs-sidebar .nav-link:hover,
+[data-theme="dark"] .docs-sidebar .nav-link.active {
+  color: #60a5fa;
+  border-left-color: #60a5fa;
+}
+[data-theme="dark"] .docs-sidebar h6.text-muted {
+  color: #9ca3af !important;
+}
+[data-theme="dark"] .docs-content h1 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-content .text-muted {
+  color: #d4d4d8 !important;
+}
+[data-theme="dark"] .docs-body {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body h2 {
+  color: var(--zta-text, #e9ecef);
+  border-bottom-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .docs-body h3 {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body code {
+  background: var(--zta-bg-tertiary, #2c3034);
+  color: #f472b6;
+}
+[data-theme="dark"] .docs-body th,
+[data-theme="dark"] .docs-body td {
+  border-color: var(--zta-border, #495057);
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .docs-body th {
+  background: var(--zta-bg-tertiary, #2c3034);
+}
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--zta-text, #e9ecef);
+}
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--zta-text-muted, #adb5bd);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  color: #d4d4d8;
+  border-color: var(--zta-border, #495057);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--zta-bg-tertiary, #2c3034);
+  color: var(--zta-text, #e9ecef);
+}
+</style>
+
+      </main>
+
+      <footer class="footer-main" role="contentinfo">
+  <div class="container py-5">
+    <div class="row g-4">
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-brand mb-3">
+          <h2 class="h4 fw-bold text-white mb-3">Zero Trust Analytics</h2>
+        </div>
+        <p class="footer-description mb-4">Privacy-focused web analytics that respects your users. No cookies, no personal data, just actionable insights.</p>
+        
+        <nav class="footer-social d-flex gap-3" aria-label="Social media links">
+          <a href="https://twitter.com/zikianalytic" target="_blank" rel="noopener" aria-label="Follow us on Twitter (opens in new tab)">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://linkedin.com/company/zerotrustanalytics" target="_blank" rel="noopener" aria-label="Connect with us on LinkedIn (opens in new tab)">
+            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+          </a>
+          <a href="https://github.com/zerotrustanalytics" target="_blank" rel="noopener" aria-label="View our code on GitHub (opens in new tab)">
+            <i class="fab fa-github" aria-hidden="true"></i>
+          </a>
+        </nav>
+      </div>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-product">
+        <h3 class="footer-heading h6" id="footer-product">Product</h3>
+        <ul class="footer-links">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li class="auth-logged-in d-none"><a href="/dashboard/">Dashboard</a></li>
+          <li class="auth-logged-out"><a href="/register/">Get Started</a></li>
+          <li><a href="/blog/">Blog</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-resources">
+        <h3 class="footer-heading h6" id="footer-resources">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="/docs/">Documentation</a></li>
+          <li><a href="/docs/api/">API Reference</a></li>
+          <li><a href="/docs/">Integrations</a></li>
+          <li><a href="/about/">About Us</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-compliance">
+        <h3 class="footer-heading h6" id="footer-compliance">Compliance</h3>
+        <ul class="footer-links">
+          <li><a href="/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/">HIPAA</a></li>
+          <li><a href="/privacy-policy/">GDPR</a></li>
+          <li><a href="/privacy-policy/">CCPA</a></li>
+          <li><a href="/privacy-policy/">Privacy</a></li>
+        </ul>
+      </nav>
+
+      
+      <nav class="col-lg-2 col-md-6 col-6" aria-labelledby="footer-legal">
+        <h3 class="footer-heading h6" id="footer-legal">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms-of-use/">Terms of Service</a></li>
+          <li><a href="/accessibility-statement/">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    
+    <div class="footer-bottom mt-5 pt-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="mb-0">&copy; 2025 Zero Trust Analytics. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          <span class="footer-badge">
+            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Privacy-First Analytics
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-main {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  color: #a0aec0;
+}
+
+.footer-brand h4 {
+  letter-spacing: -0.5px;
+}
+
+.footer-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4dae0;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.footer-heading {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #d4dae0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+</style>
+
+    </div>
+
+    
+<script defer src="/src/js/bootstrap/popper.min.js"></script>
+<script defer src="/src/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script src="/src/js/shared/utils.js"></script>
+<script src="/src/js/shared/auth-service.js"></script>
+<script src="/src/js/shared/api.js"></script>
+<script src="/src/js/shared/notifications.js"></script>
+<script src="/src/js/shared/modal.js"></script>
+<script src="/src/js/shared/validators.js"></script>
+<script src="/src/js/shared/form-handler.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateAuthUI === 'function') {
+      updateAuthUI();
+    }
+  });
+</script>
+
+
+
+  </body>
+</html>

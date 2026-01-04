@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Pricing on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/pricing/</link>
+    <description>Recent content in Pricing on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 03 Mar 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/pricing/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>For Developers: Our Pricing Model Beats Everyone (Unlimited Sites)</title>
+      <link>http://localhost:49390/blog/for-developers-unlimited-sites-beat-everyone/</link>
+      <pubDate>Mon, 03 Mar 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/for-developers-unlimited-sites-beat-everyone/</guid>
+      <description>&lt;p&gt;Let me guess your situation:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Your portfolio site&lt;/li&gt;&#xA;&lt;li&gt;That SaaS you&amp;rsquo;re building on the side&lt;/li&gt;&#xA;&lt;li&gt;The client site you&amp;rsquo;re maintaining&lt;/li&gt;&#xA;&lt;li&gt;Three abandoned projects you might resurrect&lt;/li&gt;&#xA;&lt;li&gt;A blog that gets sporadic traffic&lt;/li&gt;&#xA;&lt;li&gt;Landing pages for experiments&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;That&amp;rsquo;s 7+ sites. At $9-19 per site (Plausible, Fathom, etc.), you&amp;rsquo;re looking at $63-133/month just for basic analytics.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;Or you could pay $15/month. Total. For all of them.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-developers-analytics-problem&#34;&gt;The Developer&amp;rsquo;s Analytics Problem&lt;/h2&gt;&#xA;&lt;p&gt;We know developers because we are developers. And we know the analytics struggle:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Agencies Are Switching to Unlimited-Site Analytics</title>
+      <link>http://localhost:49390/blog/why-agencies-are-switching-to-unlimited-site-analytics/</link>
+      <pubDate>Mon, 17 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-agencies-are-switching-to-unlimited-site-analytics/</guid>
+      <description>&lt;p&gt;You manage 50 client websites. Each one needs analytics. Traditional pricing models make this expensive:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Google Analytics is &amp;ldquo;free&amp;rdquo; but creates compliance nightmares&lt;/li&gt;&#xA;&lt;li&gt;Plausible charges per site ($9 × 50 = $450/month)&lt;/li&gt;&#xA;&lt;li&gt;Fathom charges per site with pageview limits&lt;/li&gt;&#xA;&lt;li&gt;Most tools get expensive quickly at scale&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;strong&gt;There has to be a better way.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-agency-analytics-problem&#34;&gt;The Agency Analytics Problem&lt;/h2&gt;&#xA;&lt;p&gt;Marketing agencies have unique analytics needs:&lt;/p&gt;&#xA;&lt;h3 id=&#34;scale&#34;&gt;Scale&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Dozens or hundreds of client sites&lt;/li&gt;&#xA;&lt;li&gt;New clients onboarding constantly&lt;/li&gt;&#xA;&lt;li&gt;Varying traffic levels across sites&lt;/li&gt;&#xA;&lt;li&gt;Need consistent reporting&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;client-expectations&#34;&gt;Client Expectations&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Clients want privacy-friendly options&lt;/li&gt;&#xA;&lt;li&gt;GDPR/CCPA questions come up in sales calls&lt;/li&gt;&#xA;&lt;li&gt;&amp;ldquo;What data are you collecting?&amp;rdquo; is a common concern&lt;/li&gt;&#xA;&lt;li&gt;Cookie banners frustrate clients&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;margin-pressure&#34;&gt;Margin Pressure&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Clients expect analytics as part of the package&lt;/li&gt;&#xA;&lt;li&gt;Per-site costs eat into margins&lt;/li&gt;&#xA;&lt;li&gt;Can&amp;rsquo;t easily pass costs through&lt;/li&gt;&#xA;&lt;li&gt;Need predictable expenses&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Traditional per-site pricing doesn&amp;rsquo;t work for this model.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

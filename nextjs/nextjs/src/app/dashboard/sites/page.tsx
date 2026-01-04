@@ -1,8 +1,23 @@
+'use client'
+
+import { SiteList } from '@/components/dashboard'
+import { useSites } from '@/hooks'
+
 export default function SitesPage() {
+  const { sites, loading, addSite } = useSites()
+
+  const handleSiteAdded = (site: { id: string; domain: string; name: string }) => {
+    console.log('Site added:', site)
+  }
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Sites</h1>
-      <p className="text-muted-foreground">Manage your tracked websites here.</p>
-    </div>
+    <SiteList
+      sites={sites.map((site) => ({
+        ...site,
+        status: 'active' as const,
+      }))}
+      loading={loading}
+      onSiteAdded={handleSiteAdded}
+    />
   )
 }

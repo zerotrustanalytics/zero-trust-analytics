@@ -26,7 +26,7 @@ export default async function handler(req, context) {
   }
 
   if (req.method !== 'POST') {
-    return Errors.methodNotAllowed();
+    return Errors.methodNotAllowed(origin);
   }
 
   // Rate limit by IP - strict limit for password reset (5 per minute)
@@ -44,21 +44,21 @@ export default async function handler(req, context) {
 
     if (!token || !password) {
       logger.warn('Password reset failed - missing token or password');
-      return Errors.validationError('Token and password are required');
+      return Errors.validationError('Token and password are required', null, origin);
     }
 
     // SECURITY: Strong password validation
     const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
       logger.warn('Password reset failed - weak password', { errors: passwordErrors });
-      return Errors.validationError('Password does not meet requirements', passwordErrors);
+      return Errors.validationError('Password does not meet requirements', passwordErrors, origin);
     }
 
     // Validate token
     const tokenData = await getPasswordResetToken(token);
     if (!tokenData) {
       logger.warn('Password reset failed - invalid or expired token');
-      return Errors.badRequest('Invalid or expired reset link');
+      return Errors.badRequest('Invalid or expired reset link', origin);
     }
 
     // Hash new password
@@ -75,7 +75,7 @@ export default async function handler(req, context) {
     });
     if (!updated) {
       logger.error('Password reset failed - failed to update user');
-      return Errors.internalError('Failed to update password');
+      return Errors.internalError('Failed to update password', origin);
     }
 
     // Delete the used token (one-time use)

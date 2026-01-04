@@ -20,7 +20,8 @@ const STORES = {
   TEAMS: 'teams',
   GOALS: 'goals',
   FUNNELS: 'funnels',
-  HEATMAPS: 'heatmaps'
+  HEATMAPS: 'heatmaps',
+  OAUTH_STATES: 'oauth_states'
 };
 
 // Get a store instance
@@ -61,6 +62,15 @@ export async function updateUser(email, updates) {
   const updated = { ...user, ...updates };
   await users.setJSON(email, updated);
   return updated;
+}
+
+// Delete user account (GDPR Article 17 - Right to Erasure)
+export async function deleteUser(email) {
+  const users = store(STORES.USERS);
+  const user = await getUser(email);
+  if (!user) return false;
+  await users.delete(email);
+  return true;
 }
 
 // Create user from OAuth provider (no password)
@@ -1061,6 +1071,24 @@ export async function updateApiKeyName(keyId, userId, newName) {
 
   const { keyHash, ...safeKey } = apiKey;
   return safeKey;
+}
+
+// Delete all API keys for a user (GDPR Article 17 - Right to Erasure)
+export async function deleteAllUserApiKeys(userId) {
+  const apiKeys = store(STORES.API_KEYS);
+  const userKeysKey = `user_keys_${userId}`;
+  const keyIds = await apiKeys.get(userKeysKey, { type: 'json' }) || [];
+
+  let deletedCount = 0;
+  for (const keyId of keyIds) {
+    await apiKeys.delete(keyId);
+    deletedCount++;
+  }
+
+  // Delete the user's key index
+  await apiKeys.delete(userKeysKey);
+
+  return deletedCount;
 }
 
 // Simple hash function for API keys
@@ -2658,4 +2686,55 @@ export async function getHeatmapPages(siteId, startDate, endDate) {
   }
 
   return Array.from(pages.values());
+}
+
+// === OAUTH STATE MANAGEMENT ===
+// SECURITY: Server-side storage for OAuth state to prevent CSRF attacks
+// State is stored with a 10-minute TTL and one-time use enforcement
+
+export async function storeOAuthState(stateId, data) {
+  const states = store(STORES.OAUTH_STATES);
+
+  const stateRecord = {
+    id: stateId,
+    data,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+    used: false
+  };
+
+  await states.setJSON(stateId, stateRecord);
+  return stateRecord;
+}
+
+export async function validateOAuthState(stateId) {
+  const states = store(STORES.OAUTH_STATES);
+
+  const stateRecord = await states.get(stateId, { type: 'json' });
+
+  if (!stateRecord) {
+    return { valid: false, error: 'State not found' };
+  }
+
+  if (stateRecord.used) {
+    return { valid: false, error: 'State already used (replay attack prevented)' };
+  }
+
+  if (Date.now() > stateRecord.expiresAt) {
+    // Clean up expired state
+    await states.delete(stateId);
+    return { valid: false, error: 'State expired' };
+  }
+
+  // Mark as used (one-time use)
+  stateRecord.used = true;
+  stateRecord.usedAt = Date.now();
+  await states.setJSON(stateId, stateRecord);
+
+  return { valid: true, data: stateRecord.data };
+}
+
+export async function deleteOAuthState(stateId) {
+  const states = store(STORES.OAUTH_STATES);
+  await states.delete(stateId);
 }

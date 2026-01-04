@@ -1,10 +1,14 @@
 [build]
   publish = "public"
-  command = "npm install && npm run build && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify -s ../hugo -d ../nextjs/public"
+  command = "npm install && npm run build && cd netlify/functions && npm install && cd ../.. && hugo --gc --minify -s hugo -d ../public"
   functions = "netlify/functions"
 
+# Local development options:
+# Option 1: Hugo marketing site (default) - run from root with: netlify dev
+# Option 2: Next.js app - run from /nextjs with: npm run dev
+# Option 3: Next.js with functions - see docs/LOCAL_DEV.md
 [dev]
-  command = "hugo server -w -s ../hugo"
+  command = "hugo server -w -s hugo"
   targetPort = 1313
   port = 8888
   autoLaunch = false
@@ -14,6 +18,37 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# Redirect auth pages to Next.js app on Vercel
+[[redirects]]
+  from = "/login"
+  to = "https://zero-trust-analytics.vercel.app/login"
+  status = 301
+
+[[redirects]]
+  from = "/register"
+  to = "https://zero-trust-analytics.vercel.app/register"
+  status = 301
+
+[[redirects]]
+  from = "/dashboard"
+  to = "https://zero-trust-analytics.vercel.app/dashboard"
+  status = 301
+
+[[redirects]]
+  from = "/dashboard/*"
+  to = "https://zero-trust-analytics.vercel.app/dashboard/:splat"
+  status = 301
+
+[[redirects]]
+  from = "/forgot-password"
+  to = "https://zero-trust-analytics.vercel.app/forgot-password"
+  status = 301
+
+[[redirects]]
+  from = "/reset-password"
+  to = "https://zero-trust-analytics.vercel.app/reset-password"
+  status = 301
 
 # API redirects
 [[redirects]]
@@ -28,10 +63,11 @@
     Access-Control-Allow-Origin = "*"
     Cache-Control = "public, max-age=3600"
 
+# Security headers for functions - CORS handled per-function
+# Do NOT use wildcard CORS here as it undermines per-function security
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Site-ID"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
 

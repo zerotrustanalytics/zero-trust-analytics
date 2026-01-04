@@ -17,7 +17,7 @@ export default async function handler(req, context) {
   }
 
   if (req.method !== 'POST') {
-    return Errors.methodNotAllowed();
+    return Errors.methodNotAllowed(origin);
   }
 
   // Rate limit by IP - strict limit for password reset (3 per minute)
@@ -35,7 +35,7 @@ export default async function handler(req, context) {
 
     if (!email) {
       logger.warn('Password reset failed - no email provided');
-      return Errors.validationError('Email is required');
+      return Errors.validationError('Email is required', null, origin);
     }
 
     // Always return success to prevent email enumeration

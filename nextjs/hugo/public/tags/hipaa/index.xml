@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>HIPAA on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/hipaa/</link>
+    <description>Recent content in HIPAA on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 10 Feb 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/hipaa/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Privacy-First Analytics for Therapists and Counselors</title>
+      <link>http://localhost:49390/blog/privacy-first-analytics-for-therapists-and-counselors/</link>
+      <pubDate>Mon, 10 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/privacy-first-analytics-for-therapists-and-counselors/</guid>
+      <description>&lt;p&gt;You&amp;rsquo;ve built a practice on trust. Clients share their deepest fears, traumas, and struggles because they trust you&amp;rsquo;ll protect that vulnerability.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;Does your website honor that same trust?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-unique-privacy-needs-of-mental-health-practices&#34;&gt;The Unique Privacy Needs of Mental Health Practices&lt;/h2&gt;&#xA;&lt;p&gt;Mental health professionals face heightened privacy concerns:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;The mere fact someone sought mental health services can be stigmatizing&lt;/li&gt;&#xA;&lt;li&gt;Topics clients research (depression, anxiety, trauma, addiction) are deeply personal&lt;/li&gt;&#xA;&lt;li&gt;Confidentiality is foundational to therapeutic relationships&lt;/li&gt;&#xA;&lt;li&gt;Breaches can cause significant harm&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Standard website analytics weren&amp;rsquo;t designed with these concerns in mind.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Google Is Tracking Your Patients (And You Might Be Liable)</title>
+      <link>http://localhost:49390/blog/google-is-tracking-your-patients/</link>
+      <pubDate>Mon, 16 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/google-is-tracking-your-patients/</guid>
+      <description>&lt;p&gt;Every time a patient visits your practice&amp;rsquo;s website, something invisible happens. A small piece of code sends their IP address, browser information, and the pages they viewed to Google&amp;rsquo;s servers. If they&amp;rsquo;re researching &amp;ldquo;dental implants&amp;rdquo; or &amp;ldquo;anxiety medication,&amp;rdquo; that behavior is now part of their advertising profile.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;This is a HIPAA problem.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-connection-between-ip-addresses-and-phi&#34;&gt;The Connection Between IP Addresses and PHI&lt;/h2&gt;&#xA;&lt;p&gt;Under HIPAA, Protected Health Information (PHI) includes any information that:&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;Relates to health care&lt;/li&gt;&#xA;&lt;li&gt;Can identify an individual&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;p&gt;When someone visits a healthcare website, their visit relates to healthcare. And their IP address—which Google Analytics captures—can identify them. Google literally runs the world&amp;rsquo;s largest identity resolution system. They can connect that IP to a real person.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Google Analytics Is a HIPAA Risk for Dental Practices</title>
+      <link>http://localhost:49390/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/</link>
+      <pubDate>Mon, 09 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-google-analytics-is-a-hipaa-risk-for-dental-practices/</guid>
+      <description>&lt;p&gt;If you run a dental practice, chances are your website has Google Analytics installed. It&amp;rsquo;s the industry standard, after all. But here&amp;rsquo;s something that might keep you up at night: &lt;strong&gt;Google Analytics may be putting your practice at risk of HIPAA violations.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-hidden-problem-with-google-analytics&#34;&gt;The Hidden Problem with Google Analytics&lt;/h2&gt;&#xA;&lt;p&gt;Every time someone visits your dental website, Google Analytics captures their IP address. That IP address is sent to Google&amp;rsquo;s servers, where it&amp;rsquo;s stored and processed alongside data from millions of other websites.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

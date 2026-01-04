@@ -1,4 +1,4 @@
-import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
+import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders, validateCSRFFromRequest } from './lib/auth.js';
 import { getSite, updateSite, getUser } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
@@ -26,6 +26,13 @@ export default async function handler(req, context) {
       status: auth.status,
       headers: getSecurityHeaders(origin)
     });
+  }
+
+  // SECURITY: Validate CSRF token for state-changing operations
+  const csrfValidation = validateCSRFFromRequest(req.headers, auth.user.id);
+  if (!csrfValidation.valid) {
+    logger.warn('CSRF validation failed', { userId: auth.user.id });
+    return Errors.csrfInvalid();
   }
 
   try {

@@ -1,0 +1,52 @@
+@mixin btn {
+    border-radius:  8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+@mixin btn-small {
+ padding: 8px 12px;
+ font-size:  14px;
+}
+
+@mixin btn-medium {
+    padding: 12px 18px;
+    font-size:  16px;
+}
+
+@mixin btn-large {
+    padding: 20px 40px;
+    font-size: 16px;
+}
+
+@mixin btn-full {
+    width: 100%;
+    font-size: 16px;
+}
+
+@mixin btn-base {
+    @include btn;
+    @include btn-medium;
+
+
+    &.btn-small {
+        @include btn-small;
+    }
+
+    &.btn-large {
+        @include btn-large;
+    }
+
+    &.btn-full {
+        @include btn-full;
+    }
+
+
+}
+
+
+.btn-primary {
+    @include btn-base;
+}

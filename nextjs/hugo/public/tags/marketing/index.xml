@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Marketing on Zero Trust Analytics</title>
+    <link>http://localhost:49390/tags/marketing/</link>
+    <description>Recent content in Marketing on Zero Trust Analytics</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 17 Feb 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:49390/tags/marketing/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Why Agencies Are Switching to Unlimited-Site Analytics</title>
+      <link>http://localhost:49390/blog/why-agencies-are-switching-to-unlimited-site-analytics/</link>
+      <pubDate>Mon, 17 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/why-agencies-are-switching-to-unlimited-site-analytics/</guid>
+      <description>&lt;p&gt;You manage 50 client websites. Each one needs analytics. Traditional pricing models make this expensive:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Google Analytics is &amp;ldquo;free&amp;rdquo; but creates compliance nightmares&lt;/li&gt;&#xA;&lt;li&gt;Plausible charges per site ($9 × 50 = $450/month)&lt;/li&gt;&#xA;&lt;li&gt;Fathom charges per site with pageview limits&lt;/li&gt;&#xA;&lt;li&gt;Most tools get expensive quickly at scale&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;strong&gt;There has to be a better way.&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-agency-analytics-problem&#34;&gt;The Agency Analytics Problem&lt;/h2&gt;&#xA;&lt;p&gt;Marketing agencies have unique analytics needs:&lt;/p&gt;&#xA;&lt;h3 id=&#34;scale&#34;&gt;Scale&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Dozens or hundreds of client sites&lt;/li&gt;&#xA;&lt;li&gt;New clients onboarding constantly&lt;/li&gt;&#xA;&lt;li&gt;Varying traffic levels across sites&lt;/li&gt;&#xA;&lt;li&gt;Need consistent reporting&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;client-expectations&#34;&gt;Client Expectations&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Clients want privacy-friendly options&lt;/li&gt;&#xA;&lt;li&gt;GDPR/CCPA questions come up in sales calls&lt;/li&gt;&#xA;&lt;li&gt;&amp;ldquo;What data are you collecting?&amp;rdquo; is a common concern&lt;/li&gt;&#xA;&lt;li&gt;Cookie banners frustrate clients&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;margin-pressure&#34;&gt;Margin Pressure&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Clients expect analytics as part of the package&lt;/li&gt;&#xA;&lt;li&gt;Per-site costs eat into margins&lt;/li&gt;&#xA;&lt;li&gt;Can&amp;rsquo;t easily pass costs through&lt;/li&gt;&#xA;&lt;li&gt;Need predictable expenses&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;Traditional per-site pricing doesn&amp;rsquo;t work for this model.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Consent Banners Are Killing Your Conversion Rate</title>
+      <link>http://localhost:49390/blog/consent-banners-are-killing-your-conversion-rate/</link>
+      <pubDate>Mon, 03 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:49390/blog/consent-banners-are-killing-your-conversion-rate/</guid>
+      <description>&lt;p&gt;You&amp;rsquo;ve spent thousands on your website. Carefully crafted copy. Beautiful design. Optimized user flows. A/B tested everything.&lt;/p&gt;&#xA;&lt;p&gt;Then a visitor arrives and immediately sees a giant popup asking about cookies.&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;How much is that interruption costing you?&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-data-on-consent-banner-impact&#34;&gt;The Data on Consent Banner Impact&lt;/h2&gt;&#xA;&lt;p&gt;Studies on cookie consent banners consistently show negative impacts:&lt;/p&gt;&#xA;&lt;h3 id=&#34;bounce-rate-increases&#34;&gt;Bounce Rate Increases&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;A study of 5 million sessions found consent banners &lt;strong&gt;increased bounce rates by 3-5%&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;li&gt;Mobile bounce rates are even higher (smaller screens, more intrusive banners)&lt;/li&gt;&#xA;&lt;li&gt;Users who reject cookies often leave entirely&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;engagement-drops&#34;&gt;Engagement Drops&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Average time on site &lt;strong&gt;decreases 5-10%&lt;/strong&gt; when banners are present&lt;/li&gt;&#xA;&lt;li&gt;Page views per session drop&lt;/li&gt;&#xA;&lt;li&gt;Return visits decrease (users remember the annoyance)&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;conversion-impact&#34;&gt;Conversion Impact&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Lead generation forms see &lt;strong&gt;2-4% fewer completions&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;li&gt;E-commerce conversion rates drop &lt;strong&gt;0.5-2%&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;li&gt;Newsletter signups decrease significantly&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;the-math&#34;&gt;The Math&lt;/h3&gt;&#xA;&lt;p&gt;If your site gets 10,000 monthly visitors:&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -117,9 +117,9 @@ describe('Input', () => {
   })
 
   describe('input types', () => {
-    it('can be queried as textbox (default input behavior)', () => {
+    it('defaults to text type', () => {
       render(<Input />)
-      expect(screen.getByRole('textbox')).toBeInTheDocument()
+      expect(screen.getByRole('textbox')).toHaveAttribute('type', 'text')
     })
 
     it('accepts email type', () => {

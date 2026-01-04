@@ -136,8 +136,8 @@ describe('Button', () => {
   })
 
   describe('button types', () => {
-    it('accepts type prop', () => {
-      render(<Button type="button">Default</Button>)
+    it('defaults to button type', () => {
+      render(<Button>Default</Button>)
       expect(screen.getByRole('button')).toHaveAttribute('type', 'button')
     })
 

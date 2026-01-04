@@ -1,4 +1,5 @@
 import { corsPreflightResponse, Errors } from './lib/auth.js';
+import { storeOAuthState } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 
@@ -26,14 +27,15 @@ export default async function handler(req, context) {
     const url = new URL(req.url);
     const plan = url.searchParams.get('plan') || 'pro';
 
-    logger.debug('OAuth state generated', { plan });
+    // SECURITY: Generate unique state ID and store server-side
+    // This prevents OAuth CSRF attacks and ensures one-time use
+    const stateId = crypto.randomUUID();
+    const stateData = { csrf: crypto.randomUUID(), plan, provider: 'google' };
 
-    // Generate state for CSRF protection (include plan)
-    const stateData = JSON.stringify({ csrf: crypto.randomUUID(), plan });
-    const state = Buffer.from(stateData).toString('base64');
+    // Store state server-side with 10-minute TTL
+    await storeOAuthState(stateId, stateData);
 
-    // Store state in cookie for verification on callback
-    const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`;
+    logger.debug('OAuth state stored server-side', { stateId, plan });
 
     // Build Google authorization URL
     const params = new URLSearchParams({
@@ -41,7 +43,7 @@ export default async function handler(req, context) {
       redirect_uri: GOOGLE_REDIRECT_URI,
       response_type: 'code',
       scope: 'email profile',
-      state: state,
+      state: stateId, // Use stateId as the state parameter
       access_type: 'offline',
       prompt: 'consent'
     });
@@ -52,8 +54,8 @@ export default async function handler(req, context) {
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': authUrl,
-        'Set-Cookie': stateCookie
+        'Location': authUrl
+        // No longer storing state in cookie - server-side storage instead
       }
     });
   } catch (err) {
