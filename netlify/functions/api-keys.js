@@ -13,8 +13,8 @@ export default async function handler(req, context) {
     return corsPreflightResponse(origin, 'GET, POST, PATCH, DELETE, OPTIONS');
   }
 
-  // Authenticate request
-  const auth = authenticateRequest(req.headers);
+  // Authenticate request (supports Clerk and legacy JWT)
+  const auth = await authenticateRequest(req.headers);
   if (auth.error) {
     logger.warn('Authentication failed', { error: auth.error });
     return new Response(JSON.stringify({ error: auth.error }), {

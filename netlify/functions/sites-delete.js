@@ -18,8 +18,8 @@ export default async function handler(req, context) {
     return Errors.methodNotAllowed();
   }
 
-  // Authenticate using shared helper
-  const auth = authenticateRequest(Object.fromEntries(req.headers));
+  // Authenticate using shared helper (supports Clerk and legacy JWT)
+  const auth = await authenticateRequest(Object.fromEntries(req.headers));
   if (auth.error) {
     logger.warn('Authentication failed', { error: auth.error });
     return new Response(JSON.stringify({ error: auth.error }), {
@@ -28,11 +28,13 @@ export default async function handler(req, context) {
     });
   }
 
-  // SECURITY: Validate CSRF token for state-changing operations
-  const csrfValidation = validateCSRFFromRequest(req.headers, auth.user.id);
-  if (!csrfValidation.valid) {
-    logger.warn('CSRF validation failed', { userId: auth.user.id });
-    return Errors.csrfInvalid();
+  // SECURITY: Validate CSRF token for legacy auth (Clerk handles its own CSRF)
+  if (!auth.user.clerkUserId) {
+    const csrfValidation = validateCSRFFromRequest(req.headers, auth.user.id);
+    if (!csrfValidation.valid) {
+      logger.warn('CSRF validation failed', { userId: auth.user.id });
+      return Errors.csrfInvalid();
+    }
   }
 
   try {
