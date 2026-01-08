@@ -83,15 +83,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input'
 
 // Card Component
-interface CardProps extends HTMLAttributes<HTMLDivElement> {}
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'bordered'
+  padding?: 'none' | 'sm' | 'md' | 'lg'
+}
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, variant = 'default', padding = 'none', ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={clsx(
-          'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700',
+          'bg-white dark:bg-gray-800 rounded-lg',
+          {
+            'border border-gray-200 dark:border-gray-700': variant === 'default' || variant === 'bordered',
+          },
+          {
+            '': padding === 'none',
+            'p-2': padding === 'sm',
+            'p-4': padding === 'md',
+            'p-6': padding === 'lg',
+          },
           className
         )}
         {...props}
