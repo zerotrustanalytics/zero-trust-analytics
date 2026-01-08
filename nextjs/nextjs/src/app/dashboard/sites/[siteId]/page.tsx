@@ -28,6 +28,7 @@ interface DataItem {
   visitors: number
   views: number
   country?: string
+  duration?: number
 }
 
 interface UTMData {
@@ -170,6 +171,143 @@ const OS_ICONS: Record<string, JSX.Element> = {
   ),
 }
 
+// Channel icons
+const CHANNEL_ICONS: Record<string, JSX.Element> = {
+  'Direct': (
+    <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+    </svg>
+  ),
+  'Organic Search': (
+    <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  ),
+  'Paid Search': (
+    <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  'Organic Social': (
+    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  ),
+  'Paid Social': (
+    <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+    </svg>
+  ),
+  'Email': (
+    <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  ),
+  'Referral': (
+    <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+    </svg>
+  ),
+  'Display': (
+    <svg className="w-4 h-4 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  ),
+  'Affiliates': (
+    <svg className="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  ),
+  'AI': (
+    <svg className="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+    </svg>
+  ),
+}
+
+// Channel color classes
+const CHANNEL_COLORS: Record<string, string> = {
+  'Direct': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  'Organic Search': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  'Paid Search': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  'Organic Social': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  'Paid Social': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  'Email': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  'Referral': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
+  'Display': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400',
+  'Affiliates': 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
+  'AI': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400',
+}
+
+// Search engines for organic search detection
+const SEARCH_ENGINES = ['google', 'bing', 'yahoo', 'duckduckgo', 'baidu', 'yandex', 'ecosia', 'ask']
+
+// Social networks for organic social detection
+const SOCIAL_NETWORKS = ['facebook', 'twitter', 't.co', 'linkedin', 'instagram', 'pinterest', 'reddit', 'tiktok', 'youtube', 'snapchat', 'tumblr', 'whatsapp', 'telegram', 'discord', 'mastodon', 'threads']
+
+// AI platforms for AI traffic detection
+const AI_PLATFORMS = ['chatgpt', 'openai', 'perplexity', 'claude', 'anthropic', 'bard', 'gemini', 'copilot', 'deepseek', 'you.com', 'phind', 'poe']
+
+// Email providers/services
+const EMAIL_SERVICES = ['mail', 'email', 'newsletter', 'mailchimp', 'sendgrid', 'constantcontact', 'hubspot', 'klaviyo', 'campaign-archive']
+
+// Categorize traffic into channels
+function categorizeToChannel(source: string, medium?: string, referrer?: string): string {
+  const src = (source || '').toLowerCase()
+  const med = (medium || '').toLowerCase()
+  const ref = (referrer || '').toLowerCase()
+
+  // Direct traffic
+  if (!source || source === 'direct' || source === '(direct)' || source === '') {
+    return 'Direct'
+  }
+
+  // AI traffic
+  if (AI_PLATFORMS.some(ai => src.includes(ai) || ref.includes(ai))) {
+    return 'AI'
+  }
+
+  // Paid Search (Google Ads, Bing Ads, etc.)
+  if (med === 'cpc' || med === 'ppc' || med === 'paid' || med === 'paidsearch' ||
+      (SEARCH_ENGINES.some(se => src.includes(se)) && (med === 'cpc' || med === 'ppc'))) {
+    return 'Paid Search'
+  }
+
+  // Paid Social
+  if ((med === 'paid_social' || med === 'paidsocial' || med === 'social_paid') ||
+      (SOCIAL_NETWORKS.some(sn => src.includes(sn)) && (med === 'cpc' || med === 'ppc' || med === 'paid'))) {
+    return 'Paid Social'
+  }
+
+  // Organic Search
+  if (SEARCH_ENGINES.some(se => src.includes(se) || ref.includes(se))) {
+    return 'Organic Search'
+  }
+
+  // Organic Social
+  if (SOCIAL_NETWORKS.some(sn => src.includes(sn) || ref.includes(sn))) {
+    return 'Organic Social'
+  }
+
+  // Email
+  if (med === 'email' || EMAIL_SERVICES.some(em => src.includes(em) || ref.includes(em))) {
+    return 'Email'
+  }
+
+  // Display/Banner ads
+  if (med === 'display' || med === 'banner' || med === 'cpm') {
+    return 'Display'
+  }
+
+  // Affiliates
+  if (med === 'affiliate' || med === 'affiliates' || src.includes('affiliate')) {
+    return 'Affiliates'
+  }
+
+  // Default to Referral for anything else with a source
+  return 'Referral'
+}
+
 // Map referrer to source
 function mapReferrerToSource(referrer: string): { name: string; icon: JSX.Element } {
   const domain = referrer.toLowerCase()
@@ -211,6 +349,162 @@ function formatDuration(seconds: number): string {
   const secs = Math.round(seconds % 60)
   if (minutes === 0) return `${secs}s`
   return `${minutes}m ${secs}s`
+}
+
+// Export data to CSV
+function exportToCSV(stats: Stats | null, site: Site | null, period: string) {
+  if (!stats || !site) return
+
+  const rows: string[][] = []
+
+  // Header info
+  rows.push(['Zero Trust Analytics - Export'])
+  rows.push(['Site', site.domain])
+  rows.push(['Period', period])
+  rows.push(['Export Date', new Date().toISOString()])
+  rows.push([])
+
+  // Summary
+  rows.push(['Summary'])
+  rows.push(['Metric', 'Value'])
+  rows.push(['Unique Visitors', String(stats.summary?.unique_visitors || 0)])
+  rows.push(['Page Views', String(stats.summary?.pageviews || 0)])
+  rows.push(['Sessions', String(stats.summary?.sessions || 0)])
+  rows.push(['Bounce Rate', `${stats.summary?.bounce_rate || 0}%`])
+  rows.push(['Avg Duration (seconds)', String(stats.summary?.avg_duration || 0)])
+  rows.push(['Views per Visit', String(stats.summary?.views_per_visit || 0)])
+  rows.push([])
+
+  // Daily stats
+  if (stats.daily?.length) {
+    rows.push(['Daily Statistics'])
+    rows.push(['Date', 'Unique Visitors', 'Page Views'])
+    stats.daily.forEach(d => {
+      rows.push([d.date, String(d.unique_visitors), String(d.pageviews)])
+    })
+    rows.push([])
+  }
+
+  // Top Pages
+  if (stats.topPages?.length) {
+    rows.push(['Top Pages'])
+    rows.push(['Page', 'Visitors', 'Views'])
+    stats.topPages.forEach(p => {
+      rows.push([p.name, String(p.visitors), String(p.views)])
+    })
+    rows.push([])
+  }
+
+  // Entry Pages
+  if (stats.entryPages?.length) {
+    rows.push(['Entry Pages'])
+    rows.push(['Page', 'Visitors', 'Views'])
+    stats.entryPages.forEach(p => {
+      rows.push([p.name, String(p.visitors), String(p.views)])
+    })
+    rows.push([])
+  }
+
+  // Exit Pages
+  if (stats.exitPages?.length) {
+    rows.push(['Exit Pages'])
+    rows.push(['Page', 'Visitors', 'Views'])
+    stats.exitPages.forEach(p => {
+      rows.push([p.name, String(p.visitors), String(p.views)])
+    })
+    rows.push([])
+  }
+
+  // Traffic Sources
+  if (stats.sources?.length) {
+    rows.push(['Traffic Sources'])
+    rows.push(['Source', 'Visitors', 'Views'])
+    stats.sources.forEach(s => {
+      rows.push([s.name, String(s.visitors), String(s.views)])
+    })
+    rows.push([])
+  }
+
+  // Countries
+  if (stats.countriesList?.length) {
+    rows.push(['Countries'])
+    rows.push(['Country', 'Visitors'])
+    stats.countriesList.forEach(c => {
+      rows.push([c.name, String(c.visitors)])
+    })
+    rows.push([])
+  }
+
+  // Browsers
+  if (stats.browsersList?.length) {
+    rows.push(['Browsers'])
+    rows.push(['Browser', 'Visitors'])
+    stats.browsersList.forEach(b => {
+      rows.push([b.name, String(b.visitors)])
+    })
+    rows.push([])
+  }
+
+  // Devices
+  if (stats.devicesList?.length) {
+    rows.push(['Devices'])
+    rows.push(['Device', 'Visitors'])
+    stats.devicesList.forEach(d => {
+      rows.push([d.name, String(d.visitors)])
+    })
+    rows.push([])
+  }
+
+  // UTM Sources
+  if (stats.utm?.sources?.length) {
+    rows.push(['UTM Sources'])
+    rows.push(['Source', 'Visitors'])
+    stats.utm.sources.forEach(s => {
+      rows.push([s.name, String(s.visitors)])
+    })
+    rows.push([])
+  }
+
+  // UTM Mediums
+  if (stats.utm?.mediums?.length) {
+    rows.push(['UTM Mediums'])
+    rows.push(['Medium', 'Visitors'])
+    stats.utm.mediums.forEach(m => {
+      rows.push([m.name, String(m.visitors)])
+    })
+    rows.push([])
+  }
+
+  // UTM Campaigns
+  if (stats.utm?.campaigns?.length) {
+    rows.push(['UTM Campaigns'])
+    rows.push(['Campaign', 'Visitors'])
+    stats.utm.campaigns.forEach(c => {
+      rows.push([c.name, String(c.visitors)])
+    })
+  }
+
+  // Convert to CSV string
+  const csvContent = rows.map(row =>
+    row.map(cell => {
+      // Escape quotes and wrap in quotes if contains comma or quote
+      const escaped = String(cell).replace(/"/g, '""')
+      return escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')
+        ? `"${escaped}"`
+        : escaped
+    }).join(',')
+  ).join('\n')
+
+  // Download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `${site.domain}-analytics-${period}-${format(new Date(), 'yyyy-MM-dd')}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 // Stat card component
@@ -324,6 +618,7 @@ export default function SiteDetailsPage() {
   const [period, setPeriod] = useState('7d')
   const [chartMetric, setChartMetric] = useState<'visitors' | 'pageviews'>('visitors')
   const [activeTab, setActiveTab] = useState<'pages' | 'entry' | 'exit'>('pages')
+  const [trafficTab, setTrafficTab] = useState<'channels' | 'sources'>('channels')
   const [utmTab, setUtmTab] = useState<'sources' | 'mediums' | 'campaigns'>('sources')
   const [locationTab, setLocationTab] = useState<'countries' | 'regions' | 'cities'>('countries')
   const [techTab, setTechTab] = useState<'browsers' | 'os' | 'devices'>('browsers')
@@ -461,6 +756,36 @@ export default function SiteDetailsPage() {
     ...mapReferrerToSource(item.name)
   }))
 
+  // Prepare channels data (aggregate sources into marketing channels)
+  const allSources = [
+    ...(directTraffic > 0 ? [{ name: 'Direct', visitors: directTraffic, views: 0 }] : []),
+    ...(stats?.sources || [])
+  ]
+
+  // Get UTM mediums for better channel detection
+  const utmMediums = stats?.utm?.mediums || []
+  const getMediumForSource = (sourceName: string) => {
+    const matchingMedium = utmMediums.find(m =>
+      sourceName.toLowerCase().includes(m.name.toLowerCase()) ||
+      m.name.toLowerCase().includes(sourceName.toLowerCase())
+    )
+    return matchingMedium?.name
+  }
+
+  // Aggregate into channels
+  const channelMap = new Map<string, number>()
+  allSources.forEach(source => {
+    const medium = getMediumForSource(source.name)
+    const channel = categorizeToChannel(source.name, medium, source.name)
+    channelMap.set(channel, (channelMap.get(channel) || 0) + source.visitors)
+  })
+
+  // Convert to array and sort by visitors
+  const channels = Array.from(channelMap.entries())
+    .map(([name, visitors]) => ({ name, visitors }))
+    .sort((a, b) => b.visitors - a.visitors)
+    .slice(0, 8)
+
   // Prepare devices data
   const totalDeviceVisitors = stats?.devicesList?.reduce((sum, d) => sum + d.visitors, 0) || 1
   const devices = (stats?.devicesList || []).map(d => ({
@@ -492,6 +817,16 @@ export default function SiteDetailsPage() {
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
           </select>
+          <button
+            onClick={() => exportToCSV(stats, site, period)}
+            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
+            title="Export to CSV"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export
+          </button>
           <button
             onClick={() => { setLoading(true); fetchSiteAndStats() }}
             className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm"
@@ -621,6 +956,7 @@ export default function SiteDetailsPage() {
               <th className="pb-2 text-left font-medium">Page</th>
               <th className="pb-2 text-right font-medium">Visitors</th>
               <th className="pb-2 text-right font-medium">Views</th>
+              <th className="pb-2 text-right font-medium">Avg. Duration</th>
             </tr>
           </thead>
           <tbody>
@@ -629,42 +965,92 @@ export default function SiteDetailsPage() {
                 <td className="py-2 text-primary truncate max-w-[250px]">{page.name}</td>
                 <td className="py-2 text-right">{page.visitors.toLocaleString()}</td>
                 <td className="py-2 text-right">{page.views.toLocaleString()}</td>
+                <td className="py-2 text-right text-muted-foreground">{formatDuration(page.duration || 0)}</td>
               </tr>
-            )) || <tr><td colSpan={3} className="py-4 text-center text-muted-foreground">No data</td></tr>}
+            )) || <tr><td colSpan={4} className="py-4 text-center text-muted-foreground">No data</td></tr>}
           </tbody>
         </table>
       </div>
 
       {/* Sources & UTM */}
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Traffic Sources */}
+        {/* Traffic Channels & Sources */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-          <h3 className="text-sm font-semibold mb-3">Traffic Sources</h3>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs text-muted-foreground border-b border-gray-100 dark:border-gray-700">
-                <th className="pb-2 text-left font-medium">Source</th>
-                <th className="pb-2 text-right font-medium">Visitors</th>
-                <th className="pb-2 text-right font-medium">%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trafficSources.map((source, i) => (
-                <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
-                  <td className="py-2">
-                    <div className="flex items-center gap-2">
-                      {source.icon}
-                      <span>{source.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-2 text-right">{source.visitors.toLocaleString()}</td>
-                  <td className="py-2 text-right text-muted-foreground">
-                    {((source.visitors / (stats?.summary?.unique_visitors || 1)) * 100).toFixed(1)}%
-                  </td>
+          <div className="flex items-center gap-4 mb-4 border-b border-gray-100 dark:border-gray-700">
+            {['channels', 'sources'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setTrafficTab(tab as 'channels' | 'sources')}
+                className={`pb-2 text-sm font-medium border-b-2 transition ${
+                  trafficTab === tab
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab === 'channels' ? 'Channels' : 'Sources'}
+              </button>
+            ))}
+          </div>
+
+          {trafficTab === 'channels' ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-muted-foreground border-b border-gray-100 dark:border-gray-700">
+                  <th className="pb-2 text-left font-medium">Channel</th>
+                  <th className="pb-2 text-right font-medium">Visitors</th>
+                  <th className="pb-2 text-right font-medium">%</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {channels.length > 0 ? channels.map((channel, i) => (
+                  <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        {CHANNEL_ICONS[channel.name] || CHANNEL_ICONS['Referral']}
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${CHANNEL_COLORS[channel.name] || CHANNEL_COLORS['Referral']}`}>
+                          {channel.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 text-right">{channel.visitors.toLocaleString()}</td>
+                    <td className="py-2 text-right text-muted-foreground">
+                      {((channel.visitors / (stats?.summary?.unique_visitors || 1)) * 100).toFixed(1)}%
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={3} className="py-4 text-center text-muted-foreground">No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-muted-foreground border-b border-gray-100 dark:border-gray-700">
+                  <th className="pb-2 text-left font-medium">Source</th>
+                  <th className="pb-2 text-right font-medium">Visitors</th>
+                  <th className="pb-2 text-right font-medium">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trafficSources.length > 0 ? trafficSources.map((source, i) => (
+                  <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        {source.icon}
+                        <span>{source.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 text-right">{source.visitors.toLocaleString()}</td>
+                    <td className="py-2 text-right text-muted-foreground">
+                      {((source.visitors / (stats?.summary?.unique_visitors || 1)) * 100).toFixed(1)}%
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={3} className="py-4 text-center text-muted-foreground">No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* UTM Parameters */}
