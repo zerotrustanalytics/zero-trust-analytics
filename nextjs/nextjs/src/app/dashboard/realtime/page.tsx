@@ -35,7 +35,10 @@ export default function RealtimePage() {
   const fetchSites = useCallback(async () => {
     try {
       const token = await getToken()
-      if (!token) return
+      if (!token) {
+        setLoading(false)
+        return
+      }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
       const res = await fetch(`${apiUrl}/api/sites/list`, {
@@ -47,10 +50,15 @@ export default function RealtimePage() {
         setSites(result.sites)
         if (result.sites.length > 0 && !selectedSiteId) {
           setSelectedSiteId(result.sites[0].id)
+        } else if (result.sites.length === 0) {
+          setLoading(false)
         }
+      } else {
+        setLoading(false)
       }
     } catch {
       console.error('Failed to fetch sites')
+      setLoading(false)
     }
   }, [getToken, selectedSiteId])
 
@@ -151,7 +159,15 @@ export default function RealtimePage() {
         </div>
       )}
 
-      {!selectedSiteId ? (
+      {sites.length === 0 ? (
+        <Card className="p-8 text-center">
+          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+          <h3 className="font-medium mb-2">No sites yet</h3>
+          <p className="text-muted-foreground">Add a site to view real-time analytics.</p>
+        </Card>
+      ) : !selectedSiteId ? (
         <Card className="p-8 text-center">
           <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />

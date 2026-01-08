@@ -1,99 +1,259 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Button, Card, Input } from '@/components/ui'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 
 interface TeamMember {
   id: string
   email: string
   name: string
-  role: 'owner' | 'admin' | 'member' | 'viewer'
+  role: 'owner' | 'admin' | 'editor' | 'viewer'
   status: 'active' | 'pending'
-  joinedAt: string
+  joinedAt?: string
 }
 
-const mockMembers: TeamMember[] = [
-  {
-    id: '1',
-    email: 'jasonsutter87@gmail.com',
-    name: 'Jason Sutter',
-    role: 'owner',
-    status: 'active',
-    joinedAt: '2024-01-15',
-  },
-]
+interface TeamInvite {
+  id: string
+  email: string
+  role: string
+  expiresAt: string
+}
 
-const roleLabels = {
+interface Team {
+  id: string
+  name: string
+  ownerId: string
+  createdAt: string
+}
+
+const roleLabels: Record<string, string> = {
   owner: 'Owner',
   admin: 'Admin',
-  member: 'Member',
+  editor: 'Editor',
   viewer: 'Viewer',
 }
 
-const roleColors = {
+const roleColors: Record<string, string> = {
   owner: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
   admin: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-  member: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+  editor: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
   viewer: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
 }
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMember[]>(mockMembers)
+  const { getToken } = useAuth()
+  const [teams, setTeams] = useState<Team[]>([])
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [invites, setInvites] = useState<TeamInvite[]>([])
+  const [userRole, setUserRole] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Modal states
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false)
+  const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member')
-  const [loading, setLoading] = useState(false)
+  const [inviteRole, setInviteRole] = useState<'admin' | 'editor' | 'viewer'>('viewer')
+  const [newTeamName, setNewTeamName] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
 
+  // Fetch teams on load
+  useEffect(() => {
+    fetchTeams()
+  }, [])
+
+  // Fetch team details when selected team changes
+  useEffect(() => {
+    if (selectedTeam) {
+      fetchTeamDetails(selectedTeam.id)
+    }
+  }, [selectedTeam])
+
+  async function fetchTeams() {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      const res = await fetch(`${apiUrl}/api/teams/invite`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+      setLoading(true)
+      const token = await getToken()
+      const res = await fetch(`${apiUrl}/api/teams`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
 
       if (res.ok) {
-        setMembers([
-          ...members,
-          {
-            id: Date.now().toString(),
-            email: inviteEmail,
-            name: inviteEmail.split('@')[0],
-            role: inviteRole,
-            status: 'pending',
-            joinedAt: new Date().toISOString(),
-          },
-        ])
-        setShowInviteModal(false)
-        setInviteEmail('')
-        setInviteRole('member')
+        const data = await res.json()
+        setTeams(data.teams || [])
+        if (data.teams?.length > 0) {
+          setSelectedTeam(data.teams[0])
+        }
+      } else {
+        setError('Failed to load teams')
       }
-    } catch (error) {
-      console.error('Invite error:', error)
+    } catch (err) {
+      console.error('Teams fetch error:', err)
+      setError('Failed to load teams')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!confirm('Are you sure you want to remove this team member?')) return
+  async function fetchTeamDetails(teamId: string) {
+    try {
+      const token = await getToken()
+      const res = await fetch(`${apiUrl}/api/teams?teamId=${teamId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setMembers(data.members || [])
+        setInvites(data.invites || [])
+        setUserRole(data.userRole || 'viewer')
+      }
+    } catch (err) {
+      console.error('Team details fetch error:', err)
+    }
+  }
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newTeamName.trim()) return
+
+    setActionLoading(true)
+    try {
+      const token = await getToken()
+      const res = await fetch(`${apiUrl}/api/teams`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: newTeamName }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setTeams([...teams, data.team])
+        setSelectedTeam(data.team)
+        setShowCreateTeamModal(false)
+        setNewTeamName('')
+      }
+    } catch (err) {
+      console.error('Create team error:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedTeam || !inviteEmail.trim()) return
+
+    setActionLoading(true)
+    try {
+      const token = await getToken()
+      const res = await fetch(`${apiUrl}/api/teams`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: 'invite',
+          teamId: selectedTeam.id,
+          email: inviteEmail,
+          role: inviteRole,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setInvites([...invites, data.invite])
+        setShowInviteModal(false)
+        setInviteEmail('')
+        setInviteRole('viewer')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to send invite')
+      }
+    } catch (err) {
+      console.error('Invite error:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleRemoveMember = async () => {
+    if (!selectedTeam || !memberToRemove) return
+
+    setActionLoading(true)
+    try {
+      const token = await getToken()
+      const res = await fetch(
+        `${apiUrl}/api/teams?teamId=${selectedTeam.id}&memberId=${memberToRemove.id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+
+      if (res.ok) {
+        setMembers(members.filter((m) => m.id !== memberToRemove.id))
+        setShowRemoveModal(false)
+        setMemberToRemove(null)
+      }
+    } catch (err) {
+      console.error('Remove member error:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleRevokeInvite = async (inviteId: string) => {
+    if (!selectedTeam) return
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      await fetch(`${apiUrl}/api/teams/members/${memberId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      })
-      setMembers(members.filter((m) => m.id !== memberId))
-    } catch (error) {
-      console.error('Remove error:', error)
+      const token = await getToken()
+      const res = await fetch(
+        `${apiUrl}/api/teams?teamId=${selectedTeam.id}&inviteId=${inviteId}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+
+      if (res.ok) {
+        setInvites(invites.filter((i) => i.id !== inviteId))
+      }
+    } catch (err) {
+      console.error('Revoke invite error:', err)
     }
+  }
+
+  const canManageMembers = userRole === 'owner' || userRole === 'admin'
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">{error}</p>
+        <Button onClick={fetchTeams} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -103,88 +263,233 @@ export default function TeamPage() {
           <h1 className="text-2xl font-bold">Team</h1>
           <p className="text-muted-foreground">Manage your team members and permissions</p>
         </div>
-        <Button onClick={() => setShowInviteModal(true)}>
-          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Invite Member
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowCreateTeamModal(true)}>
+            New Team
+          </Button>
+          {canManageMembers && selectedTeam && (
+            <Button onClick={() => setShowInviteModal(true)}>
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Invite Member
+            </Button>
+          )}
+        </div>
       </div>
 
+      {/* Team Selector */}
+      {teams.length > 0 && (
+        <Card className="p-4 mb-6">
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium">Select Team:</label>
+            <select
+              value={selectedTeam?.id || ''}
+              onChange={(e) => {
+                const team = teams.find((t) => t.id === e.target.value)
+                setSelectedTeam(team || null)
+              }}
+              className="px-3 py-2 border border-input rounded-md bg-background"
+            >
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-sm text-muted-foreground">
+              Your role: <span className={`px-2 py-0.5 rounded-full text-xs ${roleColors[userRole]}`}>{roleLabels[userRole]}</span>
+            </span>
+          </div>
+        </Card>
+      )}
+
+      {/* No Teams State */}
+      {teams.length === 0 && (
+        <Card className="p-12 text-center">
+          <svg className="w-12 h-12 mx-auto text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <h3 className="text-lg font-semibold mb-2">No Teams Yet</h3>
+          <p className="text-muted-foreground mb-4">Create a team to collaborate with others on your analytics.</p>
+          <Button onClick={() => setShowCreateTeamModal(true)}>Create Your First Team</Button>
+        </Card>
+      )}
+
       {/* Team Members Table */}
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Member
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Joined
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {members.map((member) => (
-                <tr key={member.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                        {member.name.charAt(0).toUpperCase()}
+      {selectedTeam && members.length > 0 && (
+        <Card className="overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold">Team Members</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Member
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Joined
+                  </th>
+                  {canManageMembers && (
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {members.map((member) => (
+                  <tr key={member.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                          {(member.name || member.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="ml-4">
+                          <div className="font-medium">{member.name || member.email.split('@')[0]}</div>
+                          <div className="text-sm text-muted-foreground">{member.email}</div>
+                        </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">{member.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleColors[member.role]}`}>
-                      {roleLabels[member.role]}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        member.status === 'active'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                      }`}
-                    >
-                      {member.status === 'active' ? 'Active' : 'Pending'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {new Date(member.joinedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    {member.role !== 'owner' && (
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleColors[member.role]}`}>
+                        {roleLabels[member.role]}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          member.status === 'active'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        }`}
+                      >
+                        {member.status === 'active' ? 'Active' : 'Pending'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString() : '-'}
+                    </td>
+                    {canManageMembers && (
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        {member.role !== 'owner' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setMemberToRemove(member)
+                              setShowRemoveModal(true)
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Pending Invites */}
+      {selectedTeam && invites.length > 0 && canManageMembers && (
+        <Card className="overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold">Pending Invites</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Expires
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {invites.map((invite) => (
+                  <tr key={invite.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">{invite.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleColors[invite.role]}`}>
+                        {roleLabels[invite.role]}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {new Date(invite.expiresAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveMember(member.id)}
+                        onClick={() => handleRevokeInvite(invite.id)}
                         className="text-red-600 hover:text-red-700"
                       >
-                        Remove
+                        Revoke
                       </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Create Team Modal */}
+      <Modal
+        isOpen={showCreateTeamModal}
+        onClose={() => setShowCreateTeamModal(false)}
+        title="Create New Team"
+        description="Create a team to collaborate with others"
+      >
+        <form onSubmit={handleCreateTeam}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="teamName" className="block text-sm font-medium mb-1">
+                Team Name
+              </label>
+              <Input
+                id="teamName"
+                type="text"
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder="My Team"
+                required
+              />
+            </div>
+          </div>
+          <ModalFooter>
+            <Button type="button" variant="outline" onClick={() => setShowCreateTeamModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={actionLoading}>
+              {actionLoading ? 'Creating...' : 'Create Team'}
+            </Button>
+          </ModalFooter>
+        </form>
+      </Modal>
 
       {/* Invite Modal */}
       <Modal
@@ -215,11 +520,11 @@ export default function TeamPage() {
               <select
                 id="inviteRole"
                 value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as 'admin' | 'member' | 'viewer')}
+                onChange={(e) => setInviteRole(e.target.value as 'admin' | 'editor' | 'viewer')}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
               >
-                <option value="admin">Admin - Full access</option>
-                <option value="member">Member - Can view and edit</option>
+                <option value="admin">Admin - Full access, can manage members</option>
+                <option value="editor">Editor - Can view and edit sites</option>
                 <option value="viewer">Viewer - Read-only access</option>
               </select>
             </div>
@@ -228,12 +533,27 @@ export default function TeamPage() {
             <Button type="button" variant="outline" onClick={() => setShowInviteModal(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Sending...' : 'Send Invitation'}
+            <Button type="submit" disabled={actionLoading}>
+              {actionLoading ? 'Sending...' : 'Send Invitation'}
             </Button>
           </ModalFooter>
         </form>
       </Modal>
+
+      {/* Remove Member Confirmation */}
+      <ConfirmModal
+        isOpen={showRemoveModal}
+        onClose={() => {
+          setShowRemoveModal(false)
+          setMemberToRemove(null)
+        }}
+        onConfirm={handleRemoveMember}
+        title="Remove Team Member"
+        description={`Are you sure you want to remove ${memberToRemove?.email} from the team? They will lose access to all team sites.`}
+        confirmText="Remove"
+        confirmVariant="destructive"
+        isLoading={actionLoading}
+      />
     </div>
   )
 }

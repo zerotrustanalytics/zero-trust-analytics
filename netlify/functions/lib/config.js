@@ -314,6 +314,81 @@ export const Config = {
   // MFA
   mfa: {
     issuer: config.MFA_ISSUER
+  },
+
+  // Pricing Tiers
+  pricing: {
+    tiers: {
+      free: {
+        name: 'Free',
+        monthlyPageviews: 5000,
+        price: 0,
+        stripePriceId: null,
+        features: ['1 site', 'Basic analytics', '30-day data retention']
+      },
+      starter: {
+        name: 'Starter',
+        monthlyPageviews: 50000,
+        price: 9,
+        stripePriceId: process.env.STRIPE_PRICE_STARTER,
+        features: ['3 sites', 'Full analytics', '6-month data retention', 'Email reports']
+      },
+      growth: {
+        name: 'Growth',
+        monthlyPageviews: 200000,
+        price: 19,
+        stripePriceId: process.env.STRIPE_PRICE_GROWTH,
+        features: ['10 sites', 'Full analytics', '1-year data retention', 'Email reports', 'API access']
+      },
+      business: {
+        name: 'Business',
+        monthlyPageviews: 1000000,
+        price: 49,
+        stripePriceId: process.env.STRIPE_PRICE_BUSINESS,
+        features: ['Unlimited sites', 'Full analytics', '2-year data retention', 'Email reports', 'API access', 'Team members (5)']
+      },
+      scale: {
+        name: 'Scale',
+        monthlyPageviews: 5000000,
+        price: 99,
+        stripePriceId: process.env.STRIPE_PRICE_SCALE,
+        features: ['Unlimited sites', 'Full analytics', 'Unlimited data retention', 'Priority support', 'API access', 'Team members (20)']
+      },
+      enterprise: {
+        name: 'Enterprise',
+        monthlyPageviews: Infinity,
+        price: null, // Custom pricing
+        stripePriceId: null,
+        features: ['Unlimited everything', 'Dedicated support', 'Custom integrations', 'SLA']
+      }
+    },
+    // Site limits per tier
+    siteLimits: {
+      free: 1,
+      starter: 3,
+      growth: 10,
+      business: Infinity,
+      scale: Infinity,
+      enterprise: Infinity
+    },
+    // Team member limits per tier
+    teamMemberLimits: {
+      free: 1,
+      starter: 1,
+      growth: 3,
+      business: 5,
+      scale: 20,
+      enterprise: Infinity
+    },
+    // Data retention in days
+    dataRetention: {
+      free: 30,
+      starter: 180,
+      growth: 365,
+      business: 730,
+      scale: Infinity,
+      enterprise: Infinity
+    }
   }
 };
 

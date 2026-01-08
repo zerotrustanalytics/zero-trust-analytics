@@ -83,7 +83,7 @@ Key variables to configure in `.env`:
 
 Full documentation: `/docs/self-hosting` on your running instance
 
-Or visit: https://zero-trust-analytics.netlify.app/docs/self-hosting
+Or visit: https://ztas.io/docs/self-hosting
 
 ## Support
 

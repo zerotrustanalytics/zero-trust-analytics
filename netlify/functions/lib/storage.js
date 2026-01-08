@@ -55,6 +55,43 @@ export async function getUser(email) {
   return await users.get(email, { type: 'json' });
 }
 
+export async function getUserById(userId) {
+  const users = store(STORES.USERS);
+  // First check if we have a userId -> email mapping
+  const userIdMapKey = `user_id_map_${userId}`;
+  try {
+    const email = await users.get(userIdMapKey, { type: 'text' });
+    if (email) {
+      return await getUser(email);
+    }
+  } catch (e) {
+    // Mapping doesn't exist, fall through to search
+  }
+
+  // Fallback: search through users (less efficient)
+  try {
+    const { blobs } = await users.list();
+    for (const blob of blobs) {
+      // Skip non-user keys (mappings, lists, etc.)
+      if (blob.key.startsWith('user_id_map_') || blob.key.startsWith('user_sites_') ||
+          blob.key.startsWith('user_teams_') || blob.key.startsWith('user_log_') ||
+          blob.key.startsWith('user_sessions_') || blob.key.startsWith('user_keys_')) {
+        continue;
+      }
+      const user = await users.get(blob.key, { type: 'json' });
+      if (user?.id === userId) {
+        // Create mapping for future lookups
+        await users.set(userIdMapKey, blob.key);
+        return { ...user, email: blob.key };
+      }
+    }
+    return null;
+  } catch (e) {
+    console.error('Error finding user by ID:', e);
+    return null;
+  }
+}
+
 export async function updateUser(email, updates) {
   const users = store(STORES.USERS);
   const user = await getUser(email);

@@ -44,7 +44,7 @@ export default async function handler(req, context) {
     // Create billing portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: user.subscription.customerId,
-      return_url: `${process.env.URL || 'https://zero-trust-analytics.netlify.app'}/dashboard/`
+      return_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/`
     });
 
     logger.info('Stripe portal session created successfully', { userId: user.id });

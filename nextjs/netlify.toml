@@ -19,35 +19,35 @@
 [functions]
   node_bundler = "esbuild"
 
-# Redirect auth pages to Next.js app on Vercel
+# Redirect auth pages to Next.js app
 [[redirects]]
   from = "/login"
-  to = "https://zero-trust-analytics.vercel.app/login"
+  to = "https://app.ztas.io/sign-in"
   status = 301
 
 [[redirects]]
   from = "/register"
-  to = "https://zero-trust-analytics.vercel.app/register"
+  to = "https://app.ztas.io/sign-up"
   status = 301
 
 [[redirects]]
   from = "/dashboard"
-  to = "https://zero-trust-analytics.vercel.app/dashboard"
+  to = "https://app.ztas.io/dashboard"
   status = 301
 
 [[redirects]]
   from = "/dashboard/*"
-  to = "https://zero-trust-analytics.vercel.app/dashboard/:splat"
+  to = "https://app.ztas.io/dashboard/:splat"
   status = 301
 
 [[redirects]]
   from = "/forgot-password"
-  to = "https://zero-trust-analytics.vercel.app/forgot-password"
+  to = "https://app.ztas.io/forgot-password"
   status = 301
 
 [[redirects]]
   from = "/reset-password"
-  to = "https://zero-trust-analytics.vercel.app/reset-password"
+  to = "https://app.ztas.io/reset-password"
   status = 301
 
 # API redirects

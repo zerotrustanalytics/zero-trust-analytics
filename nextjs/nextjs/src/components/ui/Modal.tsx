@@ -23,7 +23,7 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
         aria-hidden="true"
       />
       <div
-        className="relative bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 shadow-xl"
+        className="relative bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 shadow-xl overflow-visible"
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}

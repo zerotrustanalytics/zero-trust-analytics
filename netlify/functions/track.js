@@ -1,9 +1,10 @@
 import { createZTRecord, validateNoPII } from './lib/zero-trust-core.js';
-import { ingestEvents } from './lib/turso.js';
-import { getSite } from './lib/storage.js';
+import { ingestEvents, checkUsageLimit, incrementUsage } from './lib/turso.js';
+import { getSite, getUserById } from './lib/storage.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, NotFoundError } from './lib/error-handler.js';
+import { Config } from './lib/config.js';
 
 // Get required hash secret - throws if not configured
 function getRequiredHashSecret() {
@@ -68,6 +69,53 @@ function extractReferrerDomain(referrer) {
     return url.hostname;
   } catch {
     return '';
+  }
+}
+
+// Get plan limit for a user
+function getPlanPageviewLimit(plan) {
+  const tier = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
+  return tier.monthlyPageviews;
+}
+
+// Check if site owner is within usage limits
+async function checkSiteOwnerUsage(site, logger) {
+  try {
+    // Site stores userId of owner
+    const ownerId = site.userId;
+    if (!ownerId) {
+      logger.warn('Site has no owner, allowing tracking', { siteId: site.id });
+      return { allowed: true, ownerId: null };
+    }
+
+    // Get owner's plan by looking up the user
+    const user = await getUserById(ownerId);
+    const plan = user?.plan || 'free';
+    const limit = getPlanPageviewLimit(plan);
+
+    // Check usage against the owner
+    const usageCheck = await checkUsageLimit(ownerId, limit);
+
+    if (!usageCheck.isWithinLimit) {
+      logger.info('Site owner over usage limit', {
+        siteId: site.id,
+        ownerId,
+        plan,
+        currentUsage: usageCheck.currentUsage,
+        limit
+      });
+    }
+
+    return {
+      allowed: usageCheck.isWithinLimit,
+      ownerId,
+      plan,
+      usage: usageCheck
+    };
+  } catch (err) {
+    // On error, allow tracking (fail open for tracking)
+    logger.error('Usage check failed, allowing tracking', err);
+    return { allowed: true, ownerId: site.userId };
   }
 }
 
@@ -196,6 +244,22 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
     });
   }).filter(record => validateNoPII(record));
 
+  // Check usage limits before ingesting
+  const usageCheck = await checkSiteOwnerUsage(site, logger);
+
+  // If over limit, return success but don't actually store (graceful degradation)
+  if (!usageCheck.allowed) {
+    logger.info('Usage limit exceeded, not storing events', {
+      siteId,
+      ownerId: usageCheck.ownerId,
+      eventCount: events.length
+    });
+    return new Response(JSON.stringify({ success: true, count: 0, limited: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': allowedOrigin || '*' }
+    });
+  }
+
   // Send all records to database in ONE request
   if (records.length > 0) {
     logger.info('Ingesting batch events', {
@@ -204,6 +268,17 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
       originalEventCount: events.length
     });
     await ingestEvents('pageviews', records);
+
+    // Increment usage for the site owner
+    if (usageCheck.ownerId) {
+      const pageviewCount = records.filter(r => r.event_type === 'pageview').length;
+      if (pageviewCount > 0) {
+        // Increment by the number of pageviews (not all events)
+        for (let i = 0; i < pageviewCount; i++) {
+          await incrementUsage(usageCheck.ownerId, siteId, 'pageview');
+        }
+      }
+    }
   } else {
     logger.debug('No valid records to ingest after filtering', {
       siteId,
@@ -373,12 +448,35 @@ async function handleSingleEvent(req, context, origin, data, logger) {
     });
   }
 
+  // Check usage limits before ingesting
+  const usageCheck = await checkSiteOwnerUsage(site, logger);
+
+  // If over limit, return success but don't actually store
+  if (!usageCheck.allowed) {
+    logger.info('Usage limit exceeded for single event', {
+      siteId,
+      ownerId: usageCheck.ownerId
+    });
+    return new Response(JSON.stringify({ success: true, limited: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': allowedOrigin || '*'
+      }
+    });
+  }
+
   // Send to database
   logger.info('Ingesting single event', {
     siteId,
     eventType
   });
   await ingestEvents('pageviews', record);
+
+  // Increment usage for pageview events
+  if (usageCheck.ownerId && eventType === 'pageview') {
+    await incrementUsage(usageCheck.ownerId, siteId, 'pageview');
+  }
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,

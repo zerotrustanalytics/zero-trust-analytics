@@ -53,8 +53,8 @@ export default async function handler(req, context) {
           quantity: 1
         }
       ],
-      success_url: `${process.env.URL || 'https://zero-trust-analytics.netlify.app'}/dashboard/?success=true`,
-      cancel_url: `${process.env.URL || 'https://zero-trust-analytics.netlify.app'}/dashboard/?canceled=true`,
+      success_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/?success=true`,
+      cancel_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/?canceled=true`,
       metadata: {
         userId: user.id,
         email: auth.user.email

@@ -40,7 +40,7 @@ Privacy-focused, anonymous website analytics. Track visitors without compromisin
 
 ### 1. Create an Account
 
-Go to [https://zero-trust-analytics.netlify.app/register/](https://zero-trust-analytics.netlify.app/register/) and create your account.
+Go to [https://app.ztas.io/sign-up](https://app.ztas.io/sign-up) and create your account.
 
 ### 2. Add Your Site
 
@@ -51,7 +51,7 @@ In the dashboard, click "Add Site" and enter your domain (e.g., `mywebsite.com`)
 You'll receive a code snippet like this:
 
 ```html
-<script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="site_abc123def456"></script>
+<script src="https://ztas.io/js/analytics.js" data-site-id="site_abc123def456"></script>
 ```
 
 ### 4. Add to Your Website
@@ -67,7 +67,7 @@ Paste the code into your website's `<head>` tag. That's it!
 Add this single line to your HTML `<head>`:
 
 ```html
-<script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
+<script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
 ```
 
 Replace `YOUR_SITE_ID` with the ID from your dashboard.
@@ -85,7 +85,7 @@ Edit `layouts/_default/baseof.html`:
   {{ partial "head.html" . }}
 
   <!-- Zero Trust Analytics -->
-  <script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
+  <script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
 </head>
 ```
 
@@ -95,7 +95,7 @@ Create `layouts/partials/analytics.html`:
 
 ```html
 {{ if not .Site.IsServer }}
-<script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
+<script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
 {{ end }}
 ```
 
@@ -138,7 +138,7 @@ export default function Analytics() {
     if (!document.getElementById('zta-script')) {
       const script = document.createElement('script');
       script.id = 'zta-script';
-      script.src = 'https://zero-trust-analytics.netlify.app/js/analytics.js';
+      script.src = 'https://ztas.io/js/analytics.js';
       script.dataset.siteId = 'YOUR_SITE_ID';
       script.dataset.spa = 'true';
       document.head.appendChild(script);
@@ -186,7 +186,7 @@ export default function App({ Component, pageProps }) {
 
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = 'https://zero-trust-analytics.netlify.app/js/analytics.js';
+    script.src = 'https://ztas.io/js/analytics.js';
     script.dataset.siteId = 'YOUR_SITE_ID';
     document.head.appendChild(script);
 
@@ -208,7 +208,7 @@ Add to `index.html`:
 
 ```html
 <head>
-  <script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID" data-spa="true"></script>
+  <script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID" data-spa="true"></script>
 </head>
 ```
 
@@ -224,7 +224,7 @@ Create `plugins/analytics.client.ts`:
 export default defineNuxtPlugin(() => {
   if (process.client) {
     const script = document.createElement('script');
-    script.src = 'https://zero-trust-analytics.netlify.app/js/analytics.js';
+    script.src = 'https://ztas.io/js/analytics.js';
     script.dataset.siteId = 'YOUR_SITE_ID';
     script.dataset.spa = 'true';
     document.head.appendChild(script);
@@ -238,7 +238,7 @@ Add to `index.html`:
 
 ```html
 <head>
-  <script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID" data-spa="true"></script>
+  <script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID" data-spa="true"></script>
 </head>
 ```
 
@@ -253,7 +253,7 @@ export function useAnalytics() {
 
   onMounted(() => {
     const script = document.createElement('script');
-    script.src = 'https://zero-trust-analytics.netlify.app/js/analytics.js';
+    script.src = 'https://ztas.io/js/analytics.js';
     script.dataset.siteId = 'YOUR_SITE_ID';
     document.head.appendChild(script);
   });
@@ -273,7 +273,7 @@ export function useAnalytics() {
 Add to your theme's `header.php` before `</head>`:
 
 ```php
-<script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
+<script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
 ```
 
 **Option 2: functions.php**
@@ -282,7 +282,7 @@ Add to your theme's `functions.php`:
 
 ```php
 function add_zero_trust_analytics() {
-    echo '<script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>';
+    echo '<script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>';
 }
 add_action('wp_head', 'add_zero_trust_analytics');
 ```
@@ -307,7 +307,7 @@ Simply add to every page's `<head>`:
   <title>My Website</title>
 
   <!-- Zero Trust Analytics -->
-  <script src="https://zero-trust-analytics.netlify.app/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
+  <script src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"></script>
 </head>
 <body>
   <!-- Your content -->
@@ -393,7 +393,7 @@ ZTA.trackEvent('purchase', { product: 'pro-plan', value: 10 });
 ### Full Example
 
 ```html
-<script src="https://zero-trust-analytics.netlify.app/js/analytics.js"
+<script src="https://ztas.io/js/analytics.js"
         data-site-id="YOUR_SITE_ID"
         data-auto-track="false"
         data-debug="true"></script>
@@ -421,7 +421,7 @@ ZTA.trackEvent('purchase', { product: 'pro-plan', value: 10 });
 
 ## REST API Reference
 
-All API endpoints are available at `https://zero-trust-analytics.netlify.app/api/`
+All API endpoints are available at `https://ztas.io/api/`
 
 ### Track Pageview
 

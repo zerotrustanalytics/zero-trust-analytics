@@ -1,4 +1,4 @@
-baseURL = 'https://zero-trust-analytics.netlify.app/'
+baseURL = 'https://ztas.io/'
 languageCode = 'en-us'
 title = 'Zero Trust Analytics'
 enableRobotsTXT = true
@@ -13,4 +13,4 @@ price = '$10/month'
 baseURL = 'http://localhost:1313/'
 
 [environments.production]
-baseURL = 'https://zero-trust-analytics.netlify.app/'
+baseURL = 'https://ztas.io/'

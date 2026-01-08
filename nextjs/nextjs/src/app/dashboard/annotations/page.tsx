@@ -49,7 +49,10 @@ export default function AnnotationsPage() {
   const fetchSites = useCallback(async () => {
     try {
       const token = await getToken()
-      if (!token) return
+      if (!token) {
+        setLoading(false)
+        return
+      }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
       const res = await fetch(`${apiUrl}/api/sites/list`, {
@@ -61,10 +64,15 @@ export default function AnnotationsPage() {
         setSites(data.sites)
         if (data.sites.length > 0 && !selectedSiteId) {
           setSelectedSiteId(data.sites[0].id)
+        } else if (data.sites.length === 0) {
+          setLoading(false)
         }
+      } else {
+        setLoading(false)
       }
     } catch {
       console.error('Failed to fetch sites')
+      setLoading(false)
     }
   }, [getToken, selectedSiteId])
 
@@ -295,7 +303,15 @@ export default function AnnotationsPage() {
         </div>
       )}
 
-      {!selectedSiteId ? (
+      {sites.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+          <h3 className="font-medium mb-2">No sites yet</h3>
+          <p className="text-muted-foreground">Add a site to manage annotations.</p>
+        </div>
+      ) : !selectedSiteId ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
           <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
