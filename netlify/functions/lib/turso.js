@@ -184,18 +184,18 @@ async function getStats(siteId, startDate, endDate) {
     utmTerms,
     sessionCounts
   ] = await Promise.all([
-    // Daily stats
+    // Daily stats - pageviews from 'pageview' events, bounce/duration from 'engagement' events
     turso.execute({
       sql: `
         SELECT
           DATE(timestamp) as date,
-          COUNT(*) as pageviews,
-          COUNT(DISTINCT identity_hash) as unique_visitors,
-          COUNT(DISTINCT session_hash) as sessions,
-          SUM(CASE WHEN meta_is_bounce = 1 THEN 1 ELSE 0 END) as bounces,
-          ROUND(AVG(meta_duration), 0) as avg_duration
+          SUM(CASE WHEN event_type = 'pageview' THEN 1 ELSE 0 END) as pageviews,
+          COUNT(DISTINCT CASE WHEN event_type = 'pageview' THEN identity_hash END) as unique_visitors,
+          COUNT(DISTINCT CASE WHEN event_type = 'pageview' THEN session_hash END) as sessions,
+          SUM(CASE WHEN event_type = 'engagement' AND meta_is_bounce = 1 THEN 1 ELSE 0 END) as bounces,
+          COALESCE(ROUND(AVG(CASE WHEN event_type = 'engagement' AND meta_duration > 0 THEN meta_duration END), 0), 0) as avg_duration
         FROM pageviews
-        WHERE event_type = 'pageview'
+        WHERE event_type IN ('pageview', 'engagement')
           AND site_id = ?
           AND timestamp >= ?
           AND timestamp <= ?
