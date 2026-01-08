@@ -622,6 +622,9 @@ export default function SiteDetailsPage() {
   const [activeTab, setActiveTab] = useState<'pages' | 'entry' | 'exit'>('pages')
   const [trafficTab, setTrafficTab] = useState<'channels' | 'sources'>('channels')
   const [utmTab, setUtmTab] = useState<'sources' | 'mediums' | 'campaigns'>('sources')
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [shareCopied, setShareCopied] = useState(false)
   const [locationTab, setLocationTab] = useState<'countries' | 'regions' | 'cities'>('countries')
   const [techTab, setTechTab] = useState<'browsers' | 'os' | 'devices'>('browsers')
 
@@ -819,6 +822,22 @@ export default function SiteDetailsPage() {
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
           </select>
+          <button
+            onClick={() => {
+              const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+              const token = btoa(`${siteId}:${Date.now()}`)
+              setShareUrl(`${baseUrl}/share/${siteId}?token=${token}`)
+              setShowShareModal(true)
+              setShareCopied(false)
+            }}
+            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
+            title="Share Dashboard"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            Share
+          </button>
           <button
             onClick={() => exportToCSV(stats, site, period)}
             className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
@@ -1213,6 +1232,59 @@ export default function SiteDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Share Dashboard</h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              Share a read-only view of this dashboard with others. Anyone with this link can view the analytics.
+            </p>
+
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={shareUrl}
+                readOnly
+                className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(shareUrl)
+                  setShareCopied(true)
+                  setTimeout(() => setShareCopied(false), 2000)
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  shareCopied
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-primary text-primary-foreground hover:opacity-90'
+                }`}
+              >
+                {shareCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>This link provides read-only access to the current period&apos;s data.</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
