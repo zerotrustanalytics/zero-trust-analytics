@@ -29,6 +29,8 @@ interface DataItem {
   views: number
   country?: string
   duration?: number
+  exitRate?: number
+  exits?: number
 }
 
 interface UTMData {
@@ -955,7 +957,8 @@ export default function SiteDetailsPage() {
             <tr className="text-xs text-muted-foreground border-b border-gray-100 dark:border-gray-700">
               <th className="pb-2 text-left font-medium">Page</th>
               <th className="pb-2 text-right font-medium">Visitors</th>
-              <th className="pb-2 text-right font-medium">Views</th>
+              <th className="pb-2 text-right font-medium">{activeTab === 'exit' ? 'Exits' : 'Views'}</th>
+              {activeTab === 'exit' && <th className="pb-2 text-right font-medium">Exit Rate</th>}
               <th className="pb-2 text-right font-medium">Avg. Duration</th>
             </tr>
           </thead>
@@ -964,10 +967,23 @@ export default function SiteDetailsPage() {
               <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
                 <td className="py-2 text-primary truncate max-w-[250px]">{page.name}</td>
                 <td className="py-2 text-right">{page.visitors.toLocaleString()}</td>
-                <td className="py-2 text-right">{page.views.toLocaleString()}</td>
+                <td className="py-2 text-right">{(activeTab === 'exit' ? page.exits || page.views : page.views).toLocaleString()}</td>
+                {activeTab === 'exit' && (
+                  <td className="py-2 text-right">
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                      (page.exitRate || 0) > 70
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        : (page.exitRate || 0) > 40
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    }`}>
+                      {(page.exitRate || (page.views > 0 ? ((page.exits || page.visitors) / page.views * 100) : 0)).toFixed(1)}%
+                    </span>
+                  </td>
+                )}
                 <td className="py-2 text-right text-muted-foreground">{formatDuration(page.duration || 0)}</td>
               </tr>
-            )) || <tr><td colSpan={4} className="py-4 text-center text-muted-foreground">No data</td></tr>}
+            )) || <tr><td colSpan={activeTab === 'exit' ? 5 : 4} className="py-4 text-center text-muted-foreground">No data</td></tr>}
           </tbody>
         </table>
       </div>
