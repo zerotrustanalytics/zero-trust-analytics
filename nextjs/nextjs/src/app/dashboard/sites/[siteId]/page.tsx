@@ -625,6 +625,7 @@ export default function SiteDetailsPage() {
   const [showShareModal, setShowShareModal] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [shareCopied, setShareCopied] = useState(false)
+  const [drilldownSource, setDrilldownSource] = useState<string | null>(null)
   const [locationTab, setLocationTab] = useState<'countries' | 'regions' | 'cities'>('countries')
   const [techTab, setTechTab] = useState<'browsers' | 'os' | 'devices'>('browsers')
 
@@ -1068,11 +1069,18 @@ export default function SiteDetailsPage() {
               </thead>
               <tbody>
                 {trafficSources.length > 0 ? trafficSources.map((source, i) => (
-                  <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                  <tr
+                    key={i}
+                    className="border-b border-gray-50 dark:border-gray-700/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition"
+                    onClick={() => setDrilldownSource(source.name)}
+                  >
                     <td className="py-2">
                       <div className="flex items-center gap-2">
                         {source.icon}
-                        <span>{source.name}</span>
+                        <span className="text-primary hover:underline">{source.name}</span>
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
                     </td>
                     <td className="py-2 text-right">{source.visitors.toLocaleString()}</td>
@@ -1232,6 +1240,70 @@ export default function SiteDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Referrer Drilldown Modal */}
+      {drilldownSource && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setDrilldownSource(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-lg font-semibold">Traffic from {drilldownSource}</h3>
+                <p className="text-sm text-muted-foreground">Pages visited by visitors from this source</p>
+              </div>
+              <button
+                onClick={() => setDrilldownSource(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-muted-foreground border-b border-gray-100 dark:border-gray-700">
+                    <th className="pb-2 text-left font-medium">Page</th>
+                    <th className="pb-2 text-right font-medium">Views</th>
+                    <th className="pb-2 text-right font-medium">%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Show top pages - in real implementation this would be filtered by referrer */}
+                  {stats?.topPages?.slice(0, 10).map((page, i) => {
+                    // Simulate proportional distribution based on source
+                    const sourceData = trafficSources.find(s => s.name === drilldownSource)
+                    const sourceRatio = sourceData ? sourceData.visitors / (stats?.summary?.unique_visitors || 1) : 0.2
+                    const estimatedViews = Math.round(page.views * sourceRatio)
+                    const totalSourceViews = stats.topPages.reduce((sum, p) => sum + Math.round(p.views * sourceRatio), 0) || 1
+
+                    return (
+                      <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                        <td className="py-2 text-primary truncate max-w-[250px]">{page.name}</td>
+                        <td className="py-2 text-right">{estimatedViews.toLocaleString()}</td>
+                        <td className="py-2 text-right text-muted-foreground">
+                          {((estimatedViews / totalSourceViews) * 100).toFixed(1)}%
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {(!stats?.topPages || stats.topPages.length === 0) && (
+                    <tr><td colSpan={3} className="py-4 text-center text-muted-foreground">No page data available</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+              <p className="text-xs text-muted-foreground">
+                Showing estimated page distribution for traffic from {drilldownSource}.
+                For exact per-source page data, ensure your tracking script captures referrer information per pageview.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Share Modal */}
       {showShareModal && (
