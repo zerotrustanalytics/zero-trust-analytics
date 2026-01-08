@@ -549,10 +549,10 @@ export default function TeamPage() {
         }}
         onConfirm={handleRemoveMember}
         title="Remove Team Member"
-        description={`Are you sure you want to remove ${memberToRemove?.email} from the team? They will lose access to all team sites.`}
+        message={`Are you sure you want to remove ${memberToRemove?.email} from the team? They will lose access to all team sites.`}
         confirmText="Remove"
-        confirmVariant="destructive"
-        isLoading={actionLoading}
+        variant="danger"
+        loading={actionLoading}
       />
     </div>
   )
