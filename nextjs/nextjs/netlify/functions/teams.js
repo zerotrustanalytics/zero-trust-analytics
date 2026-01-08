@@ -1,4 +1,5 @@
 import { authenticateRequest } from './lib/auth.js';
+import { createClerkClient } from '@clerk/backend';
 import {
   getUser,
   createTeam,
@@ -19,6 +20,41 @@ import {
   getUserSites,
   TeamRoles
 } from './lib/storage.js';
+
+// Initialize Clerk client
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY
+});
+
+// Enrich team members with Clerk user data
+async function enrichMembersWithClerkData(members) {
+  const enrichedMembers = await Promise.all(
+    members.map(async (member) => {
+      try {
+        // Skip if no userId (shouldn't happen but just in case)
+        if (!member.userId) return member;
+
+        const clerkUser = await clerkClient.users.getUser(member.userId);
+
+        return {
+          ...member,
+          name: clerkUser.firstName && clerkUser.lastName
+            ? `${clerkUser.firstName} ${clerkUser.lastName}`.trim()
+            : clerkUser.firstName || clerkUser.username || member.email?.split('@')[0] || 'Unknown',
+          email: clerkUser.emailAddresses?.[0]?.emailAddress || member.email || '',
+          imageUrl: clerkUser.imageUrl || null,
+          status: 'active' // If we can fetch from Clerk, they're active
+        };
+      } catch (err) {
+        // If Clerk user not found, return original member data
+        console.error(`Failed to fetch Clerk user ${member.userId}:`, err.message);
+        return member;
+      }
+    })
+  );
+
+  return enrichedMembers;
+}
 
 export default async function handler(req, context) {
   if (req.method === 'OPTIONS') {
@@ -61,7 +97,8 @@ export default async function handler(req, context) {
         }
 
         const team = await getTeam(teamId);
-        const members = await getTeamMembers(teamId);
+        const rawMembers = await getTeamMembers(teamId);
+        const members = await enrichMembersWithClerkData(rawMembers);
         const invites = role === TeamRoles.OWNER || role === TeamRoles.ADMIN
           ? await getTeamInvites(teamId)
           : [];

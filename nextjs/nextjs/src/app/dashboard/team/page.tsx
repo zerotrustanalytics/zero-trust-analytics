@@ -13,6 +13,7 @@ interface TeamMember {
   role: 'owner' | 'admin' | 'editor' | 'viewer'
   status: 'active' | 'pending'
   joinedAt?: string
+  imageUrl?: string
 }
 
 interface TeamInvite {
@@ -467,9 +468,17 @@ export default function TeamPage() {
                   <tr key={member.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                          {(member.name || member.email || '?').charAt(0).toUpperCase()}
-                        </div>
+                        {member.imageUrl ? (
+                          <img
+                            src={member.imageUrl}
+                            alt={member.name || 'Member'}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                            {(member.name || member.email || '?').charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <div className="ml-4">
                           <div className="font-medium">{member.name || (member.email ? member.email.split('@')[0] : 'Unknown')}</div>
                           <div className="text-sm text-muted-foreground">{member.email || 'No email'}</div>
