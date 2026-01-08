@@ -119,7 +119,7 @@ async function ingestEvents(tableName, events) {
  */
 async function getStats(siteId, startDate, endDate) {
   // Run all queries in parallel
-  const [dailyStats, topPages, topReferrers, devices, browsers, countries] = await Promise.all([
+  const [dailyStats, topPages, topReferrers, devices, browsers, countries, engagementDuration] = await Promise.all([
     // Daily stats
     turso.execute({
       sql: `
@@ -127,8 +127,7 @@ async function getStats(siteId, startDate, endDate) {
           DATE(timestamp) as date,
           COUNT(*) as pageviews,
           COUNT(DISTINCT identity_hash) as unique_visitors,
-          SUM(CASE WHEN meta_is_bounce = 1 THEN 1 ELSE 0 END) as bounces,
-          ROUND(AVG(meta_duration), 0) as avg_duration
+          SUM(CASE WHEN meta_is_bounce = 1 THEN 1 ELSE 0 END) as bounces
         FROM pageviews
         WHERE event_type = 'pageview'
           AND site_id = ?
@@ -140,23 +139,42 @@ async function getStats(siteId, startDate, endDate) {
       args: [siteId, startDate, endDate]
     }),
 
-    // Top pages
+    // Top pages with duration from engagement events
     turso.execute({
       sql: `
         SELECT
-          JSON_EXTRACT(payload, '$.page_path') as page,
-          COUNT(*) as views,
-          COUNT(DISTINCT identity_hash) as visitors
-        FROM pageviews
-        WHERE event_type = 'pageview'
-          AND site_id = ?
-          AND timestamp >= ?
-          AND timestamp <= ?
-        GROUP BY page
-        ORDER BY views DESC
+          pv.page,
+          pv.views,
+          pv.visitors,
+          COALESCE(eng.avg_duration, 0) as avg_duration
+        FROM (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            COUNT(*) as views,
+            COUNT(DISTINCT identity_hash) as visitors
+          FROM pageviews
+          WHERE event_type = 'pageview'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+          GROUP BY page
+        ) pv
+        LEFT JOIN (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            ROUND(AVG(meta_duration), 0) as avg_duration
+          FROM pageviews
+          WHERE event_type = 'engagement'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+            AND meta_duration > 0
+          GROUP BY page
+        ) eng ON pv.page = eng.page
+        ORDER BY pv.views DESC
         LIMIT 10
       `,
-      args: [siteId, startDate, endDate]
+      args: [siteId, startDate, endDate, siteId, startDate, endDate]
     }),
 
     // Top referrers
@@ -222,28 +240,53 @@ async function getStats(siteId, startDate, endDate) {
         ORDER BY count DESC
       `,
       args: [siteId, startDate, endDate]
+    }),
+
+    // Overall engagement duration from engagement events
+    turso.execute({
+      sql: `
+        SELECT
+          ROUND(AVG(meta_duration), 0) as avg_duration,
+          COUNT(*) as engagement_count
+        FROM pageviews
+        WHERE event_type = 'engagement'
+          AND site_id = ?
+          AND timestamp >= ?
+          AND timestamp <= ?
+          AND meta_duration > 0
+      `,
+      args: [siteId, startDate, endDate]
     })
   ]);
 
   // Calculate totals from daily stats
   const daily = normalizeRows(dailyStats.rows);
+  const engagementData = normalizeRows(engagementDuration.rows)[0] || { avg_duration: 0 };
   const totals = daily.reduce(
     (acc, day) => ({
       pageviews: acc.pageviews + (day.pageviews || 0),
       unique_visitors: acc.unique_visitors + (day.unique_visitors || 0),
-      bounces: acc.bounces + (day.bounces || 0),
-      total_duration: acc.total_duration + ((day.avg_duration || 0) * (day.pageviews || 0))
+      bounces: acc.bounces + (day.bounces || 0)
     }),
-    { pageviews: 0, unique_visitors: 0, bounces: 0, total_duration: 0 }
+    { pageviews: 0, unique_visitors: 0, bounces: 0 }
   );
 
   // Convert arrays to objects for frontend compatibility
   // Frontend expects: { "/path": 5, "/other": 3 }
-  const pagesToObj = rowsToObject(normalizeRows(topPages.rows), 'page', 'views');
+  const normalizedPages = normalizeRows(topPages.rows);
+  const pagesToObj = rowsToObject(normalizedPages, 'page', 'views');
   const referrersToObj = rowsToObject(normalizeRows(topReferrers.rows), 'referrer', 'views');
   const devicesToObj = rowsToObject(normalizeRows(devices.rows), 'device', 'count');
   const browsersToObj = rowsToObject(normalizeRows(browsers.rows), 'browser', 'count');
   const countriesToObj = rowsToObject(normalizeRows(countries.rows), 'country', 'count');
+
+  // Convert pages to array format for frontend: { name, visitors, views, duration }
+  const topPagesArray = normalizedPages.map(row => ({
+    name: row.page || '/',
+    visitors: row.visitors || 0,
+    views: row.views || 0,
+    duration: row.avg_duration || 0
+  }));
 
   return {
     summary: {
@@ -252,12 +295,11 @@ async function getStats(siteId, startDate, endDate) {
       bounce_rate: totals.pageviews > 0
         ? Math.round((totals.bounces / totals.pageviews) * 100)
         : 0,
-      avg_duration: totals.pageviews > 0
-        ? Math.round(totals.total_duration / totals.pageviews)
-        : 0
+      avg_duration: engagementData.avg_duration || 0
     },
     daily,
     pages: pagesToObj,
+    topPages: topPagesArray,
     referrers: referrersToObj,
     devices: devicesToObj,
     browsers: browsersToObj,
