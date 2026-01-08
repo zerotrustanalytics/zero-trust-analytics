@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth, SignInButton } from '@clerk/nextjs'
 import { Button, Card } from '@/components/ui'
@@ -23,7 +23,7 @@ const roleLabels: Record<string, string> = {
   viewer: 'Viewer',
 }
 
-export default function AcceptInvitePage() {
+function AcceptInviteContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isLoaded, isSignedIn, getToken } = useAuth()
@@ -297,5 +297,19 @@ export default function AcceptInvitePage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      }
+    >
+      <AcceptInviteContent />
+    </Suspense>
   )
 }
