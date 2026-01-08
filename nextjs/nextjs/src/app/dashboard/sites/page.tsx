@@ -1,23 +1,217 @@
 'use client'
 
-import { SiteList } from '@/components/dashboard'
-import { useSites } from '@/hooks'
+import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@clerk/nextjs'
+import { AddSiteModal } from '@/components/dashboard/AddSiteModal'
+import Link from 'next/link'
+
+interface Site {
+  id: string
+  domain: string
+  name?: string
+  createdAt: string
+  pageviews?: number
+}
 
 export default function SitesPage() {
-  const { sites, loading, addSite } = useSites()
+  const { getToken } = useAuth()
+  const [sites, setSites] = useState<Site[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const fetchSites = useCallback(async () => {
+    try {
+      const token = await getToken()
+      if (!token) {
+        setError('Not authenticated')
+        setLoading(false)
+        return
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/sites/list`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to fetch sites')
+        return
+      }
+
+      setSites(data.sites || [])
+    } catch {
+      setError('Failed to load sites')
+    } finally {
+      setLoading(false)
+    }
+  }, [getToken])
+
+  useEffect(() => {
+    fetchSites()
+  }, [fetchSites])
+
+  const handleDelete = async (siteId: string) => {
+    if (!confirm('Are you sure you want to delete this site? This action cannot be undone.')) {
+      return
+    }
+
+    setDeletingId(siteId)
+    try {
+      const token = await getToken()
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+
+      const res = await fetch(`${apiUrl}/api/sites/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ siteId }),
+      })
+
+      if (res.ok) {
+        setSites(sites.filter(s => s.id !== siteId))
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete site')
+      }
+    } catch {
+      alert('Failed to delete site')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const copyTrackingCode = (siteId: string) => {
+    const code = `<script src="https://ztas.io/js/analytics.js" data-site-id="${siteId}"></script>`
+    navigator.clipboard.writeText(code)
+    setCopiedId(siteId)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   const handleSiteAdded = (site: { id: string; domain: string; name: string }) => {
-    console.log('Site added:', site)
+    setSites([...sites, { ...site, createdAt: new Date().toISOString() }])
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   return (
-    <SiteList
-      sites={sites.map((site) => ({
-        ...site,
-        status: 'active' as const,
-      }))}
-      loading={loading}
-      onSiteAdded={handleSiteAdded}
-    />
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Sites</h1>
+          <p className="text-muted-foreground">Manage your tracked websites</p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition"
+        >
+          Add Site
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
+          {error}
+        </div>
+      )}
+
+      {sites.length === 0 && !error ? (
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No sites yet</h3>
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Get started by adding your first website.</p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition"
+          >
+            Add Your First Site
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {sites.map((site) => (
+            <div
+              key={site.id}
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{site.name || site.domain}</h3>
+                  <p className="text-sm text-muted-foreground">{site.domain}</p>
+                </div>
+                <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
+                  Active
+                </span>
+              </div>
+
+              <div className="text-sm text-muted-foreground mb-4">
+                Added {new Date(site.createdAt).toLocaleDateString()}
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => copyTrackingCode(site.id)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
+                >
+                  {copiedId === site.id ? (
+                    <>
+                      <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy Tracking Code
+                    </>
+                  )}
+                </button>
+
+                <div className="flex gap-2">
+                  <Link
+                    href={`/dashboard/sites/${site.id}`}
+                    className="flex-1 px-3 py-2 text-sm text-center bg-primary text-primary-foreground rounded hover:opacity-90 transition"
+                  >
+                    View Analytics
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(site.id)}
+                    disabled={deletingId === site.id}
+                    className="px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
+                  >
+                    {deletingId === site.id ? '...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <AddSiteModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={handleSiteAdded}
+      />
+    </div>
   )
 }
