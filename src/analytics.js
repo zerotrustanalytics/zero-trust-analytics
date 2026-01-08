@@ -775,6 +775,32 @@
     }
   };
 
+  // Auto-track elements with data-zta-track attribute
+  function setupAutoTrack() {
+    var elements = document.querySelectorAll('[data-zta-track]');
+
+    elements.forEach(function(el) {
+      if (el._ztaTracked) return; // Already tracked
+      el._ztaTracked = true;
+
+      el.addEventListener('click', function() {
+        var eventName = el.getAttribute('data-zta-track');
+        var label = el.getAttribute('data-zta-label') || null;
+        var category = el.getAttribute('data-zta-category') || 'click';
+        var value = el.getAttribute('data-zta-value') || null;
+
+        if (ZTA.config.debug) {
+          ZTA.log('Auto-track click:', eventName, { label: label, category: category, value: value });
+        }
+
+        ZTA.trackEvent(category, eventName, label, value ? parseFloat(value) : null);
+      });
+    });
+  }
+
+  // Expose for manual re-scanning (useful for SPAs)
+  ZTA.scanTrackElements = setupAutoTrack;
+
   // Expose globally
   window.ZTA = ZTA;
 
@@ -804,6 +830,13 @@
         trackFileDownloads: trackDownloads,
         trackFormSubmissions: trackForms
       });
+
+      // Setup auto-tracking for data-zta-track elements
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupAutoTrack);
+      } else {
+        setupAutoTrack();
+      }
     }
   }
 })();
