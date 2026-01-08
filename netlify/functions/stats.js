@@ -20,7 +20,7 @@ export default async function handler(req, context) {
   }
 
   // Authenticate
-  const auth = authenticateRequest(Object.fromEntries(req.headers));
+  const auth = await authenticateRequest(Object.fromEntries(req.headers));
   if (auth.error) {
     logger.warn('Authentication failed', {
       error: auth.error,
