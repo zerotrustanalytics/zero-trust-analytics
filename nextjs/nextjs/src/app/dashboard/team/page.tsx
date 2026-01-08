@@ -57,10 +57,12 @@ export default function TeamPage() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false)
   const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'admin' | 'editor' | 'viewer'>('viewer')
   const [newTeamName, setNewTeamName] = useState('')
+  const [editTeamName, setEditTeamName] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
@@ -114,6 +116,9 @@ export default function TeamPage() {
         setMembers(data.members || [])
         setInvites(data.invites || [])
         setUserRole(data.userRole || 'viewer')
+        if (data.team?.name) {
+          setEditTeamName(data.team.name)
+        }
       }
     } catch (err) {
       console.error('Team details fetch error:', err)
@@ -235,6 +240,71 @@ export default function TeamPage() {
     }
   }
 
+  const handleRenameTeam = async () => {
+    if (!selectedTeam || !editTeamName.trim() || editTeamName === selectedTeam.name) return
+
+    setActionLoading(true)
+    try {
+      const token = await getToken()
+      const res = await fetch(`${apiUrl}/api/teams`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          teamId: selectedTeam.id,
+          name: editTeamName,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setTeams(teams.map((t) => (t.id === selectedTeam.id ? { ...t, name: editTeamName } : t)))
+        setSelectedTeam({ ...selectedTeam, name: editTeamName })
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to rename team')
+      }
+    } catch (err) {
+      console.error('Rename team error:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleDeleteTeam = async () => {
+    if (!selectedTeam) return
+
+    setActionLoading(true)
+    try {
+      const token = await getToken()
+      const res = await fetch(
+        `${apiUrl}/api/teams?teamId=${selectedTeam.id}&action=deleteTeam`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+
+      if (res.ok) {
+        const updatedTeams = teams.filter((t) => t.id !== selectedTeam.id)
+        setTeams(updatedTeams)
+        setSelectedTeam(updatedTeams.length > 0 ? updatedTeams[0] : null)
+        setShowDeleteTeamModal(false)
+        setMembers([])
+        setInvites([])
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete team')
+      }
+    } catch (err) {
+      console.error('Delete team error:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const canManageMembers = userRole === 'owner' || userRole === 'admin'
 
   if (loading) {
@@ -288,6 +358,7 @@ export default function TeamPage() {
               onChange={(e) => {
                 const team = teams.find((t) => t.id === e.target.value)
                 setSelectedTeam(team || null)
+                setEditTeamName(team?.name || '')
               }}
               className="px-3 py-2 border border-input rounded-md bg-background"
             >
@@ -302,6 +373,50 @@ export default function TeamPage() {
                 Your role: <span className={`px-2 py-0.5 rounded-full text-xs ${roleColors[userRole] || ''}`}>{roleLabels[userRole] || userRole}</span>
               </span>
             )}
+          </div>
+        </Card>
+      )}
+
+      {/* Team Settings (Owner only) */}
+      {selectedTeam && userRole === 'owner' && (
+        <Card className="p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Team Settings</h2>
+
+          {/* Rename Team */}
+          <div className="mb-6">
+            <label htmlFor="editTeamName" className="block text-sm font-medium mb-2">
+              Team Name
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id="editTeamName"
+                type="text"
+                value={editTeamName}
+                onChange={(e) => setEditTeamName(e.target.value)}
+                className="max-w-xs"
+              />
+              <Button
+                onClick={handleRenameTeam}
+                disabled={actionLoading || !editTeamName.trim() || editTeamName === selectedTeam.name}
+              >
+                {actionLoading ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Once you delete a team, there is no going back. All team members will lose access.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteTeamModal(true)}
+              className="text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Delete Team
+            </Button>
           </div>
         </Card>
       )}
@@ -553,6 +668,18 @@ export default function TeamPage() {
         title="Remove Team Member"
         message={`Are you sure you want to remove ${memberToRemove?.email} from the team? They will lose access to all team sites.`}
         confirmText="Remove"
+        variant="danger"
+        loading={actionLoading}
+      />
+
+      {/* Delete Team Confirmation */}
+      <ConfirmModal
+        isOpen={showDeleteTeamModal}
+        onClose={() => setShowDeleteTeamModal(false)}
+        onConfirm={handleDeleteTeam}
+        title="Delete Team"
+        message={`Are you sure you want to delete "${selectedTeam?.name}"? This action cannot be undone. All team members will lose access to shared sites.`}
+        confirmText="Delete Team"
         variant="danger"
         loading={actionLoading}
       />

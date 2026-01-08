@@ -4,6 +4,7 @@ import {
   createTeam,
   getTeam,
   updateTeam,
+  deleteTeam,
   getUserTeams,
   getTeamMembers,
   getTeamMemberRole,
@@ -319,6 +320,26 @@ export default async function handler(req, context) {
     }
 
     try {
+      // Delete team
+      if (action === 'deleteTeam') {
+        const result = await deleteTeam(teamId, userId);
+
+        if (result.error) {
+          return new Response(JSON.stringify({ error: result.error }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
+
       // Leave team
       if (action === 'leave') {
         const result = await leaveTeam(teamId, userId);

@@ -1963,6 +1963,54 @@ export async function leaveTeam(teamId, userId) {
   return await removeTeamMember(teamId, userId, userId);
 }
 
+// Delete a team (owner only)
+export async function deleteTeam(teamId, userId) {
+  const teams = store(STORES.TEAMS);
+  const team = await getTeam(teamId);
+
+  if (!team) return { error: 'Team not found' };
+
+  // Only owner can delete team
+  if (team.ownerId !== userId) {
+    return { error: 'Only the team owner can delete the team' };
+  }
+
+  // Get all members to remove team from their lists
+  const membersKey = `team_members_${teamId}`;
+  const members = await teams.get(membersKey, { type: 'json' }) || [];
+
+  // Remove team from each member's team list
+  for (const member of members) {
+    const userTeamsKey = `user_teams_${member.userId}`;
+    let userTeams = await teams.get(userTeamsKey, { type: 'json' }) || [];
+    userTeams = userTeams.filter(id => id !== teamId);
+    await teams.setJSON(userTeamsKey, userTeams);
+  }
+
+  // Delete team members list
+  await teams.delete(membersKey);
+
+  // Delete team invites
+  const invitesKey = `team_invites_${teamId}`;
+  const invites = await teams.get(invitesKey, { type: 'json' }) || [];
+  for (const invite of invites) {
+    await teams.delete(invite.id);
+    if (invite.token) {
+      await teams.delete(`invite_token_${invite.token}`);
+    }
+  }
+  await teams.delete(invitesKey);
+
+  // Delete team sites list (doesn't delete the sites themselves)
+  const teamSitesKey = `team_sites_${teamId}`;
+  await teams.delete(teamSitesKey);
+
+  // Delete the team itself
+  await teams.delete(teamId);
+
+  return { success: true };
+}
+
 // Add a site to a team
 export async function addSiteToTeam(teamId, siteId, userId) {
   const teams = store(STORES.TEAMS);
