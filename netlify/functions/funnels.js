@@ -22,7 +22,7 @@ export default async function handler(req, context) {
   }
 
   // Authenticate request
-  const auth = authenticateRequest(req.headers);
+  const auth = await authenticateRequest(Object.fromEntries(req.headers));
   if (auth.error) {
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,

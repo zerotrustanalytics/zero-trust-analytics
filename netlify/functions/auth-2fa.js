@@ -26,7 +26,7 @@ export default async function handler(req, context) {
     // POST /api/auth/2fa/setup - Generate TOTP secret + QR code
     if (action === 'setup' || url.pathname.includes('/setup')) {
       logger.info('2FA setup initiated');
-      const auth = authenticateRequest(req.headers);
+      const auth = await authenticateRequest(Object.fromEntries(req.headers));
       if (auth.error) {
         logger.warn('2FA setup failed - authentication error', { error: auth.error });
         return new Response(JSON.stringify({ error: auth.error }), {
@@ -75,7 +75,7 @@ export default async function handler(req, context) {
     // POST /api/auth/2fa/verify - Verify TOTP code and enable 2FA
     if (action === 'verify' || url.pathname.includes('/verify')) {
       logger.info('2FA verification initiated');
-      const auth = authenticateRequest(req.headers);
+      const auth = await authenticateRequest(Object.fromEntries(req.headers));
       if (auth.error) {
         logger.warn('2FA verify failed - authentication error', { error: auth.error });
         return new Response(JSON.stringify({ error: auth.error }), {
@@ -131,7 +131,7 @@ export default async function handler(req, context) {
     // POST /api/auth/2fa/disable - Disable 2FA (requires code)
     if (action === 'disable' || url.pathname.includes('/disable')) {
       logger.info('2FA disable initiated');
-      const auth = authenticateRequest(req.headers);
+      const auth = await authenticateRequest(Object.fromEntries(req.headers));
       if (auth.error) {
         logger.warn('2FA disable failed - authentication error', { error: auth.error });
         return new Response(JSON.stringify({ error: auth.error }), {

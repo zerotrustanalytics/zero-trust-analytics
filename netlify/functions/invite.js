@@ -72,7 +72,7 @@ export default async function handler(req, context) {
   // POST - Accept or decline invite
   if (req.method === 'POST') {
     // Authenticate request
-    const auth = authenticateRequest(req.headers);
+    const auth = await authenticateRequest(Object.fromEntries(req.headers));
     if (auth.error) {
       return new Response(JSON.stringify({ error: auth.error }), {
         status: auth.status,
