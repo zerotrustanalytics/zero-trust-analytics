@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import { ConfirmModal } from '@/components/ui'
 
 interface Annotation {
   id: string
@@ -41,6 +42,9 @@ export default function AnnotationsPage() {
   const [date, setDate] = useState('')
   const [category, setCategory] = useState<Annotation['category']>('other')
   const [saving, setSaving] = useState(false)
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchSites = useCallback(async () => {
     try {
@@ -139,17 +143,17 @@ export default function AnnotationsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedSiteId) {
-      alert('Please select a site first')
+      setError('Please select a site first')
       return
     }
 
     setSaving(true)
+    setError('')
     try {
       const token = await getToken()
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
 
       if (editingAnnotation) {
-        // Update
         const res = await fetch(`${apiUrl}/api/annotations`, {
           method: 'PATCH',
           headers: {
@@ -168,7 +172,7 @@ export default function AnnotationsPage() {
 
         if (!res.ok) {
           const data = await res.json()
-          alert(data.error || 'Failed to update annotation')
+          setError(data.error || 'Failed to update annotation')
           return
         }
 
@@ -178,7 +182,6 @@ export default function AnnotationsPage() {
             : a
         ))
       } else {
-        // Create
         const res = await fetch(`${apiUrl}/api/annotations`, {
           method: 'POST',
           headers: {
@@ -196,7 +199,7 @@ export default function AnnotationsPage() {
 
         const data = await res.json()
         if (!res.ok) {
-          alert(data.error || 'Failed to create annotation')
+          setError(data.error || 'Failed to create annotation')
           return
         }
 
@@ -204,32 +207,36 @@ export default function AnnotationsPage() {
       }
       handleCloseModal()
     } catch {
-      alert('Failed to save annotation')
+      setError('Failed to save annotation')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleDelete = async (annotationId: string) => {
-    if (!confirm('Are you sure you want to delete this annotation?')) return
+  const handleDelete = async () => {
+    if (!confirmDeleteId) return
 
+    setDeleting(true)
     try {
       const token = await getToken()
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
 
-      const res = await fetch(`${apiUrl}/api/annotations?id=${annotationId}&siteId=${selectedSiteId}`, {
+      const res = await fetch(`${apiUrl}/api/annotations?id=${confirmDeleteId}&siteId=${selectedSiteId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       })
 
       if (res.ok) {
-        setAnnotations(annotations.filter(a => a.id !== annotationId))
+        setAnnotations(annotations.filter(a => a.id !== confirmDeleteId))
+        setConfirmDeleteId(null)
       } else {
         const data = await res.json()
-        alert(data.error || 'Failed to delete annotation')
+        setError(data.error || 'Failed to delete annotation')
       }
     } catch {
-      alert('Failed to delete annotation')
+      setError('Failed to delete annotation')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -284,6 +291,7 @@ export default function AnnotationsPage() {
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
           {error}
+          <button onClick={() => setError('')} className="ml-4 text-sm underline">Dismiss</button>
         </div>
       )}
 
@@ -351,7 +359,7 @@ export default function AnnotationsPage() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => handleDelete(annotation.id)}
+                    onClick={() => setConfirmDeleteId(annotation.id)}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-600"
                     title="Delete"
                   >
@@ -366,7 +374,7 @@ export default function AnnotationsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
@@ -442,6 +450,18 @@ export default function AnnotationsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Annotation"
+        message="Are you sure you want to delete this annotation? This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={deleting}
+      />
     </div>
   )
 }

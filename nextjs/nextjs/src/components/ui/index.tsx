@@ -3,6 +3,8 @@
 import { forwardRef, ButtonHTMLAttributes, InputHTMLAttributes, HTMLAttributes } from 'react'
 import { clsx } from 'clsx'
 
+export { ConfirmModal } from './ConfirmModal'
+
 // Button Component
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'outline' | 'ghost' | 'destructive'
