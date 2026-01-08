@@ -297,9 +297,11 @@ export default function TeamPage() {
                 </option>
               ))}
             </select>
-            <span className="text-sm text-muted-foreground">
-              Your role: <span className={`px-2 py-0.5 rounded-full text-xs ${roleColors[userRole]}`}>{roleLabels[userRole]}</span>
-            </span>
+            {userRole && (
+              <span className="text-sm text-muted-foreground">
+                Your role: <span className={`px-2 py-0.5 rounded-full text-xs ${roleColors[userRole] || ''}`}>{roleLabels[userRole] || userRole}</span>
+              </span>
+            )}
           </div>
         </Card>
       )}
@@ -351,17 +353,17 @@ export default function TeamPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                          {(member.name || member.email).charAt(0).toUpperCase()}
+                          {(member.name || member.email || '?').charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-4">
-                          <div className="font-medium">{member.name || member.email.split('@')[0]}</div>
-                          <div className="text-sm text-muted-foreground">{member.email}</div>
+                          <div className="font-medium">{member.name || (member.email ? member.email.split('@')[0] : 'Unknown')}</div>
+                          <div className="text-sm text-muted-foreground">{member.email || 'No email'}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleColors[member.role]}`}>
-                        {roleLabels[member.role]}
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleColors[member.role] || 'bg-gray-100 text-gray-800'}`}>
+                        {roleLabels[member.role] || member.role || 'Unknown'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -432,8 +434,8 @@ export default function TeamPage() {
                   <tr key={invite.id}>
                     <td className="px-6 py-4 whitespace-nowrap">{invite.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleColors[invite.role]}`}>
-                        {roleLabels[invite.role]}
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleColors[invite.role] || 'bg-gray-100 text-gray-800'}`}>
+                        {roleLabels[invite.role] || invite.role || 'Unknown'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
