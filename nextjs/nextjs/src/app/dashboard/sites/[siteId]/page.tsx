@@ -625,6 +625,8 @@ export default function SiteDetailsPage() {
   const [showShareModal, setShowShareModal] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [shareCopied, setShareCopied] = useState(false)
+  const [shareTab, setShareTab] = useState<'link' | 'embed'>('link')
+  const [embedCopied, setEmbedCopied] = useState(false)
   const [drilldownSource, setDrilldownSource] = useState<string | null>(null)
   const [locationTab, setLocationTab] = useState<'countries' | 'regions' | 'cities'>('countries')
   const [techTab, setTechTab] = useState<'browsers' | 'os' | 'devices'>('browsers')
@@ -1308,8 +1310,8 @@ export default function SiteDetailsPage() {
       {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold">Share Dashboard</h3>
               <button
                 onClick={() => setShowShareModal(false)}
@@ -1321,38 +1323,124 @@ export default function SiteDetailsPage() {
               </button>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-4">
-              Share a read-only view of this dashboard with others. Anyone with this link can view the analytics.
-            </p>
-
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={shareUrl}
-                readOnly
-                className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm"
-              />
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(shareUrl)
-                  setShareCopied(true)
-                  setTimeout(() => setShareCopied(false), 2000)
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  shareCopied
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-primary text-primary-foreground hover:opacity-90'
+                onClick={() => setShareTab('link')}
+                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition ${
+                  shareTab === 'link'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {shareCopied ? 'Copied!' : 'Copy'}
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  Share Link
+                </div>
+              </button>
+              <button
+                onClick={() => setShareTab('embed')}
+                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition ${
+                  shareTab === 'embed'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  Embed Code
+                </div>
               </button>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>This link provides read-only access to the current period&apos;s data.</span>
+            <div className="p-4">
+              {shareTab === 'link' ? (
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Share a read-only view of this dashboard with others. Anyone with this link can view the analytics.
+                  </p>
+
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm font-mono text-xs"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(shareUrl)
+                        setShareCopied(true)
+                        setTimeout(() => setShareCopied(false), 2000)
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        shareCopied
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-primary text-primary-foreground hover:opacity-90'
+                      }`}
+                    >
+                      {shareCopied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>This link provides read-only access to the current period&apos;s data.</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Embed your analytics dashboard on your website or blog. Copy the code below and paste it into your HTML.
+                  </p>
+
+                  <div className="mb-4">
+                    <textarea
+                      readOnly
+                      value={`<iframe
+  src="${shareUrl}"
+  width="100%"
+  height="600"
+  frameborder="0"
+  style="border: 1px solid #e5e7eb; border-radius: 8px;"
+  title="Analytics Dashboard - ${site?.domain || ''}"
+></iframe>`}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm font-mono text-xs h-32 resize-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const embedCode = `<iframe src="${shareUrl}" width="100%" height="600" frameborder="0" style="border: 1px solid #e5e7eb; border-radius: 8px;" title="Analytics Dashboard - ${site?.domain || ''}"></iframe>`
+                      navigator.clipboard.writeText(embedCode)
+                      setEmbedCopied(true)
+                      setTimeout(() => setEmbedCopied(false), 2000)
+                    }}
+                    className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      embedCopied
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-primary text-primary-foreground hover:opacity-90'
+                    }`}
+                  >
+                    {embedCopied ? 'Embed Code Copied!' : 'Copy Embed Code'}
+                  </button>
+
+                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <p className="text-xs font-medium mb-2">Customization Options:</p>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>- Adjust <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">width</code> and <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">height</code> to fit your layout</li>
+                      <li>- Add <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">?theme=dark</code> to the URL for dark mode</li>
+                      <li>- Add <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">?minimal=true</code> for a compact view</li>
+                    </ul>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
