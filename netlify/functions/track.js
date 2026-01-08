@@ -98,7 +98,7 @@ export default async function handler(req, context) {
   // Rate limiting: 1000 requests per minute per IP (generous for tracking)
   const clientIP = context.ip || req.headers.get('x-forwarded-for') || 'unknown';
   const rateLimitKey = hashIP(clientIP);
-  const rateLimit = checkRateLimit(rateLimitKey, { limit: 1000, windowMs: 60000 });
+  const rateLimit = await checkRateLimit(rateLimitKey, { limit: 1000, windowMs: 60000 });
 
   if (!rateLimit.allowed) {
     logger.warn('Rate limit exceeded for tracking', {
