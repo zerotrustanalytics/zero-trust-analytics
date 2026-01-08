@@ -8,10 +8,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'outline' | 'ghost' | 'destructive'
   size?: 'default' | 'sm' | 'lg'
   loading?: boolean
+  fullWidth?: boolean
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', loading, disabled, children, ...props }, ref) => {
+  ({ className, variant = 'default', size = 'default', loading, disabled, fullWidth, children, ...props }, ref) => {
     return (
       <button
         ref={ref}
@@ -29,6 +30,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'h-8 px-3 text-sm': size === 'sm',
             'h-12 px-6 text-lg': size === 'lg',
           },
+          fullWidth && 'w-full',
           className
         )}
         {...props}
