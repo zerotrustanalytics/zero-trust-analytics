@@ -1,39 +1,124 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Card } from '@/components/ui'
 
-interface RealtimeVisitor {
+interface Site {
   id: string
-  page: string
-  referrer: string
-  country: string
-  device: string
-  timestamp: Date
+  domain: string
+  name?: string
+}
+
+interface RealtimeData {
+  activeVisitors: number
+  last30Minutes: number
+  today: number
+  visitors: {
+    id: string
+    page: string
+    referrer: string
+    country: string
+    device: string
+    timestamp: string
+  }[]
 }
 
 export default function RealtimePage() {
-  const [activeVisitors, setActiveVisitors] = useState(12)
-  const [visitors, setVisitors] = useState<RealtimeVisitor[]>([
-    { id: '1', page: '/pricing', referrer: 'google.com', country: 'US', device: 'Desktop', timestamp: new Date() },
-    { id: '2', page: '/features', referrer: 'twitter.com', country: 'UK', device: 'Mobile', timestamp: new Date(Date.now() - 30000) },
-    { id: '3', page: '/', referrer: 'direct', country: 'DE', device: 'Desktop', timestamp: new Date(Date.now() - 60000) },
-    { id: '4', page: '/docs/api', referrer: 'github.com', country: 'CA', device: 'Desktop', timestamp: new Date(Date.now() - 90000) },
-    { id: '5', page: '/blog/analytics', referrer: 'hackernews', country: 'US', device: 'Tablet', timestamp: new Date(Date.now() - 120000) },
-  ])
+  const { getToken } = useAuth()
+  const [sites, setSites] = useState<Site[]>([])
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('')
+  const [data, setData] = useState<RealtimeData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  // Simulate real-time updates
+  const fetchSites = useCallback(async () => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/sites/list`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+
+      const result = await res.json()
+      if (res.ok && result.sites) {
+        setSites(result.sites)
+        if (result.sites.length > 0 && !selectedSiteId) {
+          setSelectedSiteId(result.sites[0].id)
+        }
+      }
+    } catch {
+      console.error('Failed to fetch sites')
+    }
+  }, [getToken, selectedSiteId])
+
+  const fetchRealtimeData = useCallback(async () => {
+    if (!selectedSiteId) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      const token = await getToken()
+      if (!token) {
+        setError('Not authenticated')
+        setLoading(false)
+        return
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/realtime?siteId=${selectedSiteId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+
+      if (!res.ok) {
+        const result = await res.json()
+        setError(result.error || 'Failed to fetch realtime data')
+        setData(null)
+        return
+      }
+
+      const result = await res.json()
+      setData(result)
+      setError('')
+    } catch {
+      setError('Failed to load realtime data')
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [getToken, selectedSiteId])
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveVisitors((prev) => prev + Math.floor(Math.random() * 3) - 1)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
+    fetchSites()
+  }, [fetchSites])
 
-  const getTimeAgo = (timestamp: Date) => {
-    const seconds = Math.floor((Date.now() - timestamp.getTime()) / 1000)
+  useEffect(() => {
+    if (selectedSiteId) {
+      setLoading(true)
+      fetchRealtimeData()
+
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchRealtimeData, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [selectedSiteId, fetchRealtimeData])
+
+  const getTimeAgo = (timestamp: string) => {
+    const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000)
     if (seconds < 60) return `${seconds}s ago`
-    return `${Math.floor(seconds / 60)}m ago`
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+    return `${Math.floor(seconds / 3600)}h ago`
+  }
+
+  if (loading && sites.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   return (
@@ -43,63 +128,108 @@ export default function RealtimePage() {
         <p className="text-muted-foreground">Live visitor activity on your sites</p>
       </div>
 
-      {/* Active Visitors Counter */}
-      <Card className="p-8 mb-8 text-center bg-gradient-to-br from-primary/10 to-primary/5">
-        <div className="inline-flex items-center gap-2 mb-2">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-          </span>
-          <span className="text-sm font-medium text-green-600">Live</span>
-        </div>
-        <p className="text-6xl font-bold text-primary">{activeVisitors}</p>
-        <p className="text-muted-foreground mt-2">Active visitors right now</p>
-      </Card>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold">156</p>
-          <p className="text-sm text-muted-foreground">Last 30 minutes</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold">1,234</p>
-          <p className="text-sm text-muted-foreground">Today</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold">2.4</p>
-          <p className="text-sm text-muted-foreground">Pages/Session</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold">1m 32s</p>
-          <p className="text-sm text-muted-foreground">Avg. Duration</p>
-        </Card>
+      {/* Site Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Select Site</label>
+        <select
+          value={selectedSiteId}
+          onChange={(e) => setSelectedSiteId(e.target.value)}
+          className="w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="">Select a site...</option>
+          {sites.map((site) => (
+            <option key={site.id} value={site.id}>
+              {site.name || site.domain}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Live Feed */}
-      <Card className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="font-semibold">Live Activity Feed</h2>
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
+          {error}
         </div>
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-          {visitors.map((visitor) => (
-            <div key={visitor.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50">
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xs">{visitor.country}</span>
-                </div>
-                <div>
-                  <p className="font-medium">{visitor.page}</p>
-                  <p className="text-sm text-muted-foreground">
-                    from {visitor.referrer} • {visitor.device}
-                  </p>
-                </div>
-              </div>
-              <span className="text-sm text-muted-foreground">{getTimeAgo(visitor.timestamp)}</span>
+      )}
+
+      {!selectedSiteId ? (
+        <Card className="p-8 text-center">
+          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <h3 className="font-medium mb-2">Select a site</h3>
+          <p className="text-muted-foreground">Choose a site above to view real-time analytics.</p>
+        </Card>
+      ) : loading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <>
+          {/* Active Visitors Counter */}
+          <Card className="p-8 mb-8 text-center bg-gradient-to-br from-primary/10 to-primary/5">
+            <div className="inline-flex items-center gap-2 mb-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              <span className="text-sm font-medium text-green-600">Live</span>
             </div>
-          ))}
-        </div>
-      </Card>
+            <p className="text-6xl font-bold text-primary">{data?.activeVisitors || 0}</p>
+            <p className="text-muted-foreground mt-2">Active visitors right now</p>
+          </Card>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold">{data?.last30Minutes || 0}</p>
+              <p className="text-sm text-muted-foreground">Last 30 minutes</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold">{data?.today || 0}</p>
+              <p className="text-sm text-muted-foreground">Today</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold">{data?.visitors?.length || 0}</p>
+              <p className="text-sm text-muted-foreground">Recent visitors</p>
+            </Card>
+          </div>
+
+          {/* Live Feed */}
+          <Card className="overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="font-semibold">Live Activity Feed</h2>
+            </div>
+            {!data?.visitors || data.visitors.length === 0 ? (
+              <div className="p-8 text-center">
+                <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <h3 className="font-medium mb-2">No recent visitors</h3>
+                <p className="text-muted-foreground">Visitor activity will appear here in real-time.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {data.visitors.map((visitor) => (
+                  <div key={visitor.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <div className="flex items-center gap-4">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xs">{visitor.country || '?'}</span>
+                      </div>
+                      <div>
+                        <p className="font-medium">{visitor.page}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {visitor.referrer ? `from ${visitor.referrer}` : 'Direct'} {visitor.device && `• ${visitor.device}`}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{getTimeAgo(visitor.timestamp)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </>
+      )}
     </div>
   )
 }
