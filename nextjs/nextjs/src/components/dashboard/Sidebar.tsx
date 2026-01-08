@@ -225,7 +225,7 @@ export function Sidebar() {
         <footer className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className={clsx('flex items-center', collapsed ? 'justify-center' : 'gap-3 px-4')}>
             <UserButton
-              afterSignOutUrl="/sign-in"
+              afterSignOutUrl="https://ztas.io"
               appearance={{
                 elements: {
                   avatarBox: "w-8 h-8"

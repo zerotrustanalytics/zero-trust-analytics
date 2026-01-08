@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Button, Card, Input } from '@/components/ui'
-import { Modal, ModalFooter } from '@/components/ui/Modal'
+import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@clerk/nextjs'
 
 interface Annotation {
   id: string
@@ -11,34 +10,14 @@ interface Annotation {
   date: string
   category: 'release' | 'campaign' | 'incident' | 'other'
   createdAt: string
+  siteId: string
 }
 
-const mockAnnotations: Annotation[] = [
-  {
-    id: '1',
-    title: 'v2.0 Release',
-    description: 'Major product update with new dashboard features',
-    date: '2026-01-01',
-    category: 'release',
-    createdAt: '2025-12-30',
-  },
-  {
-    id: '2',
-    title: 'New Year Campaign',
-    description: 'Email campaign to all subscribers',
-    date: '2025-12-31',
-    category: 'campaign',
-    createdAt: '2025-12-29',
-  },
-  {
-    id: '3',
-    title: 'Server Migration',
-    description: 'Moved to new infrastructure, brief downtime expected',
-    date: '2025-12-15',
-    category: 'incident',
-    createdAt: '2025-12-14',
-  },
-]
+interface Site {
+  id: string
+  domain: string
+  name?: string
+}
 
 const categoryColors = {
   release: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
@@ -47,38 +26,88 @@ const categoryColors = {
   other: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
 }
 
-const categoryIcons = {
-  release: (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-    </svg>
-  ),
-  campaign: (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-    </svg>
-  ),
-  incident: (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
-  ),
-  other: (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-    </svg>
-  ),
-}
-
 export default function AnnotationsPage() {
-  const [annotations, setAnnotations] = useState<Annotation[]>(mockAnnotations)
+  const { getToken } = useAuth()
+  const [sites, setSites] = useState<Site[]>([])
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('')
+  const [annotations, setAnnotations] = useState<Annotation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
   const [showModal, setShowModal] = useState(false)
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState('')
   const [category, setCategory] = useState<Annotation['category']>('other')
-  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const fetchSites = useCallback(async () => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/sites/list`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+
+      const data = await res.json()
+      if (res.ok && data.sites) {
+        setSites(data.sites)
+        if (data.sites.length > 0 && !selectedSiteId) {
+          setSelectedSiteId(data.sites[0].id)
+        }
+      }
+    } catch {
+      console.error('Failed to fetch sites')
+    }
+  }, [getToken, selectedSiteId])
+
+  const fetchAnnotations = useCallback(async () => {
+    if (!selectedSiteId) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      const token = await getToken()
+      if (!token) {
+        setError('Not authenticated')
+        setLoading(false)
+        return
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/annotations?siteId=${selectedSiteId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Failed to fetch annotations')
+        return
+      }
+
+      setAnnotations(data.annotations || [])
+    } catch {
+      setError('Failed to load annotations')
+    } finally {
+      setLoading(false)
+    }
+  }, [getToken, selectedSiteId])
+
+  useEffect(() => {
+    fetchSites()
+  }, [fetchSites])
+
+  useEffect(() => {
+    if (selectedSiteId) {
+      setLoading(true)
+      setError('')
+      fetchAnnotations()
+    }
+  }, [selectedSiteId, fetchAnnotations])
 
   const resetForm = () => {
     setTitle('')
@@ -97,6 +126,7 @@ export default function AnnotationsPage() {
       setCategory(annotation.category)
     } else {
       resetForm()
+      setDate(new Date().toISOString().split('T')[0])
     }
     setShowModal(true)
   }
@@ -108,221 +138,310 @@ export default function AnnotationsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (!selectedSiteId) {
+      alert('Please select a site first')
+      return
+    }
 
+    setSaving(true)
     try {
+      const token = await getToken()
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+
       if (editingAnnotation) {
-        // Update existing
+        // Update
+        const res = await fetch(`${apiUrl}/api/annotations`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: editingAnnotation.id,
+            siteId: selectedSiteId,
+            title,
+            description,
+            date,
+            category,
+          }),
+        })
+
+        if (!res.ok) {
+          const data = await res.json()
+          alert(data.error || 'Failed to update annotation')
+          return
+        }
+
         setAnnotations(annotations.map(a =>
           a.id === editingAnnotation.id
             ? { ...a, title, description, date, category }
             : a
         ))
       } else {
-        // Create new
-        const newAnnotation: Annotation = {
-          id: Date.now().toString(),
-          title,
-          description,
-          date,
-          category,
-          createdAt: new Date().toISOString(),
+        // Create
+        const res = await fetch(`${apiUrl}/api/annotations`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            siteId: selectedSiteId,
+            title,
+            description,
+            date,
+            category,
+          }),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.error || 'Failed to create annotation')
+          return
         }
-        setAnnotations([newAnnotation, ...annotations])
+
+        setAnnotations([data.annotation, ...annotations])
       }
       handleCloseModal()
-    } catch (error) {
-      console.error('Save error:', error)
+    } catch {
+      alert('Failed to save annotation')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  const handleDelete = (annotationId: string) => {
+  const handleDelete = async (annotationId: string) => {
     if (!confirm('Are you sure you want to delete this annotation?')) return
-    setAnnotations(annotations.filter(a => a.id !== annotationId))
+
+    try {
+      const token = await getToken()
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+
+      const res = await fetch(`${apiUrl}/api/annotations?id=${annotationId}&siteId=${selectedSiteId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+
+      if (res.ok) {
+        setAnnotations(annotations.filter(a => a.id !== annotationId))
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete annotation')
+      }
+    } catch {
+      alert('Failed to delete annotation')
+    }
   }
 
-  // Sort annotations by date (newest first)
   const sortedAnnotations = [...annotations].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   )
+
+  if (loading && sites.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Annotations</h1>
-          <p className="text-muted-foreground">Mark important events on your analytics timeline</p>
+          <p className="text-muted-foreground">Add notes and markers to your analytics timeline.</p>
         </div>
-        <Button onClick={() => handleOpenModal()}>
-          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button
+          onClick={() => handleOpenModal()}
+          disabled={!selectedSiteId}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Add Annotation
-        </Button>
+        </button>
       </div>
 
-      {/* Info Card */}
-      <Card className="p-4 mb-6 bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
-        <div className="flex items-start gap-3">
-          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {/* Site Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Select Site</label>
+        <select
+          value={selectedSiteId}
+          onChange={(e) => setSelectedSiteId(e.target.value)}
+          className="w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="">Select a site...</option>
+          {sites.map((site) => (
+            <option key={site.id} value={site.id}>
+              {site.name || site.domain}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
+          {error}
+        </div>
+      )}
+
+      {!selectedSiteId ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
           </svg>
-          <div>
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              Annotations help you correlate traffic changes with events like product launches, marketing campaigns, or incidents.
-              They appear as markers on your analytics charts.
-            </p>
+          <h3 className="font-medium mb-2">Select a site</h3>
+          <p className="text-muted-foreground">Choose a site above to view and manage annotations.</p>
+        </div>
+      ) : loading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : sortedAnnotations.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+          </svg>
+          <h3 className="font-medium mb-2">No annotations yet</h3>
+          <p className="text-muted-foreground mb-4">Add your first annotation to mark important events.</p>
+          <button
+            onClick={() => handleOpenModal()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+          >
+            Add Annotation
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {sortedAnnotations.map((annotation) => (
+            <div
+              key={annotation.id}
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold">{annotation.title}</h3>
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${categoryColors[annotation.category]}`}>
+                      {annotation.category}
+                    </span>
+                  </div>
+                  {annotation.description && (
+                    <p className="text-sm text-muted-foreground mb-2">{annotation.description}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(annotation.date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenModal(annotation)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                    title="Edit"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(annotation.id)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-600"
+                    title="Delete"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <h2 className="text-xl font-bold mb-4">
+              {editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Product Launch"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief description of the event..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date</label>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as Annotation['category'])}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                    >
+                      <option value="release">Release</option>
+                      <option value="campaign">Campaign</option>
+                      <option value="incident">Incident</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : editingAnnotation ? 'Update' : 'Add'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </Card>
-
-      {/* Timeline */}
-      <div className="space-y-4">
-        {sortedAnnotations.map((annotation, index) => (
-          <Card key={annotation.id} className="p-4">
-            <div className="flex items-start gap-4">
-              {/* Timeline indicator */}
-              <div className="flex flex-col items-center">
-                <div className={`p-2 rounded-full ${categoryColors[annotation.category]}`}>
-                  {categoryIcons[annotation.category]}
-                </div>
-                {index < sortedAnnotations.length - 1 && (
-                  <div className="w-0.5 h-full min-h-[40px] bg-gray-200 dark:bg-gray-700 mt-2" />
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold">{annotation.title}</h3>
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${categoryColors[annotation.category]}`}>
-                        {annotation.category}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{annotation.description}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(annotation.date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => handleOpenModal(annotation)}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(annotation.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        ))}
-
-        {annotations.length === 0 && (
-          <Card className="p-8 text-center">
-            <svg className="w-12 h-12 mx-auto text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-            <h3 className="font-medium mb-2">No annotations yet</h3>
-            <p className="text-muted-foreground mb-4">Add your first annotation to mark important events</p>
-            <Button onClick={() => handleOpenModal()}>Add Annotation</Button>
-          </Card>
-        )}
-      </div>
-
-      {/* Add/Edit Modal */}
-      <Modal
-        isOpen={showModal}
-        onClose={handleCloseModal}
-        title={editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}
-        description={editingAnnotation ? 'Update the annotation details' : 'Mark an important event on your timeline'}
-      >
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium mb-1">
-                Title
-              </label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Product Launch"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium mb-1">
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of the event..."
-                className="w-full px-3 py-2 border border-input rounded-md bg-background resize-none"
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium mb-1">
-                  Date
-                </label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium mb-1">
-                  Category
-                </label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as Annotation['category'])}
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                >
-                  <option value="release">Release</option>
-                  <option value="campaign">Campaign</option>
-                  <option value="incident">Incident</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <ModalFooter>
-            <Button type="button" variant="outline" onClick={handleCloseModal}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : editingAnnotation ? 'Update' : 'Add Annotation'}
-            </Button>
-          </ModalFooter>
-        </form>
-      </Modal>
+      )}
     </div>
   )
 }
