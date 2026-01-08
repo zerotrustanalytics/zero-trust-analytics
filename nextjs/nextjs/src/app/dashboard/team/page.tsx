@@ -59,6 +59,7 @@ export default function TeamPage() {
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false)
+  const [showTeamSettingsModal, setShowTeamSettingsModal] = useState(false)
   const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'admin' | 'editor' | 'viewer'>('viewer')
@@ -369,55 +370,23 @@ export default function TeamPage() {
                 </option>
               ))}
             </select>
+            {userRole === 'owner' && selectedTeam && (
+              <button
+                onClick={() => setShowTeamSettingsModal(true)}
+                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Team Settings"
+              >
+                <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            )}
             {userRole && (
               <span className="text-sm text-muted-foreground">
                 Your role: <span className={`px-2 py-0.5 rounded-full text-xs ${roleColors[userRole] || ''}`}>{roleLabels[userRole] || userRole}</span>
               </span>
             )}
-          </div>
-        </Card>
-      )}
-
-      {/* Team Settings (Owner only) */}
-      {selectedTeam && userRole === 'owner' && (
-        <Card className="p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Team Settings</h2>
-
-          {/* Rename Team */}
-          <div className="mb-6">
-            <label htmlFor="editTeamName" className="block text-sm font-medium mb-2">
-              Team Name
-            </label>
-            <div className="flex gap-2">
-              <Input
-                id="editTeamName"
-                type="text"
-                value={editTeamName}
-                onChange={(e) => setEditTeamName(e.target.value)}
-                className="max-w-xs"
-              />
-              <Button
-                onClick={handleRenameTeam}
-                disabled={actionLoading || !editTeamName.trim() || editTeamName === selectedTeam.name}
-              >
-                {actionLoading ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </div>
-
-          {/* Danger Zone */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Once you delete a team, there is no going back. All team members will lose access.
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteTeamModal(true)}
-              className="text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              Delete Team
-            </Button>
           </div>
         </Card>
       )}
@@ -692,6 +661,61 @@ export default function TeamPage() {
         variant="danger"
         loading={actionLoading}
       />
+
+      {/* Team Settings Modal */}
+      <Modal
+        isOpen={showTeamSettingsModal}
+        onClose={() => setShowTeamSettingsModal(false)}
+        title="Team Settings"
+        description="Manage your team settings"
+      >
+        <div className="space-y-6">
+          {/* Rename Team */}
+          <div>
+            <label htmlFor="editTeamNameModal" className="block text-sm font-medium mb-2">
+              Team Name
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id="editTeamNameModal"
+                type="text"
+                value={editTeamName}
+                onChange={(e) => setEditTeamName(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                onClick={async () => {
+                  await handleRenameTeam()
+                  if (editTeamName !== selectedTeam?.name) {
+                    // Keep modal open if rename failed
+                  }
+                }}
+                disabled={actionLoading || !editTeamName.trim() || editTeamName === selectedTeam?.name}
+              >
+                {actionLoading ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Once you delete a team, there is no going back. All team members will lose access.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTeamSettingsModal(false)
+                setShowDeleteTeamModal(true)
+              }}
+              className="text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Delete Team
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
