@@ -248,10 +248,25 @@ export default function ReportsPage() {
 
       {/* Report Preview */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-        <h2 className="text-sm font-semibold mb-4">Email Report Preview</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-sm font-semibold">Email Report Preview</h2>
+          {sites.length > 1 && (
+            <select
+              value={newReport.siteId}
+              onChange={(e) => setNewReport({ ...newReport, siteId: e.target.value })}
+              className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+            >
+              {sites.map(site => (
+                <option key={site.id} value={site.id}>{site.name || site.domain}</option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-muted-foreground">Subject: Weekly Analytics Report - yoursite.com</p>
+            <p className="text-xs text-muted-foreground">
+              Subject: Weekly Analytics Report - {sites.find(s => s.id === newReport.siteId)?.domain || 'yoursite.com'}
+            </p>
           </div>
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-3 mb-4">
