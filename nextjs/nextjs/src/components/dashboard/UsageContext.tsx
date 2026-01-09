@@ -47,9 +47,11 @@ export function UsageProvider({ children }: { children: ReactNode }) {
 
       if (res.ok) {
         const data = await res.json()
+        console.log('Usage API response:', data)
         setUsageData(data)
         setError(null)
       } else {
+        console.error('Usage API failed:', res.status, await res.text())
         setError('Failed to load usage data')
       }
     } catch {

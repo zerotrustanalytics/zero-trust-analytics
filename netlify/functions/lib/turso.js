@@ -1224,6 +1224,46 @@ async function getTeamForSite(siteId) {
   return null;
 }
 
+/**
+ * Calculate actual pageview usage from pageviews table for given sites
+ * This is more accurate than monthly_usage as it counts real data
+ */
+async function getActualUsageFromPageviews(siteIds, month = null) {
+  if (!siteIds || siteIds.length === 0) {
+    return { month: getCurrentMonth(), pageviews: 0, visitors: 0 };
+  }
+
+  const targetMonth = month || getCurrentMonth();
+  // Calculate date range for the month
+  const [year, monthNum] = targetMonth.split('-').map(Number);
+  const startDate = `${targetMonth}-01 00:00:00`;
+  const endDate = new Date(year, monthNum, 0, 23, 59, 59).toISOString().replace('T', ' ').split('.')[0];
+
+  // Build placeholders for IN clause
+  const placeholders = siteIds.map(() => '?').join(', ');
+
+  const result = await turso.execute({
+    sql: `
+      SELECT
+        COUNT(*) as total_pageviews,
+        COUNT(DISTINCT identity_hash) as unique_visitors
+      FROM pageviews
+      WHERE site_id IN (${placeholders})
+        AND event_type = 'pageview'
+        AND timestamp >= ?
+        AND timestamp <= ?
+    `,
+    args: [...siteIds, startDate, endDate]
+  });
+
+  const row = normalizeRows(result.rows)[0];
+  return {
+    month: targetMonth,
+    pageviews: row?.total_pageviews || 0,
+    visitors: row?.unique_visitors || 0
+  };
+}
+
 export {
   turso,
   initSchema,
@@ -1255,5 +1295,6 @@ export {
   getTeamUsageBySite,
   getTeamUsageHistory,
   checkUsageLimit,
-  getTeamForSite
+  getTeamForSite,
+  getActualUsageFromPageviews
 };

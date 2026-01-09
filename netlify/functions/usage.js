@@ -1,5 +1,5 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getTeamUsage, getTeamUsageBySite, getTeamUsageHistory, checkUsageLimit } from './lib/turso.js';
+import { getTeamUsage, getTeamUsageBySite, getTeamUsageHistory, checkUsageLimit, getActualUsageFromPageviews, getCurrentMonth } from './lib/turso.js';
 import { Config } from './lib/config.js';
 import { getUser, getUserById, getUserSites, getUserTeams, getTeamMembers } from './lib/storage.js';
 
@@ -57,28 +57,54 @@ export default async function handler(req, context) {
     const plan = user?.plan || 'free';
     const planLimits = getPlanLimits(plan);
 
-    // Get current usage (using userId as the "team_id" for usage tracking)
-    const currentUsage = await getTeamUsage(userId, month);
-
-    // Get usage by site
-    const usageBySite = await getTeamUsageBySite(userId, month);
-
-    // Get usage history (last 6 months)
-    const usageHistory = await getTeamUsageHistory(userId, 6);
-
-    // Check limits
-    const limitCheck = await checkUsageLimit(userId, planLimits.monthlyPageviews);
-
-    // Get actual counts for sites and team members
+    // Get user's sites first (needed for actual usage calculation)
     let sitesCount = 0;
-    let teamMembersCount = 1; // At least the user themselves
-
+    let userSites = [];
     try {
-      const userSites = await getUserSites(userId);
-      sitesCount = userSites?.length || 0;
+      userSites = await getUserSites(userId) || [];
+      sitesCount = userSites.length;
     } catch (e) {
       console.error('Error fetching user sites:', e);
     }
+
+    // Calculate actual usage from pageviews table (more accurate than monthly_usage)
+    const targetMonth = month || getCurrentMonth();
+    let currentUsage = { month: targetMonth, pageviews: 0, visitors: 0, events: 0 };
+    let usageBySite = [];
+    let usageHistory = [];
+
+    try {
+      // Get actual pageview counts from the pageviews table
+      const actualUsage = await getActualUsageFromPageviews(userSites, targetMonth);
+      currentUsage = {
+        month: actualUsage.month,
+        pageviews: actualUsage.pageviews,
+        visitors: actualUsage.visitors,
+        events: 0
+      };
+    } catch (usageErr) {
+      console.error('Error calculating actual usage:', usageErr.message);
+    }
+
+    // Try to get historical data from monthly_usage table (may not exist)
+    try {
+      usageBySite = await getTeamUsageBySite(userId, month);
+      usageHistory = await getTeamUsageHistory(userId, 6);
+    } catch (historyErr) {
+      console.error('Error fetching usage history (table may not exist):', historyErr.message);
+    }
+
+    // Calculate limit check based on actual usage
+    const limitCheck = {
+      isWithinLimit: currentUsage.pageviews < planLimits.monthlyPageviews,
+      currentUsage: currentUsage.pageviews,
+      limit: planLimits.monthlyPageviews,
+      percentUsed: planLimits.monthlyPageviews > 0 ? Math.round((currentUsage.pageviews / planLimits.monthlyPageviews) * 100) : 0,
+      remaining: Math.max(0, planLimits.monthlyPageviews - currentUsage.pageviews)
+    };
+
+    // Get team member counts
+    let teamMembersCount = 1; // At least the user themselves
 
     try {
       const userTeams = await getUserTeams(userId);
@@ -158,9 +184,16 @@ export default async function handler(req, context) {
 
   } catch (err) {
     console.error('Usage API error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to get usage data' }), {
+    return new Response(JSON.stringify({
+      error: 'Failed to get usage data',
+      details: err.message,
+      stack: err.stack
+    }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
     });
   }
 }
