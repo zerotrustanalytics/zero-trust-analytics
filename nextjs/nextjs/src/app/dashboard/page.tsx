@@ -492,15 +492,21 @@ export default function DashboardPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <p className="font-medium text-sm">{site.name || site.domain}</p>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                      <span className="relative flex h-2 w-2">
+                        <span className={`${site.realtime?.active_visitors ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75`}></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                      </span>
+                      <span className={site.realtime?.active_visitors ? 'text-green-600 dark:text-green-400 font-medium' : ''}>
+                        {site.realtime?.active_visitors || 0}
+                      </span>
+                      <span>current visitors</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
                     <p className="text-2xl font-bold">{(site.summary?.unique_visitors || 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">visitors</p>
                   </div>
-                  {site.realtime?.active_visitors ? (
-                    <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                      {site.realtime.active_visitors} now
-                    </span>
-                  ) : null}
                 </div>
                 {siteChartData.length > 0 && (
                   <div className="h-16">
