@@ -69,8 +69,8 @@ interface Site {
 }
 
 interface RealtimeData {
-  active_visitors: number
-  pageviews_last_5min: number
+  activeVisitors: number
+  pageviewsLast5Min: number
 }
 
 // Source icons mapping
@@ -869,8 +869,8 @@ export default function SiteDetailsPage() {
             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
           </span>
           <span className="text-sm font-medium">
-            <span className="text-green-600 dark:text-green-400">{realtime.active_visitors}</span>
-            {' '}current visitor{realtime.active_visitors !== 1 ? 's' : ''}
+            <span className="text-green-600 dark:text-green-400">{realtime.activeVisitors}</span>
+            {' '}current visitor{realtime.activeVisitors !== 1 ? 's' : ''}
           </span>
         </div>
       )}
