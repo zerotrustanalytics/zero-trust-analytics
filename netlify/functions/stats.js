@@ -89,15 +89,33 @@ export default async function handler(req, context) {
         usageLimitReached = true;
         // Get the date when they hit the limit
         const limitHitDate = await getUsageLimitHitDate(userSites, monthlyLimit, currentMonth);
+        logger.info('Usage limit check', {
+          userId: auth.user.id,
+          currentPageviews,
+          monthlyLimit,
+          limitHitDate,
+          userSitesCount: userSites.length,
+          currentMonth
+        });
         if (limitHitDate) {
           dataFrozenAt = limitHitDate;
-          logger.info('Usage limit reached, freezing data', {
+        } else {
+          // If we can't determine when they hit limit, use yesterday to freeze
+          // This ensures data is frozen even if the query has issues
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          dataFrozenAt = yesterday.toISOString().split('T')[0];
+          logger.warn('Could not determine exact freeze date, using yesterday', {
             userId: auth.user.id,
-            currentPageviews,
-            monthlyLimit,
             dataFrozenAt
           });
         }
+        logger.info('Usage limit reached, freezing data', {
+          userId: auth.user.id,
+          currentPageviews,
+          monthlyLimit,
+          dataFrozenAt
+        });
       }
     } catch (usageErr) {
       logger.warn('Failed to check usage limits', { error: usageErr.message });

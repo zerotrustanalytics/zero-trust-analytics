@@ -1270,6 +1270,7 @@ async function getActualUsageFromPageviews(siteIds, month = null) {
  */
 async function getUsageLimitHitDate(siteIds, limit, month = null) {
   if (!siteIds || siteIds.length === 0 || !limit) {
+    console.log('getUsageLimitHitDate: early return', { siteIds, limit });
     return null;
   }
 
@@ -1279,6 +1280,14 @@ async function getUsageLimitHitDate(siteIds, limit, month = null) {
   const endDate = new Date(year, monthNum, 0, 23, 59, 59).toISOString().replace('T', ' ').split('.')[0];
 
   const placeholders = siteIds.map(() => '?').join(', ');
+
+  console.log('getUsageLimitHitDate query params:', {
+    siteIds,
+    limit,
+    targetMonth,
+    startDate,
+    endDate
+  });
 
   try {
     // Get pageviews grouped by date, ordered chronologically
@@ -1299,16 +1308,31 @@ async function getUsageLimitHitDate(siteIds, limit, month = null) {
     });
 
     const rows = normalizeRows(result.rows);
+    console.log('getUsageLimitHitDate results:', {
+      rowCount: rows.length,
+      firstRows: rows.slice(0, 3),
+      limit
+    });
+
     let cumulative = 0;
 
     // Find the date when we crossed the limit
     for (const row of rows) {
       cumulative += row.daily_count || 0;
       if (cumulative >= limit) {
+        console.log('getUsageLimitHitDate found limit date:', {
+          date: row.date,
+          cumulative,
+          limit
+        });
         return row.date; // Return the date when limit was hit
       }
     }
 
+    console.log('getUsageLimitHitDate: limit not reached', {
+      totalCumulative: cumulative,
+      limit
+    });
     return null; // Limit not reached
   } catch (err) {
     console.error('Error finding usage limit hit date:', err);
