@@ -160,8 +160,8 @@ function transformStatsData(stats, metrics, property, filters) {
           break;
         case 'bounce_rate':
           const bounces = day.bounces || 0;
-          const views = day.pageviews || 1;
-          result.bounce_rate = Math.round((bounces / views) * 100);
+          const visitors = day.unique_visitors || 1;
+          result.bounce_rate = Math.min(100, Math.round((bounces / visitors) * 100));
           break;
         case 'visit_duration':
           result.visit_duration = day.avg_duration || 0;
