@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import { clsx } from 'clsx'
+import { useSidebar } from './SidebarContext'
 
 interface NavItem {
   label: string
@@ -128,7 +128,7 @@ const navigation: NavSection[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, toggle } = useSidebar()
 
   return (
     <aside
@@ -154,7 +154,7 @@ export function Sidebar() {
           </Link>
           <button
             type="button"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={toggle}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-expanded={!collapsed}
