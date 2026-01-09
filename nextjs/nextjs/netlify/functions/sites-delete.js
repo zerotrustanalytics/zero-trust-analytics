@@ -1,5 +1,5 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
-import { getSite, deleteSite } from './lib/storage.js';
+import { getSite, deleteSite, getUserSites } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 
@@ -36,16 +36,17 @@ export default async function handler(req, context) {
       return Errors.validationError('Site ID required');
     }
 
-    // Verify site belongs to user
+    // Verify site exists
     const site = await getSite(siteId);
     if (!site) {
       logger.warn('Site deletion failed - site not found', { userId: auth.user.id, siteId });
       return Errors.notFound('Site');
     }
 
-    // Check if user owns the site using their JWT user ID
-    if (site.userId !== auth.user.id) {
-      logger.warn('Site deletion failed - unauthorized', { userId: auth.user.id, siteId, siteUserId: site.userId });
+    // Check if user owns the site by checking their site list
+    const userSites = await getUserSites(auth.user.id);
+    if (!userSites.includes(siteId)) {
+      logger.warn('Site deletion failed - unauthorized', { userId: auth.user.id, siteId });
       return Errors.forbidden('Not authorized to delete this site');
     }
 
