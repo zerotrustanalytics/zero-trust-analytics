@@ -223,10 +223,11 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
     });
   }
 
-  // Build headers for geo extraction
+  // Build headers for geo extraction (country, region, city from Netlify Edge)
   const headers = {
     'x-country': context.geo?.country?.code || '',
-    'x-nf-client-connection-region': context.geo?.subdivision?.code || ''
+    'x-nf-client-connection-region': context.geo?.subdivision?.code || '',
+    'x-city': context.geo?.city || ''
   };
 
   // Process all events into records
@@ -415,10 +416,11 @@ async function handleSingleEvent(req, context, origin, data, logger) {
     });
   }
 
-  // Build headers object for geo extraction
+  // Build headers object for geo extraction (country, region, city from Netlify Edge)
   const headers = {
     'x-country': context.geo?.country?.code || '',
-    'x-nf-client-connection-region': context.geo?.subdivision?.code || ''
+    'x-nf-client-connection-region': context.geo?.subdivision?.code || '',
+    'x-city': context.geo?.city || ''
   };
 
   // Parse event

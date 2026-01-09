@@ -86,12 +86,13 @@ function parseContext(userAgent) {
  * Uses edge-provided geo, never does IP lookup
  *
  * @param {object} headers - Request headers
- * @returns {object} - { country, region }
+ * @returns {object} - { country, region, city }
  */
 function parseGeo(headers) {
   return {
     country: headers['x-country'] || headers['cf-ipcountry'] || 'unknown',
-    region: headers['x-nf-client-connection-region'] || headers['cf-region'] || 'unknown'
+    region: headers['x-nf-client-connection-region'] || headers['cf-region'] || 'unknown',
+    city: headers['x-city'] || headers['cf-ipcity'] || ''
   };
 }
 
@@ -115,13 +116,19 @@ function createZTRecord({
   const context = parseContext(userAgent);
   const geo = parseGeo(headers);
 
+  // Add city to payload for city-level analytics (not stored as separate column)
+  const enrichedPayload = {
+    ...payload,
+    city: geo.city || ''
+  };
+
   return {
     timestamp: new Date().toISOString().replace('T', ' ').split('.')[0],
     site_id: siteId,
     identity_hash: createIdentityHash(ip, userAgent, secret),
     session_hash: payload.sessionId || createSessionHash(),
     event_type: eventType,
-    payload: JSON.stringify(payload),
+    payload: JSON.stringify(enrichedPayload),
     context_device: context.device,
     context_browser: context.browser,
     context_os: context.os,
