@@ -74,16 +74,26 @@ export default async function handler(req, context) {
     let usageLimitReached = false;
     let dataFrozenAt = null;
 
+    console.log('=== STATS FREEZE CHECK START ===');
+    console.log('User email:', auth.user.email);
+    console.log('User sites:', userSites);
+
     try {
       const user = await getUser(auth.user.email);
+      console.log('User from DB:', user ? { plan: user.plan, email: user.email } : 'NOT FOUND');
       const plan = user?.plan || 'free';
       const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
       const monthlyLimit = planConfig.monthlyPageviews;
+      console.log('Plan:', plan, 'Monthly limit:', monthlyLimit);
 
       // Get current usage
       const currentMonth = getCurrentMonth();
       const actualUsage = await getActualUsageFromPageviews(userSites, currentMonth);
       const currentPageviews = actualUsage?.pageviews || 0;
+      console.log('Current month:', currentMonth);
+      console.log('Actual usage:', actualUsage);
+      console.log('Current pageviews:', currentPageviews, 'vs limit:', monthlyLimit);
+      console.log('Over limit?', currentPageviews >= monthlyLimit);
 
       if (currentPageviews >= monthlyLimit) {
         usageLimitReached = true;
@@ -118,9 +128,14 @@ export default async function handler(req, context) {
         });
       }
     } catch (usageErr) {
+      console.log('=== USAGE CHECK ERROR ===', usageErr.message);
       logger.warn('Failed to check usage limits', { error: usageErr.message });
       // Continue without usage gating if check fails
     }
+
+    console.log('=== AFTER USAGE CHECK ===');
+    console.log('usageLimitReached:', usageLimitReached);
+    console.log('dataFrozenAt:', dataFrozenAt);
 
     // Calculate date range
     let endDate, startDate;
@@ -143,14 +158,23 @@ export default async function handler(req, context) {
       endDate = new Date();
       startDate = new Date();
 
+      console.log('=== DATE CAPPING ===');
+      console.log('Original endDate:', endDate.toISOString());
+
       // If usage limit reached and we have a frozen date, cap the end date
       if (usageLimitReached && dataFrozenAt) {
         const frozenDate = new Date(dataFrozenAt);
+        console.log('frozenDate from dataFrozenAt:', frozenDate.toISOString());
         // Set end of day for the frozen date
         frozenDate.setHours(23, 59, 59, 999);
+        console.log('frozenDate after setHours:', frozenDate.toISOString());
+        console.log('frozenDate < endDate?', frozenDate < endDate);
         if (frozenDate < endDate) {
           endDate = frozenDate;
+          console.log('CAPPED endDate to:', endDate.toISOString());
         }
+      } else {
+        console.log('NOT CAPPING - usageLimitReached:', usageLimitReached, 'dataFrozenAt:', dataFrozenAt);
       }
 
       switch (period) {
@@ -178,11 +202,15 @@ export default async function handler(req, context) {
     const startStr = startDate.toISOString().replace('T', ' ').split('.')[0];
     const endStr = endDate.toISOString().replace('T', ' ').split('.')[0];
 
-    logger.info('Querying stats from database', {
+    logger.info('FREEZE DEBUG - Final query params', {
       siteId,
       startDate: startStr,
       endDate: endStr,
-      period
+      period,
+      usageLimitReached,
+      dataFrozenAt,
+      endDateObj: endDate.toISOString(),
+      nowDate: new Date().toISOString()
     });
 
     // Query database for stats
