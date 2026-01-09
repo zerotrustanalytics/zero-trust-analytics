@@ -541,19 +541,25 @@ async function getStats(siteId, startDate, endDate) {
     }),
 
     // Session counts and bounce rate calculation
+    // A session is NOT a bounce if:
+    //   - It has more than 1 pageview, OR
+    //   - It has an outbound click event (user clicked to leave, e.g., to app.ztas.io)
     turso.execute({
       sql: `
         SELECT
           COUNT(*) as total_sessions,
-          SUM(CASE WHEN pv_count = 1 THEN 1 ELSE 0 END) as bounced_sessions
+          SUM(CASE WHEN pv_count = 1 AND has_outbound = 0 THEN 1 ELSE 0 END) as bounced_sessions
         FROM (
-          SELECT session_hash, COUNT(*) as pv_count
+          SELECT
+            session_hash,
+            SUM(CASE WHEN event_type = 'pageview' THEN 1 ELSE 0 END) as pv_count,
+            MAX(CASE WHEN event_type = 'event' AND JSON_EXTRACT(payload, '$.category') = 'outbound' THEN 1 ELSE 0 END) as has_outbound
           FROM pageviews
-          WHERE event_type = 'pageview'
-            AND site_id = ?
+          WHERE site_id = ?
             AND timestamp >= ?
             AND timestamp <= ?
           GROUP BY session_hash
+          HAVING pv_count > 0
         )
       `,
       args: [siteId, startDate, endDate]
