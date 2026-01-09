@@ -1179,7 +1179,7 @@ export default function SiteDetailsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-muted-foreground border-b border-gray-100 dark:border-gray-700">
-              <th className="pb-2 text-left font-medium">{locationTab.slice(0, -1 - (locationTab === 'cities' ? 2 : 0))}</th>
+              <th className="pb-2 text-left font-medium">{locationTab === 'countries' ? 'Country' : locationTab === 'regions' ? 'Region' : 'City'}</th>
               <th className="pb-2 text-right font-medium">Visitors</th>
               <th className="pb-2 text-right font-medium">%</th>
             </tr>
