@@ -243,7 +243,7 @@ async function getStats(siteId, startDate, endDate) {
       args: [siteId, startDate, endDate, siteId, startDate, endDate]
     }),
 
-    // Entry pages (first page of session)
+    // Entry pages (first page of session) with duration from engagement events
     turso.execute({
       sql: `
         WITH first_pages AS (
@@ -256,20 +256,39 @@ async function getStats(siteId, startDate, endDate) {
           GROUP BY session_hash
         )
         SELECT
-          JSON_EXTRACT(p.payload, '$.page_path') as page,
-          COUNT(*) as visits,
-          COUNT(DISTINCT p.identity_hash) as visitors
-        FROM pageviews p
-        JOIN first_pages fp ON p.session_hash = fp.session_hash AND p.timestamp = fp.first_ts
-        WHERE p.site_id = ?
-        GROUP BY page
-        ORDER BY visits DESC
+          ep.page,
+          ep.visits,
+          ep.visitors,
+          COALESCE(eng.avg_duration, 0) as duration
+        FROM (
+          SELECT
+            JSON_EXTRACT(p.payload, '$.page_path') as page,
+            COUNT(*) as visits,
+            COUNT(DISTINCT p.identity_hash) as visitors
+          FROM pageviews p
+          JOIN first_pages fp ON p.session_hash = fp.session_hash AND p.timestamp = fp.first_ts
+          WHERE p.site_id = ?
+          GROUP BY page
+        ) ep
+        LEFT JOIN (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            ROUND(AVG(meta_duration), 0) as avg_duration
+          FROM pageviews
+          WHERE event_type = 'engagement'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+            AND meta_duration > 0
+          GROUP BY page
+        ) eng ON ep.page = eng.page
+        ORDER BY ep.visits DESC
         LIMIT 10
       `,
-      args: [siteId, startDate, endDate, siteId]
+      args: [siteId, startDate, endDate, siteId, siteId, startDate, endDate]
     }),
 
-    // Exit pages (last page of session)
+    // Exit pages (last page of session) with duration from engagement events
     turso.execute({
       sql: `
         WITH last_pages AS (
@@ -282,17 +301,36 @@ async function getStats(siteId, startDate, endDate) {
           GROUP BY session_hash
         )
         SELECT
-          JSON_EXTRACT(p.payload, '$.page_path') as page,
-          COUNT(*) as exits,
-          COUNT(DISTINCT p.identity_hash) as visitors
-        FROM pageviews p
-        JOIN last_pages lp ON p.session_hash = lp.session_hash AND p.timestamp = lp.last_ts
-        WHERE p.site_id = ?
-        GROUP BY page
-        ORDER BY exits DESC
+          xp.page,
+          xp.exits,
+          xp.visitors,
+          COALESCE(eng.avg_duration, 0) as duration
+        FROM (
+          SELECT
+            JSON_EXTRACT(p.payload, '$.page_path') as page,
+            COUNT(*) as exits,
+            COUNT(DISTINCT p.identity_hash) as visitors
+          FROM pageviews p
+          JOIN last_pages lp ON p.session_hash = lp.session_hash AND p.timestamp = lp.last_ts
+          WHERE p.site_id = ?
+          GROUP BY page
+        ) xp
+        LEFT JOIN (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            ROUND(AVG(meta_duration), 0) as avg_duration
+          FROM pageviews
+          WHERE event_type = 'engagement'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+            AND meta_duration > 0
+          GROUP BY page
+        ) eng ON xp.page = eng.page
+        ORDER BY xp.exits DESC
         LIMIT 10
       `,
-      args: [siteId, startDate, endDate, siteId]
+      args: [siteId, startDate, endDate, siteId, siteId, startDate, endDate]
     }),
 
     // Top referrers
