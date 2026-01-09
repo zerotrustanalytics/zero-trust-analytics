@@ -1,5 +1,7 @@
 export { Sidebar } from './Sidebar'
 export { AddSiteModal } from './AddSiteModal'
 export { SidebarProvider, useSidebar } from './SidebarContext'
+export { UsageProvider, useUsage } from './UsageContext'
+export { UsageBanner } from './UsageBanner'
 export { MainContent } from './MainContent'
 export { DashboardShell } from './DashboardShell'

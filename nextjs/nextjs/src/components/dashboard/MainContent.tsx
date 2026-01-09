@@ -2,6 +2,7 @@
 
 import { clsx } from 'clsx'
 import { useSidebar } from './SidebarContext'
+import { UsageBanner } from './UsageBanner'
 
 interface MainContentProps {
   children: React.ReactNode
@@ -20,6 +21,7 @@ export function MainContent({ children }: MainContentProps) {
       role="main"
       tabIndex={-1}
     >
+      <UsageBanner />
       {children}
     </main>
   )
