@@ -708,12 +708,21 @@ function rowsToObject(rows, keyField, valueField) {
  */
 async function getRealtime(siteId) {
   try {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+    const now = new Date();
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000)
+      .toISOString()
+      .replace('T', ' ')
+      .split('.')[0];
+    const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000)
+      .toISOString()
+      .replace('T', ' ')
+      .split('.')[0];
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
       .toISOString()
       .replace('T', ' ')
       .split('.')[0];
 
-    const [activeResult, recentResult] = await Promise.all([
+    const [activeResult, last30Result, todayResult, recentResult] = await Promise.all([
       // Active visitors in last 5 minutes
       turso.execute({
         sql: `
@@ -728,17 +737,45 @@ async function getRealtime(siteId) {
         args: [siteId, fiveMinutesAgo]
       }),
 
-      // Recent pageviews
+      // Visitors in last 30 minutes
+      turso.execute({
+        sql: `
+          SELECT COUNT(DISTINCT identity_hash) as visitors
+          FROM pageviews
+          WHERE site_id = ?
+            AND timestamp >= ?
+            AND event_type = 'pageview'
+        `,
+        args: [siteId, thirtyMinutesAgo]
+      }),
+
+      // Visitors today
+      turso.execute({
+        sql: `
+          SELECT COUNT(DISTINCT identity_hash) as visitors
+          FROM pageviews
+          WHERE site_id = ?
+            AND timestamp >= ?
+            AND event_type = 'pageview'
+        `,
+        args: [siteId, todayStart]
+      }),
+
+      // Recent pageviews with details
       turso.execute({
         sql: `
           SELECT
+            identity_hash as id,
             timestamp,
-            JSON_EXTRACT(payload, '$.page_path') as page
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            JSON_EXTRACT(payload, '$.referrer_domain') as referrer,
+            context_country as country,
+            context_device as device
           FROM pageviews
           WHERE site_id = ?
             AND event_type = 'pageview'
           ORDER BY timestamp DESC
-          LIMIT 10
+          LIMIT 20
         `,
         args: [siteId]
       })
@@ -746,10 +783,14 @@ async function getRealtime(siteId) {
 
     const activeRows = normalizeRows(activeResult.rows);
     const active = activeRows[0] || {};
+    const last30Rows = normalizeRows(last30Result.rows);
+    const todayRows = normalizeRows(todayResult.rows);
 
     return {
       active_visitors: active.active_visitors || 0,
       pageviews_last_5min: active.pageviews_last_5min || 0,
+      last_30_minutes: last30Rows[0]?.visitors || 0,
+      today: todayRows[0]?.visitors || 0,
       recent_pageviews: normalizeRows(recentResult.rows),
       visitors_per_minute: [],
       traffic_sources: []

@@ -74,8 +74,21 @@ export default async function handler(req, context) {
         .sort((a, b) => b.count - a.count);
     }
 
+    // Map recent pageviews to visitor format for frontend
+    const visitors = (realtime.recent_pageviews || []).map(pv => ({
+      id: pv.id || Math.random().toString(36).substr(2, 9),
+      page: pv.page || '/',
+      referrer: pv.referrer || '',
+      country: pv.country || '',
+      device: pv.device || '',
+      timestamp: pv.timestamp
+    }));
+
     return new Response(JSON.stringify({
       activeVisitors: realtime.active_visitors,
+      last30Minutes: realtime.last_30_minutes || 0,
+      today: realtime.today || 0,
+      visitors,
       pageviewsLast5Min: realtime.pageviews_last_5min,
       pageBreakdown,
       recentPageviews: realtime.recent_pageviews,
