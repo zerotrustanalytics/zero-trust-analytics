@@ -119,7 +119,7 @@ async function ingestEvents(tableName, events) {
  */
 async function getStats(siteId, startDate, endDate) {
   // Run all queries in parallel
-  const [dailyStats, topPages, topReferrers, devices, browsers, countries] = await Promise.all([
+  const [dailyStats, topPages, topReferrers, devices, browsers, countries, bounceStats] = await Promise.all([
     // Daily stats
     turso.execute({
       sql: `
@@ -127,7 +127,7 @@ async function getStats(siteId, startDate, endDate) {
           DATE(timestamp) as date,
           COUNT(*) as pageviews,
           COUNT(DISTINCT identity_hash) as unique_visitors,
-          SUM(CASE WHEN meta_is_bounce = 1 THEN 1 ELSE 0 END) as bounces,
+          COUNT(DISTINCT session_hash) as sessions,
           ROUND(AVG(meta_duration), 0) as avg_duration
         FROM pageviews
         WHERE event_type = 'pageview'
@@ -241,6 +241,25 @@ async function getStats(siteId, startDate, endDate) {
         ORDER BY count DESC
       `,
       args: [siteId, startDate, endDate]
+    }),
+
+    // Bounce rate: count sessions with only 1 pageview
+    turso.execute({
+      sql: `
+        SELECT
+          COUNT(*) as total_sessions,
+          SUM(CASE WHEN pv_count = 1 THEN 1 ELSE 0 END) as bounced_sessions
+        FROM (
+          SELECT session_hash, COUNT(*) as pv_count
+          FROM pageviews
+          WHERE event_type = 'pageview'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+          GROUP BY session_hash
+        )
+      `,
+      args: [siteId, startDate, endDate]
     })
   ]);
 
@@ -250,11 +269,14 @@ async function getStats(siteId, startDate, endDate) {
     (acc, day) => ({
       pageviews: acc.pageviews + (day.pageviews || 0),
       unique_visitors: acc.unique_visitors + (day.unique_visitors || 0),
-      bounces: acc.bounces + (day.bounces || 0),
+      sessions: acc.sessions + (day.sessions || 0),
       total_duration: acc.total_duration + ((day.avg_duration || 0) * (day.pageviews || 0))
     }),
-    { pageviews: 0, unique_visitors: 0, bounces: 0, total_duration: 0 }
+    { pageviews: 0, unique_visitors: 0, sessions: 0, total_duration: 0 }
   );
+
+  // Get bounce data
+  const bounceData = normalizeRows(bounceStats.rows)[0] || { total_sessions: 0, bounced_sessions: 0 };
 
   // Convert arrays to objects for frontend compatibility
   // Frontend expects: { "/path": 5, "/other": 3 }
@@ -273,14 +295,17 @@ async function getStats(siteId, startDate, endDate) {
     duration: row.avg_duration || 0
   }));
 
+  // Calculate bounce rate properly: bounced sessions / total sessions
+  const bounceRate = bounceData.total_sessions > 0
+    ? Math.round((bounceData.bounced_sessions / bounceData.total_sessions) * 100)
+    : 0;
+
   return {
     summary: {
       pageviews: totals.pageviews,
       unique_visitors: totals.unique_visitors,
-      // Bounce rate = bounces / unique visitors (not pageviews)
-      bounce_rate: totals.unique_visitors > 0
-        ? Math.min(100, Math.round((totals.bounces / totals.unique_visitors) * 100))
-        : 0,
+      sessions: totals.sessions,
+      bounce_rate: bounceRate,
       avg_duration: totals.pageviews > 0
         ? Math.round(totals.total_duration / totals.pageviews)
         : 0
