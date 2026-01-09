@@ -1,26 +1,38 @@
 {{ define "main" }}
 <!-- Demo Banner -->
-<div class="alert alert-info mb-0 rounded-0 text-center" role="alert">
+<div class="alert alert-success mb-0 rounded-0 text-center" role="alert">
   <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <span><strong>Live Demo</strong> - This is sample data from a fictional website</span>
-    <a href="/register/" class="btn btn-primary btn-sm">Start Your Free Trial</a>
+    <span><strong>Live Demo</strong> - Real data from ztas.io (this website!)</span>
+    <a href="https://app.ztas.io/sign-up" class="btn btn-primary btn-sm">Start Your Free Trial</a>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div id="demo-loading" class="bg-light min-vh-100 d-flex align-items-center justify-content-center">
+  <div class="text-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading live analytics...</p>
   </div>
 </div>
 
 <!-- Demo Dashboard -->
-<div class="bg-light min-vh-100">
+<div id="demo-content" class="bg-light min-vh-100 d-none">
   <div class="container-fluid px-4 py-4">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
         <h1 class="h3 mb-1">Analytics Dashboard</h1>
-        <p class="text-muted mb-0">demo-site.example.com</p>
+        <p class="text-muted mb-0" id="demo-domain">ztas.io</p>
       </div>
       <div class="d-flex gap-2 align-items-center">
-        <select class="form-select form-select-sm" style="width: auto;" disabled>
-          <option>Last 7 days</option>
+        <select class="form-select form-select-sm" style="width: auto;" id="demo-period-select">
+          <option value="7d" selected>Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="90d">Last 90 days</option>
         </select>
-        <button class="btn btn-outline-secondary btn-sm" disabled>
+        <button class="btn btn-outline-secondary btn-sm" id="demo-refresh-btn">
           <i class="fas fa-sync-alt me-1"></i>Refresh
         </button>
       </div>
@@ -34,9 +46,8 @@
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <p class="text-muted small mb-1">Unique Visitors</p>
-                <h3 class="mb-0 fw-bold">4,892</h3>
+                <h3 class="mb-0 fw-bold" id="demo-visitors">-</h3>
               </div>
-              <span class="badge bg-success-subtle text-success">+12.3%</span>
             </div>
           </div>
         </div>
@@ -47,9 +58,8 @@
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <p class="text-muted small mb-1">Page Views</p>
-                <h3 class="mb-0 fw-bold">12,847</h3>
+                <h3 class="mb-0 fw-bold" id="demo-pageviews">-</h3>
               </div>
-              <span class="badge bg-success-subtle text-success">+8.7%</span>
             </div>
           </div>
         </div>
@@ -59,10 +69,9 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <p class="text-muted small mb-1">Avg. Time on Site</p>
-                <h3 class="mb-0 fw-bold">2m 47s</h3>
+                <p class="text-muted small mb-1">Avg. Session</p>
+                <h3 class="mb-0 fw-bold" id="demo-duration">-</h3>
               </div>
-              <span class="badge bg-success-subtle text-success">+5.2%</span>
             </div>
           </div>
         </div>
@@ -73,9 +82,8 @@
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <p class="text-muted small mb-1">Bounce Rate</p>
-                <h3 class="mb-0 fw-bold">34.2%</h3>
+                <h3 class="mb-0 fw-bold" id="demo-bounce">-</h3>
               </div>
-              <span class="badge bg-danger-subtle text-danger">+2.1%</span>
             </div>
           </div>
         </div>
@@ -87,56 +95,10 @@
       <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">Traffic Overview</h5>
-          <div class="btn-group btn-group-sm" role="group">
-            <button class="btn btn-outline-secondary active">Visitors</button>
-            <button class="btn btn-outline-secondary">Page Views</button>
-          </div>
         </div>
       </div>
       <div class="card-body">
-        <!-- SVG Chart -->
-        <svg viewBox="0 0 800 200" class="w-100" style="height: 200px;">
-          <!-- Grid lines -->
-          <line x1="0" y1="40" x2="800" y2="40" stroke="#e5e7eb" stroke-width="1"/>
-          <line x1="0" y1="80" x2="800" y2="80" stroke="#e5e7eb" stroke-width="1"/>
-          <line x1="0" y1="120" x2="800" y2="120" stroke="#e5e7eb" stroke-width="1"/>
-          <line x1="0" y1="160" x2="800" y2="160" stroke="#e5e7eb" stroke-width="1"/>
-
-          <!-- Area fill -->
-          <path d="M0,180 L0,140 L114,100 L228,120 L342,80 L456,60 L570,90 L684,50 L800,70 L800,180 Z"
-                fill="url(#demoGradient)" opacity="0.3"/>
-
-          <!-- Line -->
-          <polyline fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-                    points="0,140 114,100 228,120 342,80 456,60 570,90 684,50 800,70"/>
-
-          <!-- Data points -->
-          <circle cx="0" cy="140" r="4" fill="#2563eb"/>
-          <circle cx="114" cy="100" r="4" fill="#2563eb"/>
-          <circle cx="228" cy="120" r="4" fill="#2563eb"/>
-          <circle cx="342" cy="80" r="4" fill="#2563eb"/>
-          <circle cx="456" cy="60" r="4" fill="#2563eb"/>
-          <circle cx="570" cy="90" r="4" fill="#2563eb"/>
-          <circle cx="684" cy="50" r="4" fill="#2563eb"/>
-          <circle cx="800" cy="70" r="4" fill="#2563eb"/>
-
-          <defs>
-            <linearGradient id="demoGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:#2563eb;stop-opacity:0.4"/>
-              <stop offset="100%" style="stop-color:#2563eb;stop-opacity:0"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <div class="d-flex justify-content-between text-muted small mt-2">
-          <span>Dec 7</span>
-          <span>Dec 8</span>
-          <span>Dec 9</span>
-          <span>Dec 10</span>
-          <span>Dec 11</span>
-          <span>Dec 12</span>
-          <span>Dec 13</span>
-          <span>Today</span>
-        </div>
+        <canvas id="demo-chart" height="200"></canvas>
       </div>
     </div>
 
@@ -158,32 +120,8 @@
                     <th class="text-end">Views</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td><code>/</code></td>
-                    <td class="text-end">2,341</td>
-                    <td class="text-end">4,892</td>
-                  </tr>
-                  <tr>
-                    <td><code>/pricing</code></td>
-                    <td class="text-end">1,247</td>
-                    <td class="text-end">2,103</td>
-                  </tr>
-                  <tr>
-                    <td><code>/features</code></td>
-                    <td class="text-end">892</td>
-                    <td class="text-end">1,456</td>
-                  </tr>
-                  <tr>
-                    <td><code>/blog/getting-started</code></td>
-                    <td class="text-end">634</td>
-                    <td class="text-end">987</td>
-                  </tr>
-                  <tr>
-                    <td><code>/docs/api</code></td>
-                    <td class="text-end">421</td>
-                    <td class="text-end">654</td>
-                  </tr>
+                <tbody id="demo-pages-table">
+                  <tr><td colspan="3" class="text-center text-muted py-4">Loading...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -204,35 +142,10 @@
                   <tr>
                     <th>Source</th>
                     <th class="text-end">Visitors</th>
-                    <th class="text-end">%</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td><i class="fab fa-google text-muted me-2"></i>Google</td>
-                    <td class="text-end">2,156</td>
-                    <td class="text-end">44.1%</td>
-                  </tr>
-                  <tr>
-                    <td><i class="fas fa-link text-muted me-2"></i>Direct</td>
-                    <td class="text-end">1,423</td>
-                    <td class="text-end">29.1%</td>
-                  </tr>
-                  <tr>
-                    <td><i class="fab fa-twitter text-muted me-2"></i>Twitter</td>
-                    <td class="text-end">534</td>
-                    <td class="text-end">10.9%</td>
-                  </tr>
-                  <tr>
-                    <td><i class="fab fa-hacker-news text-muted me-2"></i>Hacker News</td>
-                    <td class="text-end">412</td>
-                    <td class="text-end">8.4%</td>
-                  </tr>
-                  <tr>
-                    <td><i class="fab fa-reddit text-muted me-2"></i>Reddit</td>
-                    <td class="text-end">367</td>
-                    <td class="text-end">7.5%</td>
-                  </tr>
+                <tbody id="demo-referrers-table">
+                  <tr><td colspan="2" class="text-center text-muted py-4">Loading...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -256,35 +169,10 @@
                   <tr>
                     <th>Country</th>
                     <th class="text-end">Visitors</th>
-                    <th class="text-end">%</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td><span class="me-2">🇺🇸</span>United States</td>
-                    <td class="text-end">1,892</td>
-                    <td class="text-end">38.7%</td>
-                  </tr>
-                  <tr>
-                    <td><span class="me-2">🇬🇧</span>United Kingdom</td>
-                    <td class="text-end">634</td>
-                    <td class="text-end">13.0%</td>
-                  </tr>
-                  <tr>
-                    <td><span class="me-2">🇩🇪</span>Germany</td>
-                    <td class="text-end">521</td>
-                    <td class="text-end">10.7%</td>
-                  </tr>
-                  <tr>
-                    <td><span class="me-2">🇨🇦</span>Canada</td>
-                    <td class="text-end">398</td>
-                    <td class="text-end">8.1%</td>
-                  </tr>
-                  <tr>
-                    <td><span class="me-2">🇫🇷</span>France</td>
-                    <td class="text-end">287</td>
-                    <td class="text-end">5.9%</td>
-                  </tr>
+                <tbody id="demo-countries-table">
+                  <tr><td colspan="2" class="text-center text-muted py-4">Loading...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -292,79 +180,21 @@
         </div>
       </div>
 
-      <!-- Devices -->
+      <!-- Devices & Browsers -->
       <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-header bg-white">
-            <h5 class="mb-0">Devices</h5>
+            <h5 class="mb-0">Devices & Browsers</h5>
           </div>
           <div class="card-body">
-            <div class="row text-center">
-              <div class="col-4">
-                <div class="mb-2">
-                  <i class="fas fa-desktop fa-2x text-primary"></i>
-                </div>
-                <h4 class="fw-bold mb-0">58%</h4>
-                <small class="text-muted">Desktop</small>
-              </div>
-              <div class="col-4">
-                <div class="mb-2">
-                  <i class="fas fa-mobile-alt fa-2x text-success"></i>
-                </div>
-                <h4 class="fw-bold mb-0">36%</h4>
-                <small class="text-muted">Mobile</small>
-              </div>
-              <div class="col-4">
-                <div class="mb-2">
-                  <i class="fas fa-tablet-alt fa-2x text-warning"></i>
-                </div>
-                <h4 class="fw-bold mb-0">6%</h4>
-                <small class="text-muted">Tablet</small>
-              </div>
+            <h6 class="text-muted mb-3">Devices</h6>
+            <div id="demo-devices-list" class="mb-4">
+              <div class="text-center text-muted">Loading...</div>
             </div>
             <hr>
             <h6 class="text-muted mb-3">Browsers</h6>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span><i class="fab fa-chrome text-muted me-2"></i>Chrome</span>
-              <span class="fw-bold">62%</span>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span><i class="fab fa-safari text-muted me-2"></i>Safari</span>
-              <span class="fw-bold">24%</span>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span><i class="fab fa-firefox text-muted me-2"></i>Firefox</span>
-              <span class="fw-bold">9%</span>
-            </div>
-            <div class="d-flex justify-content-between align-items-center">
-              <span><i class="fab fa-edge text-muted me-2"></i>Edge</span>
-              <span class="fw-bold">5%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Real-time Section -->
-    <div class="row g-4 mt-0">
-      <div class="col-12">
-        <div class="card border-0 shadow-sm">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><span class="badge bg-success me-2">LIVE</span> Real-time Visitors</h5>
-            <span class="text-muted">Last 30 minutes</span>
-          </div>
-          <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <h2 class="fw-bold mb-0">23</h2>
-                <p class="text-muted mb-0">visitors on site right now</p>
-              </div>
-              <div class="d-flex gap-2">
-                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>US: 12</span>
-                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>UK: 5</span>
-                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>DE: 3</span>
-                <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1"></i>Other: 3</span>
-              </div>
+            <div id="demo-browsers-list">
+              <div class="text-center text-muted">Loading...</div>
             </div>
           </div>
         </div>
@@ -375,9 +205,278 @@
     <div class="text-center py-5">
       <h3 class="mb-3">Ready to get these insights for your site?</h3>
       <p class="text-muted mb-4">Start tracking in under 2 minutes. No cookies, no consent banners needed.</p>
-      <a href="/register/" class="btn btn-primary btn-lg me-2">Start Free Trial</a>
+      <a href="https://app.ztas.io/sign-up" class="btn btn-primary btn-lg me-2">Start Free Trial</a>
       <a href="/#pricing" class="btn btn-outline-secondary btn-lg">View Pricing</a>
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const API_URL = 'https://ztas.io/api/demo/stats';
+let demoChart = null;
+let currentPeriod = '7d';
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadDemoStats();
+
+  document.getElementById('demo-period-select').addEventListener('change', function(e) {
+    currentPeriod = e.target.value;
+    loadDemoStats();
+  });
+
+  document.getElementById('demo-refresh-btn').addEventListener('click', function() {
+    loadDemoStats();
+  });
+});
+
+async function loadDemoStats() {
+  try {
+    const res = await fetch(`${API_URL}?period=${currentPeriod}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
+    }
+
+    // Hide loading, show content
+    document.getElementById('demo-loading').classList.add('d-none');
+    document.getElementById('demo-content').classList.remove('d-none');
+
+    // Update stats cards
+    document.getElementById('demo-visitors').textContent = formatNumber(data.uniqueVisitors || 0);
+    document.getElementById('demo-pageviews').textContent = formatNumber(data.pageviews || 0);
+    document.getElementById('demo-duration').textContent = formatDuration(data.avgSessionDuration || 0);
+    document.getElementById('demo-bounce').textContent = (data.bounceRate || 0).toFixed(1) + '%';
+
+    // Update tables
+    renderPagesTable(data.pages || []);
+    renderReferrersTable(data.referrers || []);
+    renderCountriesTable(data.countries || []);
+    renderDevices(data.devices || []);
+    renderBrowsers(data.browsers || []);
+
+    // Update chart
+    renderChart(data.daily || []);
+
+  } catch (err) {
+    console.error('Failed to load demo stats:', err);
+    document.getElementById('demo-loading').innerHTML = `
+      <div class="text-center text-danger">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+        <p>Failed to load live data. Please try again later.</p>
+      </div>
+    `;
+  }
+}
+
+function renderPagesTable(pages) {
+  const tbody = document.getElementById('demo-pages-table');
+  if (!pages || pages.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-4">No data yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = pages.slice(0, 5).map(page => `
+    <tr>
+      <td><code>${truncate(page.name || page.page || '/', 30)}</code></td>
+      <td class="text-end">${formatNumber(page.visitors || 0)}</td>
+      <td class="text-end">${formatNumber(page.views || 0)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderReferrersTable(referrers) {
+  const tbody = document.getElementById('demo-referrers-table');
+  if (!referrers || referrers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-4">No data yet</td></tr>';
+    return;
+  }
+
+  const icons = {
+    'google': '<i class="fab fa-google text-muted me-2"></i>',
+    'direct': '<i class="fas fa-link text-muted me-2"></i>',
+    'twitter': '<i class="fab fa-twitter text-muted me-2"></i>',
+    'facebook': '<i class="fab fa-facebook text-muted me-2"></i>',
+    'linkedin': '<i class="fab fa-linkedin text-muted me-2"></i>',
+    'reddit': '<i class="fab fa-reddit text-muted me-2"></i>',
+    'github': '<i class="fab fa-github text-muted me-2"></i>'
+  };
+
+  tbody.innerHTML = referrers.slice(0, 5).map(ref => {
+    const name = ref.name || ref.referrer || 'Direct';
+    const lowerName = name.toLowerCase();
+    const icon = Object.keys(icons).find(k => lowerName.includes(k)) || 'link';
+    return `
+      <tr>
+        <td>${icons[icon] || icons['direct']}${name}</td>
+        <td class="text-end">${formatNumber(ref.visitors || ref.views || 0)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderCountriesTable(countries) {
+  const tbody = document.getElementById('demo-countries-table');
+  if (!countries || countries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-4">No data yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = countries.slice(0, 5).map(country => {
+    const name = country.name || country.country || 'Unknown';
+    return `
+      <tr>
+        <td>${name}</td>
+        <td class="text-end">${formatNumber(country.visitors || country.views || 0)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderDevices(devices) {
+  const container = document.getElementById('demo-devices-list');
+  if (!devices || devices.length === 0) {
+    container.innerHTML = '<div class="text-center text-muted">No data yet</div>';
+    return;
+  }
+
+  const total = devices.reduce((sum, d) => sum + (d.visitors || d.views || 0), 0);
+  const icons = {
+    'desktop': '<i class="fas fa-desktop fa-lg text-primary me-2"></i>',
+    'mobile': '<i class="fas fa-mobile-alt fa-lg text-success me-2"></i>',
+    'tablet': '<i class="fas fa-tablet-alt fa-lg text-warning me-2"></i>'
+  };
+
+  container.innerHTML = devices.map(device => {
+    const name = (device.name || device.device || 'Unknown').toLowerCase();
+    const count = device.visitors || device.views || 0;
+    const pct = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
+    return `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>${icons[name] || icons['desktop']}${capitalize(name)}</span>
+        <span class="fw-bold">${pct}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderBrowsers(browsers) {
+  const container = document.getElementById('demo-browsers-list');
+  if (!browsers || browsers.length === 0) {
+    container.innerHTML = '<div class="text-center text-muted">No data yet</div>';
+    return;
+  }
+
+  const total = browsers.reduce((sum, b) => sum + (b.visitors || b.views || 0), 0);
+  const icons = {
+    'chrome': '<i class="fab fa-chrome text-muted me-2"></i>',
+    'safari': '<i class="fab fa-safari text-muted me-2"></i>',
+    'firefox': '<i class="fab fa-firefox text-muted me-2"></i>',
+    'edge': '<i class="fab fa-edge text-muted me-2"></i>',
+    'opera': '<i class="fab fa-opera text-muted me-2"></i>'
+  };
+
+  container.innerHTML = browsers.slice(0, 4).map(browser => {
+    const name = (browser.name || browser.browser || 'Unknown').toLowerCase();
+    const count = browser.visitors || browser.views || 0;
+    const pct = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
+    return `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>${icons[name] || '<i class="fas fa-globe text-muted me-2"></i>'}${capitalize(name)}</span>
+        <span class="fw-bold">${pct}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderChart(dailyData) {
+  const ctx = document.getElementById('demo-chart');
+  if (!ctx) return;
+
+  if (demoChart) {
+    demoChart.destroy();
+  }
+
+  const labels = dailyData.map(d => {
+    const date = new Date(d.date);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+
+  const visitors = dailyData.map(d => d.unique_visitors || d.visitors || 0);
+  const pageviews = dailyData.map(d => d.pageviews || 0);
+
+  demoChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Visitors',
+          data: visitors,
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Page Views',
+          data: pageviews,
+          borderColor: '#10b981',
+          backgroundColor: 'transparent',
+          borderDash: [5, 5],
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
+}
+
+// Helper functions
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toLocaleString();
+}
+
+function formatDuration(seconds) {
+  if (!seconds || seconds === 0) return '0s';
+  if (seconds < 60) return Math.round(seconds) + 's';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return mins + 'm ' + secs + 's';
+}
+
+function truncate(str, len) {
+  if (!str) return '/';
+  return str.length > len ? str.substring(0, len) + '...' : str;
+}
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+</script>
+
+<style>
+#demo-chart {
+  height: 250px !important;
+}
+</style>
 {{ end }}
