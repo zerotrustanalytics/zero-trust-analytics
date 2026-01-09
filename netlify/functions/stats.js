@@ -107,11 +107,22 @@ export default async function handler(req, context) {
           userSitesCount: userSites.length,
           currentMonth
         });
+
+        const today = new Date().toISOString().split('T')[0];
+
         if (limitHitDate) {
-          dataFrozenAt = limitHitDate;
+          // If limit was hit TODAY, freeze at yesterday (so no new data shows)
+          // Otherwise freeze at the day they hit the limit
+          if (limitHitDate === today) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            dataFrozenAt = yesterday.toISOString().split('T')[0];
+            console.log('Limit hit today, freezing at yesterday:', dataFrozenAt);
+          } else {
+            dataFrozenAt = limitHitDate;
+          }
         } else {
           // If we can't determine when they hit limit, use yesterday to freeze
-          // This ensures data is frozen even if the query has issues
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
           dataFrozenAt = yesterday.toISOString().split('T')[0];
