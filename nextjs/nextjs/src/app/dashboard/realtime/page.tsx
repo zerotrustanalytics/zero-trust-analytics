@@ -115,10 +115,17 @@ export default function RealtimePage() {
   }, [selectedSiteId, fetchRealtimeData])
 
   const getTimeAgo = (timestamp: string) => {
-    const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000)
+    // Parse timestamp as UTC (database stores in UTC format without 'Z')
+    const utcTimestamp = timestamp.includes('Z') || timestamp.includes('+')
+      ? timestamp
+      : timestamp.replace(' ', 'T') + 'Z'
+    const seconds = Math.floor((Date.now() - new Date(utcTimestamp).getTime()) / 1000)
+
+    if (seconds < 0) return 'just now' // Handle any edge cases
     if (seconds < 60) return `${seconds}s ago`
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    return `${Math.floor(seconds / 3600)}h ago`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+    return `${Math.floor(seconds / 86400)}d ago`
   }
 
   if (loading && sites.length === 0) {
