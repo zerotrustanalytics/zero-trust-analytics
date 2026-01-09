@@ -1,6 +1,7 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getUserSites } from './lib/storage.js';
-import { getRealtime } from './lib/turso.js';
+import { getUserSites, getUser } from './lib/storage.js';
+import { getRealtime, getActualUsageFromPageviews, getCurrentMonth } from './lib/turso.js';
+import { Config } from './lib/config.js';
 
 export default async function handler(req, context) {
   // Handle CORS preflight
@@ -48,6 +49,51 @@ export default async function handler(req, context) {
       return new Response(JSON.stringify({ error: 'Access denied' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check usage limits - return frozen/zeroed data if over limit
+    let usageLimitReached = false;
+    try {
+      const user = await getUser(auth.user.email);
+      const plan = user?.plan || 'free';
+      const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
+      const monthlyLimit = planConfig.monthlyPageviews;
+
+      const currentMonth = getCurrentMonth();
+      const actualUsage = await getActualUsageFromPageviews(userSites, currentMonth);
+      const currentPageviews = actualUsage?.pageviews || 0;
+
+      if (currentPageviews >= monthlyLimit) {
+        usageLimitReached = true;
+      }
+    } catch (usageErr) {
+      console.warn('Failed to check usage limits for realtime:', usageErr.message);
+    }
+
+    // If over limit, return frozen realtime data (zeros)
+    if (usageLimitReached) {
+      return new Response(JSON.stringify({
+        activeVisitors: 0,
+        last30Minutes: 0,
+        today: 0,
+        visitors: [],
+        pageviewsLast5Min: 0,
+        pageBreakdown: {},
+        recentPageviews: [],
+        visitorsPerMinute: [],
+        trafficSources: [],
+        timestamp: new Date().toISOString(),
+        _meta: {
+          usageLimitReached: true,
+          message: 'Real-time data frozen. Upgrade to see live visitors.'
+        }
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
       });
     }
 

@@ -1,9 +1,10 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
-import { getUserSites } from './lib/storage.js';
-import { getStats } from './lib/turso.js';
+import { getUserSites, getUser } from './lib/storage.js';
+import { getStats, getActualUsageFromPageviews, getCurrentMonth, getUsageLimitHitDate } from './lib/turso.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, ForbiddenError } from './lib/error-handler.js';
 import { validateRequest, statsQuerySchema, validateDateRangeInData } from './lib/schemas.js';
+import { Config } from './lib/config.js';
 
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
@@ -69,6 +70,40 @@ export default async function handler(req, context) {
       hasCustomDates: !!(customStart && customEnd)
     });
 
+    // Check usage limits - freeze data if over limit
+    let usageLimitReached = false;
+    let dataFrozenAt = null;
+
+    try {
+      const user = await getUser(auth.user.email);
+      const plan = user?.plan || 'free';
+      const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
+      const monthlyLimit = planConfig.monthlyPageviews;
+
+      // Get current usage
+      const currentMonth = getCurrentMonth();
+      const actualUsage = await getActualUsageFromPageviews(userSites, currentMonth);
+      const currentPageviews = actualUsage?.pageviews || 0;
+
+      if (currentPageviews >= monthlyLimit) {
+        usageLimitReached = true;
+        // Get the date when they hit the limit
+        const limitHitDate = await getUsageLimitHitDate(userSites, monthlyLimit, currentMonth);
+        if (limitHitDate) {
+          dataFrozenAt = limitHitDate;
+          logger.info('Usage limit reached, freezing data', {
+            userId: auth.user.id,
+            currentPageviews,
+            monthlyLimit,
+            dataFrozenAt
+          });
+        }
+      }
+    } catch (usageErr) {
+      logger.warn('Failed to check usage limits', { error: usageErr.message });
+      // Continue without usage gating if check fails
+    }
+
     // Calculate date range
     let endDate, startDate;
 
@@ -77,9 +112,28 @@ export default async function handler(req, context) {
       const dateRangeValidation = validateDateRangeInData({ startDate: customStart, endDate: customEnd });
       startDate = dateRangeValidation.startDate || new Date(customStart);
       endDate = dateRangeValidation.endDate || new Date(customEnd);
+
+      // Cap custom end date if over limit
+      if (usageLimitReached && dataFrozenAt) {
+        const frozenDate = new Date(dataFrozenAt);
+        frozenDate.setHours(23, 59, 59, 999);
+        if (frozenDate < endDate) {
+          endDate = frozenDate;
+        }
+      }
     } else {
       endDate = new Date();
       startDate = new Date();
+
+      // If usage limit reached and we have a frozen date, cap the end date
+      if (usageLimitReached && dataFrozenAt) {
+        const frozenDate = new Date(dataFrozenAt);
+        // Set end of day for the frozen date
+        frozenDate.setHours(23, 59, 59, 999);
+        if (frozenDate < endDate) {
+          endDate = frozenDate;
+        }
+      }
 
       switch (period) {
         case '24h':
@@ -119,10 +173,22 @@ export default async function handler(req, context) {
     logger.info('Stats query successful', {
       siteId,
       hasData: !!stats,
-      resultKeys: stats ? Object.keys(stats) : []
+      resultKeys: stats ? Object.keys(stats) : [],
+      usageLimitReached,
+      dataFrozenAt
     });
 
-    return successResponse(stats, 200, origin);
+    // Include usage limit info in response
+    const response = {
+      ...stats,
+      _meta: {
+        usageLimitReached,
+        dataFrozenAt,
+        queryEndDate: endDate.toISOString()
+      }
+    };
+
+    return successResponse(response, 200, origin);
   } catch (err) {
     return handleError(err, logger, origin);
   }

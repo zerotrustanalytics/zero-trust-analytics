@@ -1264,6 +1264,58 @@ async function getActualUsageFromPageviews(siteIds, month = null) {
   };
 }
 
+/**
+ * Find the date when a user hit their pageview limit
+ * Uses a running total query to find when cumulative pageviews crossed the threshold
+ */
+async function getUsageLimitHitDate(siteIds, limit, month = null) {
+  if (!siteIds || siteIds.length === 0 || !limit) {
+    return null;
+  }
+
+  const targetMonth = month || getCurrentMonth();
+  const [year, monthNum] = targetMonth.split('-').map(Number);
+  const startDate = `${targetMonth}-01 00:00:00`;
+  const endDate = new Date(year, monthNum, 0, 23, 59, 59).toISOString().replace('T', ' ').split('.')[0];
+
+  const placeholders = siteIds.map(() => '?').join(', ');
+
+  try {
+    // Get pageviews grouped by date, ordered chronologically
+    const result = await turso.execute({
+      sql: `
+        SELECT
+          DATE(timestamp) as date,
+          COUNT(*) as daily_count
+        FROM pageviews
+        WHERE site_id IN (${placeholders})
+          AND event_type = 'pageview'
+          AND timestamp >= ?
+          AND timestamp <= ?
+        GROUP BY DATE(timestamp)
+        ORDER BY date ASC
+      `,
+      args: [...siteIds, startDate, endDate]
+    });
+
+    const rows = normalizeRows(result.rows);
+    let cumulative = 0;
+
+    // Find the date when we crossed the limit
+    for (const row of rows) {
+      cumulative += row.daily_count || 0;
+      if (cumulative >= limit) {
+        return row.date; // Return the date when limit was hit
+      }
+    }
+
+    return null; // Limit not reached
+  } catch (err) {
+    console.error('Error finding usage limit hit date:', err);
+    return null;
+  }
+}
+
 export {
   turso,
   initSchema,
@@ -1296,5 +1348,6 @@ export {
   getTeamUsageHistory,
   checkUsageLimit,
   getTeamForSite,
-  getActualUsageFromPageviews
+  getActualUsageFromPageviews,
+  getUsageLimitHitDate
 };

@@ -72,7 +72,7 @@ export function UsageBanner() {
           <p className={`text-sm ${styles.text} opacity-80 mt-1`}>
             {isWarning
               ? `Your ${planName} plan is approaching its limit. Upgrade to avoid interruption.`
-              : `Your ${planName} plan limit has been reached. Data is being collected but hidden until you upgrade.`
+              : `Your ${planName} plan limit has been reached. Analytics data is frozen until you upgrade.`
             }
           </p>
         </div>
