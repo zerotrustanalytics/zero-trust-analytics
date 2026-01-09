@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [period, setPeriod] = useState('7d')
+  const [chartMode, setChartMode] = useState<'combined' | 'perSite'>('combined')
 
   const getPeriodDays = (p: string) => {
     switch (p) {
@@ -183,6 +184,39 @@ export default function DashboardPage() {
 
   const chartData = aggregateDailyData()
 
+  // Generate per-site chart data (each site as separate line)
+  const getPerSiteChartData = () => {
+    // Get all unique dates
+    const allDates = new Set<string>()
+    siteStats.forEach(site => {
+      site.daily?.forEach(day => allDates.add(day.date))
+    })
+
+    // Sort dates
+    const sortedDates = Array.from(allDates).sort()
+
+    // Build data array with each date having values for each site
+    return sortedDates.map(date => {
+      const dataPoint: Record<string, string | number> = {
+        date,
+        formattedDate: format(parseISO(date), 'MMM d')
+      }
+
+      siteStats.forEach(site => {
+        const dayData = site.daily?.find(d => d.date === date)
+        const siteName = site.name || site.domain
+        dataPoint[siteName] = dayData?.unique_visitors || 0
+      })
+
+      return dataPoint
+    })
+  }
+
+  const perSiteChartData = getPerSiteChartData()
+
+  // Colors for per-site lines
+  const siteColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16']
+
   // Format duration
   const formatDuration = (seconds: number): string => {
     if (!seconds || seconds === 0) return '0s'
@@ -274,23 +308,85 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Combined Traffic Chart */}
+      {/* Traffic Chart with Toggle */}
       {chartData.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-          <h2 className="text-sm font-semibold mb-4">Combined Traffic Overview</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-sm font-semibold">
+              {chartMode === 'combined' ? 'Combined Traffic Overview' : 'Traffic by Site'}
+            </h2>
+            {sites.length > 1 && (
+              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                <button
+                  onClick={() => setChartMode('combined')}
+                  className={`px-3 py-1 text-xs rounded-md transition ${
+                    chartMode === 'combined'
+                      ? 'bg-white dark:bg-gray-600 shadow-sm font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Combined
+                </button>
+                <button
+                  onClick={() => setChartMode('perSite')}
+                  className={`px-3 py-1 text-xs rounded-md transition ${
+                    chartMode === 'perSite'
+                      ? 'bg-white dark:bg-gray-600 shadow-sm font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Per Site
+                </button>
+              </div>
+            )}
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#F9FAFB' }}
-                />
-                <Line type="monotone" dataKey="visitors" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 3 }} name="Visitors" />
-                <Line type="monotone" dataKey="pageviews" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', r: 3 }} name="Page Views" />
-              </LineChart>
+              {chartMode === 'combined' ? (
+                <LineChart data={chartData}>
+                  <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#F9FAFB' }}
+                  />
+                  <Line type="monotone" dataKey="visitors" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 3 }} name="Visitors" />
+                  <Line type="monotone" dataKey="pageviews" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', r: 3 }} name="Page Views" />
+                </LineChart>
+              ) : (
+                <LineChart data={perSiteChartData}>
+                  <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#F9FAFB' }}
+                  />
+                  {siteStats.map((site, index) => (
+                    <Line
+                      key={site.siteId}
+                      type="monotone"
+                      dataKey={site.name || site.domain}
+                      stroke={siteColors[index % siteColors.length]}
+                      strokeWidth={2}
+                      dot={{ fill: siteColors[index % siteColors.length], r: 3 }}
+                    />
+                  ))}
+                </LineChart>
+              )}
             </ResponsiveContainer>
           </div>
+          {/* Legend for per-site view */}
+          {chartMode === 'perSite' && (
+            <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {siteStats.map((site, index) => (
+                <div key={site.siteId} className="flex items-center gap-2 text-sm">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: siteColors[index % siteColors.length] }}
+                  ></span>
+                  <span className="text-muted-foreground">{site.name || site.domain}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
