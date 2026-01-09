@@ -225,7 +225,11 @@ export default function SitesPage() {
         onClose={() => setConfirmDeleteId(null)}
         onConfirm={handleDelete}
         title="Delete Site"
-        message="Are you sure you want to delete this site? This action cannot be undone and all analytics data will be lost."
+        message={
+          <>
+            Are you sure you want to delete <strong>{sites.find(s => s.id === confirmDeleteId)?.name || sites.find(s => s.id === confirmDeleteId)?.domain}</strong>? This action cannot be undone and all analytics data will be lost.
+          </>
+        }
         confirmText="Delete Site"
         variant="danger"
         loading={!!deletingId}
