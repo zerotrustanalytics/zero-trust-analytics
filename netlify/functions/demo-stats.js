@@ -54,12 +54,13 @@ export default async function handler(req, context) {
       pageviews: stats.summary.pageviews,
       bounceRate: stats.summary.bounce_rate,
       avgSessionDuration: stats.summary.avg_duration,
-      pages: stats.pages,
-      referrers: stats.referrers,
-      devices: stats.devices,
-      browsers: stats.browsers,
-      countries: stats.countries,
-      daily: stats.daily
+      // Use array formats for frontend compatibility
+      pages: stats.topPages || [],
+      referrers: stats.sources || [],
+      devices: stats.devicesList || [],
+      browsers: stats.browsersList || [],
+      countries: stats.countriesList || [],
+      daily: stats.daily || []
     }), {
       status: 200,
       headers
