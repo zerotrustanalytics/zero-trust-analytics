@@ -521,15 +521,21 @@ async function getStats(siteId, startDate, endDate) {
       args: [siteId, startDate, endDate]
     }),
 
-    // Session counts for views per visit calculation
+    // Session counts and bounce rate calculation
     turso.execute({
       sql: `
-        SELECT COUNT(DISTINCT session_hash) as total_sessions
-        FROM pageviews
-        WHERE event_type = 'pageview'
-          AND site_id = ?
-          AND timestamp >= ?
-          AND timestamp <= ?
+        SELECT
+          COUNT(*) as total_sessions,
+          SUM(CASE WHEN pv_count = 1 THEN 1 ELSE 0 END) as bounced_sessions
+        FROM (
+          SELECT session_hash, COUNT(*) as pv_count
+          FROM pageviews
+          WHERE event_type = 'pageview'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+          GROUP BY session_hash
+        )
       `,
       args: [siteId, startDate, endDate]
     })
@@ -548,8 +554,10 @@ async function getStats(siteId, startDate, endDate) {
     { pageviews: 0, unique_visitors: 0, sessions: 0, bounces: 0, total_duration: 0 }
   );
 
-  // Get total sessions
-  const totalSessions = normalizeRows(sessionCounts.rows)[0]?.total_sessions || 0;
+  // Get session and bounce data
+  const sessionData = normalizeRows(sessionCounts.rows)[0] || { total_sessions: 0, bounced_sessions: 0 };
+  const totalSessions = sessionData.total_sessions || 0;
+  const bouncedSessions = sessionData.bounced_sessions || 0;
 
   // Helper to convert rows to array format with visitors
   const rowsToArrayWithVisitors = (rows, keyField) => {
@@ -573,8 +581,8 @@ async function getStats(siteId, startDate, endDate) {
       pageviews: totals.pageviews,
       unique_visitors: totals.unique_visitors,
       sessions: totalSessions,
-      bounce_rate: totals.pageviews > 0
-        ? Math.round((totals.bounces / totals.pageviews) * 100)
+      bounce_rate: totalSessions > 0
+        ? Math.round((bouncedSessions / totalSessions) * 100)
         : 0,
       avg_duration: totals.pageviews > 0
         ? Math.round(totals.total_duration / totals.pageviews)
