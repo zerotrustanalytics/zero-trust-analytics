@@ -140,23 +140,42 @@ async function getStats(siteId, startDate, endDate) {
       args: [siteId, startDate, endDate]
     }),
 
-    // Top pages
+    // Top pages with duration from engagement events
     turso.execute({
       sql: `
         SELECT
-          JSON_EXTRACT(payload, '$.page_path') as page,
-          COUNT(*) as views,
-          COUNT(DISTINCT identity_hash) as visitors
-        FROM pageviews
-        WHERE event_type = 'pageview'
-          AND site_id = ?
-          AND timestamp >= ?
-          AND timestamp <= ?
-        GROUP BY page
-        ORDER BY views DESC
+          pv.page,
+          pv.views,
+          pv.visitors,
+          COALESCE(eng.avg_duration, 0) as avg_duration
+        FROM (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            COUNT(*) as views,
+            COUNT(DISTINCT identity_hash) as visitors
+          FROM pageviews
+          WHERE event_type = 'pageview'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+          GROUP BY page
+        ) pv
+        LEFT JOIN (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            ROUND(AVG(meta_duration), 0) as avg_duration
+          FROM pageviews
+          WHERE event_type = 'engagement'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+            AND meta_duration > 0
+          GROUP BY page
+        ) eng ON pv.page = eng.page
+        ORDER BY pv.views DESC
         LIMIT 10
       `,
-      args: [siteId, startDate, endDate]
+      args: [siteId, startDate, endDate, siteId, startDate, endDate]
     }),
 
     // Top referrers
@@ -239,18 +258,28 @@ async function getStats(siteId, startDate, endDate) {
 
   // Convert arrays to objects for frontend compatibility
   // Frontend expects: { "/path": 5, "/other": 3 }
-  const pagesToObj = rowsToObject(normalizeRows(topPages.rows), 'page', 'views');
+  const normalizedPages = normalizeRows(topPages.rows);
+  const pagesToObj = rowsToObject(normalizedPages, 'page', 'views');
   const referrersToObj = rowsToObject(normalizeRows(topReferrers.rows), 'referrer', 'views');
   const devicesToObj = rowsToObject(normalizeRows(devices.rows), 'device', 'count');
   const browsersToObj = rowsToObject(normalizeRows(browsers.rows), 'browser', 'count');
   const countriesToObj = rowsToObject(normalizeRows(countries.rows), 'country', 'count');
 
+  // Convert pages to array format for frontend: { name, visitors, views, duration }
+  const topPagesArray = normalizedPages.map(row => ({
+    name: row.page || '/',
+    visitors: row.visitors || 0,
+    views: row.views || 0,
+    duration: row.avg_duration || 0
+  }));
+
   return {
     summary: {
       pageviews: totals.pageviews,
       unique_visitors: totals.unique_visitors,
-      bounce_rate: totals.pageviews > 0
-        ? Math.round((totals.bounces / totals.pageviews) * 100)
+      // Bounce rate = bounces / unique visitors (not pageviews)
+      bounce_rate: totals.unique_visitors > 0
+        ? Math.min(100, Math.round((totals.bounces / totals.unique_visitors) * 100))
         : 0,
       avg_duration: totals.pageviews > 0
         ? Math.round(totals.total_duration / totals.pageviews)
@@ -258,6 +287,7 @@ async function getStats(siteId, startDate, endDate) {
     },
     daily,
     pages: pagesToObj,
+    topPages: topPagesArray,
     referrers: referrersToObj,
     devices: devicesToObj,
     browsers: browsersToObj,
