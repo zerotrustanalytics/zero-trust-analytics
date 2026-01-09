@@ -238,7 +238,7 @@ async function getStats(siteId, startDate, endDate) {
           GROUP BY page
         ) eng ON pv.page = eng.page
         ORDER BY pv.views DESC
-        LIMIT 10
+        LIMIT 100
       `,
       args: [siteId, startDate, endDate, siteId, startDate, endDate]
     }),
@@ -283,7 +283,7 @@ async function getStats(siteId, startDate, endDate) {
           GROUP BY page
         ) eng ON ep.page = eng.page
         ORDER BY ep.visits DESC
-        LIMIT 10
+        LIMIT 100
       `,
       args: [siteId, startDate, endDate, siteId, siteId, startDate, endDate]
     }),
@@ -328,7 +328,7 @@ async function getStats(siteId, startDate, endDate) {
           GROUP BY page
         ) eng ON xp.page = eng.page
         ORDER BY xp.exits DESC
-        LIMIT 10
+        LIMIT 100
       `,
       args: [siteId, startDate, endDate, siteId, siteId, startDate, endDate]
     }),

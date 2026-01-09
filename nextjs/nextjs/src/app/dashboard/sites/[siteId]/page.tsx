@@ -620,6 +620,7 @@ export default function SiteDetailsPage() {
   const [period, setPeriod] = useState('7d')
   const [chartMetric, setChartMetric] = useState<'visitors' | 'pageviews'>('visitors')
   const [activeTab, setActiveTab] = useState<'pages' | 'entry' | 'exit'>('pages')
+  const [pagesLimit, setPagesLimit] = useState(5)
   const [trafficTab, setTrafficTab] = useState<'channels' | 'sources'>('channels')
   const [utmTab, setUtmTab] = useState<'sources' | 'mediums' | 'campaigns'>('sources')
   const [showShareModal, setShowShareModal] = useState(false)
@@ -963,7 +964,10 @@ export default function SiteDetailsPage() {
           {['pages', 'entry', 'exit'].map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as 'pages' | 'entry' | 'exit')}
+              onClick={() => {
+                setActiveTab(tab as 'pages' | 'entry' | 'exit')
+                setPagesLimit(5) // Reset limit when switching tabs
+              }}
               className={`pb-2 text-sm font-medium border-b-2 transition ${
                 activeTab === tab
                   ? 'border-primary text-primary'
@@ -985,7 +989,7 @@ export default function SiteDetailsPage() {
             </tr>
           </thead>
           <tbody>
-            {(activeTab === 'pages' ? stats?.topPages : activeTab === 'entry' ? stats?.entryPages : stats?.exitPages)?.slice(0, 5).map((page, i) => (
+            {(activeTab === 'pages' ? stats?.topPages : activeTab === 'entry' ? stats?.entryPages : stats?.exitPages)?.slice(0, pagesLimit).map((page, i) => (
               <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
                 <td className="py-2 text-primary truncate max-w-[250px]">{page.name}</td>
                 <td className="py-2 text-right">{page.visitors.toLocaleString()}</td>
@@ -1008,6 +1012,24 @@ export default function SiteDetailsPage() {
             )) || <tr><td colSpan={activeTab === 'exit' ? 5 : 4} className="py-4 text-center text-muted-foreground">No data</td></tr>}
           </tbody>
         </table>
+        {/* Load More button */}
+        {(() => {
+          const currentData = activeTab === 'pages' ? stats?.topPages : activeTab === 'entry' ? stats?.entryPages : stats?.exitPages
+          const totalItems = currentData?.length || 0
+          if (totalItems > pagesLimit) {
+            return (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setPagesLimit(prev => prev + 10)}
+                  className="px-4 py-2 text-sm text-primary hover:bg-primary/5 rounded-lg transition"
+                >
+                  Load More ({totalItems - pagesLimit} remaining)
+                </button>
+              </div>
+            )
+          }
+          return null
+        })()}
       </div>
 
       {/* Sources & UTM */}
