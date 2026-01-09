@@ -205,23 +205,42 @@ async function getStats(siteId, startDate, endDate) {
       args: [siteId, startDate, endDate]
     }),
 
-    // Top pages (all pages with views)
+    // Top pages (all pages with views and duration from engagement events)
     turso.execute({
       sql: `
         SELECT
-          JSON_EXTRACT(payload, '$.page_path') as page,
-          COUNT(*) as views,
-          COUNT(DISTINCT identity_hash) as visitors
-        FROM pageviews
-        WHERE event_type = 'pageview'
-          AND site_id = ?
-          AND timestamp >= ?
-          AND timestamp <= ?
-        GROUP BY page
-        ORDER BY views DESC
+          pv.page,
+          pv.views,
+          pv.visitors,
+          COALESCE(eng.avg_duration, 0) as duration
+        FROM (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            COUNT(*) as views,
+            COUNT(DISTINCT identity_hash) as visitors
+          FROM pageviews
+          WHERE event_type = 'pageview'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+          GROUP BY page
+        ) pv
+        LEFT JOIN (
+          SELECT
+            JSON_EXTRACT(payload, '$.page_path') as page,
+            ROUND(AVG(meta_duration), 0) as avg_duration
+          FROM pageviews
+          WHERE event_type = 'engagement'
+            AND site_id = ?
+            AND timestamp >= ?
+            AND timestamp <= ?
+            AND meta_duration > 0
+          GROUP BY page
+        ) eng ON pv.page = eng.page
+        ORDER BY pv.views DESC
         LIMIT 10
       `,
-      args: [siteId, startDate, endDate]
+      args: [siteId, startDate, endDate, siteId, startDate, endDate]
     }),
 
     // Entry pages (first page of session)
@@ -559,13 +578,15 @@ async function getStats(siteId, startDate, endDate) {
   const totalSessions = sessionData.total_sessions || 0;
   const bouncedSessions = sessionData.bounced_sessions || 0;
 
-  // Helper to convert rows to array format with visitors
+  // Helper to convert rows to array format with visitors and duration
   const rowsToArrayWithVisitors = (rows, keyField) => {
     return normalizeRows(rows).map(row => ({
       name: row[keyField] || 'Unknown',
       visitors: row.visitors || 0,
       views: row.views || row.visits || row.exits || 0,
-      ...(row.country ? { country: row.country } : {})
+      duration: row.duration || row.avg_duration || 0,
+      ...(row.country ? { country: row.country } : {}),
+      ...(row.exitRate ? { exitRate: row.exitRate } : {})
     }));
   };
 
