@@ -224,10 +224,27 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
   }
 
   // Build headers for geo extraction (country, region, city from Netlify Edge)
+  // If Netlify doesn't have city, try fallback geo lookup
+  let city = context.geo?.city || '';
+  if (!city && ip && ip !== 'unknown') {
+    try {
+      // Free fallback geo lookup (ip-api.com, no key needed, 45 req/min)
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=city`, {
+        signal: AbortSignal.timeout(1000) // 1s timeout to not slow tracking
+      });
+      if (geoRes.ok) {
+        const geoData = await geoRes.json();
+        city = geoData.city || '';
+      }
+    } catch {
+      // Fallback failed, continue without city
+    }
+  }
+
   const headers = {
     'x-country': context.geo?.country?.code || '',
     'x-nf-client-connection-region': context.geo?.subdivision?.code || '',
-    'x-city': context.geo?.city || ''
+    'x-city': city
   };
 
   // Process all events into records
@@ -417,10 +434,26 @@ async function handleSingleEvent(req, context, origin, data, logger) {
   }
 
   // Build headers object for geo extraction (country, region, city from Netlify Edge)
+  // If Netlify doesn't have city, try fallback geo lookup
+  let singleCity = context.geo?.city || '';
+  if (!singleCity && ip && ip !== 'unknown') {
+    try {
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=city`, {
+        signal: AbortSignal.timeout(1000)
+      });
+      if (geoRes.ok) {
+        const geoData = await geoRes.json();
+        singleCity = geoData.city || '';
+      }
+    } catch {
+      // Fallback failed, continue without city
+    }
+  }
+
   const headers = {
     'x-country': context.geo?.country?.code || '',
     'x-nf-client-connection-region': context.geo?.subdivision?.code || '',
-    'x-city': context.geo?.city || ''
+    'x-city': singleCity
   };
 
   // Parse event
