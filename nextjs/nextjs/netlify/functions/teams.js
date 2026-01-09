@@ -1,7 +1,6 @@
 import { authenticateRequest } from './lib/auth.js';
 import { createClerkClient } from '@clerk/backend';
 import {
-  getUser,
   createTeam,
   getTeam,
   updateTeam,
@@ -73,7 +72,7 @@ export default async function handler(req, context) {
   if (auth.error) {
     return new Response(JSON.stringify({ error: auth.error }), {
       status: auth.status,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
 
@@ -92,7 +91,7 @@ export default async function handler(req, context) {
         if (!role) {
           return new Response(JSON.stringify({ error: 'Access denied' }), {
             status: 403,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -135,7 +134,7 @@ export default async function handler(req, context) {
       console.error('Get teams error:', err);
       return new Response(JSON.stringify({ error: 'Failed to get teams' }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
   }
@@ -164,7 +163,7 @@ export default async function handler(req, context) {
         if (!teamId || !email) {
           return new Response(JSON.stringify({ error: 'Team ID and email required' }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -173,7 +172,7 @@ export default async function handler(req, context) {
         if (userRole !== TeamRoles.OWNER && userRole !== TeamRoles.ADMIN) {
           return new Response(JSON.stringify({ error: 'Only owners and admins can invite members' }), {
             status: 403,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -183,7 +182,7 @@ export default async function handler(req, context) {
         if (!Object.values(TeamRoles).includes(inviteRole) || inviteRole === TeamRoles.OWNER) {
           return new Response(JSON.stringify({ error: 'Invalid role' }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -192,7 +191,7 @@ export default async function handler(req, context) {
         if (result.error) {
           return new Response(JSON.stringify({ error: result.error }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -223,7 +222,7 @@ export default async function handler(req, context) {
         if (!teamId || !siteId) {
           return new Response(JSON.stringify({ error: 'Team ID and site ID required' }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -232,7 +231,7 @@ export default async function handler(req, context) {
         if (!userSites.includes(siteId)) {
           return new Response(JSON.stringify({ error: 'You must own the site to add it to a team' }), {
             status: 403,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -241,7 +240,7 @@ export default async function handler(req, context) {
         if (result.error) {
           return new Response(JSON.stringify({ error: result.error }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -256,14 +255,14 @@ export default async function handler(req, context) {
 
       return new Response(JSON.stringify({ error: 'Invalid action' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
 
     } catch (err) {
       console.error('Team POST error:', err);
       return new Response(JSON.stringify({ error: 'Failed to process request' }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
   }
@@ -277,7 +276,7 @@ export default async function handler(req, context) {
       if (!teamId) {
         return new Response(JSON.stringify({ error: 'Team ID required' }), {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       }
 
@@ -288,7 +287,7 @@ export default async function handler(req, context) {
         if (!updated) {
           return new Response(JSON.stringify({ error: 'Failed to update team' }), {
             status: 403,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -306,7 +305,7 @@ export default async function handler(req, context) {
         if (!memberId || !role) {
           return new Response(JSON.stringify({ error: 'Member ID and role required' }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -315,7 +314,7 @@ export default async function handler(req, context) {
         if (result.error) {
           return new Response(JSON.stringify({ error: result.error }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -330,14 +329,14 @@ export default async function handler(req, context) {
 
       return new Response(JSON.stringify({ error: 'Invalid action' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
 
     } catch (err) {
       console.error('Team PATCH error:', err);
       return new Response(JSON.stringify({ error: 'Failed to update' }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
   }
@@ -352,7 +351,7 @@ export default async function handler(req, context) {
     if (!teamId) {
       return new Response(JSON.stringify({ error: 'Team ID required' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
 
@@ -364,7 +363,7 @@ export default async function handler(req, context) {
         if (result.error) {
           return new Response(JSON.stringify({ error: result.error }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -384,7 +383,7 @@ export default async function handler(req, context) {
         if (result.error) {
           return new Response(JSON.stringify({ error: result.error }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -404,7 +403,7 @@ export default async function handler(req, context) {
         if (result.error) {
           return new Response(JSON.stringify({ error: result.error }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -424,7 +423,7 @@ export default async function handler(req, context) {
         if (!success) {
           return new Response(JSON.stringify({ error: 'Failed to revoke invite' }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
 
@@ -439,21 +438,21 @@ export default async function handler(req, context) {
 
       return new Response(JSON.stringify({ error: 'Specify memberId, inviteId, or action=leave' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
 
     } catch (err) {
       console.error('Team DELETE error:', err);
       return new Response(JSON.stringify({ error: 'Failed to delete' }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
   }
 
   return new Response(JSON.stringify({ error: 'Method not allowed' }), {
     status: 405,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
   });
 }
 

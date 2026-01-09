@@ -1698,13 +1698,16 @@ export async function createTeamInvite(teamId, inviterId, email, role = TeamRole
 
   // Check for existing pending invite
   const invitesKey = `team_invites_${teamId}`;
-  let invites = await teams.get(invitesKey, { type: 'json' }) || [];
-  const existingInvite = invites.find(i =>
-    i.email.toLowerCase() === email.toLowerCase() && i.status === TeamInviteStatus.PENDING
-  );
+  let inviteIds = await teams.get(invitesKey, { type: 'json' }) || [];
 
-  if (existingInvite) {
-    return { error: 'Pending invite already exists for this email' };
+  // Fetch actual invite objects to check for duplicates
+  for (const inviteId of inviteIds) {
+    const invite = await teams.get(inviteId, { type: 'json' });
+    if (invite &&
+        invite.email.toLowerCase() === email.toLowerCase() &&
+        invite.status === TeamInviteStatus.PENDING) {
+      return { error: 'Pending invite already exists for this email' };
+    }
   }
 
   const inviteId = 'inv_' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
@@ -1727,8 +1730,8 @@ export async function createTeamInvite(teamId, inviterId, email, role = TeamRole
   await teams.setJSON(`invite_token_${inviteToken}`, inviteId);
 
   // Add to team's invite list
-  invites.push(inviteId);
-  await teams.setJSON(invitesKey, invites);
+  inviteIds.push(inviteId);
+  await teams.setJSON(invitesKey, inviteIds);
 
   return invite;
 }

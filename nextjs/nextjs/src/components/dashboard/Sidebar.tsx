@@ -177,7 +177,7 @@ export function Sidebar() {
         </header>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-6 overflow-y-auto" aria-label="Main navigation">
+        <nav className={clsx('flex-1 space-y-6 overflow-y-auto', collapsed ? 'p-2' : 'p-4')} aria-label="Main navigation">
           {navigation.map((section) => (
             <div key={section.title} role="group" aria-labelledby={`nav-section-${section.title.toLowerCase()}`}>
               {!collapsed && (
@@ -201,7 +201,8 @@ export function Sidebar() {
                       <Link
                         href={item.href}
                         className={clsx(
-                          'flex items-center gap-3 px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                          'flex items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                          collapsed ? 'justify-center p-2' : 'gap-3 px-4 py-2',
                           isActive
                             ? 'bg-primary/10 text-primary'
                             : 'text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-foreground'
@@ -210,7 +211,7 @@ export function Sidebar() {
                         aria-current={isActive ? 'page' : undefined}
                         aria-label={collapsed ? item.label : undefined}
                       >
-                        {item.icon}
+                        <span className="flex-shrink-0">{item.icon}</span>
                         {!collapsed && (
                           <>
                             <span className="flex-1">{item.label}</span>

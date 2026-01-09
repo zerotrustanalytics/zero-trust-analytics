@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth, useUser } from '@clerk/nextjs'
+import Link from 'next/link'
 
 interface Site {
   id: string
@@ -284,9 +285,12 @@ export default function ReportsPage() {
             </div>
 
             <div className="text-center pt-4">
-              <span className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">
+              <Link
+                href={newReport.siteId ? `/dashboard/sites/${newReport.siteId}` : '/dashboard'}
+                className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:opacity-90 transition-opacity"
+              >
                 View Full Report
-              </span>
+              </Link>
             </div>
           </div>
         </div>
