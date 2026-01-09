@@ -177,7 +177,7 @@ export default function DashboardPage() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, data]) => ({
         date,
-        formattedDate: format(parseISO(date), 'MMM d'),
+        formattedDate: format(new Date(date + 'T12:00:00'), 'MMM d'), // Use noon to avoid timezone date shifts
         ...data
       }))
   }
@@ -199,7 +199,7 @@ export default function DashboardPage() {
     return sortedDates.map(date => {
       const dataPoint: Record<string, string | number> = {
         date,
-        formattedDate: format(parseISO(date), 'MMM d')
+        formattedDate: format(new Date(date + 'T12:00:00'), 'MMM d') // Use noon to avoid timezone date shifts
       }
 
       siteStats.forEach(site => {

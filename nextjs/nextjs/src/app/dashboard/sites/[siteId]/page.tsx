@@ -749,7 +749,7 @@ export default function SiteDetailsPage() {
   // Prepare chart data
   const chartData = stats?.daily?.slice().reverse().map(d => ({
     date: d.date,
-    formattedDate: format(parseISO(d.date), 'MMM d'),
+    formattedDate: format(new Date(d.date + 'T12:00:00'), 'MMM d'), // Use noon to avoid timezone date shifts
     visitors: d.unique_visitors || 0,
     pageviews: d.pageviews || 0,
   })) || []
