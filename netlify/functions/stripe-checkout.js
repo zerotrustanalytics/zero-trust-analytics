@@ -3,6 +3,7 @@ import { authenticateRequest, corsPreflightResponse, successResponse, Errors, ge
 import { getUser } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
+import { Config } from './lib/config.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -32,15 +33,31 @@ export default async function handler(req, context) {
   }
 
   try {
-    const user = await getUser(auth.user.email);
+    // Parse request body for plan selection
+    const body = await req.json().catch(() => ({}));
+    const selectedPlan = body.plan || 'starter';
 
-    // Check if already subscribed
-    if (user.subscription && user.subscription.status === 'active') {
-      logger.warn('Checkout failed - already subscribed', { userId: user.id });
-      return Errors.badRequest('Already subscribed');
+    // Validate plan exists and has a price
+    const planConfig = Config.pricing.tiers[selectedPlan];
+    if (!planConfig) {
+      logger.warn('Invalid plan selected', { plan: selectedPlan });
+      return Errors.badRequest('Invalid plan selected');
     }
 
-    logger.info('Creating Stripe checkout session', { userId: user.id });
+    if (!planConfig.stripePriceId) {
+      logger.warn('Plan has no Stripe price', { plan: selectedPlan });
+      return Errors.badRequest('This plan is not available for purchase');
+    }
+
+    const user = await getUser(auth.user.email);
+
+    // Check if already subscribed to same or higher plan
+    if (user.subscription && user.subscription.status === 'active') {
+      logger.warn('Checkout failed - already subscribed', { userId: user.id });
+      return Errors.badRequest('Already subscribed. Use the billing portal to change plans.');
+    }
+
+    logger.info('Creating Stripe checkout session', { userId: user.id, plan: selectedPlan });
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -49,15 +66,16 @@ export default async function handler(req, context) {
       customer_email: auth.user.email,
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID, // Stripe price ID from env
+          price: planConfig.stripePriceId,
           quantity: 1
         }
       ],
-      success_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/?success=true`,
-      cancel_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/?canceled=true`,
+      success_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/billing?success=true`,
+      cancel_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/billing?canceled=true`,
       metadata: {
         userId: user.id,
-        email: auth.user.email
+        email: auth.user.email,
+        plan: selectedPlan
       }
     });
 

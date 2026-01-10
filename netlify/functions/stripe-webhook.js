@@ -40,27 +40,31 @@ export default async function handler(req, context) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const email = session.customer_email || session.metadata.email;
+        const email = session.customer_email || session.metadata?.email;
+        const plan = session.metadata?.plan || 'starter';
 
         logger.info('Processing checkout.session.completed', {
           sessionId: session.id,
           customerId: session.customer,
-          hasEmail: !!email
+          hasEmail: !!email,
+          plan
         });
 
         if (email) {
           await updateUser(email, {
-            plan: 'starter', // Upgrade to starter plan (50k pageviews)
+            plan: plan,
             subscription: {
               status: 'active',
               customerId: session.customer,
               subscriptionId: session.subscription,
+              plan: plan,
               createdAt: new Date().toISOString()
             }
           });
-          logger.info('User subscription activated and plan upgraded to starter', {
+          logger.info('User subscription activated', {
             customerId: session.customer,
-            email
+            email,
+            plan
           });
         } else {
           logger.warn('Checkout completed but no email found', {

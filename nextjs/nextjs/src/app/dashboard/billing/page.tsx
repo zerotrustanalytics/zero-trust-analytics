@@ -122,7 +122,7 @@ export default function BillingPage() {
     try {
       const token = await getToken()
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      const res = await fetch(`${apiUrl}/api/stripe-checkout`, {
+      const res = await fetch(`${apiUrl}/api/stripe/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ export default function BillingPage() {
     try {
       const token = await getToken()
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      const res = await fetch(`${apiUrl}/api/stripe-portal`, {
+      const res = await fetch(`${apiUrl}/api/stripe/portal`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
