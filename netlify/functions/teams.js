@@ -18,6 +18,7 @@ import {
   getUserSites,
   TeamRoles
 } from './lib/storage.js';
+import { Config } from './lib/config.js';
 
 export default async function handler(req, context) {
   if (req.method === 'OPTIONS') {
@@ -134,6 +135,27 @@ export default async function handler(req, context) {
         const userRole = await getTeamMemberRole(teamId, userId);
         if (userRole !== TeamRoles.OWNER && userRole !== TeamRoles.ADMIN) {
           return new Response(JSON.stringify({ error: 'Only owners and admins can invite members' }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Check team member limit based on team owner's plan
+        const team = await getTeam(teamId);
+        const teamOwner = await getUser(team.ownerEmail || userEmail);
+        const plan = teamOwner?.plan || 'free';
+        const memberLimit = Config.pricing.teamMemberLimits[plan] || Config.pricing.teamMemberLimits.free;
+        const currentMembers = await getTeamMembers(teamId);
+        const pendingInvites = await getTeamInvites(teamId);
+        const totalCount = (currentMembers?.length || 0) + (pendingInvites?.length || 0);
+
+        if (memberLimit !== Infinity && totalCount >= memberLimit) {
+          return new Response(JSON.stringify({
+            error: 'Team member limit reached',
+            message: `Your ${plan} plan allows ${memberLimit} team member${memberLimit !== 1 ? 's' : ''}. Upgrade to invite more.`,
+            currentCount: totalCount,
+            limit: memberLimit
+          }), {
             status: 403,
             headers: { 'Content-Type': 'application/json' }
           });

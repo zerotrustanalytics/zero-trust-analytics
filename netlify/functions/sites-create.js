@@ -1,9 +1,10 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders, validateCSRFFromRequest } from './lib/auth.js';
-import { createSite, getUser } from './lib/storage.js';
+import { createSite, getUser, getUserSites } from './lib/storage.js';
 import { generateSiteId } from './lib/hash.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 import { validateRequest, siteCreateSchema } from './lib/schemas.js';
+import { Config } from './lib/config.js';
 
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
@@ -52,6 +53,33 @@ export default async function handler(req, context) {
     const { domain } = validated;
 
     logger.debug('Input validation successful', { domain });
+
+    // Check site limit based on plan
+    const user = await getUser(auth.user.email);
+    const plan = user?.plan || 'free';
+    const siteLimit = Config.pricing.siteLimits[plan] || Config.pricing.siteLimits.free;
+    const currentSites = await getUserSites(auth.user.id);
+    const currentSiteCount = currentSites?.length || 0;
+
+    logger.debug('Site limit check', { plan, siteLimit, currentSiteCount });
+
+    if (siteLimit !== Infinity && currentSiteCount >= siteLimit) {
+      logger.warn('Site limit reached', {
+        userId: auth.user.id,
+        plan,
+        siteLimit,
+        currentSiteCount
+      });
+      return new Response(JSON.stringify({
+        error: 'Site limit reached',
+        message: `Your ${plan} plan allows ${siteLimit} site${siteLimit !== 1 ? 's' : ''}. Upgrade to add more.`,
+        currentCount: currentSiteCount,
+        limit: siteLimit
+      }), {
+        status: 403,
+        headers: getSecurityHeaders(origin)
+      });
+    }
 
     // Generate site ID and create
     const siteId = generateSiteId();
