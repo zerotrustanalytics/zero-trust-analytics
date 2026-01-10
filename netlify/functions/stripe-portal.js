@@ -32,10 +32,30 @@ export default async function handler(req, context) {
   }
 
   try {
-    const user = await getUser(auth.user.email);
+    // Get user email - fetch from Clerk if not in auth token
+    let userEmail = auth.user.email;
+    if (!userEmail && auth.user.id?.startsWith('user_')) {
+      try {
+        const clerkResponse = await fetch(`https://api.clerk.com/v1/users/${auth.user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (clerkResponse.ok) {
+          const clerkUser = await clerkResponse.json();
+          const primaryEmail = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
+          userEmail = primaryEmail?.email_address || clerkUser.email_addresses?.[0]?.email_address;
+        }
+      } catch (clerkErr) {
+        logger.warn('Failed to fetch email from Clerk', { error: clerkErr.message });
+      }
+    }
 
-    if (!user.subscription || !user.subscription.customerId) {
-      logger.warn('Portal access failed - no active subscription', { userId: user.id });
+    const user = userEmail ? await getUser(userEmail) : null;
+
+    if (!user || !user.subscription || !user.subscription.customerId) {
+      logger.warn('Portal access failed - no active subscription', { userId: user?.id, hasUser: !!user });
       return Errors.badRequest('No active subscription');
     }
 
