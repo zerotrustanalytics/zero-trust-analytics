@@ -186,8 +186,7 @@ export default async function handler(req, context) {
           });
         }
 
-        // Get team name for invite URL
-        const team = await getTeam(teamId);
+        // Get team name for invite URL (team already fetched above)
         const inviteUrl = `${url.origin}/accept-invite?token=${result.token}`;
 
         return new Response(JSON.stringify({
