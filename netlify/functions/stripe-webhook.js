@@ -11,8 +11,11 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
 async function upsertUserForSubscription(email, userId, plan, subscription) {
   const users = getStore({ name: 'users', consistency: 'strong' });
 
+  console.log('[webhook] upsertUserForSubscription called', { email, userId, plan });
+
   // Try to get existing user
   let user = await users.get(email, { type: 'json' });
+  console.log('[webhook] Existing user lookup', { email, found: !!user, existingPlan: user?.plan, existingId: user?.id });
 
   if (user) {
     // Update existing user
@@ -22,10 +25,13 @@ async function upsertUserForSubscription(email, userId, plan, subscription) {
       subscription
     };
     await users.setJSON(email, updated);
+    console.log('[webhook] Updated existing user', { email, newPlan: plan });
 
     // Create userId -> email mapping for lookups (even for existing users)
     if (userId) {
-      await users.set(`user_id_map_${userId}`, email);
+      const mapKey = `user_id_map_${userId}`;
+      await users.set(mapKey, email);
+      console.log('[webhook] Created userId mapping', { mapKey, email });
     }
 
     return { user: updated, created: false };
