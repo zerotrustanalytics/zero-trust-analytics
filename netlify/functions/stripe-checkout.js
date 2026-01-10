@@ -94,10 +94,11 @@ export default async function handler(req, context) {
       return Errors.badRequest('Email address required for checkout. Please update your profile.');
     }
 
-    // Check if already subscribed to same or higher plan
-    if (user?.subscription && user.subscription.status === 'active') {
-      logger.warn('Checkout failed - already subscribed', { userId: user?.id });
-      return Errors.badRequest('Already subscribed. Use the billing portal to change plans.');
+    // Check if already subscribed - but allow if they want to change plans
+    // (Stripe will handle canceling old subscription when new one is created)
+    if (user?.subscription && user.subscription.status === 'active' && user.subscription.plan === selectedPlan) {
+      logger.warn('Checkout failed - already subscribed to this plan', { userId: user?.id, plan: selectedPlan });
+      return Errors.badRequest('Already subscribed to this plan. Use the billing portal to manage your subscription.');
     }
 
     logger.info('Creating Stripe checkout session', { userId: auth.user.id, plan: selectedPlan, email: customerEmail });
