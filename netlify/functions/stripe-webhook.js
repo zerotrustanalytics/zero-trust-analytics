@@ -50,6 +50,7 @@ export default async function handler(req, context) {
 
         if (email) {
           await updateUser(email, {
+            plan: 'starter', // Upgrade to starter plan (50k pageviews)
             subscription: {
               status: 'active',
               customerId: session.customer,
@@ -57,8 +58,9 @@ export default async function handler(req, context) {
               createdAt: new Date().toISOString()
             }
           });
-          logger.info('User subscription activated', {
-            customerId: session.customer
+          logger.info('User subscription activated and plan upgraded to starter', {
+            customerId: session.customer,
+            email
           });
         } else {
           logger.warn('Checkout completed but no email found', {
@@ -130,6 +132,7 @@ export default async function handler(req, context) {
 
         if (user) {
           await updateUser(user.email, {
+            plan: 'free', // Downgrade to free plan
             subscription: {
               ...user.subscription,
               status: 'canceled',
@@ -138,7 +141,7 @@ export default async function handler(req, context) {
             }
           });
 
-          logger.info('Subscription canceled successfully', {
+          logger.info('Subscription canceled and plan downgraded to free', {
             userId: user.id,
             customerId: subscription.customer
           });
