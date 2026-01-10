@@ -1,5 +1,5 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, getSecurityHeaders } from './lib/auth.js';
-import { getUser, getUserSites } from './lib/storage.js';
+import { getUser, getUserById, getUserSites } from './lib/storage.js';
 import { getTeamMembers } from './lib/storage.js';
 import { Config } from './lib/config.js';
 
@@ -27,7 +27,36 @@ export default async function handler(req, context) {
   }
 
   try {
-    const user = await getUser(auth.user.email);
+    // Try to find user by email first, then by Clerk ID
+    let user = null;
+    let userEmail = auth.user.email;
+
+    // If no email from auth, fetch from Clerk API
+    if (!userEmail && auth.user.id?.startsWith('user_')) {
+      try {
+        const clerkResponse = await fetch(`https://api.clerk.com/v1/users/${auth.user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (clerkResponse.ok) {
+          const clerkUser = await clerkResponse.json();
+          const primaryEmail = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
+          userEmail = primaryEmail?.email_address || clerkUser.email_addresses?.[0]?.email_address;
+        }
+      } catch (clerkErr) {
+        console.error('Failed to fetch email from Clerk:', clerkErr.message);
+      }
+    }
+
+    if (userEmail) {
+      user = await getUser(userEmail);
+    }
+    if (!user && auth.user.id) {
+      user = await getUserById(auth.user.id);
+    }
+
     const plan = user?.plan || 'free';
     const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
 
