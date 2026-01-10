@@ -93,6 +93,20 @@ async function checkSiteOwnerUsage(site, logger) {
     const plan = user?.plan || 'free';
     const limit = getPlanPageviewLimit(plan);
 
+    // Debug: log user lookup result
+    logger.info('User lookup for usage check', {
+      siteId: site.id,
+      ownerId,
+      ownerIdType: typeof ownerId,
+      ownerIdLength: ownerId?.length,
+      userFound: !!user,
+      userPlan: user?.plan,
+      userIdInRecord: user?.id,
+      resolvedPlan: plan,
+      planLimit: limit,
+      userEmail: user?.email
+    });
+
     // Check usage against the owner
     const usageCheck = await checkUsageLimit(ownerId, limit);
 

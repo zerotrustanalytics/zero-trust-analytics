@@ -59,18 +59,25 @@ export async function getUserById(userId) {
   const users = store(STORES.USERS);
   // First check if we have a userId -> email mapping
   const userIdMapKey = `user_id_map_${userId}`;
+  console.log('[getUserById] Looking up user', { userId, mapKey: userIdMapKey });
+
   try {
     const email = await users.get(userIdMapKey, { type: 'text' });
+    console.log('[getUserById] Mapping lookup result', { userId, email: email || 'not found' });
     if (email) {
-      return await getUser(email);
+      const user = await getUser(email);
+      console.log('[getUserById] Found user via mapping', { userId, email, userPlan: user?.plan, userId: user?.id });
+      return user;
     }
   } catch (e) {
+    console.log('[getUserById] Mapping not found, will search', { userId, error: e.message });
     // Mapping doesn't exist, fall through to search
   }
 
   // Fallback: search through users (less efficient)
   try {
     const { blobs } = await users.list();
+    console.log('[getUserById] Searching through', blobs.length, 'blobs');
     for (const blob of blobs) {
       // Skip non-user keys (mappings, lists, etc.)
       if (blob.key.startsWith('user_id_map_') || blob.key.startsWith('user_sites_') ||
@@ -81,10 +88,12 @@ export async function getUserById(userId) {
       const user = await users.get(blob.key, { type: 'json' });
       if (user?.id === userId) {
         // Create mapping for future lookups
+        console.log('[getUserById] Found user via search, creating mapping', { userId, email: blob.key, userPlan: user?.plan });
         await users.set(userIdMapKey, blob.key);
         return { ...user, email: blob.key };
       }
     }
+    console.log('[getUserById] User not found after searching all blobs', { userId });
     return null;
   } catch (e) {
     console.error('Error finding user by ID:', e);
