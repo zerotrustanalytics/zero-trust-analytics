@@ -87,6 +87,17 @@ export default async function handler(req, context) {
     const plan = user?.plan || 'free';
     const planLimits = getPlanLimits(plan);
 
+    // ALWAYS ensure userId -> email mapping exists for track.js
+    if (userId && userEmail) {
+      try {
+        const users = getStore({ name: 'users', consistency: 'strong' });
+        await users.set(`user_id_map_${userId}`, userEmail);
+        console.log('[usage] Created/updated userId mapping', { userId, userEmail, userPlan: user?.plan });
+      } catch (mapErr) {
+        console.error('[usage] Failed to create userId mapping:', mapErr.message);
+      }
+    }
+
     // Get user's sites first (needed for actual usage calculation)
     let sitesCount = 0;
     let userSites = [];
