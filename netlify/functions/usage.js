@@ -1,4 +1,5 @@
 import { authenticateRequest } from './lib/auth.js';
+import { getStore } from '@netlify/blobs';
 import { getTeamUsage, getTeamUsageBySite, getTeamUsageHistory, checkUsageLimit, getActualUsageFromPageviews, getCurrentMonth } from './lib/turso.js';
 import { Config } from './lib/config.js';
 import { getUser, getUserById, getUserSites, getUserTeams, getTeamMembers } from './lib/storage.js';
@@ -65,6 +66,16 @@ export default async function handler(req, context) {
           const clerkUser = await clerkResponse.json();
           const primaryEmail = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
           userEmail = primaryEmail?.email_address || clerkUser.email_addresses?.[0]?.email_address;
+
+          // Create userId -> email mapping for track.js lookups
+          if (userEmail) {
+            try {
+              const users = getStore({ name: 'users', consistency: 'strong' });
+              await users.set(`user_id_map_${userId}`, userEmail);
+            } catch (mapErr) {
+              console.error('Failed to create userId mapping:', mapErr.message);
+            }
+          }
         }
       } catch (clerkErr) {
         console.error('Failed to fetch email from Clerk:', clerkErr.message);
