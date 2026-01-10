@@ -47,13 +47,32 @@ export default async function handler(req, context) {
   }
 
   const userId = auth.user.id;
-  const userEmail = auth.user.email;
+  let userEmail = auth.user.email;
   const url = new URL(req.url);
   const month = url.searchParams.get('month'); // Optional: specific month YYYY-MM
 
   try {
+    // If no email from auth, fetch from Clerk API
+    if (!userEmail && userId?.startsWith('user_')) {
+      try {
+        const clerkResponse = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (clerkResponse.ok) {
+          const clerkUser = await clerkResponse.json();
+          const primaryEmail = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
+          userEmail = primaryEmail?.email_address || clerkUser.email_addresses?.[0]?.email_address;
+        }
+      } catch (clerkErr) {
+        console.error('Failed to fetch email from Clerk:', clerkErr.message);
+      }
+    }
+
     // Get user to determine their plan
-    const user = await getUser(userEmail);
+    const user = userEmail ? await getUser(userEmail) : null;
     const plan = user?.plan || 'free';
     const planLimits = getPlanLimits(plan);
 
