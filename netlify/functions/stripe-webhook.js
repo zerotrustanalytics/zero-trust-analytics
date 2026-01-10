@@ -56,7 +56,9 @@ export default async function handler(req, context) {
   }
 
   const sig = req.headers.get('stripe-signature');
-  const body = await req.text();
+  // Use arrayBuffer then decode to ensure raw body is preserved
+  const buffer = await req.arrayBuffer();
+  const body = new TextDecoder('utf-8').decode(buffer);
 
   logger.info('Webhook debug', {
     hasSignature: !!sig,
@@ -64,8 +66,8 @@ export default async function handler(req, context) {
     hasSecret: !!webhookSecret,
     secretPrefix: webhookSecret?.substring(0, 10),
     secretLength: webhookSecret?.length,
-    expectedSecretLength: 36, // whsec_ (6) + 32 chars = 38, yours is 36
-    bodyLength: body?.length
+    bodyLength: body?.length,
+    bodyStart: body?.substring(0, 50)
   });
 
   let event;
