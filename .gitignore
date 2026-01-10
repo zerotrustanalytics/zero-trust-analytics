@@ -33,3 +33,6 @@ backups/
 nul
 .vercel
 .env*.local
+
+# Nested nextjs folders
+nextjs/nextjs/
