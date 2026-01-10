@@ -22,6 +22,12 @@ async function upsertUserForSubscription(email, userId, plan, subscription) {
       subscription
     };
     await users.setJSON(email, updated);
+
+    // Create userId -> email mapping for lookups (even for existing users)
+    if (userId) {
+      await users.set(`user_id_map_${userId}`, email);
+    }
+
     return { user: updated, created: false };
   }
 
