@@ -122,7 +122,7 @@ export default async function handler(req, context) {
       }
     });
 
-    logger.info('Stripe checkout session created successfully', { userId: user.id, sessionId: session.id });
+    logger.info('Stripe checkout session created successfully', { userId: auth.user.id, sessionId: session.id });
     return successResponse({ url: session.url }, 200, origin);
   } catch (err) {
     logger.error('Stripe checkout failed', err, { userId: auth.user.id });
