@@ -9,7 +9,9 @@ export function UsageBanner() {
   // Don't show if loading, dismissed, or no data
   if (loading || !usageData) return null
 
-  const { percentUsed, isWithinLimit } = usageData.usage
+  const { percentUsed, isWithinLimit, current, limit } = usageData.usage
+  const currentPageviews = current?.pageviews || 0
+  const pageviewLimit = limit || 0
   const { name: planName } = usageData.plan
 
   // Determine which banner to show
@@ -66,13 +68,13 @@ export function UsageBanner() {
           <p className={`text-sm font-medium ${styles.text}`}>
             {isWarning
               ? `You've used ${Math.round(percentUsed)}% of your monthly pageviews`
-              : 'Monthly pageview limit exceeded'
+              : `Monthly pageview limit exceeded (${currentPageviews.toLocaleString()} / ${pageviewLimit.toLocaleString()})`
             }
           </p>
           <p className={`text-sm ${styles.text} opacity-80 mt-1`}>
             {isWarning
               ? `Your ${planName} plan is approaching its limit. Upgrade to avoid interruption.`
-              : `Your ${planName} plan limit has been reached. Analytics data is frozen until you upgrade.`
+              : `Your ${planName} plan limit has been reached across all sites. Analytics data is frozen until you upgrade.`
             }
           </p>
         </div>
