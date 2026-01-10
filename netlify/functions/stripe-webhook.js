@@ -1,10 +1,48 @@
 import Stripe from 'stripe';
+import { getStore } from '@netlify/blobs';
 import { getUser, updateUser, getUserByCustomerId } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, ExternalServiceError } from './lib/error-handler.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+// Create or update user for Stripe subscription
+async function upsertUserForSubscription(email, userId, plan, subscription) {
+  const users = getStore({ name: 'users', consistency: 'strong' });
+
+  // Try to get existing user
+  let user = await users.get(email, { type: 'json' });
+
+  if (user) {
+    // Update existing user
+    const updated = {
+      ...user,
+      plan,
+      subscription
+    };
+    await users.setJSON(email, updated);
+    return { user: updated, created: false };
+  }
+
+  // Create new user (Clerk user who never existed in our DB)
+  const newUser = {
+    id: userId || 'user_' + Date.now(),
+    email,
+    createdAt: new Date().toISOString(),
+    plan,
+    subscription,
+    provider: 'clerk'
+  };
+  await users.setJSON(email, newUser);
+
+  // Create userId -> email mapping for lookups
+  if (userId) {
+    await users.set(`user_id_map_${userId}`, email);
+  }
+
+  return { user: newUser, created: true };
+}
 
 export default async function handler(req, context) {
   const logger = createFunctionLogger('stripe-webhook', req, context);
@@ -42,29 +80,33 @@ export default async function handler(req, context) {
         const session = event.data.object;
         const email = session.customer_email || session.metadata?.email;
         const plan = session.metadata?.plan || 'starter';
+        const userId = session.metadata?.userId;
 
         logger.info('Processing checkout.session.completed', {
           sessionId: session.id,
           customerId: session.customer,
           hasEmail: !!email,
+          userId,
           plan
         });
 
         if (email) {
-          await updateUser(email, {
+          const subscription = {
+            status: 'active',
+            customerId: session.customer,
+            subscriptionId: session.subscription,
             plan: plan,
-            subscription: {
-              status: 'active',
-              customerId: session.customer,
-              subscriptionId: session.subscription,
-              plan: plan,
-              createdAt: new Date().toISOString()
-            }
-          });
+            createdAt: new Date().toISOString()
+          };
+
+          const { user, created } = await upsertUserForSubscription(email, userId, plan, subscription);
+
           logger.info('User subscription activated', {
             customerId: session.customer,
             email,
-            plan
+            plan,
+            userCreated: created,
+            userId: user.id
           });
         } else {
           logger.warn('Checkout completed but no email found', {
