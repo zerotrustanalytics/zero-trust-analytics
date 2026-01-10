@@ -58,6 +58,14 @@ export default async function handler(req, context) {
   const sig = req.headers.get('stripe-signature');
   const body = await req.text();
 
+  logger.info('Webhook debug', {
+    hasSignature: !!sig,
+    signaturePrefix: sig?.substring(0, 20),
+    hasSecret: !!webhookSecret,
+    secretPrefix: webhookSecret?.substring(0, 10),
+    bodyLength: body?.length
+  });
+
   let event;
 
   try {
