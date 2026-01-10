@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
-import { getUser } from './lib/storage.js';
+import { getUser, getUserById } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 import { Config } from './lib/config.js';
@@ -49,21 +49,43 @@ export default async function handler(req, context) {
       return Errors.badRequest('This plan is not available for purchase');
     }
 
-    const user = await getUser(auth.user.email);
+    // Get user - try email first, then by Clerk ID
+    let user = null;
+    if (auth.user.email) {
+      user = await getUser(auth.user.email);
+    }
+    if (!user && auth.user.id) {
+      user = await getUserById(auth.user.id);
+    }
+
+    // Get email from auth or user record
+    const customerEmail = auth.user.email || user?.email;
+
+    logger.info('User lookup result', {
+      authEmail: auth.user.email,
+      userEmail: user?.email,
+      customerEmail,
+      userId: auth.user.id
+    });
+
+    if (!customerEmail) {
+      logger.warn('No email available for checkout', { userId: auth.user.id });
+      return Errors.badRequest('Email address required for checkout. Please update your profile.');
+    }
 
     // Check if already subscribed to same or higher plan
-    if (user.subscription && user.subscription.status === 'active') {
-      logger.warn('Checkout failed - already subscribed', { userId: user.id });
+    if (user?.subscription && user.subscription.status === 'active') {
+      logger.warn('Checkout failed - already subscribed', { userId: user?.id });
       return Errors.badRequest('Already subscribed. Use the billing portal to change plans.');
     }
 
-    logger.info('Creating Stripe checkout session', { userId: user.id, plan: selectedPlan });
+    logger.info('Creating Stripe checkout session', { userId: auth.user.id, plan: selectedPlan, email: customerEmail });
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      customer_email: auth.user.email,
+      customer_email: customerEmail,
       line_items: [
         {
           price: planConfig.stripePriceId,
@@ -73,8 +95,8 @@ export default async function handler(req, context) {
       success_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/billing?success=true`,
       cancel_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/billing?canceled=true`,
       metadata: {
-        userId: user.id,
-        email: auth.user.email,
+        userId: auth.user.id,
+        email: customerEmail,
         plan: selectedPlan
       }
     });
