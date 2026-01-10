@@ -239,7 +239,13 @@ export default function BillingPage() {
               <p className="text-2xl font-bold">{usageData.counts?.sites || 0}</p>
               <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-primary"
+                  className={`h-full rounded-full ${
+                    usageData.plan.limits.sites !== Infinity && (usageData.counts?.sites || 0) > usageData.plan.limits.sites
+                      ? 'bg-red-500'
+                      : usageData.plan.limits.sites !== Infinity && (usageData.counts?.sites || 0) >= usageData.plan.limits.sites
+                        ? 'bg-yellow-500'
+                        : 'bg-primary'
+                  }`}
                   style={{
                     width: usageData.plan.limits.sites === Infinity
                       ? '10%'
