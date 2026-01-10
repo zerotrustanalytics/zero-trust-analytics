@@ -14,7 +14,7 @@
   autoLaunch = false
 
 [context.production.environment]
-  HUGO_VERSION = "0.147.4"
+  HUGO_VERSION = "0.139.0"
 
 [functions]
   node_bundler = "esbuild"
