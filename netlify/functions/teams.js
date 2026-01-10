@@ -95,10 +95,16 @@ export default async function handler(req, context) {
       }
 
     } catch (err) {
-      console.error('Get teams error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to get teams' }), {
+      console.error('Get teams error:', err.message, err.stack);
+      return new Response(JSON.stringify({
+        error: 'Failed to get teams',
+        details: err.message
+      }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
       });
     }
   }
