@@ -5,7 +5,7 @@ import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, ExternalServiceError } from './lib/error-handler.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
 
 // Create or update user for Stripe subscription
 async function upsertUserForSubscription(email, userId, plan, subscription) {
@@ -63,6 +63,8 @@ export default async function handler(req, context) {
     signaturePrefix: sig?.substring(0, 20),
     hasSecret: !!webhookSecret,
     secretPrefix: webhookSecret?.substring(0, 10),
+    secretLength: webhookSecret?.length,
+    expectedSecretLength: 36, // whsec_ (6) + 32 chars = 38, yours is 36
     bodyLength: body?.length
   });
 
