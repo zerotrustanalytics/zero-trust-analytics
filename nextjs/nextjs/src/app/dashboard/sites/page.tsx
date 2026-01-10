@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { AddSiteModal } from '@/components/dashboard/AddSiteModal'
 import { ConfirmModal } from '@/components/ui'
+import { usePlan } from '@/components/dashboard/PlanContext'
 import Link from 'next/link'
 
 interface Site {
@@ -16,6 +17,7 @@ interface Site {
 
 export default function SitesPage() {
   const { getToken } = useAuth()
+  const { planData, canAddSite, refetch: refetchPlan } = usePlan()
   const [sites, setSites] = useState<Site[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -99,6 +101,7 @@ export default function SitesPage() {
 
   const handleSiteAdded = (site: { id: string; domain: string; name: string }) => {
     setSites([...sites, { ...site, createdAt: new Date().toISOString() }])
+    refetchPlan() // Update plan limits after adding site
   }
 
   if (loading) {
@@ -114,14 +117,32 @@ export default function SitesPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Sites</h1>
-          <p className="text-muted-foreground">Manage your tracked websites</p>
+          <p className="text-muted-foreground">
+            Manage your tracked websites
+            {planData && (
+              <span className="ml-2 text-xs">
+                ({planData.limits.sites.current} / {planData.limits.sites.max === Infinity ? 'Unlimited' : planData.limits.sites.max})
+              </span>
+            )}
+          </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition"
-        >
-          Add Site
-        </button>
+        <div className="flex items-center gap-3">
+          {!canAddSite() && (
+            <Link
+              href="/dashboard/billing"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Upgrade for more sites
+            </Link>
+          )}
+          <button
+            onClick={() => setShowAddModal(true)}
+            disabled={!canAddSite()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Add Site
+          </button>
+        </div>
       </div>
 
       {error && (

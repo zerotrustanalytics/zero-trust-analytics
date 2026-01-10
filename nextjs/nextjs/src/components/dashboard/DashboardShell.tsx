@@ -2,6 +2,7 @@
 
 import { SidebarProvider } from './SidebarContext'
 import { UsageProvider } from './UsageContext'
+import { PlanProvider } from './PlanContext'
 import { Sidebar } from './Sidebar'
 import { MainContent } from './MainContent'
 
@@ -13,10 +14,12 @@ export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <SidebarProvider>
       <UsageProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <Sidebar />
-          <MainContent>{children}</MainContent>
-        </div>
+        <PlanProvider>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <Sidebar />
+            <MainContent>{children}</MainContent>
+          </div>
+        </PlanProvider>
       </UsageProvider>
     </SidebarProvider>
   )
