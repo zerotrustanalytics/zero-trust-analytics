@@ -1,91 +1,179 @@
-# Zero Trust Analytics - Docker Deployment
+# Zero Trust Analytics - Self-Hosted Deployment
 
-Quick reference for deploying Zero Trust Analytics with Docker.
+Run your own privacy-focused analytics instance. Your data stays on your infrastructure.
 
-## Quick Start
+## Quick Start (Recommended: Turso)
+
+The easiest way to self-host is using [Turso](https://turso.tech) for the database (free tier: 9GB, 500M reads/month).
+
+### 1. Create a Turso Database
 
 ```bash
-# 1. Copy environment template
-cp docker/.env.example docker/.env
+# Install Turso CLI
+curl -sSfL https://get.tur.so/install.sh | bash
 
-# 2. Edit configuration (set HASH_SECRET and JWT_SECRET)
-nano docker/.env
+# Sign up (free)
+turso auth signup
 
-# 3. Start the application
-docker-compose up -d
+# Create database
+turso db create zta-analytics
 
-# 4. Visit http://localhost:3000
+# Get connection info
+turso db show zta-analytics --url
+turso db tokens create zta-analytics
 ```
 
-## Files in this Directory
-
-- **`.env.example`** - Environment variable template (copy to `.env`)
-- **`entrypoint.sh`** - Container startup script
-- **`nginx.conf`** - Nginx reverse proxy configuration for SSL/HTTPS
-- **`README.md`** - This file
-
-## Production Deployment
-
-For production with SSL/HTTPS:
+### 2. Configure Environment
 
 ```bash
-# 1. Configure production settings
 cp docker/.env.example docker/.env
-nano docker/.env
+```
 
-# 2. Update nginx.conf with your domain
+Edit `docker/.env`:
+```env
+# Database (from Turso)
+TURSO_DATABASE_URL=libsql://your-db-name.turso.io
+TURSO_AUTH_TOKEN=your-token-here
+
+# Security (generate with: openssl rand -hex 32)
+JWT_SECRET=your-random-64-character-secret-here
+HASH_SECRET=your-random-64-character-secret-here
+
+# Your domain
+SITE_URL=https://analytics.yourdomain.com
+```
+
+### 3. Run
+
+```bash
+docker-compose up -d
+```
+
+Visit `http://localhost:3000` and create your first account.
+
+---
+
+## Alternative: Local SQLite
+
+If you prefer fully self-contained deployment with no external services:
+
+```env
+# Use local SQLite instead of Turso
+TURSO_DATABASE_URL=file:/app/data/analytics.db
+TURSO_AUTH_TOKEN=
+```
+
+Data is stored in a Docker volume (`zta-data`).
+
+---
+
+## Architecture
+
+### What's Included
+- **Analytics tracking** - Same tracking script as the hosted service
+- **Dashboard** - Full analytics dashboard
+- **Built-in auth** - JWT-based authentication (no third-party auth needed)
+- **API** - Full REST API for programmatic access
+
+### What's NOT Shared
+Your self-hosted instance is completely isolated:
+- ✅ Your own database (Turso or SQLite)
+- ✅ Your own user accounts
+- ✅ Your own JWT secrets
+- ✅ Zero connection to ztas.io infrastructure
+
+---
+
+## Deployment Options
+
+| Option | Database | Auth | Best For |
+|--------|----------|------|----------|
+| Docker + Turso | Turso (free tier) | Built-in JWT | Most users |
+| Docker + SQLite | Local file | Built-in JWT | Air-gapped/offline |
+| Vercel/Railway | Turso | Built-in JWT | Serverless |
+
+---
+
+## Authentication
+
+Self-hosted uses built-in JWT authentication (no Clerk/Auth0 needed):
+
+- `POST /api/auth/register` - Create account
+- `POST /api/auth/login` - Get JWT token
+- `POST /api/auth/forgot` - Request password reset
+- `POST /api/auth/reset` - Reset password
+
+First user to register becomes the admin.
+
+---
+
+## Commands
+
+```bash
+# Start
+docker-compose up -d
+
+# View logs
+docker-compose logs -f zta
+
+# Stop
+docker-compose down
+
+# Update to latest
+git pull && docker-compose up -d --build
+
+# Backup database (SQLite only)
+docker cp zero-trust-analytics:/app/data/analytics.db ./backup-$(date +%Y%m%d).db
+```
+
+---
+
+## Production Checklist
+
+- [ ] Set strong `JWT_SECRET` and `HASH_SECRET` (64+ characters)
+- [ ] Configure `SITE_URL` with your actual domain
+- [ ] Set up HTTPS (use nginx profile or external proxy)
+- [ ] Configure email service for password resets (Resend or SendGrid)
+- [ ] Disable registration after creating accounts: `ENABLE_REGISTRATION=false`
+
+---
+
+## With HTTPS (Nginx + Let's Encrypt)
+
+```bash
+# 1. Update DOMAIN in docker/.env
+DOMAIN=analytics.yourdomain.com
+LETSENCRYPT_EMAIL=admin@yourdomain.com
+
+# 2. Start with nginx profile
+docker-compose --profile with-nginx up -d
 
 # 3. Get SSL certificate
-mkdir -p docker/certbot/conf docker/certbot/www
 docker-compose run --rm certbot certonly --webroot \
   --webroot-path=/var/www/certbot \
   --email admin@yourdomain.com \
   --agree-tos \
   -d analytics.yourdomain.com
-
-# 4. Start with production config
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-## Useful Commands
-
-```bash
-# View logs
-docker-compose logs -f
-
-# Restart application
-docker-compose restart zta
-
-# Stop everything
-docker-compose down
-
-# Update to latest version
-git pull && docker-compose up -d --build
-
-# Backup database
-docker cp zero-trust-analytics:/app/data/analytics.db ./backup.db
-
-# Access database
-docker-compose exec zta sqlite3 /app/data/analytics.db
-```
+---
 
 ## Environment Variables
 
-Key variables to configure in `.env`:
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TURSO_DATABASE_URL` | Yes | Database URL (`libsql://...` or `file:...`) |
+| `TURSO_AUTH_TOKEN` | Yes* | Turso token (empty for local SQLite) |
+| `JWT_SECRET` | Yes | Secret for JWT signing (32+ chars) |
+| `HASH_SECRET` | Yes | Secret for visitor hashing (32+ chars) |
+| `SITE_URL` | Yes | Your instance URL |
+| `RESEND_API_KEY` | No | For password reset emails |
+| `SENDGRID_API_KEY` | No | Alternative email service |
+| `ENABLE_REGISTRATION` | No | Set `false` to disable signups |
 
-- `SITE_URL` - Your instance URL (e.g., `https://analytics.yourdomain.com`)
-- `HASH_SECRET` - Secret for hashing visitor IDs (generate with `openssl rand -hex 32`)
-- `JWT_SECRET` - Secret for JWT tokens (generate with `openssl rand -hex 32`)
-- `RESEND_API_KEY` or `SENDGRID_API_KEY` - For password reset emails
-- `ENABLE_REGISTRATION` - Set to `false` after creating accounts
-
-## Documentation
-
-Full documentation: `/docs/self-hosting` on your running instance
-
-Or visit: https://ztas.io/docs/self-hosting
+---
 
 ## Support
 
-- GitHub Issues: https://github.com/jasonsutter87/zero-trust-analytics/issues
-- Discussions: https://github.com/jasonsutter87/zero-trust-analytics/discussions
+- GitHub Issues: https://github.com/zerotrustanalytics/zero-trust-analytics/issues
+- Documentation: https://ztas.io/docs/self-hosting
