@@ -436,6 +436,145 @@ export function matchConversionRule(rules, eventData) {
   return null;
 }
 
+// ============================================
+// Page Value Rules
+// ============================================
+
+/**
+ * Get page value rules for a site
+ */
+export async function getPageValueRules(siteId) {
+  const site = await getSite(siteId);
+  return site?.pageValueRules || [];
+}
+
+/**
+ * Add a page value rule to a site
+ * Rule structure:
+ * - name: string (e.g., "Contact Form Submission")
+ * - conditions: { page: string, match: 'exact' | 'contains' | 'starts_with' | 'regex' }
+ * - value: number (monetary value, e.g., 500 for $500)
+ * - currency: string (e.g., 'USD')
+ * - enabled: boolean
+ */
+export async function addPageValueRule(siteId, rule) {
+  const site = await getSite(siteId);
+  if (!site) return null;
+
+  const rules = site.pageValueRules || [];
+  const newRule = {
+    id: `pv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    ...rule,
+    createdAt: new Date().toISOString()
+  };
+  rules.push(newRule);
+
+  await updateSite(siteId, { pageValueRules: rules });
+  return newRule;
+}
+
+/**
+ * Update a page value rule
+ */
+export async function updatePageValueRule(siteId, ruleId, updates) {
+  const site = await getSite(siteId);
+  if (!site) return null;
+
+  const rules = site.pageValueRules || [];
+  const ruleIndex = rules.findIndex(r => r.id === ruleId);
+  if (ruleIndex === -1) return null;
+
+  rules[ruleIndex] = { ...rules[ruleIndex], ...updates, updatedAt: new Date().toISOString() };
+  await updateSite(siteId, { pageValueRules: rules });
+  return rules[ruleIndex];
+}
+
+/**
+ * Delete a page value rule
+ */
+export async function deletePageValueRule(siteId, ruleId) {
+  const site = await getSite(siteId);
+  if (!site) return false;
+
+  const rules = site.pageValueRules || [];
+  const newRules = rules.filter(r => r.id !== ruleId);
+
+  if (newRules.length === rules.length) return false;
+
+  await updateSite(siteId, { pageValueRules: newRules });
+  return true;
+}
+
+/**
+ * Calculate page values for a set of pageviews
+ * Returns: { totalValue, valueBySource, valueByPage, matchedPageviews }
+ */
+export function calculatePageValues(rules, pageviews) {
+  if (!rules || rules.length === 0 || !pageviews || pageviews.length === 0) {
+    return { totalValue: 0, currency: 'USD', valueBySource: {}, valueByPage: {}, matchedPageviews: 0 };
+  }
+
+  const enabledRules = rules.filter(r => r.enabled);
+  if (enabledRules.length === 0) {
+    return { totalValue: 0, currency: 'USD', valueBySource: {}, valueByPage: {}, matchedPageviews: 0 };
+  }
+
+  let totalValue = 0;
+  let matchedPageviews = 0;
+  const valueBySource = {};
+  const valueByPage = {};
+  const currency = enabledRules[0]?.currency || 'USD';
+
+  for (const pv of pageviews) {
+    const pagePath = pv.page_path || pv.payload?.page_path || '/';
+
+    for (const rule of enabledRules) {
+      if (matchesPageCondition(rule, pagePath)) {
+        totalValue += rule.value;
+        matchedPageviews++;
+
+        // Track by source
+        const source = pv.referrer_domain || pv.utm_source || 'direct';
+        valueBySource[source] = (valueBySource[source] || 0) + rule.value;
+
+        // Track by page
+        valueByPage[pagePath] = (valueByPage[pagePath] || 0) + rule.value;
+
+        break; // Only apply first matching rule per pageview
+      }
+    }
+  }
+
+  return { totalValue, currency, valueBySource, valueByPage, matchedPageviews };
+}
+
+/**
+ * Check if a page path matches a rule's conditions
+ */
+function matchesPageCondition(rule, pagePath) {
+  if (!rule.conditions?.page) return false;
+
+  const pattern = rule.conditions.page;
+  const matchType = rule.conditions.match || 'exact';
+
+  switch (matchType) {
+    case 'exact':
+      return pagePath === pattern;
+    case 'contains':
+      return pagePath.includes(pattern);
+    case 'starts_with':
+      return pagePath.startsWith(pattern);
+    case 'regex':
+      try {
+        return new RegExp(pattern).test(pagePath);
+      } catch {
+        return false;
+      }
+    default:
+      return pagePath === pattern;
+  }
+}
+
 export async function deleteSite(siteId, userId) {
   const sites = store(STORES.SITES);
 
