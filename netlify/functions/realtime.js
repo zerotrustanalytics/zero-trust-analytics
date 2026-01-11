@@ -36,6 +36,8 @@ export default async function handler(req, context) {
     const url = new URL(req.url);
     const siteId = url.searchParams.get('siteId');
 
+    console.log('[realtime] Request received', { siteId, userId: auth.user?.id });
+
     if (!siteId) {
       return new Response(JSON.stringify({ error: 'Site ID required' }), {
         status: 400,
@@ -98,7 +100,13 @@ export default async function handler(req, context) {
     }
 
     // Get realtime data from database
+    console.log('[realtime] Calling getRealtime', { siteId });
     const realtime = await getRealtime(siteId);
+    console.log('[realtime] Got realtime data', {
+      siteId,
+      active_visitors: realtime.active_visitors,
+      recent_count: realtime.recent_pageviews?.length
+    });
 
     // Build page breakdown from recent pageviews
     const pageBreakdown = {};
