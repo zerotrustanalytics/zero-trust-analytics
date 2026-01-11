@@ -8,14 +8,14 @@ FROM hugomods/hugo:exts-0.147.4 AS hugo-builder
 
 WORKDIR /site
 
-# Copy Hugo configuration and content
-COPY config.toml hugo.toml ./
-COPY archetypes ./archetypes/
-COPY assets ./assets/
-COPY content ./content/
-COPY layouts ./layouts/
-COPY static ./static/
-COPY resources ./resources/
+# Copy Hugo configuration and content from hugo/ directory
+COPY hugo/config.toml hugo/hugo.toml ./
+COPY hugo/archetypes ./archetypes/
+COPY hugo/assets ./assets/
+COPY hugo/content ./content/
+COPY hugo/layouts ./layouts/
+COPY hugo/static ./static/
+COPY hugo/resources ./resources/
 
 # Build static site
 RUN hugo --gc --minify
@@ -30,10 +30,13 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 COPY netlify/functions/package*.json ./netlify/functions/
+COPY nextjs/server/package*.json ./server/
 
 # Install production dependencies
 RUN npm ci --omit=dev && \
     cd netlify/functions && \
+    npm ci --omit=dev && \
+    cd ../../server && \
     npm ci --omit=dev
 
 # ============================================
@@ -43,13 +46,14 @@ FROM node:20-alpine AS script-builder
 
 WORKDIR /app
 
-# Copy package files and install obfuscator
+# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install javascript-obfuscator
+RUN npm install
 
 # Copy source and build
 COPY src ./src/
-RUN npm run obfuscate
+COPY build.js ./
+RUN npm run build
 
 # ============================================
 # Stage 4: Runtime
@@ -68,17 +72,17 @@ WORKDIR /app
 # Copy built static site from Hugo
 COPY --from=hugo-builder --chown=nodejs:nodejs /site/public ./public
 
-# Copy built analytics script
-COPY --from=script-builder --chown=nodejs:nodejs /app/static/js/analytics.js ./public/js/
+# Copy built analytics scripts
+COPY --from=script-builder --chown=nodejs:nodejs /app/static/js/*.js ./public/js/
 
 # Copy Node.js dependencies
 COPY --from=node-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=node-deps --chown=nodejs:nodejs /app/netlify/functions/node_modules ./netlify/functions/node_modules
+COPY --from=node-deps --chown=nodejs:nodejs /app/server/node_modules ./server/node_modules
 
 # Copy application code
 COPY --chown=nodejs:nodejs netlify/functions ./netlify/functions
-COPY --chown=nodejs:nodejs server ./server
-COPY --chown=nodejs:nodejs package*.json ./
+COPY --chown=nodejs:nodejs nextjs/server ./server
 
 # Create data directory for SQLite database
 RUN mkdir -p /app/data && chown -R nodejs:nodejs /app/data

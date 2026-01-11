@@ -2,9 +2,9 @@
  * DATABASE INITIALIZATION SCRIPT
  * ===============================
  * Run this to initialize the database schema for self-hosted deployments.
+ * Uses the same schema as the Netlify functions (turso.js with rollup tables).
  */
 
-import { initSchema } from './db-adapter.js';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -20,20 +20,25 @@ async function initializeDatabase() {
   try {
     console.log('Initializing Zero Trust Analytics database...');
 
-    // Ensure data directory exists
-    const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'analytics.db');
-    const dbDir = path.dirname(dbPath);
+    // Ensure data directory exists for file: URLs
+    const dbUrl = process.env.TURSO_DATABASE_URL || '';
+    if (dbUrl.startsWith('file:')) {
+      const dbPath = dbUrl.replace('file:', '');
+      const dbDir = path.dirname(dbPath);
 
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
-      console.log(`Created data directory: ${dbDir}`);
+      if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+        console.log(`Created data directory: ${dbDir}`);
+      }
     }
 
-    // Initialize schema
+    // Import and run turso.js initSchema (same as Netlify functions)
+    const tursoPath = path.join(__dirname, '..', 'netlify', 'functions', 'lib', 'turso.js');
+    const { initSchema } = await import(tursoPath);
     await initSchema();
 
     console.log('✓ Database initialized successfully!');
-    console.log(`  Database location: ${dbPath}`);
+    console.log(`  Database: ${dbUrl}`);
 
     process.exit(0);
   } catch (error) {
