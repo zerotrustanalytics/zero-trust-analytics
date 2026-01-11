@@ -1,5 +1,5 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
-import { getUserSites, getUser } from './lib/storage.js';
+import { getUserSites, getUser, getUserById } from './lib/storage.js';
 import { getStats, getActualUsageFromPageviews, getCurrentMonth, getUsageLimitHitDate } from './lib/turso.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, ForbiddenError } from './lib/error-handler.js';
@@ -75,11 +75,12 @@ export default async function handler(req, context) {
     let dataFrozenAt = null;
 
     console.log('=== STATS FREEZE CHECK START ===');
-    console.log('User email:', auth.user.email);
+    console.log('User ID:', auth.user.id);
     console.log('User sites:', userSites);
 
     try {
-      const user = await getUser(auth.user.email);
+      // Use getUserById since Clerk JWT doesn't include email
+      const user = await getUserById(auth.user.id);
       console.log('User from DB:', user ? { plan: user.plan, email: user.email } : 'NOT FOUND');
       const plan = user?.plan || 'free';
       const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
