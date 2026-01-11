@@ -127,6 +127,16 @@ async function initSchema() {
 async function ingestEvents(tableName, events) {
   const eventsArray = Array.isArray(events) ? events : [events];
 
+  console.log('[turso] ingestEvents called', {
+    tableName,
+    eventCount: eventsArray.length,
+    firstEvent: eventsArray[0] ? {
+      site_id: eventsArray[0].site_id,
+      timestamp: eventsArray[0].timestamp,
+      event_type: eventsArray[0].event_type
+    } : null
+  });
+
   // Use a transaction for batch inserts
   const statements = eventsArray.map(e => ({
     sql: `INSERT INTO ${tableName} (
@@ -151,8 +161,14 @@ async function ingestEvents(tableName, events) {
     ]
   }));
 
-  const result = await turso.batch(statements);
-  return { success: true, inserted: eventsArray.length };
+  try {
+    const result = await turso.batch(statements);
+    console.log('[turso] ingestEvents SUCCESS', { inserted: eventsArray.length });
+    return { success: true, inserted: eventsArray.length };
+  } catch (err) {
+    console.error('[turso] ingestEvents FAILED', { error: err.message, stack: err.stack });
+    throw err;
+  }
 }
 
 /**
@@ -722,6 +738,14 @@ async function getRealtime(siteId) {
       .replace('T', ' ')
       .split('.')[0];
 
+    console.log('[turso] getRealtime query params', {
+      siteId,
+      fiveMinutesAgo,
+      thirtyMinutesAgo,
+      todayStart,
+      nowUTC: now.toISOString()
+    });
+
     const [activeResult, last30Result, todayResult, recentResult] = await Promise.all([
       // Active visitors in last 5 minutes
       turso.execute({
@@ -785,18 +809,29 @@ async function getRealtime(siteId) {
     const active = activeRows[0] || {};
     const last30Rows = normalizeRows(last30Result.rows);
     const todayRows = normalizeRows(todayResult.rows);
+    const recentRows = normalizeRows(recentResult.rows);
+
+    console.log('[turso] getRealtime results', {
+      siteId,
+      active_visitors: active.active_visitors || 0,
+      pageviews_last_5min: active.pageviews_last_5min || 0,
+      last_30_minutes: last30Rows[0]?.visitors || 0,
+      today: todayRows[0]?.visitors || 0,
+      recent_count: recentRows.length,
+      recent_first: recentRows[0] || null
+    });
 
     return {
       active_visitors: active.active_visitors || 0,
       pageviews_last_5min: active.pageviews_last_5min || 0,
       last_30_minutes: last30Rows[0]?.visitors || 0,
       today: todayRows[0]?.visitors || 0,
-      recent_pageviews: normalizeRows(recentResult.rows),
+      recent_pageviews: recentRows,
       visitors_per_minute: [],
       traffic_sources: []
     };
   } catch (err) {
-    console.error('Realtime query error:', err);
+    console.error('[turso] getRealtime error:', err);
     return {
       active_visitors: 0,
       pageviews_last_5min: 0,
