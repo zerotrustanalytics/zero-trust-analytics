@@ -937,15 +937,15 @@ async function getUsageLimitHitDate(siteIds, limit, month = null) {
 // === CACHED WRAPPERS ===
 // Export cached versions when Redis is configured, otherwise use direct functions
 
-const cachedGetStats = cache.cachedGetStats(getStats);
-const cachedGetRealtime = cache.cachedGetRealtime(getRealtime);
+const getStatsCached = cache.cachedGetStats(getStats);
+const getRealtimeCached = cache.cachedGetRealtime(getRealtime);
 
 export {
   turso,
   initSchema,
   ingestEvents,
-  getStats: cachedGetStats,
-  getRealtime: cachedGetRealtime,
+  getStatsCached as getStats,
+  getRealtimeCached as getRealtime,
   exportData,
   debugGetCount,
   debugGetRecent,
