@@ -22,6 +22,17 @@ interface EmailReport {
   createdAt: string
 }
 
+interface PreviewStats {
+  visitors: number
+  pageviews: number
+  bounceRate: number
+  visitorsChange: number
+  pageviewsChange: number
+  bounceRateChange: number
+  dateRange: string
+  loading: boolean
+}
+
 export default function ReportsPage() {
   const { getToken } = useAuth()
   const { user } = useUser()
@@ -29,6 +40,16 @@ export default function ReportsPage() {
   const [reports, setReports] = useState<EmailReport[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [previewStats, setPreviewStats] = useState<PreviewStats>({
+    visitors: 0,
+    pageviews: 0,
+    bounceRate: 0,
+    visitorsChange: 0,
+    pageviewsChange: 0,
+    bounceRateChange: 0,
+    dateRange: '',
+    loading: true
+  })
 
   // Form state
   const [newReport, setNewReport] = useState({
@@ -72,6 +93,85 @@ export default function ReportsPage() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Fetch preview stats when selected site changes
+  const fetchPreviewStats = useCallback(async (siteId: string) => {
+    if (!siteId) return
+
+    setPreviewStats(prev => ({ ...prev, loading: true }))
+
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+
+      // Calculate date range for last 7 days
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - 7)
+
+      // Previous period for comparison
+      const prevEndDate = new Date(startDate)
+      prevEndDate.setDate(prevEndDate.getDate() - 1)
+      const prevStartDate = new Date(prevEndDate)
+      prevStartDate.setDate(prevStartDate.getDate() - 7)
+
+      const formatDate = (d: Date) => d.toISOString().split('T')[0]
+
+      // Fetch current period stats
+      const [currentRes, prevRes] = await Promise.all([
+        fetch(`${apiUrl}/api/stats?siteId=${siteId}&period=7d`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${apiUrl}/api/stats?siteId=${siteId}&startDate=${formatDate(prevStartDate)}&endDate=${formatDate(prevEndDate)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ])
+
+      if (currentRes.ok) {
+        const current = await currentRes.json()
+        const prev = prevRes.ok ? await prevRes.json() : null
+
+        const currentVisitors = current.visitors || 0
+        const currentPageviews = current.pageviews || 0
+        const currentBounceRate = current.bounceRate || 0
+
+        const prevVisitors = prev?.visitors || 0
+        const prevPageviews = prev?.pageviews || 0
+        const prevBounceRate = prev?.bounceRate || 0
+
+        // Calculate percentage changes
+        const calcChange = (curr: number, prev: number) => {
+          if (prev === 0) return curr > 0 ? 100 : 0
+          return Math.round(((curr - prev) / prev) * 100 * 10) / 10
+        }
+
+        // Format date range
+        const dateRange = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+
+        setPreviewStats({
+          visitors: currentVisitors,
+          pageviews: currentPageviews,
+          bounceRate: Math.round(currentBounceRate),
+          visitorsChange: calcChange(currentVisitors, prevVisitors),
+          pageviewsChange: calcChange(currentPageviews, prevPageviews),
+          bounceRateChange: calcChange(currentBounceRate, prevBounceRate),
+          dateRange,
+          loading: false
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch preview stats:', err)
+      setPreviewStats(prev => ({ ...prev, loading: false }))
+    }
+  }, [getToken])
+
+  useEffect(() => {
+    if (newReport.siteId) {
+      fetchPreviewStats(newReport.siteId)
+    }
+  }, [newReport.siteId, fetchPreviewStats])
 
   const handleCreateReport = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -277,27 +377,39 @@ export default function ReportsPage() {
               </div>
               <div>
                 <p className="font-semibold">Weekly Analytics Summary</p>
-                <p className="text-sm text-muted-foreground">Dec 30 - Jan 5, 2025</p>
+                <p className="text-sm text-muted-foreground">{previewStats.dateRange || 'Loading...'}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <p className="text-2xl font-bold">1,234</p>
-                <p className="text-xs text-muted-foreground">Visitors</p>
-                <p className="text-xs text-green-600">+12.5% vs last week</p>
+            {previewStats.loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <p className="text-2xl font-bold">3,456</p>
-                <p className="text-xs text-muted-foreground">Page Views</p>
-                <p className="text-xs text-green-600">+8.3% vs last week</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                  <p className="text-2xl font-bold">{previewStats.visitors.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Visitors</p>
+                  <p className={`text-xs ${previewStats.visitorsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {previewStats.visitorsChange >= 0 ? '+' : ''}{previewStats.visitorsChange}% vs last week
+                  </p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                  <p className="text-2xl font-bold">{previewStats.pageviews.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Page Views</p>
+                  <p className={`text-xs ${previewStats.pageviewsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {previewStats.pageviewsChange >= 0 ? '+' : ''}{previewStats.pageviewsChange}% vs last week
+                  </p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                  <p className="text-2xl font-bold">{previewStats.bounceRate}%</p>
+                  <p className="text-xs text-muted-foreground">Bounce Rate</p>
+                  <p className={`text-xs ${previewStats.bounceRateChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {previewStats.bounceRateChange >= 0 ? '+' : ''}{previewStats.bounceRateChange}% vs last week
+                  </p>
+                </div>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <p className="text-2xl font-bold">42%</p>
-                <p className="text-xs text-muted-foreground">Bounce Rate</p>
-                <p className="text-xs text-red-600">+2.1% vs last week</p>
-              </div>
-            </div>
+            )}
 
             <div className="text-center pt-4">
               <Link
