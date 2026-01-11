@@ -169,6 +169,19 @@ export default function SettingsPage() {
         </Button>
       </Card>
 
+      {/* Integrations */}
+      <Card className="p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Integrations</h2>
+        <p className="text-muted-foreground mb-4">
+          Connect external services like Google Search Console to view organic search keywords and rankings alongside your analytics.
+        </p>
+        <Link href="/dashboard/settings/integrations">
+          <Button variant="outline">
+            Manage Integrations
+          </Button>
+        </Link>
+      </Card>
+
       {/* White-Label Branding */}
       <Card className="p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">White-Label Branding</h2>
