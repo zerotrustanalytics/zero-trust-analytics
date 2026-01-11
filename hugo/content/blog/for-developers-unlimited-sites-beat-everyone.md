@@ -85,7 +85,7 @@ At 2 sites, we're competitive. At 3+, we're cheaper. At 10+, it's not even close
 One script tag. That's it.
 
 ```html
-<script defer data-site="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
+<script defer data-site-id="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
 ```
 
 No npm packages to install. No build step integration. No configuration files. Works with any stack.
@@ -169,7 +169,7 @@ Your users get privacy. You get analytics. No ethical compromise.
 ```
 
 ```html
-<script defer data-site="site_xxx" src="https://ztas.io/js/analytics.js"></script>
+<script defer data-site-id="site_xxx" src="https://ztas.io/js/analytics.js"></script>
 ```
 
 That's literally it. You'll see data within seconds.

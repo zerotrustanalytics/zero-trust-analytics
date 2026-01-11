@@ -12,21 +12,23 @@ The tracking script supports several configuration options via `data-*` attribut
 ```html
 <script
   defer
-  data-site="YOUR_SITE_ID"
-  data-honor-dnt="true"
-  data-exclude="/admin/*,/preview/*"
+  data-site-id="YOUR_SITE_ID"
   src="https://ztas.io/js/analytics.js">
 </script>
 ```
 
 ### Available Attributes
 
-| Attribute | Required | Description |
-|-----------|----------|-------------|
-| `data-site` | Yes | Your unique Site ID |
-| `data-honor-dnt` | No | Respect Do Not Track browser setting (default: false) |
-| `data-exclude` | No | Comma-separated URL patterns to exclude from tracking |
-| `data-domain` | No | Override the domain for cross-subdomain tracking |
+| Attribute | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `data-site-id` | Yes | - | Your unique Site ID |
+| `data-auto-track` | No | `true` | Automatically track page views |
+| `data-spa` | No | `false` | Enable SPA mode (manual navigation tracking) |
+| `data-debug` | No | `false` | Enable console debug logging |
+| `data-track-scroll` | No | `true` | Track scroll depth (25%, 50%, 75%, 100%) |
+| `data-track-outbound` | No | `true` | Track outbound link clicks |
+| `data-track-downloads` | No | `true` | Track file downloads |
+| `data-track-forms` | No | `true` | Track form submissions |
 
 ## What Gets Tracked Automatically
 
@@ -54,30 +56,34 @@ The tracking script is under **3KB** minified and gzipped. It won't impact your 
 
 ## Excluding Pages
 
-Use the `data-exclude` attribute to skip tracking on certain pages:
+Configure page exclusions in your site settings in the dashboard. Go to **Sites → Settings → Exclude Paths** to add URL patterns that should not be tracked.
+
+## Disabling Auto-Tracking
+
+If you want full control over what gets tracked, disable auto-tracking:
 
 ```html
 <script
   defer
-  data-site="YOUR_SITE_ID"
-  data-exclude="/admin/*,/dashboard/*,/internal/*"
+  data-site-id="YOUR_SITE_ID"
+  data-auto-track="false"
   src="https://ztas.io/js/analytics.js">
 </script>
 ```
 
-Supports wildcards (`*`) for pattern matching.
+Then manually call `zta.trackPageview()` when you want to track a view.
 
-## Respecting Do Not Track
+## SPA Mode
 
-If you want to honor the browser's Do Not Track setting:
+For single-page applications that handle their own routing:
 
 ```html
 <script
   defer
-  data-site="YOUR_SITE_ID"
-  data-honor-dnt="true"
+  data-site-id="YOUR_SITE_ID"
+  data-spa="true"
   src="https://ztas.io/js/analytics.js">
 </script>
 ```
 
-When enabled, visitors with DNT will not be tracked.
+In SPA mode, call `zta.trackPageview()` after each route change. See the [SPA Support](/docs/spa-support) guide for framework-specific examples.

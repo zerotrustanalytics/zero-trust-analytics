@@ -34,7 +34,7 @@ Get Zero Trust Analytics running in under 5 minutes:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/jasonsutter87/zero-trust-analytics.git
+git clone https://github.com/zerotrustanalytics/zero-trust-analytics.git
 cd zero-trust-analytics
 ```
 
@@ -162,8 +162,10 @@ Full list of configuration options in `docker/.env`:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_PATH` | SQLite database location | `/app/data/analytics.db` |
-| `DATABASE_URL` | PostgreSQL URL (optional) | - |
+| `TURSO_DATABASE_URL` | Database URL (libSQL/Turso or local SQLite) | `file:/app/data/analytics.db` |
+| `TURSO_AUTH_TOKEN` | Turso auth token (empty for local SQLite) | - |
+
+**Recommended:** Use [Turso](https://turso.tech) (free tier: 9GB, 500M reads/month). See [Using Turso](#using-turso-recommended) below.
 
 #### Email Configuration (Optional)
 
@@ -183,28 +185,77 @@ Configure at least one email provider for password reset functionality:
 | `MAX_SITES_PER_USER` | Maximum sites per user | `999` |
 | `LOG_LEVEL` | Logging level (error, warn, info, debug) | `info` |
 
-### Using PostgreSQL Instead of SQLite
+### Using Turso (Recommended)
 
-For higher traffic volumes, use PostgreSQL:
+[Turso](https://turso.tech) provides a hosted libSQL database with a generous free tier (9GB storage, 500M reads/month). This is the easiest setup:
 
-1. Edit `docker/.env`:
-
-```bash
-# Comment out SQLite
-# DATABASE_PATH=/app/data/analytics.db
-
-# Enable PostgreSQL
-DATABASE_URL=postgresql://zta:yourpassword@postgres:5432/zta
-POSTGRES_USER=zta
-POSTGRES_PASSWORD=your-secure-password
-POSTGRES_DB=zta
-```
-
-2. Start with PostgreSQL profile:
+1. **Create a Turso database:**
 
 ```bash
-docker-compose --profile postgres -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Install Turso CLI
+curl -sSfL https://get.tur.so/install.sh | bash
+
+# Sign up (free)
+turso auth signup
+
+# Create database
+turso db create zta-analytics
+
+# Get connection info
+turso db show zta-analytics --url
+turso db tokens create zta-analytics
 ```
+
+2. **Update `docker/.env`:**
+
+```bash
+TURSO_DATABASE_URL=libsql://your-db-name.turso.io
+TURSO_AUTH_TOKEN=your-token-here
+```
+
+3. **Start the application:**
+
+```bash
+docker-compose up -d
+```
+
+### Using Local SQLite
+
+For fully self-contained deployment (no external services):
+
+```bash
+# In docker/.env
+TURSO_DATABASE_URL=file:/app/data/analytics.db
+TURSO_AUTH_TOKEN=
+```
+
+Data is stored in a Docker volume (`zta-data`). Good for air-gapped environments or personal use.
+
+### Authentication Modes
+
+Self-hosted supports multiple auth modes via `AUTH_MODE`:
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `none` | No login required | Personal use, trusted network |
+| `password` | Single shared password | Small teams |
+| `jwt` | Full multi-user accounts | Enterprise self-hosting |
+
+**Examples:**
+
+```bash
+# No authentication (default for self-hosted)
+AUTH_MODE=none
+
+# Shared password protection
+AUTH_MODE=password
+AUTH_PASSWORD=your-shared-password
+
+# Multi-user with accounts
+AUTH_MODE=jwt
+```
+
+With `AUTH_MODE=none` or `password`, email reports are disabled (no scheduler in self-hosted mode).
 
 ## SSL/HTTPS Setup
 
@@ -263,12 +314,6 @@ docker-compose --profile backup run --rm backup
 0 2 * * * cd /path/to/zero-trust-analytics && docker-compose --profile backup run --rm backup
 ```
 
-#### PostgreSQL Backup
-
-```bash
-docker-compose exec postgres pg_dump -U zta zta > backup-$(date +%Y%m%d).sql
-```
-
 ### Database Restore
 
 #### SQLite Restore
@@ -284,10 +329,16 @@ docker cp backup-20251212.db zero-trust-analytics:/app/data/analytics.db
 docker-compose start zta
 ```
 
-#### PostgreSQL Restore
+#### Turso Backup/Restore
+
+For Turso databases, use the Turso CLI:
 
 ```bash
-docker-compose exec -T postgres psql -U zta zta < backup-20251212.sql
+# Export database
+turso db shell zta-analytics ".dump" > backup.sql
+
+# Import to new database
+turso db shell zta-analytics < backup.sql
 ```
 
 ### Updating to Latest Version
@@ -337,21 +388,9 @@ VACUUM;
 .exit
 ```
 
-#### PostgreSQL
+#### Turso (Cloud)
 
-Add connection pooling and tune settings in `docker-compose.prod.yml`:
-
-```yaml
-postgres:
-  environment:
-    POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
-  command:
-    - "postgres"
-    - "-c"
-    - "max_connections=200"
-    - "-c"
-    - "shared_buffers=256MB"
-```
+Turso handles scaling automatically. For higher limits, upgrade your Turso plan.
 
 ### Nginx Caching
 
@@ -390,8 +429,9 @@ Common issues:
 # Check database exists
 docker-compose exec zta ls -la /app/data/
 
-# Reinitialize database
-docker-compose exec zta node /app/server/init-db.js
+# Database initializes automatically on server start
+# To force reinitialize, restart the container:
+docker-compose restart zta
 ```
 
 ### SSL Certificate Issues
@@ -513,10 +553,9 @@ Increase resources for single server:
 
 For very high traffic (multiple servers):
 
-1. Use PostgreSQL instead of SQLite
+1. Use Turso (cloud database, accessible from all containers)
 2. Deploy multiple application containers with load balancer
-3. Share database across all containers
-4. Use Redis for session storage (requires code modification)
+3. Add Redis for caching (already supported via `UPSTASH_REDIS_REST_URL`)
 
 ## Migration
 
@@ -534,8 +573,8 @@ Contact support for migration assistance.
 
 ### Community Support
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/jasonsutter87/zero-trust-analytics/issues)
-- **Discussions**: [Community forum](https://github.com/jasonsutter87/zero-trust-analytics/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/zerotrustanalytics/zero-trust-analytics/issues)
+- **Discussions**: [Community forum](https://github.com/zerotrustanalytics/zero-trust-analytics/discussions)
 
 ### Commercial Support
 
@@ -563,8 +602,8 @@ Self-hosted is identical in features. You manage infrastructure and updates.
 
 ### How many pageviews can it handle?
 
-With default SQLite: **1M+ pageviews/month** comfortably.
-With PostgreSQL: **10M+ pageviews/month** and beyond.
+With local SQLite: **1M+ pageviews/month** comfortably.
+With Turso (cloud): **10M+ pageviews/month** and beyond (scales automatically).
 
 ### Is visitor data truly private?
 
@@ -593,4 +632,4 @@ Open an issue on GitHub or check the Discussions forum.
 
 ---
 
-**Need help?** Open an issue on [GitHub](https://github.com/jasonsutter87/zero-trust-analytics/issues) or join our [community discussions](https://github.com/jasonsutter87/zero-trust-analytics/discussions).
+**Need help?** Open an issue on [GitHub](https://github.com/zerotrustanalytics/zero-trust-analytics/issues) or join our [community discussions](https://github.com/zerotrustanalytics/zero-trust-analytics/discussions).

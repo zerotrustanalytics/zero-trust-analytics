@@ -10,7 +10,7 @@ priority: 0.7
 Add this script to your HTML, just before the closing `</head>` tag:
 
 ```html
-<script defer data-site="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
+<script defer data-site-id="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
 ```
 
 The `defer` attribute ensures the script doesn't block page rendering.
@@ -22,7 +22,7 @@ The `defer` attribute ensures the script doesn't block page rendering.
 Add the script to your theme's `header.php` file, just before `</head>`:
 
 ```php
-<script defer data-site="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
+<script defer data-site-id="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
 </head>
 ```
 
@@ -58,7 +58,7 @@ export default function App({ Component, pageProps }) {
     <>
       <Script
         defer
-        data-site="YOUR_SITE_ID"
+        data-site-id="YOUR_SITE_ID"
         src="https://ztas.io/js/analytics.js"
         strategy="afterInteractive"
       />
@@ -75,7 +75,7 @@ export default function App({ Component, pageProps }) {
 export const onClientEntry = () => {
   const script = document.createElement('script')
   script.defer = true
-  script.dataset.site = 'YOUR_SITE_ID'
+  script.dataset.siteId = 'YOUR_SITE_ID'
   script.src = 'https://ztas.io/js/analytics.js'
   document.head.appendChild(script)
 }
@@ -86,7 +86,7 @@ export const onClientEntry = () => {
 Add to your `layouts/partials/head.html`:
 
 ```html
-<script defer data-site="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
+<script defer data-site-id="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
 ```
 
 ## Verifying Installation

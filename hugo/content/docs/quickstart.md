@@ -23,7 +23,7 @@ site_abc123xyz
 Copy this script and paste it just before the closing `</head>` tag on your website:
 
 ```html
-<script defer data-site="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
+<script defer data-site-id="YOUR_SITE_ID" src="https://ztas.io/js/analytics.js"></script>
 ```
 
 Replace `YOUR_SITE_ID` with the Site ID from Step 2.
