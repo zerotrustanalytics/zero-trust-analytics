@@ -110,6 +110,44 @@ export async function updateUser(email, updates) {
   return updated;
 }
 
+// === BRANDING (White-label) ===
+
+/**
+ * Get branding settings for a user
+ * Returns default ZTA branding if not set
+ */
+export async function getBranding(userId) {
+  const user = await getUserById(userId);
+  if (!user) return null;
+
+  // Return user's branding or defaults
+  return user.branding || {
+    enabled: false,
+    companyName: 'Zero Trust Analytics',
+    logoUrl: null,
+    primaryColor: '#3B82F6'
+  };
+}
+
+/**
+ * Update branding settings for a user
+ * Requires Business plan or higher
+ */
+export async function updateBranding(userId, branding) {
+  const user = await getUserById(userId);
+  if (!user) return null;
+
+  const updatedBranding = {
+    ...user.branding,
+    ...branding,
+    updatedAt: new Date().toISOString()
+  };
+
+  // Update user via their email
+  await updateUser(user.email, { branding: updatedBranding });
+  return updatedBranding;
+}
+
 // Delete user account (GDPR Article 17 - Right to Erasure)
 export async function deleteUser(email) {
   const users = store(STORES.USERS);

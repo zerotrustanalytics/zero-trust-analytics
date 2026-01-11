@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button, Input, Card, Alert } from '@/components/ui'
 
 export default function SettingsPage() {
@@ -166,6 +167,19 @@ export default function SettingsPage() {
         <Button variant="outline">
           Enable 2FA
         </Button>
+      </Card>
+
+      {/* White-Label Branding */}
+      <Card className="p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">White-Label Branding</h2>
+        <p className="text-muted-foreground mb-4">
+          Customize reports and shared dashboards with your own company branding. Remove Zero Trust Analytics branding and replace it with your logo and colors.
+        </p>
+        <Link href="/dashboard/settings/branding">
+          <Button variant="outline">
+            Configure Branding
+          </Button>
+        </Link>
       </Card>
 
       {/* Danger Zone */}
