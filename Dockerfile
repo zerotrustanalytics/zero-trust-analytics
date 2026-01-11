@@ -1,8 +1,9 @@
 # Zero Trust Analytics - Self-Hosted Dockerfile
 # Multi-stage build for optimal image size and security
+# Includes: Hugo (marketing), Next.js (dashboard), Express (API)
 
 # ============================================
-# Stage 1: Hugo Build (Static Site Generator)
+# Stage 1: Hugo Build (Marketing Site)
 # ============================================
 FROM hugomods/hugo:exts-0.147.4 AS hugo-builder
 
@@ -21,7 +22,30 @@ COPY hugo/resources ./resources/
 RUN hugo --gc --minify
 
 # ============================================
-# Stage 2: Node.js Dependencies
+# Stage 2: Next.js Build (Dashboard)
+# ============================================
+FROM node:20-alpine AS nextjs-builder
+
+WORKDIR /app
+
+# Copy Next.js app
+COPY nextjs/nextjs/package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source
+COPY nextjs/nextjs/ ./
+
+# Set build-time environment variables for self-hosted
+ENV NEXT_PUBLIC_AUTH_MODE=none
+ENV NEXT_PUBLIC_API_URL=""
+
+# Build Next.js
+RUN npm run build
+
+# ============================================
+# Stage 3: Node.js Dependencies (API)
 # ============================================
 FROM node:20-alpine AS node-deps
 
@@ -40,7 +64,7 @@ RUN npm ci --omit=dev && \
     npm ci --omit=dev
 
 # ============================================
-# Stage 3: Build Analytics Script
+# Stage 4: Build Analytics Script
 # ============================================
 FROM node:20-alpine AS script-builder
 
@@ -56,7 +80,7 @@ COPY build.js ./
 RUN npm run build
 
 # ============================================
-# Stage 4: Runtime
+# Stage 5: Runtime
 # ============================================
 FROM node:20-alpine
 
@@ -69,13 +93,18 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copy built static site from Hugo
-COPY --from=hugo-builder --chown=nodejs:nodejs /site/public ./public
+# Copy Hugo marketing site
+COPY --from=hugo-builder --chown=nodejs:nodejs /site/public ./public/marketing
 
-# Copy built analytics scripts
-COPY --from=script-builder --chown=nodejs:nodejs /app/static/js/*.js ./public/js/
+# Copy Next.js standalone build
+COPY --from=nextjs-builder --chown=nodejs:nodejs /app/.next/standalone ./dashboard
+COPY --from=nextjs-builder --chown=nodejs:nodejs /app/.next/static ./dashboard/.next/static
+COPY --from=nextjs-builder --chown=nodejs:nodejs /app/public ./dashboard/public
 
-# Copy Node.js dependencies
+# Copy analytics scripts
+COPY --from=script-builder --chown=nodejs:nodejs /app/static/js/*.js ./public/marketing/js/
+
+# Copy Node.js dependencies for API
 COPY --from=node-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=node-deps --chown=nodejs:nodejs /app/netlify/functions/node_modules ./netlify/functions/node_modules
 COPY --from=node-deps --chown=nodejs:nodejs /app/server/node_modules ./server/node_modules
@@ -90,7 +119,8 @@ RUN mkdir -p /app/data && chown -R nodejs:nodejs /app/data
 # Set environment variables
 ENV NODE_ENV=production \
     PORT=3000 \
-    DATABASE_PATH=/app/data/analytics.db
+    SELF_HOSTED=true \
+    AUTH_MODE=none
 
 # Switch to non-root user
 USER nodejs

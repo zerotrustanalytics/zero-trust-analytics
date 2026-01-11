@@ -82,6 +82,12 @@ Your self-hosted instance is completely isolated:
 - ✅ Your own JWT secrets
 - ✅ Zero connection to ztas.io infrastructure
 
+### Self-Hosted Differences
+Some features are disabled in self-hosted mode:
+- **Email Reports**: Scheduled email reports are disabled (no background scheduler)
+- **Stripe Billing**: Payment processing is disabled (self-hosting is free)
+- **Clerk Auth**: Uses built-in auth instead of Clerk (see auth modes below)
+
 ---
 
 ## Deployment Options
