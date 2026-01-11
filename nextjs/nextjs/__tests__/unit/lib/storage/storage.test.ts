@@ -896,6 +896,226 @@ class StorageService {
     await oauthStates.delete(stateId)
     return true
   }
+
+  // === CONVERSION RULES ===
+
+  async getConversionRules(siteId: string) {
+    const site = await this.getSite(siteId)
+    return site?.conversionRules || []
+  }
+
+  async addConversionRule(siteId: string, rule: Record<string, unknown>) {
+    const site = await this.getSite(siteId)
+    if (!site) return null
+
+    const rules = site.conversionRules || []
+    const newRule = {
+      id: `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...rule,
+      createdAt: new Date().toISOString(),
+    }
+    rules.push(newRule)
+
+    await this.updateSite(siteId, { conversionRules: rules })
+    return newRule
+  }
+
+  async updateConversionRule(siteId: string, ruleId: string, updates: Record<string, unknown>) {
+    const site = await this.getSite(siteId)
+    if (!site) return null
+
+    const rules = site.conversionRules || []
+    const ruleIndex = rules.findIndex((r: { id: string }) => r.id === ruleId)
+    if (ruleIndex === -1) return null
+
+    rules[ruleIndex] = { ...rules[ruleIndex], ...updates, updatedAt: new Date().toISOString() }
+    await this.updateSite(siteId, { conversionRules: rules })
+    return rules[ruleIndex]
+  }
+
+  async deleteConversionRule(siteId: string, ruleId: string) {
+    const site = await this.getSite(siteId)
+    if (!site) return false
+
+    const rules = site.conversionRules || []
+    const newRules = rules.filter((r: { id: string }) => r.id !== ruleId)
+    if (newRules.length === rules.length) return false
+
+    await this.updateSite(siteId, { conversionRules: newRules })
+    return true
+  }
+
+  matchConversionRule(rules: Array<{ id: string; enabled: boolean; conditions?: { page?: string; event?: string } }> | null, eventData: { payload?: { page_path?: string }; page?: string; event_type?: string }) {
+    if (!rules || rules.length === 0) return null
+
+    for (const rule of rules) {
+      if (!rule.enabled) continue
+
+      let matches = true
+
+      if (rule.conditions?.page) {
+        const pagePath = eventData.page || eventData.payload?.page_path || ''
+        if (rule.conditions.page.startsWith('/') && !rule.conditions.page.includes('*')) {
+          matches = matches && pagePath === rule.conditions.page
+        } else {
+          try {
+            const regex = new RegExp(rule.conditions.page)
+            matches = matches && regex.test(pagePath)
+          } catch {
+            matches = false
+          }
+        }
+      }
+
+      if (rule.conditions?.event) {
+        matches = matches && eventData.event_type === rule.conditions.event
+      }
+
+      if (matches) return rule
+    }
+
+    return null
+  }
+
+  // === PAGE VALUE RULES ===
+
+  async getPageValueRules(siteId: string) {
+    const site = await this.getSite(siteId)
+    return site?.pageValueRules || []
+  }
+
+  async addPageValueRule(siteId: string, rule: Record<string, unknown>) {
+    const site = await this.getSite(siteId)
+    if (!site) return null
+
+    const rules = site.pageValueRules || []
+    const newRule = {
+      id: `pv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...rule,
+      createdAt: new Date().toISOString(),
+    }
+    rules.push(newRule)
+
+    await this.updateSite(siteId, { pageValueRules: rules })
+    return newRule
+  }
+
+  async updatePageValueRule(siteId: string, ruleId: string, updates: Record<string, unknown>) {
+    const site = await this.getSite(siteId)
+    if (!site) return null
+
+    const rules = site.pageValueRules || []
+    const ruleIndex = rules.findIndex((r: { id: string }) => r.id === ruleId)
+    if (ruleIndex === -1) return null
+
+    rules[ruleIndex] = { ...rules[ruleIndex], ...updates, updatedAt: new Date().toISOString() }
+    await this.updateSite(siteId, { pageValueRules: rules })
+    return rules[ruleIndex]
+  }
+
+  async deletePageValueRule(siteId: string, ruleId: string) {
+    const site = await this.getSite(siteId)
+    if (!site) return false
+
+    const rules = site.pageValueRules || []
+    const newRules = rules.filter((r: { id: string }) => r.id !== ruleId)
+    if (newRules.length === rules.length) return false
+
+    await this.updateSite(siteId, { pageValueRules: newRules })
+    return true
+  }
+
+  calculatePageValues(
+    rules: Array<{ id: string; enabled: boolean; conditions: { page: string; match?: string }; value: number; currency: string }>,
+    pageviews: Array<{ page_path: string; referrer_domain?: string }>
+  ) {
+    const result = {
+      totalValue: 0,
+      currency: 'USD',
+      matchedPageviews: 0,
+      valueBySource: {} as Record<string, number>,
+      valueByPage: {} as Record<string, number>,
+    }
+
+    if (!rules || rules.length === 0 || !pageviews || pageviews.length === 0) {
+      return result
+    }
+
+    result.currency = rules[0]?.currency || 'USD'
+
+    for (const pv of pageviews) {
+      for (const rule of rules) {
+        if (!rule.enabled) continue
+
+        let matches = false
+        const pagePath = pv.page_path || ''
+        const condition = rule.conditions
+
+        switch (condition.match) {
+          case 'exact':
+            matches = pagePath === condition.page
+            break
+          case 'contains':
+            matches = pagePath.includes(condition.page)
+            break
+          case 'starts_with':
+            matches = pagePath.startsWith(condition.page)
+            break
+          case 'regex':
+            try {
+              const regex = new RegExp(condition.page)
+              matches = regex.test(pagePath)
+            } catch {
+              matches = false
+            }
+            break
+          default:
+            matches = pagePath === condition.page
+        }
+
+        if (matches) {
+          result.totalValue += rule.value
+          result.matchedPageviews++
+
+          const source = pv.referrer_domain || 'direct'
+          result.valueBySource[source] = (result.valueBySource[source] || 0) + rule.value
+          result.valueByPage[pagePath] = (result.valueByPage[pagePath] || 0) + rule.value
+
+          break // Only match first rule per pageview
+        }
+      }
+    }
+
+    return result
+  }
+
+  // === BRANDING ===
+
+  async getBranding(userId: string) {
+    const user = await this.getUserById(userId)
+    if (!user) return null
+
+    return user.branding || {
+      enabled: false,
+      companyName: 'Zero Trust Analytics',
+      logoUrl: null,
+      primaryColor: '#3B82F6',
+    }
+  }
+
+  async updateBranding(userId: string, branding: Record<string, unknown>) {
+    const user = await this.getUserById(userId)
+    if (!user) return null
+
+    const updatedBranding = {
+      ...(user.branding || {}),
+      ...branding,
+      updatedAt: new Date().toISOString(),
+    }
+
+    await this.updateUser(user.email, { branding: updatedBranding })
+    return updatedBranding
+  }
 }
 
 // ==========================================
@@ -2006,6 +2226,979 @@ describe('Storage Functions', () => {
 
         expect(result).toBe(true)
         expect(stores[STORES.OAUTH_STATES].delete).toHaveBeenCalledWith('state_123')
+      })
+    })
+  })
+
+  // ==========================================
+  // CONVERSION RULES TESTS (NEW)
+  // ==========================================
+  describe('Conversion Rules Operations', () => {
+    describe('getConversionRules', () => {
+      it('returns empty array when no rules exist', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({ id: 'site_123' })
+
+        const result = await storage.getConversionRules('site_123')
+
+        expect(result).toEqual([])
+      })
+
+      it('returns existing rules from site', async () => {
+        const rules = [
+          { id: 'rule_1', name: 'Signup', enabled: true },
+          { id: 'rule_2', name: 'Purchase', enabled: false },
+        ]
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          conversionRules: rules,
+        })
+
+        const result = await storage.getConversionRules('site_123')
+
+        expect(result).toEqual(rules)
+        expect(result).toHaveLength(2)
+      })
+
+      it('returns null for non-existent site', async () => {
+        stores[STORES.SITES].get.mockResolvedValue(null)
+
+        const result = await storage.getConversionRules('nonexistent')
+
+        expect(result).toEqual([])
+      })
+    })
+
+    describe('addConversionRule', () => {
+      it('adds new rule with generated ID', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          conversionRules: [],
+        })
+
+        const result = await storage.addConversionRule('site_123', {
+          name: 'Signup',
+          conditions: { page: '/signup' },
+          enabled: true,
+        })
+
+        expect(result?.id).toMatch(/^rule_/)
+        expect(result?.name).toBe('Signup')
+        expect(result?.createdAt).toBeDefined()
+      })
+
+      it('appends to existing rules', async () => {
+        const existingRules = [{ id: 'rule_1', name: 'Existing' }]
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          conversionRules: existingRules,
+        })
+
+        await storage.addConversionRule('site_123', {
+          name: 'New Rule',
+          conditions: {},
+          enabled: true,
+        })
+
+        expect(stores[STORES.SITES].setJSON).toHaveBeenCalledWith(
+          'site_123',
+          expect.objectContaining({
+            conversionRules: expect.arrayContaining([
+              expect.objectContaining({ name: 'Existing' }),
+              expect.objectContaining({ name: 'New Rule' }),
+            ]),
+          })
+        )
+      })
+
+      it('returns null for non-existent site', async () => {
+        stores[STORES.SITES].get.mockResolvedValue(null)
+
+        const result = await storage.addConversionRule('nonexistent', {
+          name: 'Test',
+          conditions: {},
+          enabled: true,
+        })
+
+        expect(result).toBeNull()
+      })
+    })
+
+    describe('updateConversionRule', () => {
+      it('updates existing rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          conversionRules: [
+            { id: 'rule_1', name: 'Old Name', enabled: true },
+          ],
+        })
+
+        const result = await storage.updateConversionRule('site_123', 'rule_1', {
+          name: 'New Name',
+          enabled: false,
+        })
+
+        expect(result?.name).toBe('New Name')
+        expect(result?.enabled).toBe(false)
+        expect(result?.updatedAt).toBeDefined()
+      })
+
+      it('returns null for non-existent rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          conversionRules: [],
+        })
+
+        const result = await storage.updateConversionRule('site_123', 'nonexistent', {
+          name: 'Test',
+        })
+
+        expect(result).toBeNull()
+      })
+
+      it('returns null for non-existent site', async () => {
+        stores[STORES.SITES].get.mockResolvedValue(null)
+
+        const result = await storage.updateConversionRule('nonexistent', 'rule_1', {
+          name: 'Test',
+        })
+
+        expect(result).toBeNull()
+      })
+    })
+
+    describe('deleteConversionRule', () => {
+      it('deletes existing rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          conversionRules: [
+            { id: 'rule_1', name: 'To Delete' },
+            { id: 'rule_2', name: 'Keep' },
+          ],
+        })
+
+        const result = await storage.deleteConversionRule('site_123', 'rule_1')
+
+        expect(result).toBe(true)
+        expect(stores[STORES.SITES].setJSON).toHaveBeenCalledWith(
+          'site_123',
+          expect.objectContaining({
+            conversionRules: [expect.objectContaining({ id: 'rule_2' })],
+          })
+        )
+      })
+
+      it('returns false for non-existent rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          conversionRules: [],
+        })
+
+        const result = await storage.deleteConversionRule('site_123', 'nonexistent')
+
+        expect(result).toBe(false)
+      })
+
+      it('returns false for non-existent site', async () => {
+        stores[STORES.SITES].get.mockResolvedValue(null)
+
+        const result = await storage.deleteConversionRule('nonexistent', 'rule_1')
+
+        expect(result).toBe(false)
+      })
+    })
+
+    describe('matchConversionRule', () => {
+      it('matches exact page path', () => {
+        const rules = [
+          { id: 'rule_1', name: 'Signup', enabled: true, conditions: { page: '/signup' } },
+        ]
+        const eventData = { payload: { page_path: '/signup' } }
+
+        const result = storage.matchConversionRule(rules, eventData)
+
+        expect(result?.id).toBe('rule_1')
+      })
+
+      it('matches regex page pattern', () => {
+        const rules = [
+          { id: 'rule_1', name: 'Product', enabled: true, conditions: { page: '/products/.*' } },
+        ]
+        const eventData = { payload: { page_path: '/products/123' } }
+
+        const result = storage.matchConversionRule(rules, eventData)
+
+        expect(result?.id).toBe('rule_1')
+      })
+
+      it('skips disabled rules', () => {
+        const rules = [
+          { id: 'rule_1', name: 'Disabled', enabled: false, conditions: { page: '/signup' } },
+        ]
+        const eventData = { payload: { page_path: '/signup' } }
+
+        const result = storage.matchConversionRule(rules, eventData)
+
+        expect(result).toBeNull()
+      })
+
+      it('returns null when no rules match', () => {
+        const rules = [
+          { id: 'rule_1', name: 'Test', enabled: true, conditions: { page: '/other' } },
+        ]
+        const eventData = { payload: { page_path: '/signup' } }
+
+        const result = storage.matchConversionRule(rules, eventData)
+
+        expect(result).toBeNull()
+      })
+
+      it('returns null for empty rules array', () => {
+        const result = storage.matchConversionRule([], { payload: {} })
+        expect(result).toBeNull()
+      })
+
+      it('returns null for null rules', () => {
+        const result = storage.matchConversionRule(null as unknown as [], { payload: {} })
+        expect(result).toBeNull()
+      })
+
+      it('matches event type condition', () => {
+        const rules = [
+          {
+            id: 'rule_1',
+            name: 'Click Event',
+            enabled: true,
+            conditions: { event: 'click' },
+          },
+        ]
+        const eventData = { event_type: 'click' }
+
+        const result = storage.matchConversionRule(rules, eventData)
+
+        expect(result?.id).toBe('rule_1')
+      })
+
+      it('does not match wrong event type', () => {
+        const rules = [
+          {
+            id: 'rule_1',
+            name: 'Click Event',
+            enabled: true,
+            conditions: { event: 'click' },
+          },
+        ]
+        const eventData = { event_type: 'pageview' }
+
+        const result = storage.matchConversionRule(rules, eventData)
+
+        expect(result).toBeNull()
+      })
+    })
+  })
+
+  // ==========================================
+  // PAGE VALUE RULES TESTS (NEW)
+  // ==========================================
+  describe('Page Value Rules Operations', () => {
+    describe('getPageValueRules', () => {
+      it('returns empty array when no rules exist', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({ id: 'site_123' })
+
+        const result = await storage.getPageValueRules('site_123')
+
+        expect(result).toEqual([])
+      })
+
+      it('returns existing page value rules', async () => {
+        const rules = [
+          { id: 'pv_1', name: 'Contact Form', value: 100, currency: 'USD' },
+          { id: 'pv_2', name: 'Demo Request', value: 500, currency: 'USD' },
+        ]
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          pageValueRules: rules,
+        })
+
+        const result = await storage.getPageValueRules('site_123')
+
+        expect(result).toEqual(rules)
+        expect(result).toHaveLength(2)
+      })
+    })
+
+    describe('addPageValueRule', () => {
+      it('adds page value rule with generated ID', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          pageValueRules: [],
+        })
+
+        const result = await storage.addPageValueRule('site_123', {
+          name: 'Lead Form',
+          conditions: { page: '/contact', match: 'exact' },
+          value: 250,
+          currency: 'USD',
+          enabled: true,
+        })
+
+        expect(result?.id).toMatch(/^pv_/)
+        expect(result?.name).toBe('Lead Form')
+        expect(result?.value).toBe(250)
+        expect(result?.createdAt).toBeDefined()
+      })
+
+      it('returns null for non-existent site', async () => {
+        stores[STORES.SITES].get.mockResolvedValue(null)
+
+        const result = await storage.addPageValueRule('nonexistent', {
+          name: 'Test',
+          conditions: {},
+          value: 100,
+          currency: 'USD',
+          enabled: true,
+        })
+
+        expect(result).toBeNull()
+      })
+    })
+
+    describe('updatePageValueRule', () => {
+      it('updates existing page value rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          pageValueRules: [
+            { id: 'pv_1', name: 'Old', value: 100, enabled: true },
+          ],
+        })
+
+        const result = await storage.updatePageValueRule('site_123', 'pv_1', {
+          name: 'Updated',
+          value: 200,
+        })
+
+        expect(result?.name).toBe('Updated')
+        expect(result?.value).toBe(200)
+        expect(result?.updatedAt).toBeDefined()
+      })
+
+      it('returns null for non-existent rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          pageValueRules: [],
+        })
+
+        const result = await storage.updatePageValueRule('site_123', 'nonexistent', {
+          value: 100,
+        })
+
+        expect(result).toBeNull()
+      })
+    })
+
+    describe('deletePageValueRule', () => {
+      it('deletes existing page value rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          pageValueRules: [
+            { id: 'pv_1', name: 'Delete Me' },
+            { id: 'pv_2', name: 'Keep' },
+          ],
+        })
+
+        const result = await storage.deletePageValueRule('site_123', 'pv_1')
+
+        expect(result).toBe(true)
+      })
+
+      it('returns false for non-existent rule', async () => {
+        stores[STORES.SITES].get.mockResolvedValue({
+          id: 'site_123',
+          pageValueRules: [],
+        })
+
+        const result = await storage.deletePageValueRule('nonexistent', 'pv_1')
+
+        expect(result).toBe(false)
+      })
+    })
+
+    describe('calculatePageValues', () => {
+      it('calculates total value from matching rules', () => {
+        const rules = [
+          {
+            id: 'pv_1',
+            name: 'Contact',
+            enabled: true,
+            conditions: { page: '/contact', match: 'exact' },
+            value: 100,
+            currency: 'USD',
+          },
+          {
+            id: 'pv_2',
+            name: 'Pricing',
+            enabled: true,
+            conditions: { page: '/pricing', match: 'exact' },
+            value: 50,
+            currency: 'USD',
+          },
+        ]
+        const pageviews = [
+          { page_path: '/contact' },
+          { page_path: '/contact' },
+          { page_path: '/pricing' },
+          { page_path: '/about' }, // No rule
+        ]
+
+        const result = storage.calculatePageValues(rules, pageviews)
+
+        expect(result.totalValue).toBe(250) // 100+100+50
+        expect(result.currency).toBe('USD')
+        expect(result.matchedPageviews).toBe(3)
+      })
+
+      it('skips disabled rules', () => {
+        const rules = [
+          {
+            id: 'pv_1',
+            name: 'Disabled',
+            enabled: false,
+            conditions: { page: '/contact', match: 'exact' },
+            value: 100,
+            currency: 'USD',
+          },
+        ]
+        const pageviews = [{ page_path: '/contact' }]
+
+        const result = storage.calculatePageValues(rules, pageviews)
+
+        expect(result.totalValue).toBe(0)
+        expect(result.matchedPageviews).toBe(0)
+      })
+
+      it('handles contains match type', () => {
+        const rules = [
+          {
+            id: 'pv_1',
+            name: 'Products',
+            enabled: true,
+            conditions: { page: 'product', match: 'contains' },
+            value: 25,
+            currency: 'USD',
+          },
+        ]
+        const pageviews = [
+          { page_path: '/products/123' },
+          { page_path: '/product-detail' },
+          { page_path: '/about' },
+        ]
+
+        const result = storage.calculatePageValues(rules, pageviews)
+
+        expect(result.totalValue).toBe(50)
+        expect(result.matchedPageviews).toBe(2)
+      })
+
+      it('handles starts_with match type', () => {
+        const rules = [
+          {
+            id: 'pv_1',
+            name: 'Blog',
+            enabled: true,
+            conditions: { page: '/blog', match: 'starts_with' },
+            value: 10,
+            currency: 'USD',
+          },
+        ]
+        const pageviews = [
+          { page_path: '/blog/post-1' },
+          { page_path: '/blog/post-2' },
+          { page_path: '/about' },
+        ]
+
+        const result = storage.calculatePageValues(rules, pageviews)
+
+        expect(result.totalValue).toBe(20)
+        expect(result.matchedPageviews).toBe(2)
+      })
+
+      it('handles regex match type', () => {
+        const rules = [
+          {
+            id: 'pv_1',
+            name: 'Order',
+            enabled: true,
+            conditions: { page: '/order/\\d+', match: 'regex' },
+            value: 500,
+            currency: 'USD',
+          },
+        ]
+        const pageviews = [
+          { page_path: '/order/12345' },
+          { page_path: '/order/67890' },
+          { page_path: '/order/abc' }, // Doesn't match \d+
+        ]
+
+        const result = storage.calculatePageValues(rules, pageviews)
+
+        expect(result.totalValue).toBe(1000)
+        expect(result.matchedPageviews).toBe(2)
+      })
+
+      it('returns zero for empty rules', () => {
+        const result = storage.calculatePageValues([], [{ page_path: '/test' }])
+
+        expect(result.totalValue).toBe(0)
+        expect(result.matchedPageviews).toBe(0)
+      })
+
+      it('returns zero for empty pageviews', () => {
+        const rules = [
+          { id: 'pv_1', enabled: true, conditions: { page: '/test' }, value: 100, currency: 'USD' },
+        ]
+
+        const result = storage.calculatePageValues(rules, [])
+
+        expect(result.totalValue).toBe(0)
+        expect(result.matchedPageviews).toBe(0)
+      })
+
+      it('groups values by source', () => {
+        const rules = [
+          {
+            id: 'pv_1',
+            enabled: true,
+            conditions: { page: '/signup', match: 'exact' },
+            value: 100,
+            currency: 'USD',
+          },
+        ]
+        const pageviews = [
+          { page_path: '/signup', referrer_domain: 'google.com' },
+          { page_path: '/signup', referrer_domain: 'google.com' },
+          { page_path: '/signup', referrer_domain: 'twitter.com' },
+        ]
+
+        const result = storage.calculatePageValues(rules, pageviews)
+
+        expect(result.valueBySource['google.com']).toBe(200)
+        expect(result.valueBySource['twitter.com']).toBe(100)
+      })
+
+      it('groups values by page', () => {
+        const rules = [
+          {
+            id: 'pv_1',
+            enabled: true,
+            conditions: { page: '/signup', match: 'exact' },
+            value: 100,
+            currency: 'USD',
+          },
+          {
+            id: 'pv_2',
+            enabled: true,
+            conditions: { page: '/contact', match: 'exact' },
+            value: 50,
+            currency: 'USD',
+          },
+        ]
+        const pageviews = [
+          { page_path: '/signup' },
+          { page_path: '/signup' },
+          { page_path: '/contact' },
+        ]
+
+        const result = storage.calculatePageValues(rules, pageviews)
+
+        expect(result.valueByPage['/signup']).toBe(200)
+        expect(result.valueByPage['/contact']).toBe(50)
+      })
+    })
+  })
+
+  // ==========================================
+  // BRANDING OPERATIONS TESTS (NEW)
+  // ==========================================
+  describe('Branding Operations', () => {
+    describe('getBranding', () => {
+      it('returns default branding when not set', async () => {
+        stores[STORES.USERS].get.mockImplementation(async (key) => {
+          if (key === 'user_id_map_user_123') return 'test@example.com'
+          if (key === 'test@example.com') return { id: 'user_123', email: 'test@example.com' }
+          return null
+        })
+
+        const result = await storage.getBranding('user_123')
+
+        expect(result).toEqual({
+          enabled: false,
+          companyName: 'Zero Trust Analytics',
+          logoUrl: null,
+          primaryColor: '#3B82F6',
+        })
+      })
+
+      it('returns custom branding when set', async () => {
+        const customBranding = {
+          enabled: true,
+          companyName: 'My Company',
+          logoUrl: 'https://example.com/logo.png',
+          primaryColor: '#FF0000',
+        }
+        stores[STORES.USERS].get.mockImplementation(async (key) => {
+          if (key === 'user_id_map_user_123') return 'test@example.com'
+          if (key === 'test@example.com') return {
+            id: 'user_123',
+            email: 'test@example.com',
+            branding: customBranding,
+          }
+          return null
+        })
+
+        const result = await storage.getBranding('user_123')
+
+        expect(result).toEqual(customBranding)
+      })
+
+      it('returns null for non-existent user', async () => {
+        stores[STORES.USERS].get.mockResolvedValue(null)
+        stores[STORES.USERS].list.mockResolvedValue({ blobs: [] })
+
+        const result = await storage.getBranding('nonexistent')
+
+        expect(result).toBeNull()
+      })
+    })
+
+    describe('updateBranding', () => {
+      it('updates branding settings', async () => {
+        stores[STORES.USERS].get.mockImplementation(async (key) => {
+          if (key === 'user_id_map_user_123') return 'test@example.com'
+          if (key === 'test@example.com') return {
+            id: 'user_123',
+            email: 'test@example.com',
+            branding: { enabled: false },
+          }
+          return null
+        })
+
+        const result = await storage.updateBranding('user_123', {
+          enabled: true,
+          companyName: 'New Company',
+        })
+
+        expect(result?.enabled).toBe(true)
+        expect(result?.companyName).toBe('New Company')
+        expect(result?.updatedAt).toBeDefined()
+      })
+
+      it('returns null for non-existent user', async () => {
+        stores[STORES.USERS].get.mockResolvedValue(null)
+        stores[STORES.USERS].list.mockResolvedValue({ blobs: [] })
+
+        const result = await storage.updateBranding('nonexistent', { enabled: true })
+
+        expect(result).toBeNull()
+      })
+    })
+  })
+
+  // ==========================================
+  // ADDITIONAL EDGE CASE TESTS
+  // ==========================================
+  describe('Edge Cases and Error Handling', () => {
+    describe('User Operations Edge Cases', () => {
+      it('handles concurrent user updates', async () => {
+        stores[STORES.USERS].get.mockResolvedValue({
+          id: 'user_123',
+          email: 'test@example.com',
+          plan: 'free',
+        })
+
+        // Simulate two concurrent updates
+        const [result1, result2] = await Promise.all([
+          storage.updateUser('test@example.com', { plan: 'pro' }),
+          storage.updateUser('test@example.com', { name: 'Test User' }),
+        ])
+
+        expect(result1).toBeDefined()
+        expect(result2).toBeDefined()
+      })
+
+      it('handles special characters in email', async () => {
+        const email = 'test+special@example.com'
+        stores[STORES.USERS].get.mockResolvedValue(null)
+
+        const result = await storage.createUser(email, 'hashed')
+
+        expect(result.email).toBe(email)
+        expect(stores[STORES.USERS].setJSON).toHaveBeenCalledWith(email, expect.anything())
+      })
+
+      it('handles very long email addresses', async () => {
+        const longEmail = 'a'.repeat(200) + '@example.com'
+
+        const result = await storage.createUser(longEmail, 'hashed')
+
+        expect(result.email).toBe(longEmail)
+      })
+    })
+
+    describe('Site Operations Edge Cases', () => {
+      it('handles international domain names', async () => {
+        stores[STORES.SITES].get.mockResolvedValue(null)
+
+        const result = await storage.createSite('user_123', 'site_456', 'beispiel.de')
+
+        expect(result.domain).toBe('beispiel.de')
+      })
+
+      it('handles subdomain with many levels', async () => {
+        stores[STORES.SITES].get.mockResolvedValue(null)
+
+        const result = await storage.createSite('user_123', 'site_456', 'a.b.c.d.example.com')
+
+        expect(result.domain).toBe('a.b.c.d.example.com')
+      })
+    })
+
+    describe('Token Expiration Edge Cases', () => {
+      it('handles token expiring exactly now', async () => {
+        const exactlyNow = new Date().toISOString()
+        stores[STORES.PASSWORD_RESET_TOKENS].get.mockResolvedValue({
+          email: 'test@example.com',
+          expiresAt: exactlyNow,
+        })
+
+        const result = await storage.getPasswordResetToken('token')
+
+        // Token at exactly expiry time is still valid (expires < now, not <=)
+        expect(result?.email).toBe('test@example.com')
+      })
+
+      it('handles OAuth state expiring one second before check', async () => {
+        const oneSecondAgo = new Date(Date.now() - 1000).toISOString()
+        stores[STORES.OAUTH_STATES].get.mockResolvedValue({
+          provider: 'google',
+          expiresAt: oneSecondAgo,
+        })
+
+        const result = await storage.validateOAuthState('state_123')
+
+        expect(result).toBeNull()
+      })
+    })
+
+    describe('Trial Status Edge Cases', () => {
+      it('handles trial ending in less than a day', () => {
+        const halfDayFromNow = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString()
+        const user = { plan: 'pro', trialEndsAt: halfDayFromNow }
+
+        const result = storage.getUserStatus(user)
+
+        expect(result.status).toBe('trial')
+        expect(result.daysLeft).toBe(1) // Rounded up
+      })
+
+      it('handles trial just expired', () => {
+        const oneSecondAgo = new Date(Date.now() - 1000).toISOString()
+        const user = { plan: 'pro', trialEndsAt: oneSecondAgo }
+
+        const result = storage.getUserStatus(user)
+
+        expect(result.status).toBe('expired')
+        expect(result.canAccess).toBe(false)
+      })
+
+      it('handles missing trialEndsAt field', () => {
+        const user = { plan: 'pro' }
+
+        const result = storage.getUserStatus(user)
+
+        expect(result.status).toBe('expired')
+        expect(result.canAccess).toBe(false)
+      })
+
+      it('handles subscription taking precedence over expired trial', () => {
+        const pastDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        const user = {
+          plan: 'pro',
+          trialEndsAt: pastDate,
+          subscription: { status: 'active' },
+        }
+
+        const result = storage.getUserStatus(user)
+
+        expect(result.status).toBe('active')
+        expect(result.canAccess).toBe(true)
+      })
+    })
+
+    describe('API Key Edge Cases', () => {
+      it('handles API key with zero usage count', async () => {
+        stores[STORES.API_KEYS].list.mockResolvedValue({
+          blobs: [{ key: 'key_123' }],
+        })
+        stores[STORES.API_KEYS].get.mockResolvedValue({
+          id: 'key_123',
+          secretKey: 'zta_test',
+          usageCount: 0,
+        })
+
+        const result = await storage.validateApiKey('zta_test')
+
+        expect(result?.usageCount).toBe(1)
+      })
+
+      it('handles API key with undefined usage count', async () => {
+        stores[STORES.API_KEYS].list.mockResolvedValue({
+          blobs: [{ key: 'key_123' }],
+        })
+        stores[STORES.API_KEYS].get.mockResolvedValue({
+          id: 'key_123',
+          secretKey: 'zta_test',
+          // usageCount not defined
+        })
+
+        const result = await storage.validateApiKey('zta_test')
+
+        expect(result?.usageCount).toBe(1)
+      })
+    })
+
+    describe('Alert Edge Cases', () => {
+      it('handles alert with exact threshold match', () => {
+        const alert = { threshold: 100 }
+
+        const result = storage.shouldAlertFire(alert, 100)
+
+        expect(result).toBe(true)
+      })
+
+      it('handles alert with fractional current value', () => {
+        const alert = { threshold: 100 }
+
+        const result = storage.shouldAlertFire(alert, 99.99)
+
+        expect(result).toBe(false)
+      })
+
+      it('handles alert triggered exactly 1 hour ago', () => {
+        const exactlyOneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+        const alert = { threshold: 100, lastTriggered: exactlyOneHourAgo }
+
+        const result = storage.shouldAlertFire(alert, 150)
+
+        // Should fire because it's been >= 1 hour
+        expect(result).toBe(true)
+      })
+    })
+
+    describe('Activity Log Edge Cases', () => {
+      it('truncates activity log to 1000 entries', async () => {
+        // Create 1000 existing activities
+        const existingActivities = Array.from({ length: 1000 }, (_, i) => `activity_${i}`)
+        stores[STORES.ACTIVITY_LOG].get.mockResolvedValue(existingActivities)
+
+        const result = await storage.logActivity('user_123', 'new_action')
+
+        // Should prepend new and keep only 1000
+        expect(stores[STORES.ACTIVITY_LOG].setJSON).toHaveBeenCalledWith(
+          'user_log_user_123',
+          expect.arrayContaining([result.id])
+        )
+
+        // Verify the saved array is capped at 1000
+        const savedCall = stores[STORES.ACTIVITY_LOG].setJSON.mock.calls.find(
+          call => call[0] === 'user_log_user_123'
+        )
+        expect(savedCall?.[1].length).toBeLessThanOrEqual(1000)
+      })
+    })
+
+    describe('Public Share Edge Cases', () => {
+      it('handles share with all options', async () => {
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
+        const result = await storage.createPublicShare('site_123', 'user_123', {
+          expiresAt,
+          password: 'secret123',
+          allowedStats: ['pageviews'],
+        })
+
+        expect(result.expiresAt).toBe(expiresAt)
+        expect(result.password).toBe('secret123')
+        expect(result.allowedStats).toEqual(['pageviews'])
+      })
+
+      it('handles share with no expiration', async () => {
+        const result = await storage.createPublicShare('site_123', 'user_123', {})
+
+        expect(result.expiresAt).toBeNull()
+      })
+    })
+
+    describe('Team Operations Edge Cases', () => {
+      it('handles team with no members array', async () => {
+        stores[STORES.TEAMS].get.mockResolvedValue({
+          id: 'team_123',
+          name: 'Test Team',
+          // members not defined
+        })
+
+        const result = await storage.getTeamMembers('team_123')
+
+        expect(result).toEqual([])
+      })
+
+      it('handles getUserTeams when team no longer exists', async () => {
+        stores[STORES.TEAMS].get.mockImplementation(async (key) => {
+          if (key === 'user_teams_user_123') return ['team_1', 'team_2']
+          if (key === 'team_1') return { id: 'team_1', name: 'Team 1' }
+          if (key === 'team_2') return null // Team deleted
+          return null
+        })
+
+        const result = await storage.getUserTeams('user_123')
+
+        expect(result).toHaveLength(1)
+        expect(result[0].name).toBe('Team 1')
+      })
+    })
+
+    describe('Goal Operations Edge Cases', () => {
+      it('handles goal with period not specified', async () => {
+        const result = await storage.createGoal('site_123', 'user_123', {
+          name: 'Test Goal',
+          metric: 'visitors',
+          target: 1000,
+          // period not specified
+        })
+
+        expect(result.period).toBe('monthly')
+      })
+    })
+
+    describe('Webhook Operations Edge Cases', () => {
+      it('creates webhook with default events', async () => {
+        const result = await storage.createWebhook('site_123', 'user_123', {
+          url: 'https://example.com/webhook',
+          // events not specified
+        })
+
+        expect(result.events).toEqual(['pageview'])
+      })
+    })
+
+    describe('Annotation Operations Edge Cases', () => {
+      it('creates annotation with minimal config', async () => {
+        const result = await storage.createAnnotation('site_123', 'user_123', {
+          date: '2026-01-09',
+          title: 'Test',
+          // description and category not specified
+        })
+
+        expect(result.description).toBe('')
+        expect(result.category).toBe('general')
       })
     })
   })

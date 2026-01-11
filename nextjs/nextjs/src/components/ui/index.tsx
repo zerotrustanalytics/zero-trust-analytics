@@ -3,7 +3,11 @@
 import { forwardRef, ButtonHTMLAttributes, InputHTMLAttributes, HTMLAttributes } from 'react'
 import { clsx } from 'clsx'
 
+// Re-export components from separate files
 export { ConfirmModal } from './ConfirmModal'
+export { LoadingSpinner, PageLoader } from './LoadingSpinner'
+export { EmptyState, EmptyStateIcons } from './EmptyState'
+export { ErrorMessage, PageError } from './ErrorMessage'
 
 // Button Component
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
