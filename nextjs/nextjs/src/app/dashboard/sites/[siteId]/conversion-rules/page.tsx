@@ -55,7 +55,8 @@ export default function ConversionRulesPage() {
   const fetchRules = useCallback(async () => {
     try {
       const token = await getToken()
-      const res = await fetch(`/api/conversion-rules?siteId=${siteId}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/conversion-rules?siteId=${siteId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -129,9 +130,10 @@ export default function ConversionRulesPage() {
         enabled: formData.enabled
       }
 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
       const url = editingRule
-        ? `/api/conversion-rules?siteId=${siteId}&ruleId=${editingRule.id}`
-        : `/api/conversion-rules?siteId=${siteId}`
+        ? `${apiUrl}/api/conversion-rules?siteId=${siteId}&ruleId=${editingRule.id}`
+        : `${apiUrl}/api/conversion-rules?siteId=${siteId}`
 
       const res = await fetch(url, {
         method: editingRule ? 'PATCH' : 'POST',
@@ -161,7 +163,8 @@ export default function ConversionRulesPage() {
 
     try {
       const token = await getToken()
-      const res = await fetch(`/api/conversion-rules?siteId=${siteId}&ruleId=${ruleId}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/conversion-rules?siteId=${siteId}&ruleId=${ruleId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -181,7 +184,8 @@ export default function ConversionRulesPage() {
   const handleToggle = async (rule: ConversionRule) => {
     try {
       const token = await getToken()
-      const res = await fetch(`/api/conversion-rules?siteId=${siteId}&ruleId=${rule.id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const res = await fetch(`${apiUrl}/api/conversion-rules?siteId=${siteId}&ruleId=${rule.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
