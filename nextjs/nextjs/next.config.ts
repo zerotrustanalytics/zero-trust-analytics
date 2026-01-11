@@ -1,7 +1,9 @@
 import type { NextConfig } from 'next'
 
 // Check if building for self-hosted (Docker)
-const isSelfHosted = process.env.NEXT_PUBLIC_AUTH_MODE !== 'clerk'
+// Default to Clerk mode (SaaS) when AUTH_MODE is not set
+const authMode = process.env.NEXT_PUBLIC_AUTH_MODE || 'clerk'
+const isSelfHosted = authMode !== 'clerk'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
