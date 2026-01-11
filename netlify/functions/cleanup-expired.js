@@ -67,7 +67,8 @@ export default async function handler(req, context) {
 }
 
 export const config = {
-  path: '/api/cleanup/expired',
   // Run daily at 3 AM UTC
+  // Note: Scheduled functions can't have custom paths in Netlify
+  // To manually trigger, use: POST /.netlify/functions/cleanup-expired
   schedule: '@daily'
 };
