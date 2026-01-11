@@ -283,6 +283,121 @@ export async function updateSite(siteId, updates) {
   return updated;
 }
 
+// === CONVERSION RULES ===
+
+/**
+ * Get conversion rules for a site
+ */
+export async function getConversionRules(siteId) {
+  const site = await getSite(siteId);
+  return site?.conversionRules || [];
+}
+
+/**
+ * Add a conversion rule to a site
+ */
+export async function addConversionRule(siteId, rule) {
+  const site = await getSite(siteId);
+  if (!site) return null;
+
+  const rules = site.conversionRules || [];
+  const newRule = {
+    id: `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    ...rule,
+    createdAt: new Date().toISOString()
+  };
+  rules.push(newRule);
+
+  await updateSite(siteId, { conversionRules: rules });
+  return newRule;
+}
+
+/**
+ * Update a conversion rule
+ */
+export async function updateConversionRule(siteId, ruleId, updates) {
+  const site = await getSite(siteId);
+  if (!site) return null;
+
+  const rules = site.conversionRules || [];
+  const ruleIndex = rules.findIndex(r => r.id === ruleId);
+  if (ruleIndex === -1) return null;
+
+  rules[ruleIndex] = { ...rules[ruleIndex], ...updates, updatedAt: new Date().toISOString() };
+  await updateSite(siteId, { conversionRules: rules });
+  return rules[ruleIndex];
+}
+
+/**
+ * Delete a conversion rule
+ */
+export async function deleteConversionRule(siteId, ruleId) {
+  const site = await getSite(siteId);
+  if (!site) return false;
+
+  const rules = site.conversionRules || [];
+  const newRules = rules.filter(r => r.id !== ruleId);
+
+  if (newRules.length === rules.length) return false; // Rule not found
+
+  await updateSite(siteId, { conversionRules: newRules });
+  return true;
+}
+
+/**
+ * Check if an event matches any conversion rule
+ * Returns the matching rule or null
+ */
+export function matchConversionRule(rules, eventData) {
+  if (!rules || rules.length === 0) return null;
+
+  for (const rule of rules) {
+    if (!rule.enabled) continue;
+
+    let matches = true;
+
+    // Check page condition (supports exact match or regex)
+    if (rule.conditions?.page) {
+      const pagePath = eventData.page || eventData.payload?.page_path || '';
+      if (rule.conditions.page.startsWith('/') && !rule.conditions.page.includes('*')) {
+        // Exact match
+        matches = matches && pagePath === rule.conditions.page;
+      } else {
+        // Regex match
+        try {
+          const regex = new RegExp(rule.conditions.page);
+          matches = matches && regex.test(pagePath);
+        } catch {
+          matches = false;
+        }
+      }
+    }
+
+    // Check event type condition
+    if (rule.conditions?.event) {
+      matches = matches && eventData.event_type === rule.conditions.event;
+    }
+
+    // Check event data conditions (payload matching)
+    if (rule.conditions?.eventData && matches) {
+      const payload = typeof eventData.payload === 'string'
+        ? JSON.parse(eventData.payload)
+        : eventData.payload || {};
+
+      for (const [key, value] of Object.entries(rule.conditions.eventData)) {
+        if (payload[key] !== value) {
+          matches = false;
+          break;
+        }
+      }
+    }
+
+    if (matches) return rule;
+  }
+
+  return null;
+}
+
 export async function deleteSite(siteId, userId) {
   const sites = store(STORES.SITES);
 

@@ -1,6 +1,6 @@
 import { createZTRecord, validateNoPII } from './lib/zero-trust-core.js';
 import { ingestEvents, checkUsageLimit, incrementUsage } from './lib/turso.js';
-import { getSite, getUserById } from './lib/storage.js';
+import { getSite, getUserById, getConversionRules, matchConversionRule } from './lib/storage.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, NotFoundError } from './lib/error-handler.js';
@@ -261,9 +261,43 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
     'x-city': city
   };
 
+  // Load conversion rules for this site
+  const conversionRules = await getConversionRules(siteId);
+
   // Process all events into records
   const records = events.map(event => {
     const { eventType, payload, meta } = parseEvent(event);
+
+    // Apply conversion rules to engagement events
+    if (eventType === 'engagement' && meta.isBounce && conversionRules.length > 0) {
+      const eventData = {
+        event_type: eventType,
+        page: payload.page_path,
+        payload: event
+      };
+      const matchedRule = matchConversionRule(conversionRules, eventData);
+      if (matchedRule) {
+        logger.debug('Conversion rule matched', {
+          siteId,
+          ruleId: matchedRule.id,
+          ruleName: matchedRule.name,
+          action: matchedRule.action,
+          page: payload.page_path
+        });
+
+        if (matchedRule.action === 'exclude_bounce') {
+          // Don't count this as a bounce
+          meta.isBounce = false;
+          meta.ruleApplied = matchedRule.id;
+        } else if (matchedRule.action === 'force_conversion') {
+          // Mark as conversion, not bounce
+          meta.isBounce = false;
+          meta.isConversion = true;
+          meta.ruleApplied = matchedRule.id;
+        }
+      }
+    }
+
     return createZTRecord({
       siteId,
       ip,
@@ -472,6 +506,37 @@ async function handleSingleEvent(req, context, origin, data, logger) {
 
   // Parse event
   const { eventType, payload, meta } = parseEvent(data);
+
+  // Apply conversion rules to engagement events
+  if (eventType === 'engagement' && meta.isBounce) {
+    const conversionRules = await getConversionRules(siteId);
+    if (conversionRules.length > 0) {
+      const eventData = {
+        event_type: eventType,
+        page: payload.page_path,
+        payload: data
+      };
+      const matchedRule = matchConversionRule(conversionRules, eventData);
+      if (matchedRule) {
+        logger.debug('Conversion rule matched (single event)', {
+          siteId,
+          ruleId: matchedRule.id,
+          ruleName: matchedRule.name,
+          action: matchedRule.action,
+          page: payload.page_path
+        });
+
+        if (matchedRule.action === 'exclude_bounce') {
+          meta.isBounce = false;
+          meta.ruleApplied = matchedRule.id;
+        } else if (matchedRule.action === 'force_conversion') {
+          meta.isBounce = false;
+          meta.isConversion = true;
+          meta.ruleApplied = matchedRule.id;
+        }
+      }
+    }
+  }
 
   // Create ZT record using core library (reusable across products)
   const record = createZTRecord({
