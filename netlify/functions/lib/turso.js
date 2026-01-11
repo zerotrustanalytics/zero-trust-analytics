@@ -1130,30 +1130,61 @@ async function incrementUsage(teamId, siteId, type = 'pageview') {
 }
 
 /**
+ * Ensure monthly_usage table exists (auto-migration)
+ */
+async function ensureMonthlyUsageTable() {
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS monthly_usage (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      team_id TEXT NOT NULL,
+      site_id TEXT NOT NULL,
+      month TEXT NOT NULL,
+      pageviews INTEGER DEFAULT 0,
+      unique_visitors INTEGER DEFAULT 0,
+      events INTEGER DEFAULT 0,
+      updated_at TEXT,
+      UNIQUE(team_id, site_id, month)
+    )
+  `);
+  await turso.execute(`CREATE INDEX IF NOT EXISTS idx_monthly_usage_team_month ON monthly_usage(team_id, month)`);
+}
+
+/**
  * Get usage for a team for current month
  */
 async function getTeamUsage(teamId, month = null) {
   const targetMonth = month || getCurrentMonth();
 
-  const result = await turso.execute({
-    sql: `
-      SELECT
-        SUM(pageviews) as total_pageviews,
-        SUM(unique_visitors) as total_visitors,
-        SUM(events) as total_events
-      FROM monthly_usage
-      WHERE team_id = ? AND month = ?
-    `,
-    args: [teamId, targetMonth]
-  });
+  try {
+    const result = await turso.execute({
+      sql: `
+        SELECT
+          SUM(pageviews) as total_pageviews,
+          SUM(unique_visitors) as total_visitors,
+          SUM(events) as total_events
+        FROM monthly_usage
+        WHERE team_id = ? AND month = ?
+      `,
+      args: [teamId, targetMonth]
+    });
 
-  const row = normalizeRows(result.rows)[0];
-  return {
-    month: targetMonth,
-    pageviews: row?.total_pageviews || 0,
-    visitors: row?.total_visitors || 0,
-    events: row?.total_events || 0
-  };
+    const row = normalizeRows(result.rows)[0];
+    return {
+      month: targetMonth,
+      pageviews: row?.total_pageviews || 0,
+      visitors: row?.total_visitors || 0,
+      events: row?.total_events || 0
+    };
+  } catch (err) {
+    // Auto-create table if it doesn't exist
+    if (err.message?.includes('no such table')) {
+      console.log('[turso] Auto-creating monthly_usage table');
+      await ensureMonthlyUsageTable();
+      // Return zero usage for now
+      return { month: targetMonth, pageviews: 0, visitors: 0, events: 0 };
+    }
+    throw err;
+  }
 }
 
 /**
