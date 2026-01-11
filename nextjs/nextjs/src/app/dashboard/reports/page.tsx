@@ -133,13 +133,14 @@ export default function ReportsPage() {
         const current = await currentRes.json()
         const prev = prevRes.ok ? await prevRes.json() : null
 
-        const currentVisitors = current.visitors || 0
-        const currentPageviews = current.pageviews || 0
-        const currentBounceRate = current.bounceRate || 0
+        // Stats are nested under 'summary' with field names: unique_visitors, pageviews, bounce_rate
+        const currentVisitors = current.summary?.unique_visitors || 0
+        const currentPageviews = current.summary?.pageviews || 0
+        const currentBounceRate = current.summary?.bounce_rate || 0
 
-        const prevVisitors = prev?.visitors || 0
-        const prevPageviews = prev?.pageviews || 0
-        const prevBounceRate = prev?.bounceRate || 0
+        const prevVisitors = prev?.summary?.unique_visitors || 0
+        const prevPageviews = prev?.summary?.pageviews || 0
+        const prevBounceRate = prev?.summary?.bounce_rate || 0
 
         // Calculate percentage changes
         const calcChange = (curr: number, prev: number) => {
