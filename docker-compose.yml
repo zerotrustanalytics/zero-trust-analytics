@@ -25,6 +25,13 @@ services:
       TURSO_DATABASE_URL: file:/app/data/analytics.db
       TURSO_AUTH_TOKEN: ""
 
+      # Self-hosted mode
+      SELF_HOSTED: "true"
+
+      # Authentication mode: none (no login), password (shared password), jwt (multi-user)
+      AUTH_MODE: ${AUTH_MODE:-none}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-}
+
       # Security Secrets (CHANGE THESE!)
       HASH_SECRET: ${HASH_SECRET}
       JWT_SECRET: ${JWT_SECRET}

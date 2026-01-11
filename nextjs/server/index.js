@@ -131,6 +131,7 @@ async function registerRoutes() {
     { path: '/api/public-stats', file: 'public-stats.js' },
 
     // Authentication
+    { path: '/api/auth/config', file: 'auth-config.js' },
     { path: '/api/auth/login', file: 'auth-login.js' },
     { path: '/api/auth/register', file: 'auth-register.js' },
     { path: '/api/auth/forgot', file: 'auth-forgot.js' },

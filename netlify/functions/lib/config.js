@@ -37,6 +37,24 @@ const REQUIRED_VARS = {
  * Optional environment variables with default values
  */
 const OPTIONAL_VARS = {
+  AUTH_MODE: {
+    description: 'Authentication mode: clerk (SaaS), jwt (self-hosted multi-user), password (single password), none (no auth)',
+    default: 'clerk',
+    validator: (value) => ['clerk', 'jwt', 'password', 'none'].includes(value),
+    errorMessage: 'AUTH_MODE must be one of: clerk, jwt, password, none'
+  },
+  AUTH_PASSWORD: {
+    description: 'Shared password for AUTH_MODE=password (required if using password mode)',
+    default: '',
+    validator: (value) => typeof value === 'string',
+    errorMessage: 'AUTH_PASSWORD must be a string'
+  },
+  SELF_HOSTED: {
+    description: 'Enable self-hosted mode (disables email reports, simplifies features)',
+    default: 'false',
+    validator: (value) => ['true', 'false'].includes(value),
+    errorMessage: 'SELF_HOSTED must be true or false'
+  },
   JWT_EXPIRY: {
     description: 'JWT token expiry time',
     default: '7d',
@@ -227,6 +245,9 @@ try {
       JWT_SECRET: 'test-secret-key-at-least-32-chars-long',
       TURSO_DATABASE_URL: 'file:test.db',
       TURSO_AUTH_TOKEN: 'test-token',
+      AUTH_MODE: 'jwt',
+      AUTH_PASSWORD: '',
+      SELF_HOSTED: 'false',
       JWT_EXPIRY: '7d',
       ALLOWED_ORIGINS: 'http://localhost:3000',
       NODE_ENV: 'test',
@@ -262,6 +283,25 @@ export const Config = {
   jwt: {
     secret: config.JWT_SECRET,
     expiry: config.JWT_EXPIRY
+  },
+
+  // Auth Mode (for self-hosted)
+  auth: {
+    mode: config.AUTH_MODE,                    // 'clerk', 'jwt', 'password', 'none'
+    password: config.AUTH_PASSWORD,            // Shared password for 'password' mode
+    isClerk: config.AUTH_MODE === 'clerk',
+    isJwt: config.AUTH_MODE === 'jwt',
+    isPassword: config.AUTH_MODE === 'password',
+    isNone: config.AUTH_MODE === 'none',
+    requiresAuth: config.AUTH_MODE !== 'none', // Does this mode require any auth?
+  },
+
+  // Self-hosted mode
+  selfHosted: {
+    enabled: config.SELF_HOSTED === 'true',
+    // Features disabled in self-hosted mode
+    disableEmailReports: config.SELF_HOSTED === 'true',
+    disableStripe: config.SELF_HOSTED === 'true',
   },
 
   // Database

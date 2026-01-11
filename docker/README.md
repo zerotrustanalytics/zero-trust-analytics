@@ -94,16 +94,34 @@ Your self-hosted instance is completely isolated:
 
 ---
 
-## Authentication
+## Authentication Modes
 
-Self-hosted uses built-in JWT authentication (no Clerk/Auth0 needed):
+Self-hosted supports multiple auth modes - choose based on your needs:
 
-- `POST /api/auth/register` - Create account
-- `POST /api/auth/login` - Get JWT token
-- `POST /api/auth/forgot` - Request password reset
-- `POST /api/auth/reset` - Reset password
+### `AUTH_MODE=none` (Default)
+No login required. Dashboard is immediately accessible.
+- Best for: Personal use, trusted networks, single user
+- Set: `AUTH_MODE=none` in your `.env`
 
-First user to register becomes the admin.
+### `AUTH_MODE=password`
+Single shared password protects the dashboard.
+- Best for: Small teams, simple protection
+- Set: `AUTH_MODE=password` and `AUTH_PASSWORD=your-password`
+
+### `AUTH_MODE=jwt`
+Full multi-user system with accounts and login.
+- Best for: Enterprise self-hosting, multiple users
+- Uses built-in JWT auth (no Clerk needed)
+- Endpoints: `/api/auth/register`, `/api/auth/login`
+
+### Features by Mode
+
+| Feature | none | password | jwt |
+|---------|------|----------|-----|
+| Login required | No | Yes (shared) | Yes (per-user) |
+| Multiple users | No | No | Yes |
+| Password reset | N/A | N/A | Yes |
+| Audit trail | No | No | Yes |
 
 ---
 

@@ -322,52 +322,108 @@ export function validateCSRFFromRequest(headers, userId) {
 }
 
 // Middleware helper - verify auth and return user
-// Supports both legacy JWT tokens and Clerk tokens
+// Supports multiple auth modes: clerk, jwt, password, none
 export async function authenticateRequest(headers, user = null) {
+  const authMode = Config.auth.mode;
+
+  // AUTH_MODE=none: No authentication required (self-hosted single user)
+  if (authMode === 'none') {
+    return {
+      user: {
+        id: 'self-hosted-user',
+        email: 'admin@localhost',
+        plan: 'enterprise', // Self-hosted gets all features
+        isSelfHosted: true
+      }
+    };
+  }
+
+  // AUTH_MODE=password: Simple shared password authentication
+  if (authMode === 'password') {
+    const providedPassword = headers.get?.('x-auth-password') || headers.get?.('X-Auth-Password');
+    const expectedPassword = Config.auth.password;
+
+    if (!expectedPassword) {
+      console.error('AUTH_MODE=password but AUTH_PASSWORD not set');
+      return { error: 'Server misconfigured', status: 500 };
+    }
+
+    if (!providedPassword) {
+      return { error: 'Password required', status: 401, needsPassword: true };
+    }
+
+    if (providedPassword !== expectedPassword) {
+      return { error: 'Invalid password', status: 401 };
+    }
+
+    return {
+      user: {
+        id: 'self-hosted-user',
+        email: 'admin@localhost',
+        plan: 'enterprise',
+        isSelfHosted: true
+      }
+    };
+  }
+
+  // AUTH_MODE=clerk or AUTH_MODE=jwt: Token-based auth
   const token = getTokenFromHeader(headers);
   if (!token) {
     return { error: 'No token provided', status: 401 };
   }
 
-  // First try to verify as Clerk token
-  try {
-    const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-    if (clerkSecretKey) {
-      const verifiedToken = await verifyClerkToken(token, {
-        secretKey: clerkSecretKey,
-      });
+  // Try Clerk verification first (only if AUTH_MODE=clerk)
+  if (authMode === 'clerk') {
+    try {
+      const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+      if (clerkSecretKey) {
+        const verifiedToken = await verifyClerkToken(token, {
+          secretKey: clerkSecretKey,
+        });
 
-      if (verifiedToken) {
-        // Return Clerk user info in a compatible format
-        return {
-          user: {
-            id: verifiedToken.sub, // Clerk user ID
-            clerkUserId: verifiedToken.sub,
-            email: verifiedToken.email || null,
-          }
-        };
+        if (verifiedToken) {
+          return {
+            user: {
+              id: verifiedToken.sub,
+              clerkUserId: verifiedToken.sub,
+              email: verifiedToken.email || null,
+            }
+          };
+        }
       }
+    } catch (clerkError) {
+      console.log('Clerk token verification failed:', clerkError.message);
+      return { error: 'Invalid token', status: 401 };
     }
-  } catch (clerkError) {
-    // If Clerk verification fails, try legacy JWT
-    console.log('Clerk token verification failed, trying legacy JWT:', clerkError.message);
   }
 
-  // Fall back to legacy JWT verification
+  // JWT verification (AUTH_MODE=jwt or fallback)
   const decoded = verifyToken(token, user);
   if (!decoded) {
     return { error: 'Invalid token', status: 401 };
   }
 
-  // Check if token is expired
   if (decoded.expired) {
     return { error: 'Token expired. Please log in again.', status: 401, expired: true };
   }
 
-  // Check if token was invalidated (e.g., after password change)
   if (decoded.invalidated) {
     return { error: 'Session invalidated. Please log in again.', status: 401, invalidated: true };
   }
 
   return { user: decoded };
+}
+
+// Helper to check if auth is required for current mode
+export function isAuthRequired() {
+  return Config.auth.requiresAuth;
+}
+
+// Helper to get auth mode info for frontend
+export function getAuthModeInfo() {
+  return {
+    mode: Config.auth.mode,
+    requiresAuth: Config.auth.requiresAuth,
+    isSelfHosted: Config.selfHosted.enabled,
+  };
 }
