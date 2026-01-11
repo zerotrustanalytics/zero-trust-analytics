@@ -1,5 +1,5 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders, validateCSRFFromRequest } from './lib/auth.js';
-import { getSite, updateSite, getUser } from './lib/storage.js';
+import { getSite, updateSite } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 
@@ -50,8 +50,8 @@ export default async function handler(req, context) {
       return Errors.notFound('Site');
     }
 
-    const user = await getUser(auth.user.email);
-    if (!user || site.userId !== user.id) {
+    // Verify the logged-in user owns this site (compare Clerk IDs directly)
+    if (site.userId !== auth.user.id) {
       logger.warn('Site update failed - unauthorized', { userId: auth.user.id, siteId, siteUserId: site.userId });
       return Errors.forbidden('Not authorized to update this site');
     }

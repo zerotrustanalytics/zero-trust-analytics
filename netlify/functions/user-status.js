@@ -1,5 +1,5 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
-import { getUser, getUserStatus } from './lib/storage.js';
+import { getUser, getUserById, getUserStatus } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 
@@ -29,7 +29,8 @@ export default async function handler(req, context) {
   }
 
   try {
-    const user = await getUser(auth.user.email);
+    // Use getUserById since Clerk JWT doesn't include email
+    const user = await getUserById(auth.user.id);
     if (!user) {
       logger.warn('User not found', { userId: auth.user.id });
       return Errors.notFound('User');
