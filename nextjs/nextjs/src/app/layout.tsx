@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { AuthProvider } from '@/components/auth'
+import { Analytics } from '@/components/Analytics'
 import '@/styles/globals.scss'
 
 export const metadata: Metadata = {
@@ -39,6 +41,9 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
       </body>
     </html>
   )
