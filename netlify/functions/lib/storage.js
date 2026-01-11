@@ -575,13 +575,39 @@ function matchesPageCondition(rule, pagePath) {
   }
 }
 
-export async function deleteSite(siteId, userId) {
+/**
+ * Soft delete a site - marks it as deleted with an expiry based on user's plan
+ * Site can be restored until the expiry date
+ */
+export async function deleteSite(siteId, userId, plan = 'free') {
   const sites = store(STORES.SITES);
 
-  // Delete the site
-  await sites.delete(siteId);
+  // Get the site first
+  const site = await getSite(siteId);
+  if (!site) {
+    return false;
+  }
 
-  // Remove from user's site list
+  // Calculate expiry based on plan
+  const { Config } = await import('./config.js');
+  const retentionDays = Config.pricing.softDeleteRetention[plan] || Config.pricing.softDeleteRetention.free;
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + retentionDays * 24 * 60 * 60 * 1000);
+
+  // Mark site as deleted (soft delete)
+  const deletedSite = {
+    ...site,
+    deleted: true,
+    deletedAt: now.toISOString(),
+    deletedBy: userId,
+    expiresAt: expiresAt.toISOString(),
+    originalId: siteId
+  };
+
+  // Store in deleted sites
+  await sites.setJSON(siteId, deletedSite);
+
+  // Remove from user's active site list
   const userSitesKey = `user_sites_${userId}`;
   let userSites = [];
   try {
@@ -592,7 +618,167 @@ export async function deleteSite(siteId, userId) {
   userSites = userSites.filter(id => id !== siteId);
   await sites.setJSON(userSitesKey, userSites);
 
-  return true;
+  // Add to user's deleted sites list
+  const deletedSitesKey = `user_deleted_sites_${userId}`;
+  let deletedSites = [];
+  try {
+    deletedSites = await sites.get(deletedSitesKey, { type: 'json' }) || [];
+  } catch (e) {
+    deletedSites = [];
+  }
+  if (!deletedSites.includes(siteId)) {
+    deletedSites.push(siteId);
+  }
+  await sites.setJSON(deletedSitesKey, deletedSites);
+
+  return { deleted: true, expiresAt: expiresAt.toISOString(), retentionDays };
+}
+
+/**
+ * Restore a soft-deleted site
+ */
+export async function restoreSite(siteId, userId) {
+  const sites = store(STORES.SITES);
+
+  // Get the deleted site
+  const site = await getSite(siteId);
+  if (!site || !site.deleted) {
+    return { error: 'Site not found or not deleted' };
+  }
+
+  // Check if expired
+  if (new Date(site.expiresAt) < new Date()) {
+    return { error: 'Site recovery period has expired' };
+  }
+
+  // Check ownership
+  if (site.userId !== userId && site.deletedBy !== userId) {
+    return { error: 'Not authorized to restore this site' };
+  }
+
+  // Restore the site
+  const restoredSite = { ...site };
+  delete restoredSite.deleted;
+  delete restoredSite.deletedAt;
+  delete restoredSite.deletedBy;
+  delete restoredSite.expiresAt;
+  delete restoredSite.originalId;
+
+  await sites.setJSON(siteId, restoredSite);
+
+  // Add back to user's active site list
+  const userSitesKey = `user_sites_${userId}`;
+  let userSites = [];
+  try {
+    userSites = await sites.get(userSitesKey, { type: 'json' }) || [];
+  } catch (e) {
+    userSites = [];
+  }
+  if (!userSites.includes(siteId)) {
+    userSites.push(siteId);
+  }
+  await sites.setJSON(userSitesKey, userSites);
+
+  // Remove from deleted sites list
+  const deletedSitesKey = `user_deleted_sites_${userId}`;
+  let deletedSites = [];
+  try {
+    deletedSites = await sites.get(deletedSitesKey, { type: 'json' }) || [];
+  } catch (e) {
+    deletedSites = [];
+  }
+  deletedSites = deletedSites.filter(id => id !== siteId);
+  await sites.setJSON(deletedSitesKey, deletedSites);
+
+  return { restored: true, site: restoredSite };
+}
+
+/**
+ * Get user's deleted sites (that haven't expired yet)
+ */
+export async function getDeletedSites(userId) {
+  const sites = store(STORES.SITES);
+  const deletedSitesKey = `user_deleted_sites_${userId}`;
+
+  let deletedSiteIds = [];
+  try {
+    deletedSiteIds = await sites.get(deletedSitesKey, { type: 'json' }) || [];
+  } catch (e) {
+    return [];
+  }
+
+  const now = new Date();
+  const result = [];
+
+  for (const siteId of deletedSiteIds) {
+    const site = await getSite(siteId);
+    if (site && site.deleted) {
+      const expiresAt = new Date(site.expiresAt);
+      if (expiresAt > now) {
+        result.push({
+          id: siteId,
+          name: site.name,
+          domain: site.domain,
+          deletedAt: site.deletedAt,
+          expiresAt: site.expiresAt,
+          daysRemaining: Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24))
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Permanently delete expired soft-deleted sites
+ * Call this periodically (e.g., daily cron job)
+ */
+export async function cleanupExpiredSites() {
+  const sites = store(STORES.SITES);
+  const users = store(STORES.USERS);
+  const now = new Date();
+  let cleaned = 0;
+
+  // Get all blobs and find deleted sites
+  try {
+    const { blobs } = await sites.list();
+
+    for (const blob of blobs) {
+      // Skip non-site keys
+      if (blob.key.startsWith('user_sites_') || blob.key.startsWith('user_deleted_sites_')) {
+        continue;
+      }
+
+      const site = await sites.get(blob.key, { type: 'json' });
+      if (site && site.deleted && site.expiresAt) {
+        const expiresAt = new Date(site.expiresAt);
+        if (expiresAt <= now) {
+          // Permanently delete the site
+          await sites.delete(blob.key);
+
+          // Remove from user's deleted sites list
+          if (site.deletedBy) {
+            const deletedSitesKey = `user_deleted_sites_${site.deletedBy}`;
+            try {
+              let deletedSites = await sites.get(deletedSitesKey, { type: 'json' }) || [];
+              deletedSites = deletedSites.filter(id => id !== blob.key);
+              await sites.setJSON(deletedSitesKey, deletedSites);
+            } catch (e) {
+              // Ignore errors
+            }
+          }
+
+          cleaned++;
+          console.log(`[cleanup] Permanently deleted expired site: ${blob.key}`);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[cleanup] Error during site cleanup:', e);
+  }
+
+  return { cleaned, timestamp: now.toISOString() };
 }
 
 export async function getUserSites(userId) {

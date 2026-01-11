@@ -1,7 +1,8 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders, validateCSRFFromRequest } from './lib/auth.js';
-import { getSite, deleteSite } from './lib/storage.js';
+import { getSite, deleteSite, getUserById } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
+import { Config } from './lib/config.js';
 
 export default async function handler(req, context) {
   const logger = createFunctionLogger('sites-delete', req, context);
@@ -58,10 +59,33 @@ export default async function handler(req, context) {
       return Errors.forbidden('Not authorized to delete this site');
     }
 
-    await deleteSite(siteId, auth.user.id);
+    // Get user's plan for soft delete retention period
+    const user = await getUserById(auth.user.id);
+    const plan = user?.plan || 'free';
+    const result = await deleteSite(siteId, auth.user.id, plan);
 
-    logger.info('Site deleted successfully', { userId: auth.user.id, siteId });
-    return successResponse({ success: true }, 200, origin);
+    if (!result) {
+      logger.warn('Site deletion failed - site not found', { userId: auth.user.id, siteId });
+      return Errors.notFound('Site');
+    }
+
+    const retentionDays = Config.pricing.softDeleteRetention[plan] || 3;
+
+    logger.info('Site soft-deleted successfully', {
+      userId: auth.user.id,
+      siteId,
+      plan,
+      expiresAt: result.expiresAt,
+      retentionDays
+    });
+
+    return successResponse({
+      success: true,
+      softDeleted: true,
+      expiresAt: result.expiresAt,
+      retentionDays,
+      message: `Site moved to trash. You can restore it within ${retentionDays} days.`
+    }, 200, origin);
   } catch (err) {
     logger.error('Site deletion failed', err, { userId: auth.user.id });
     return handleError(err, logger, origin);

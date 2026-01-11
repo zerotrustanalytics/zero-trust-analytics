@@ -429,6 +429,15 @@ export const Config = {
       scale: Infinity,
       enterprise: Infinity
     },
+    // Soft delete recovery window in days
+    softDeleteRetention: {
+      free: 3,
+      starter: 7,
+      growth: 14,
+      business: 30,
+      scale: 30,
+      enterprise: 30
+    },
     // Feature flags per tier (basic vs full analytics)
     features: {
       free: {
