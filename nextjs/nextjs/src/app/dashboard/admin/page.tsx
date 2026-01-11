@@ -218,7 +218,7 @@ export default function AdminDashboard() {
               <li>{report.alerts.overLimitSites} sites over 200k pageviews/month</li>
             )}
             {report.alerts.highGrowthSites > 0 && (
-              <li>{report.alerts.highGrowthSites} sites with >5k avg daily pageviews</li>
+              <li>{report.alerts.highGrowthSites} sites with &gt;5k avg daily pageviews</li>
             )}
             {report.alerts.highSupportCount > 0 && (
               <li>{report.alerts.highSupportCount} customers exceeded 2hr support threshold</li>
