@@ -5,10 +5,12 @@
  * - Denormalized columns (no JSON_EXTRACT at read time)
  * - Rollup tables for pre-aggregated stats
  * - Single-pass queries where possible
+ * - Redis caching layer for frequently accessed data
  */
 
 import { createClient } from '@libsql/client';
 import { Config } from './config.js';
+import * as cache from './cache.js';
 
 const turso = createClient({
   url: Config.database.url,
@@ -328,6 +330,12 @@ async function ingestEvents(tableName, events) {
 
   // Execute all in a single batch
   await turso.batch([...insertStatements, ...rollupStatements]);
+
+  // Invalidate cache for affected sites
+  const affectedSites = [...new Set(eventsArray.map(e => e.site_id))];
+  for (const siteId of affectedSites) {
+    cache.invalidateSite(siteId).catch(() => {});
+  }
 
   return { success: true, inserted: eventsArray.length };
 }
@@ -926,12 +934,18 @@ async function getUsageLimitHitDate(siteIds, limit, month = null) {
   return null;
 }
 
+// === CACHED WRAPPERS ===
+// Export cached versions when Redis is configured, otherwise use direct functions
+
+const cachedGetStats = cache.cachedGetStats(getStats);
+const cachedGetRealtime = cache.cachedGetRealtime(getRealtime);
+
 export {
   turso,
   initSchema,
   ingestEvents,
-  getStats,
-  getRealtime,
+  getStats: cachedGetStats,
+  getRealtime: cachedGetRealtime,
   exportData,
   debugGetCount,
   debugGetRecent,
