@@ -5,6 +5,7 @@ import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, NotFoundError } from './lib/error-handler.js';
 import { Config } from './lib/config.js';
+import { incrementDailyUsage } from './lib/usage-metrics.js';
 
 // Get required hash secret - throws if not configured
 function getRequiredHashSecret() {
@@ -338,11 +339,19 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
     // Increment usage for the site owner
     if (usageCheck.ownerId) {
       const pageviewCount = records.filter(r => r.event_type === 'pageview').length;
+      const eventCount = records.filter(r => r.event_type !== 'pageview').length;
+
       if (pageviewCount > 0) {
-        // Increment by the number of pageviews (not all events)
+        // Increment monthly usage (for billing)
         for (let i = 0; i < pageviewCount; i++) {
           await incrementUsage(usageCheck.ownerId, siteId, 'pageview');
         }
+        // Increment daily usage (for metrics/pricing leverage)
+        await incrementDailyUsage(siteId, usageCheck.ownerId, 'pageview').catch(() => {});
+      }
+
+      if (eventCount > 0) {
+        await incrementDailyUsage(siteId, usageCheck.ownerId, 'event').catch(() => {});
       }
     }
   } else {
@@ -588,8 +597,13 @@ async function handleSingleEvent(req, context, origin, data, logger) {
   await ingestEvents('pageviews', record);
 
   // Increment usage for pageview events
-  if (usageCheck.ownerId && eventType === 'pageview') {
-    await incrementUsage(usageCheck.ownerId, siteId, 'pageview');
+  if (usageCheck.ownerId) {
+    if (eventType === 'pageview') {
+      await incrementUsage(usageCheck.ownerId, siteId, 'pageview');
+      await incrementDailyUsage(siteId, usageCheck.ownerId, 'pageview').catch(() => {});
+    } else {
+      await incrementDailyUsage(siteId, usageCheck.ownerId, 'event').catch(() => {});
+    }
   }
 
   return new Response(JSON.stringify({ success: true }), {

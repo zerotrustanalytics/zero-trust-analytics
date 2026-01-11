@@ -5,6 +5,7 @@ import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, ForbiddenError } from './lib/error-handler.js';
 import { validateRequest, statsQuerySchema, validateDateRangeInData } from './lib/schemas.js';
 import { Config } from './lib/config.js';
+import { incrementDailyUsage } from './lib/usage-metrics.js';
 
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
@@ -227,6 +228,9 @@ export default async function handler(req, context) {
 
     // Query database for stats
     const stats = await getStats(siteId, startStr, endStr);
+
+    // Track API read for usage metrics (fire and forget)
+    incrementDailyUsage(siteId, auth.user.id, 'api_read').catch(() => {});
 
     logger.info('Stats query successful', {
       siteId,
