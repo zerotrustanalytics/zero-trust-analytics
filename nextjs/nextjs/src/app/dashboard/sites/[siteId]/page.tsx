@@ -619,6 +619,7 @@ export default function SiteDetailsPage() {
   const [error, setError] = useState('')
   const [period, setPeriod] = useState('7d')
   const [chartMetric, setChartMetric] = useState<'visitors' | 'pageviews'>('visitors')
+  const [showCumulative, setShowCumulative] = useState(false)
   const [activeTab, setActiveTab] = useState<'pages' | 'entry' | 'exit'>('pages')
   const [pagesLimit, setPagesLimit] = useState(5)
   const [trafficTab, setTrafficTab] = useState<'channels' | 'sources'>('channels')
@@ -747,12 +748,25 @@ export default function SiteDetailsPage() {
   }
 
   // Prepare chart data
-  const chartData = stats?.daily?.slice().reverse().map(d => ({
+  const dailyData = stats?.daily?.slice().reverse().map(d => ({
     date: d.date,
     formattedDate: format(new Date(d.date + 'T12:00:00'), 'MMM d'), // Use noon to avoid timezone date shifts
     visitors: d.unique_visitors || 0,
     pageviews: d.pageviews || 0,
   })) || []
+
+  // Calculate cumulative totals
+  let cumulativeVisitors = 0
+  let cumulativePageviews = 0
+  const chartData = dailyData.map(d => {
+    cumulativeVisitors += d.visitors
+    cumulativePageviews += d.pageviews
+    return {
+      ...d,
+      cumulativeVisitors,
+      cumulativePageviews,
+    }
+  })
 
   // Prepare traffic sources with Direct
   const totalReferrerVisitors = stats?.sources?.reduce((sum, s) => sum + s.visitors, 0) || 0
@@ -927,27 +941,41 @@ export default function SiteDetailsPage() {
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold">Traffic Overview</h2>
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="flex items-center gap-3">
+            {/* Cumulative toggle */}
             <button
-              onClick={() => setChartMetric('visitors')}
-              className={`px-3 py-1 text-xs font-medium transition ${
-                chartMetric === 'visitors'
-                  ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                  : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+              onClick={() => setShowCumulative(!showCumulative)}
+              className={`px-3 py-1 text-xs font-medium rounded-lg border transition ${
+                showCumulative
+                  ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700'
+                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700'
               }`}
             >
-              Visitors
+              Cumulative
             </button>
-            <button
-              onClick={() => setChartMetric('pageviews')}
-              className={`px-3 py-1 text-xs font-medium transition ${
-                chartMetric === 'pageviews'
-                  ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                  : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-              }`}
-            >
-              Page Views
-            </button>
+            {/* Metric toggle */}
+            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <button
+                onClick={() => setChartMetric('visitors')}
+                className={`px-3 py-1 text-xs font-medium transition ${
+                  chartMetric === 'visitors'
+                    ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                    : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                Visitors
+              </button>
+              <button
+                onClick={() => setChartMetric('pageviews')}
+                className={`px-3 py-1 text-xs font-medium transition ${
+                  chartMetric === 'pageviews'
+                    ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                    : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                Page Views
+              </button>
+            </div>
           </div>
         </div>
         <div className="h-56">
@@ -958,9 +986,23 @@ export default function SiteDetailsPage() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#F9FAFB' }}
-                  formatter={(value: number) => [value.toLocaleString(), chartMetric === 'visitors' ? 'Visitors' : 'Page Views']}
+                  formatter={(value: number) => [
+                    value.toLocaleString(),
+                    showCumulative
+                      ? (chartMetric === 'visitors' ? 'Total Visitors' : 'Total Page Views')
+                      : (chartMetric === 'visitors' ? 'Visitors' : 'Page Views')
+                  ]}
                 />
-                <Line type="monotone" dataKey={chartMetric} stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 3 }} />
+                <Line
+                  type="monotone"
+                  dataKey={showCumulative
+                    ? (chartMetric === 'visitors' ? 'cumulativeVisitors' : 'cumulativePageviews')
+                    : chartMetric
+                  }
+                  stroke={showCumulative ? '#10B981' : '#3B82F6'}
+                  strokeWidth={2}
+                  dot={{ fill: showCumulative ? '#10B981' : '#3B82F6', r: 3 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           ) : (
