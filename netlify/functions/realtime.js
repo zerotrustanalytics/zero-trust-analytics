@@ -1,5 +1,5 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getUserSites, getUser } from './lib/storage.js';
+import { getUserSites, getUser, getUserById } from './lib/storage.js';
 import { getRealtime, getActualUsageFromPageviews, getCurrentMonth } from './lib/turso.js';
 import { Config } from './lib/config.js';
 
@@ -66,7 +66,8 @@ export default async function handler(req, context) {
     // Check usage limits - return frozen/zeroed data if over limit
     let usageLimitReached = false;
     try {
-      const user = await getUser(auth.user.email);
+      // Use getUserById since Clerk JWT doesn't include email
+      const user = await getUserById(auth.user.id);
       const plan = user?.plan || 'free';
       const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
       const monthlyLimit = planConfig.monthlyPageviews;
@@ -76,7 +77,8 @@ export default async function handler(req, context) {
       const currentPageviews = actualUsage?.pageviews || 0;
 
       console.log('[realtime] Usage check', {
-        email: auth.user.email,
+        userId: auth.user.id,
+        userEmail: user?.email,
         plan,
         monthlyLimit,
         currentPageviews,
