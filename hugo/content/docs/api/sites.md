@@ -12,9 +12,12 @@ The Sites API allows you to create, list, update, and delete websites (analytics
 ## Endpoints
 
 ```
-GET /api/sites
-POST /api/sites
-DELETE /api/sites
+GET    /api/sites          # List all sites
+POST   /api/sites          # Create a new site
+PATCH  /api/sites          # Update a site
+POST   /api/sites/delete   # Delete a site (soft delete)
+GET    /api/sites/deleted  # List deleted sites
+POST   /api/sites/restore  # Restore a deleted site
 ```
 
 **Requires authentication.** See [Authentication](/docs/api/authentication/).
@@ -186,29 +189,127 @@ curl -X PATCH "https://ztas.io/api/sites" \
 
 ## Delete Site
 
-Permanently delete a site and all its analytics data.
+Delete a site (soft delete with recovery period).
 
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/sites?id=site_abc123" \
-  -H "Authorization: Bearer YOUR_TOKEN"
+curl -X POST "https://ztas.io/api/sites/delete" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"siteId": "site_abc123"}'
 ```
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `id` | string | Yes | Site ID to delete |
-
-**Warning:** This action is irreversible. All analytics data, goals, funnels, and settings will be permanently deleted.
+| `siteId` | string | Yes | Site ID to delete |
 
 ### Response
 
 ```json
 {
   "success": true,
-  "message": "Site deleted successfully"
+  "softDeleted": true,
+  "expiresAt": "2026-01-14T22:15:00.000Z",
+  "retentionDays": 3,
+  "message": "Site moved to trash. You can restore it within 3 days."
+}
+```
+
+### Recovery Window by Plan
+
+Sites are soft-deleted and can be recovered within a plan-based retention period:
+
+| Plan | Recovery Window |
+|------|-----------------|
+| Free | 3 days |
+| Starter | 7 days |
+| Growth | 14 days |
+| Business | 30 days |
+| Scale | 30 days |
+| Enterprise | 30 days |
+
+After the recovery window expires, the site and all its data are permanently deleted.
+
+---
+
+## List Deleted Sites
+
+Get all soft-deleted sites that can still be recovered.
+
+### Request
+
+```bash
+curl "https://ztas.io/api/sites/deleted" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response
+
+```json
+{
+  "sites": [
+    {
+      "id": "site_abc123",
+      "name": "Example Website",
+      "domain": "example.com",
+      "deletedAt": "2026-01-11T22:15:00.000Z",
+      "expiresAt": "2026-01-14T22:15:00.000Z",
+      "daysRemaining": 3
+    }
+  ],
+  "count": 1
+}
+```
+
+---
+
+## Restore Site
+
+Restore a soft-deleted site before it expires.
+
+### Request
+
+```bash
+curl -X POST "https://ztas.io/api/sites/restore" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"siteId": "site_abc123"}'
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `siteId` | string | Yes | Site ID to restore |
+
+### Response
+
+```json
+{
+  "success": true,
+  "restored": true,
+  "site": {
+    "id": "site_abc123",
+    "name": "Example Website",
+    "domain": "example.com"
+  }
+}
+```
+
+### Error Responses
+
+```json
+{
+  "error": "Site recovery period has expired"
+}
+```
+
+```json
+{
+  "error": "Site not found or not deleted"
 }
 ```
 
