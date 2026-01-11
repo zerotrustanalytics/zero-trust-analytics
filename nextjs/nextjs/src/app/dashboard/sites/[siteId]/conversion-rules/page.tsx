@@ -253,11 +253,11 @@ export default function ConversionRulesPage() {
           <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Upgrade to Unlock</h3>
             <p className="text-gray-600 mb-4">
-              Conversion rules are available on Growth plans and above.
+              Conversion rules are available on Business plans and above.
             </p>
             <ul className="text-sm text-gray-600 mb-4 space-y-1">
-              <li><strong>Growth:</strong> Fix inaccurate bounce rates by excluding intentional redirects</li>
-              <li><strong>Business:</strong> Track custom conversion goals with advanced rule conditions</li>
+              <li><strong>Business:</strong> Fix inaccurate bounce rates by excluding intentional redirects</li>
+              <li><strong>Scale:</strong> Track custom conversion goals with advanced rule conditions</li>
             </ul>
             <Link
               href="/dashboard/billing"
@@ -508,7 +508,7 @@ export default function ConversionRulesPage() {
                         Don&apos;t count this as a bounce (improves bounce rate)
                       </div>
                       {!allowedActions.exclude_bounce && (
-                        <div className="text-xs text-blue-600 mt-1">Requires Growth plan</div>
+                        <div className="text-xs text-blue-600 mt-1">Requires Business plan</div>
                       )}
                     </div>
                   </label>
@@ -535,7 +535,7 @@ export default function ConversionRulesPage() {
                         Track this action as a conversion in your analytics
                       </div>
                       {!allowedActions.force_conversion && (
-                        <div className="text-xs text-blue-600 mt-1">Requires Business plan</div>
+                        <div className="text-xs text-blue-600 mt-1">Requires Scale plan</div>
                       )}
                     </div>
                   </label>

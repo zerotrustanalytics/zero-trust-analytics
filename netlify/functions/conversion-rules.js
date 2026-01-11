@@ -5,8 +5,8 @@ import { handleError } from './lib/error-handler.js';
 
 // Plan requirements for each action type
 const ACTION_PLAN_REQUIREMENTS = {
-  exclude_bounce: ['growth', 'business', 'scale', 'enterprise'],
-  force_conversion: ['business', 'scale', 'enterprise']
+  exclude_bounce: ['business', 'scale', 'enterprise'],
+  force_conversion: ['scale', 'enterprise']
 };
 
 function canUseAction(plan, action) {
@@ -96,7 +96,7 @@ export default async function handler(req, context) {
 
         // Check plan allows this action
         if (!canUseAction(plan, action)) {
-          const requiredPlan = action === 'force_conversion' ? 'Business' : 'Growth';
+          const requiredPlan = action === 'force_conversion' ? 'Scale' : 'Business';
           logger.warn('Plan does not support action', { plan, action, requiredPlan });
           return new Response(JSON.stringify({
             error: 'Plan upgrade required',
@@ -131,7 +131,7 @@ export default async function handler(req, context) {
 
         // If changing action, check plan allows it
         if (updates.action && !canUseAction(plan, updates.action)) {
-          const requiredPlan = updates.action === 'force_conversion' ? 'Business' : 'Growth';
+          const requiredPlan = updates.action === 'force_conversion' ? 'Scale' : 'Business';
           logger.warn('Plan does not support new action', { plan, action: updates.action });
           return new Response(JSON.stringify({
             error: 'Plan upgrade required',
