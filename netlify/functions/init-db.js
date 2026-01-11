@@ -1,19 +1,21 @@
 import { initSchema } from './lib/turso.js';
 
 export default async function handler(req, context) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
+  // Allow GET or POST for flexibility
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  // Simple auth check - require a secret header
+  // Simple auth check - require a secret in header or query param
+  const url = new URL(req.url);
   const authHeader = req.headers.get('x-init-secret');
+  const authQuery = url.searchParams.get('secret');
   const expectedSecret = process.env.INIT_DB_SECRET || 'init-secret-change-me';
 
-  if (authHeader !== expectedSecret) {
+  if (authHeader !== expectedSecret && authQuery !== expectedSecret) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
