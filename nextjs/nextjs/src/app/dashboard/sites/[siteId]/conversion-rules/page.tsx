@@ -256,8 +256,8 @@ export default function ConversionRulesPage() {
               Conversion rules are available on Growth plans and above.
             </p>
             <ul className="text-sm text-gray-600 mb-4 space-y-1">
-              <li><strong>Growth:</strong> Exclude bounces (when a redirect is actually a conversion)</li>
-              <li><strong>Business:</strong> Force conversions (mark specific actions as conversions)</li>
+              <li><strong>Growth:</strong> Fix inaccurate bounce rates by excluding intentional redirects</li>
+              <li><strong>Business:</strong> Track custom conversion goals with advanced rule conditions</li>
             </ul>
             <Link
               href="/dashboard/billing"
@@ -304,7 +304,7 @@ export default function ConversionRulesPage() {
                             : 'bg-blue-100 text-blue-700'
                         }`}
                       >
-                        {rule.action === 'force_conversion' ? 'Force Conversion' : 'Exclude Bounce'}
+                        {rule.action === 'force_conversion' ? 'Conversion Goal' : 'Exclude Bounce'}
                       </span>
                       {!rule.enabled && (
                         <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
@@ -530,9 +530,9 @@ export default function ConversionRulesPage() {
                       className="mt-1"
                     />
                     <div>
-                      <div className="font-medium text-gray-900">Force Conversion</div>
+                      <div className="font-medium text-gray-900">Conversion Goal</div>
                       <div className="text-sm text-gray-600">
-                        Mark this action as a conversion event
+                        Track this action as a conversion in your analytics
                       </div>
                       {!allowedActions.force_conversion && (
                         <div className="text-xs text-blue-600 mt-1">Requires Business plan</div>
