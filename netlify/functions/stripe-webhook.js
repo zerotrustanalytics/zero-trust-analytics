@@ -84,6 +84,23 @@ export default async function handler(req, context) {
 
   let event;
 
+  // Validate webhook secret is configured
+  if (!webhookSecret) {
+    logger.error('STRIPE_WEBHOOK_SECRET not configured');
+    return new Response(JSON.stringify({ error: 'Webhook not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  if (!sig) {
+    logger.error('Missing stripe-signature header');
+    return new Response(JSON.stringify({ error: 'Missing signature' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
     logger.info('Stripe webhook signature verified', {
@@ -91,24 +108,15 @@ export default async function handler(req, context) {
       eventId: event.id
     });
   } catch (err) {
-    // TEMPORARY: Skip signature verification for debugging
-    // TODO: Fix signature verification and re-enable
-    logger.warn('Webhook signature verification failed, parsing body directly (TEMPORARY)', {
-      error: err.message
+    logger.error('Webhook signature verification failed', {
+      error: err.message,
+      signaturePrefix: sig?.substring(0, 20),
+      hint: 'Ensure STRIPE_WEBHOOK_SECRET matches the webhook endpoint secret in Stripe dashboard'
     });
-    try {
-      event = JSON.parse(body);
-      logger.info('Parsed webhook event without signature verification', {
-        eventType: event.type,
-        eventId: event.id
-      });
-    } catch (parseErr) {
-      logger.error('Failed to parse webhook body', parseErr);
-      return new Response(JSON.stringify({ error: 'Invalid payload' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
