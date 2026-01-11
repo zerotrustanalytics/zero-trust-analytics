@@ -46,10 +46,17 @@ export default async function handler(req, context) {
     }
 
     // Verify user owns this site
-    const userSites = await getUserSites(auth.user.id);
-    console.log('[realtime] User sites check', { userId: auth.user.id, siteId, userSites, hasSite: userSites.includes(siteId) });
+    let userSites = [];
+    try {
+      console.log('[realtime] Fetching user sites for', auth.user.id);
+      userSites = await getUserSites(auth.user.id);
+      console.log('[realtime] User sites check', { userId: auth.user.id, siteId, userSites, hasSite: userSites.includes(siteId) });
+    } catch (sitesErr) {
+      console.error('[realtime] getUserSites FAILED', sitesErr.message);
+      userSites = [];
+    }
     if (!userSites.includes(siteId)) {
-      console.log('[realtime] Access denied - user does not own site');
+      console.log('[realtime] Access denied - user does not own site', { siteId, userSites });
       return new Response(JSON.stringify({ error: 'Access denied' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }
