@@ -47,7 +47,9 @@ export default async function handler(req, context) {
 
     // Verify user owns this site
     const userSites = await getUserSites(auth.user.id);
+    console.log('[realtime] User sites check', { userId: auth.user.id, siteId, userSites, hasSite: userSites.includes(siteId) });
     if (!userSites.includes(siteId)) {
+      console.log('[realtime] Access denied - user does not own site');
       return new Response(JSON.stringify({ error: 'Access denied' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }
@@ -66,11 +68,19 @@ export default async function handler(req, context) {
       const actualUsage = await getActualUsageFromPageviews(userSites, currentMonth);
       const currentPageviews = actualUsage?.pageviews || 0;
 
+      console.log('[realtime] Usage check', {
+        email: auth.user.email,
+        plan,
+        monthlyLimit,
+        currentPageviews,
+        overLimit: currentPageviews >= monthlyLimit
+      });
+
       if (currentPageviews >= monthlyLimit) {
         usageLimitReached = true;
       }
     } catch (usageErr) {
-      console.warn('Failed to check usage limits for realtime:', usageErr.message);
+      console.warn('[realtime] Failed to check usage limits:', usageErr.message);
     }
 
     // If over limit, return frozen realtime data (zeros)
