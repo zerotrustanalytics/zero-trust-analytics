@@ -190,6 +190,24 @@ async function handleGet(path, url, logger) {
       return jsonResponse(metrics);
     }
 
+    case '/debug-sites': {
+      // Debug: show all sites in pageviews table
+      logger.info('Debug sites requested');
+      const { createClient } = await import('@libsql/client');
+      const { Config } = await import('./lib/config.js');
+      const turso = createClient({
+        url: Config.database.url,
+        authToken: Config.database.authToken
+      });
+      const result = await turso.execute({
+        sql: `SELECT site_id, COUNT(*) as pageviews, MIN(timestamp) as first, MAX(timestamp) as last
+              FROM pageviews
+              GROUP BY site_id
+              ORDER BY pageviews DESC`
+      });
+      return jsonResponse({ sites: result.rows });
+    }
+
     default:
       return jsonResponse({ error: 'Unknown endpoint' }, 404);
   }
