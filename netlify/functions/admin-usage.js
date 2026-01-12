@@ -196,7 +196,13 @@ async function handleGet(path, url, logger) {
 }
 
 async function handlePost(path, req, logger) {
-  const body = await req.json();
+  // Some endpoints don't need a body (like /backfill)
+  let body = {};
+  try {
+    body = await req.json();
+  } catch (e) {
+    // No body or invalid JSON - that's ok for some endpoints
+  }
 
   switch (path) {
     case '/tag': {
