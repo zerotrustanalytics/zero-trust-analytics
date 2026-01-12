@@ -310,9 +310,19 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {report?.topSites.slice(0, 10).map((site, i) => (
-                <tr key={i} className="border-b">
-                  <td className="py-2 font-mono text-xs">{site.site_id.substring(0, 12)}...</td>
-                  <td className="py-2 font-mono text-xs">{site.user_id.substring(0, 12)}...</td>
+                <tr key={i} className="border-b hover:bg-muted/50">
+                  <td className="py-2 font-mono text-xs">
+                    <a
+                      href={`/dashboard/sites/${site.site_id}`}
+                      className="text-blue-600 hover:underline"
+                      title={site.site_id}
+                    >
+                      {site.site_id}
+                    </a>
+                  </td>
+                  <td className="py-2 font-mono text-xs" title={site.user_id}>
+                    {site.user_id}
+                  </td>
                   <td className="py-2 text-right font-semibold">{site.total_pageviews.toLocaleString()}</td>
                   <td className="py-2 text-right">{site.total_api_reads.toLocaleString()}</td>
                   <td className="py-2 text-right">{Math.round(site.avg_daily_pageviews).toLocaleString()}</td>
