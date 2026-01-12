@@ -238,9 +238,18 @@ async function handlePost(path, req, logger) {
     case '/backfill': {
       // Backfill daily_usage from existing pageviews
       logger.info('Starting backfill from pageviews');
-      const result = await backfillUsageFromPageviews();
-      logger.info('Backfill completed', result);
-      return jsonResponse(result);
+      try {
+        const result = await backfillUsageFromPageviews();
+        logger.info('Backfill completed', result);
+        return jsonResponse(result);
+      } catch (err) {
+        logger.error('Backfill failed', err);
+        return jsonResponse({
+          error: 'Backfill failed',
+          message: err.message,
+          stack: err.stack
+        }, 500);
+      }
     }
 
     default:

@@ -592,8 +592,8 @@ function formatBytes(bytes) {
 export async function backfillUsageFromPageviews() {
   console.log('[backfill] Starting backfill from pageviews table...');
 
-  // First, get site -> user_id mapping from sites table in Turso
-  // or we can get it from the pageviews join
+  // Ensure schema exists first
+  await initUsageMetricsSchema();
 
   // Aggregate pageviews by date and site_id
   const result = await turso.execute({
