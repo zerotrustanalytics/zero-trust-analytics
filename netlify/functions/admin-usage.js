@@ -191,21 +191,42 @@ async function handleGet(path, url, logger) {
     }
 
     case '/debug-sites': {
-      // Debug: show all sites in pageviews table
+      // Debug: show all sites in pageviews table WITH domain mapping
       logger.info('Debug sites requested');
       const { createClient } = await import('@libsql/client');
       const { Config } = await import('./lib/config.js');
+      const { getStore } = await import('@netlify/blobs');
+
       const turso = createClient({
         url: Config.database.url,
         authToken: Config.database.authToken
       });
+      const sitesStore = getStore({ name: 'sites', consistency: 'strong' });
+
       const result = await turso.execute({
         sql: `SELECT site_id, COUNT(*) as pageviews, MIN(timestamp) as first, MAX(timestamp) as last
               FROM pageviews
               GROUP BY site_id
               ORDER BY pageviews DESC`
       });
-      return jsonResponse({ sites: result.rows });
+
+      // Get domain mapping for each site
+      const sitesWithDomains = await Promise.all(
+        result.rows.map(async (row) => {
+          let domain = 'unknown';
+          let userId = 'unknown';
+          try {
+            const site = await sitesStore.get(row.site_id, { type: 'json' });
+            if (site) {
+              domain = site.domain || 'unknown';
+              userId = site.userId || 'unknown';
+            }
+          } catch (e) {}
+          return { ...row, domain, userId };
+        })
+      );
+
+      return jsonResponse({ sites: sitesWithDomains });
     }
 
     default:
