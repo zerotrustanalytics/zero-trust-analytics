@@ -76,7 +76,29 @@ export default function AdminDashboard() {
   const [supportCategory, setSupportCategory] = useState('general')
   const [supportNotes, setSupportNotes] = useState('')
 
+  // User details view state
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [userDetails, setUserDetails] = useState<any>(null)
+  const [userLoading, setUserLoading] = useState(false)
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+
+  const fetchUserDetails = async (userId: string) => {
+    setUserLoading(true)
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/usage/customer?userId=${userId}`, {
+        headers: { 'X-Admin-Key': adminKey }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setUserDetails(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch user details:', err)
+    } finally {
+      setUserLoading(false)
+    }
+  }
 
   const fetchReport = async () => {
     setLoading(true)
@@ -320,8 +342,17 @@ export default function AdminDashboard() {
                       {site.site_id}
                     </a>
                   </td>
-                  <td className="py-2 font-mono text-xs" title={site.user_id}>
-                    {site.user_id}
+                  <td className="py-2 font-mono text-xs">
+                    <button
+                      onClick={() => {
+                        setSelectedUserId(site.user_id)
+                        fetchUserDetails(site.user_id)
+                      }}
+                      className="text-blue-600 hover:underline text-left"
+                      title={`View ${site.user_id}`}
+                    >
+                      {site.user_id}
+                    </button>
                   </td>
                   <td className="py-2 text-right font-semibold">{site.total_pageviews.toLocaleString()}</td>
                   <td className="py-2 text-right">{site.total_api_reads.toLocaleString()}</td>
@@ -333,6 +364,72 @@ export default function AdminDashboard() {
           </table>
         </div>
       </Card>
+
+      {/* User Details Panel */}
+      {selectedUserId && (
+        <Card className="p-4 mb-6 border-blue-500 bg-blue-500/5">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="font-semibold">User Details: {selectedUserId}</h3>
+            <button
+              onClick={() => { setSelectedUserId(null); setUserDetails(null); }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Close
+            </button>
+          </div>
+          {userLoading ? (
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          ) : userDetails ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Customer Type</p>
+                  <p className="font-semibold">{userDetails.tags?.customerType || 'standard'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Is Pilot</p>
+                  <p className="font-semibold">{userDetails.tags?.isPilot ? 'Yes' : 'No'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Support Hours MTD</p>
+                  <p className="font-semibold">{userDetails.support?.totalHours || 0}h</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Notes</p>
+                  <p className="font-semibold">{userDetails.tags?.notes || 'None'}</p>
+                </div>
+              </div>
+              {userDetails.usage && userDetails.usage.length > 0 && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Recent Usage ({userDetails.usage.length} records)</p>
+                  <div className="max-h-40 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-1">Date</th>
+                          <th className="text-left py-1">Site</th>
+                          <th className="text-right py-1">Pageviews</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userDetails.usage.slice(0, 20).map((u: any, i: number) => (
+                          <tr key={i} className="border-b">
+                            <td className="py-1">{u.date}</td>
+                            <td className="py-1 font-mono">{u.site_id?.substring(0, 12)}...</td>
+                            <td className="py-1 text-right">{u.pageviews?.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No details available</p>
+          )}
+        </Card>
+      )}
 
       {/* Pilot Customers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
