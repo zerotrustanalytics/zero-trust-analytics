@@ -76,7 +76,7 @@ export default function AdminDashboard() {
   const [supportCategory, setSupportCategory] = useState('general')
   const [supportNotes, setSupportNotes] = useState('')
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
 
   const fetchReport = async () => {
     setLoading(true)
