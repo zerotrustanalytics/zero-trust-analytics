@@ -250,5 +250,5 @@ function jsonResponse(data, status = 200) {
 }
 
 export const config = {
-  path: '/api/admin/usage/*'
+  path: ['/api/admin/usage', '/api/admin/usage/*']
 };
