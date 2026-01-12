@@ -581,6 +581,111 @@ function formatBytes(bytes) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
+// ============================================
+// BACKFILL FROM EXISTING PAGEVIEWS
+// ============================================
+
+/**
+ * Backfill daily_usage from existing pageviews table
+ * This aggregates all historical pageviews into daily_usage
+ */
+export async function backfillUsageFromPageviews() {
+  console.log('[backfill] Starting backfill from pageviews table...');
+
+  // First, get site -> user_id mapping from sites table in Turso
+  // or we can get it from the pageviews join
+
+  // Aggregate pageviews by date and site_id
+  const result = await turso.execute({
+    sql: `
+      SELECT
+        DATE(timestamp) as date,
+        site_id,
+        COUNT(*) as pageviews,
+        COUNT(DISTINCT identity_hash) as unique_visitors,
+        SUM(CASE WHEN event_type = 'event' THEN 1 ELSE 0 END) as events
+      FROM pageviews
+      GROUP BY DATE(timestamp), site_id
+      ORDER BY date DESC
+    `
+  });
+
+  const rows = normalizeRows(result.rows);
+  console.log(`[backfill] Found ${rows.length} daily records to backfill`);
+
+  // Get unique site IDs to fetch user mappings
+  const siteIds = [...new Set(rows.map(r => r.site_id))];
+  console.log(`[backfill] Found ${siteIds.length} unique sites`);
+
+  // Try to get user_id for each site from the sites store
+  const { getStore } = await import('@netlify/blobs');
+  const sitesStore = getStore({ name: 'sites', consistency: 'strong' });
+
+  const siteUserMap = {};
+  for (const siteId of siteIds) {
+    try {
+      const site = await sitesStore.get(siteId, { type: 'json' });
+      if (site && site.userId) {
+        siteUserMap[siteId] = site.userId;
+      } else {
+        siteUserMap[siteId] = 'unknown';
+      }
+    } catch (e) {
+      siteUserMap[siteId] = 'unknown';
+    }
+  }
+
+  console.log('[backfill] Site to user mapping:', siteUserMap);
+
+  // Insert/update daily_usage records
+  let inserted = 0;
+  let updated = 0;
+  const now = new Date().toISOString();
+
+  for (const row of rows) {
+    const userId = siteUserMap[row.site_id] || 'unknown';
+
+    try {
+      await turso.execute({
+        sql: `INSERT INTO daily_usage (date, site_id, user_id, pageviews, unique_visitors, events, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(date, site_id) DO UPDATE SET
+                pageviews = ?,
+                unique_visitors = ?,
+                events = ?,
+                user_id = ?,
+                updated_at = ?`,
+        args: [
+          row.date, row.site_id, userId, row.pageviews, row.unique_visitors, row.events, now,
+          row.pageviews, row.unique_visitors, row.events, userId, now
+        ]
+      });
+      inserted++;
+    } catch (e) {
+      console.error(`[backfill] Error inserting row for ${row.site_id}/${row.date}:`, e.message);
+    }
+  }
+
+  console.log(`[backfill] Completed: ${inserted} records processed`);
+
+  // Also update storage metrics for each site
+  for (const siteId of siteIds) {
+    const userId = siteUserMap[siteId] || 'unknown';
+    try {
+      await updateStorageMetrics(siteId, userId);
+    } catch (e) {
+      console.error(`[backfill] Error updating storage for ${siteId}:`, e.message);
+    }
+  }
+
+  return {
+    success: true,
+    dailyRecords: inserted,
+    sites: siteIds.length,
+    siteUserMap
+  };
+}
+
 export default {
   initUsageMetricsSchema,
   incrementDailyUsage,
@@ -597,5 +702,6 @@ export default {
   logSupportTime,
   getSupportTime,
   getHighSupportCustomers,
-  getAdminUsageReport
+  getAdminUsageReport,
+  backfillUsageFromPageviews
 };

@@ -31,7 +31,8 @@ import {
   logSupportTime,
   getSupportTime,
   getDailyUsage,
-  getUserDailyUsage
+  getUserDailyUsage,
+  backfillUsageFromPageviews
 } from './lib/usage-metrics.js';
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
@@ -232,6 +233,14 @@ async function handlePost(path, req, logger) {
       logger.info('Initializing usage metrics schema');
       await initUsageMetricsSchema();
       return jsonResponse({ success: true, message: 'Schema initialized' });
+    }
+
+    case '/backfill': {
+      // Backfill daily_usage from existing pageviews
+      logger.info('Starting backfill from pageviews');
+      const result = await backfillUsageFromPageviews();
+      logger.info('Backfill completed', result);
+      return jsonResponse(result);
     }
 
     default:
