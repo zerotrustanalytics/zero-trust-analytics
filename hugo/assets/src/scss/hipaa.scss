@@ -1,0 +1,410 @@
+// Zero Trust Analytics - HIPAA Page Styles
+@import 'shared/variables';
+@import 'shared/mixins';
+
+// ===========================================
+// Hero Section (shared with about)
+// ===========================================
+
+#inner-page-hero-section {
+  padding: 60px 0 40px;
+  @include hero-gradient;
+
+  h4 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: $font-size-xxl + 0.5rem;
+    font-weight: $font-weight-bold;
+    margin: 0;
+    margin-bottom: 10px;
+
+    @include media-md {
+      font-size: 3rem;
+    }
+  }
+
+  .lead {
+    font-size: $font-size-lg;
+    opacity: 0.9;
+    margin: 0;
+  }
+}
+
+// ===========================================
+// Main Content Section
+// ===========================================
+
+#policies-main-section {
+  padding: 50px 0 80px;
+  background: $bg-light;
+
+  h2 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin-top: $spacer-xl + 0.5rem;
+    margin-bottom: $spacer-md;
+    padding-bottom: $spacer-sm;
+    border-bottom: 2px solid $primary;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  p {
+    font-size: $font-size-base;
+    line-height: $line-height-relaxed;
+    color: $gray-700;
+    margin-bottom: $spacer-md;
+  }
+
+  ul {
+    margin-bottom: $spacer-lg;
+    padding-left: 1.25rem;
+
+    li {
+      margin-bottom: $spacer-sm + 0.25rem;
+      line-height: 1.6;
+      color: $gray-700;
+
+      strong {
+        color: $text-primary;
+      }
+    }
+  }
+
+  // ===========================================
+  // Alert Box (Bottom Line)
+  // ===========================================
+
+  .alert {
+    border-radius: $border-radius-lg;
+    border: none;
+
+    &.alert-success {
+      background: linear-gradient(135deg, rgba($success, 0.1) 0%, rgba($success, 0.05) 100%);
+      border-left: 4px solid $success;
+    }
+
+    .alert-heading {
+      color: darken($success, 10%);
+      font-weight: $font-weight-bold;
+      margin-bottom: $spacer-sm;
+    }
+
+    p {
+      color: $gray-800;
+      margin-bottom: $spacer-sm;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  // ===========================================
+  // Data Sample Card
+  // ===========================================
+
+  .card {
+    border: none;
+    border-radius: $border-radius-lg;
+    overflow: hidden;
+    box-shadow: $shadow-sm;
+    margin-bottom: $spacer-lg;
+
+    .card-header {
+      padding: $spacer-md $spacer-lg;
+      font-weight: $font-weight-medium;
+
+      &.bg-dark {
+        background: $gray-900 !important;
+      }
+
+      code {
+        color: $white;
+        font-family: $font-family-mono;
+        font-size: $font-size-sm;
+      }
+    }
+
+    .card-body {
+      padding: $spacer-lg;
+
+      &.bg-light {
+        background: $gray-100 !important;
+      }
+
+      pre {
+        margin: 0;
+        font-family: $font-family-mono;
+        font-size: $font-size-sm;
+        line-height: 1.6;
+        color: $gray-800;
+        white-space: pre-wrap;
+        word-break: break-word;
+
+        code {
+          color: inherit;
+          background: none;
+          padding: 0;
+        }
+      }
+    }
+
+    .card-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+      margin-bottom: $spacer-sm;
+    }
+
+    .card-text {
+      color: $gray-700;
+      margin-bottom: 0;
+    }
+  }
+
+  // Feature cards grid
+  .row.g-4 {
+    .card {
+      height: 100%;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: $shadow;
+      }
+    }
+  }
+
+  // ===========================================
+  // Tables
+  // ===========================================
+
+  .table {
+    margin-bottom: $spacer-lg;
+    border-radius: $border-radius;
+    overflow: hidden;
+    box-shadow: $shadow-sm;
+
+    thead {
+      &.table-dark {
+        th {
+          background: $gray-900;
+          color: $white;
+          font-weight: $font-weight-semibold;
+          padding: $spacer-md;
+          border: none;
+        }
+      }
+    }
+
+    tbody {
+      td {
+        padding: $spacer-md;
+        vertical-align: middle;
+        background: $white;
+        border-color: $gray-200;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+    }
+
+    .badge {
+      font-size: $font-size-xs;
+      padding: 0.35em 0.65em;
+      font-weight: $font-weight-medium;
+
+      &.bg-danger {
+        background: $danger !important;
+      }
+    }
+  }
+
+  // ===========================================
+  // CTA Card
+  // ===========================================
+
+  .card.bg-primary {
+    background: $gradient-primary !important;
+    border: none;
+
+    h3 {
+      font-weight: $font-weight-bold;
+      margin-bottom: $spacer-sm;
+    }
+
+    .lead {
+      opacity: 0.9;
+    }
+
+    .btn-light {
+      background: $white;
+      color: $primary;
+      font-weight: $font-weight-semibold;
+      padding: $spacer-md $spacer-xl;
+      border: none;
+
+      &:hover {
+        background: $gray-100;
+        transform: translateY(-2px);
+      }
+    }
+
+    .btn-outline-light {
+      border: 2px solid rgba($white, 0.8);
+      color: $white;
+      font-weight: $font-weight-semibold;
+      padding: $spacer-md $spacer-xl;
+
+      &:hover {
+        background: rgba($white, 0.1);
+        border-color: $white;
+      }
+    }
+  }
+
+  // ===========================================
+  // Contact Box
+  // ===========================================
+
+  .bg-light.rounded {
+    background: $white !important;
+    border: 1px solid $gray-200;
+    box-shadow: $shadow-sm;
+
+    h5 {
+      color: $text-primary;
+      font-weight: $font-weight-semibold;
+      margin-bottom: $spacer-sm;
+    }
+
+    a {
+      color: $primary;
+      font-weight: $font-weight-medium;
+
+      &:hover {
+        color: $primary-dark;
+      }
+    }
+  }
+
+  // ===========================================
+  // Code inline
+  // ===========================================
+
+  code {
+    background: rgba($primary, 0.1);
+    color: $primary-dark;
+    padding: 0.2em 0.4em;
+    border-radius: $border-radius-sm;
+    font-family: $font-family-mono;
+    font-size: 0.9em;
+  }
+
+  // ===========================================
+  // Buttons
+  // ===========================================
+
+  .btn-primary {
+    padding: 12px 30px;
+    font-weight: $font-weight-medium;
+  }
+}
+
+// ===========================================
+// Dark Mode Support
+// ===========================================
+
+[data-theme="dark"] {
+  #inner-page-hero-section {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+  }
+
+  #policies-main-section {
+    background-color: var(--zta-bg-secondary, #1a1a2e);
+
+    h2 {
+      color: var(--zta-text, #f4f4f5);
+      border-bottom-color: var(--zta-primary);
+    }
+
+    p, ul li {
+      color: #d4d4d8;
+    }
+
+    ul li strong {
+      color: var(--zta-text, #f4f4f5);
+    }
+
+    a {
+      color: #60a5fa;
+    }
+
+    .alert.alert-success {
+      background: rgba($success, 0.15);
+      border-left-color: $success;
+
+      .alert-heading {
+        color: lighten($success, 20%);
+      }
+
+      p {
+        color: #d4d4d8;
+      }
+    }
+
+    .card {
+      background: #252538;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+      .card-body.bg-light {
+        background: #1e1e2e !important;
+      }
+
+      .card-body pre, .card-body pre code {
+        color: #d4d4d8;
+      }
+
+      .card-title {
+        color: var(--zta-text, #f4f4f5);
+      }
+
+      .card-text {
+        color: #d4d4d8;
+      }
+    }
+
+    .table {
+      tbody td {
+        background: #252538;
+        color: #d4d4d8;
+        border-color: #3a3a4a;
+      }
+    }
+
+    .bg-light.rounded {
+      background: #252538 !important;
+      border-color: #3a3a4a;
+
+      h5 {
+        color: var(--zta-text, #f4f4f5);
+      }
+    }
+
+    code {
+      background: rgba($primary, 0.2);
+      color: #60a5fa;
+    }
+  }
+}
