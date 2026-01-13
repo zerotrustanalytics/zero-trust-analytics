@@ -100,6 +100,14 @@ export async function initUsageMetricsSchema() {
  * Increment daily usage counter
  */
 export async function incrementDailyUsage(siteId, userId, type = 'pageview') {
+  return incrementDailyUsageBatch(siteId, userId, type, 1);
+}
+
+/**
+ * Increment daily usage counter by a specific count (batched)
+ */
+export async function incrementDailyUsageBatch(siteId, userId, type = 'pageview', count = 1) {
+  if (count <= 0) return;
   const date = new Date().toISOString().split('T')[0];
   const now = new Date().toISOString();
 
@@ -115,11 +123,11 @@ export async function incrementDailyUsage(siteId, userId, type = 'pageview') {
 
   await turso.execute({
     sql: `INSERT INTO daily_usage (date, site_id, user_id, ${column}, updated_at)
-          VALUES (?, ?, ?, 1, ?)
+          VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(date, site_id) DO UPDATE SET
-            ${column} = ${column} + 1,
+            ${column} = ${column} + ?,
             updated_at = ?`,
-    args: [date, siteId, userId, now, now]
+    args: [date, siteId, userId, count, now, count, now]
   });
 }
 
@@ -596,14 +604,15 @@ export async function backfillUsageFromPageviews() {
   await initUsageMetricsSchema();
 
   // Aggregate pageviews by date and site_id
+  // Only count actual pageview events (not heartbeats, engagement, scroll, etc.)
   const result = await turso.execute({
     sql: `
       SELECT
         DATE(timestamp) as date,
         site_id,
-        COUNT(*) as pageviews,
-        COUNT(DISTINCT identity_hash) as unique_visitors,
-        SUM(CASE WHEN event_type = 'event' THEN 1 ELSE 0 END) as events
+        SUM(CASE WHEN event_type = 'pageview' THEN 1 ELSE 0 END) as pageviews,
+        COUNT(DISTINCT CASE WHEN event_type = 'pageview' THEN identity_hash END) as unique_visitors,
+        SUM(CASE WHEN event_type NOT IN ('pageview', 'heartbeat', 'engagement') THEN 1 ELSE 0 END) as events
       FROM pageviews
       GROUP BY DATE(timestamp), site_id
       ORDER BY date DESC
@@ -689,6 +698,7 @@ export async function backfillUsageFromPageviews() {
 export default {
   initUsageMetricsSchema,
   incrementDailyUsage,
+  incrementDailyUsageBatch,
   getDailyUsage,
   getUserDailyUsage,
   getUsageOverview,

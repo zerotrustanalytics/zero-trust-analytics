@@ -1,11 +1,11 @@
 import { createZTRecord, validateNoPII } from './lib/zero-trust-core.js';
-import { ingestEvents, checkUsageLimit, incrementUsage } from './lib/turso.js';
+import { ingestEvents, checkUsageLimit, incrementUsageBatch } from './lib/turso.js';
 import { getSite, getUserById, getConversionRules, matchConversionRule } from './lib/storage.js';
 import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
 import { createFunctionLogger } from './lib/logger.js';
-import { handleError, ValidationError, NotFoundError } from './lib/error-handler.js';
+import { handleError } from './lib/error-handler.js';
 import { Config } from './lib/config.js';
-import { incrementDailyUsage } from './lib/usage-metrics.js';
+import { incrementDailyUsageBatch } from './lib/usage-metrics.js';
 
 // Get required hash secret - throws if not configured
 function getRequiredHashSecret() {
@@ -82,43 +82,18 @@ function getPlanPageviewLimit(plan) {
 // Check if site owner is within usage limits
 async function checkSiteOwnerUsage(site, logger) {
   try {
-    // Site stores userId of owner
     const ownerId = site.userId;
     if (!ownerId) {
-      logger.warn('Site has no owner, allowing tracking', { siteId: site.id });
       return { allowed: true, ownerId: null };
     }
 
-    // Get owner's plan by looking up the user
     const user = await getUserById(ownerId);
     const plan = user?.plan || 'free';
     const limit = getPlanPageviewLimit(plan);
-
-    // Debug: log user lookup result
-    logger.info('User lookup for usage check', {
-      siteId: site.id,
-      ownerId,
-      ownerIdType: typeof ownerId,
-      ownerIdLength: ownerId?.length,
-      userFound: !!user,
-      userPlan: user?.plan,
-      userIdInRecord: user?.id,
-      resolvedPlan: plan,
-      planLimit: limit,
-      userEmail: user?.email
-    });
-
-    // Check usage against the owner
     const usageCheck = await checkUsageLimit(ownerId, limit);
 
     if (!usageCheck.isWithinLimit) {
-      logger.info('Site owner over usage limit', {
-        siteId: site.id,
-        ownerId,
-        plan,
-        currentUsage: usageCheck.currentUsage,
-        limit
-      });
+      logger.info('Usage limit exceeded', { siteId: site.id, ownerId, plan });
     }
 
     return {
@@ -128,7 +103,6 @@ async function checkSiteOwnerUsage(site, logger) {
       usage: usageCheck
     };
   } catch (err) {
-    // On error, allow tracking (fail open for tracking)
     logger.error('Usage check failed, allowing tracking', err);
     return { allowed: true, ownerId: site.userId };
   }
@@ -239,27 +213,11 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
   }
 
   // Build headers for geo extraction (country, region, city from Netlify Edge)
-  // If Netlify doesn't have city, try fallback geo lookup
-  let city = context.geo?.city || '';
-  if (!city && ip && ip !== 'unknown') {
-    try {
-      // Free fallback geo lookup (ip-api.com, no key needed, 45 req/min)
-      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=city`, {
-        signal: AbortSignal.timeout(1000) // 1s timeout to not slow tracking
-      });
-      if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        city = geoData.city || '';
-      }
-    } catch {
-      // Fallback failed, continue without city
-    }
-  }
-
+  // Note: Removed external ip-api.com lookup to reduce latency
   const headers = {
     'x-country': context.geo?.country?.code || '',
     'x-nf-client-connection-region': context.geo?.subdivision?.code || '',
-    'x-city': city
+    'x-city': context.geo?.city || ''
   };
 
   // Load conversion rules for this site
@@ -336,22 +294,18 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
     });
     await ingestEvents('pageviews', records);
 
-    // Increment usage for the site owner
+    // Increment usage for the site owner (batched for performance)
     if (usageCheck.ownerId) {
       const pageviewCount = records.filter(r => r.event_type === 'pageview').length;
       const eventCount = records.filter(r => r.event_type !== 'pageview').length;
 
+      // Fire and forget - don't block tracking response
       if (pageviewCount > 0) {
-        // Increment monthly usage (for billing)
-        for (let i = 0; i < pageviewCount; i++) {
-          await incrementUsage(usageCheck.ownerId, siteId, 'pageview');
-        }
-        // Increment daily usage (for metrics/pricing leverage)
-        await incrementDailyUsage(siteId, usageCheck.ownerId, 'pageview').catch(() => {});
+        incrementUsageBatch(usageCheck.ownerId, siteId, 'pageview', pageviewCount).catch(() => {});
+        incrementDailyUsageBatch(siteId, usageCheck.ownerId, 'pageview', pageviewCount).catch(() => {});
       }
-
       if (eventCount > 0) {
-        await incrementDailyUsage(siteId, usageCheck.ownerId, 'event').catch(() => {});
+        incrementDailyUsageBatch(siteId, usageCheck.ownerId, 'event', eventCount).catch(() => {});
       }
     }
   } else {
@@ -435,184 +389,10 @@ function parseEvent(data) {
   return { eventType, payload, meta };
 }
 
-// Handle single event (legacy/fallback)
+// Handle single event (legacy/fallback) - delegates to batch handler
 async function handleSingleEvent(req, context, origin, data, logger) {
-  const { type, siteId } = data;
-
-  if (!siteId) {
-    logger.warn('Single event missing site ID');
-    return new Response(JSON.stringify({ error: 'Site ID required' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  // Verify site exists (still using Netlify Blobs for site config)
-  const site = await getSite(siteId);
-  if (!site) {
-    logger.warn('Invalid site ID in single event', { siteId });
-    return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  // CORS origin validation
-  const allowedOrigin = getAllowedOrigin(origin, site.domain);
-  if (!allowedOrigin && origin) {
-    logger.warn('CORS origin not allowed for single event', {
-      siteId,
-      siteDomain: site.domain,
-      requestOrigin: origin
-    });
-    return new Response(JSON.stringify({ error: 'Origin not allowed', debug: { origin, expected: site.domain } }), {
-      status: 403,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': 'null'
-      }
-    });
-  }
-
-  // Get client info (will be hashed, never stored raw)
-  const ip = context.ip || req.headers.get('x-forwarded-for') || 'unknown';
-  const userAgent = req.headers.get('user-agent') || 'unknown';
-
-  // Filter bots silently
-  if (isBot(userAgent)) {
-    logger.debug('Bot detected in single event, silently accepting', { siteId });
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': allowedOrigin || '*'
-      }
-    });
-  }
-
-  // Build headers object for geo extraction (country, region, city from Netlify Edge)
-  // If Netlify doesn't have city, try fallback geo lookup
-  let singleCity = context.geo?.city || '';
-  if (!singleCity && ip && ip !== 'unknown') {
-    try {
-      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=city`, {
-        signal: AbortSignal.timeout(1000)
-      });
-      if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        singleCity = geoData.city || '';
-      }
-    } catch {
-      // Fallback failed, continue without city
-    }
-  }
-
-  const headers = {
-    'x-country': context.geo?.country?.code || '',
-    'x-nf-client-connection-region': context.geo?.subdivision?.code || '',
-    'x-city': singleCity
-  };
-
-  // Parse event
-  const { eventType, payload, meta } = parseEvent(data);
-
-  // Apply conversion rules to engagement events
-  if (eventType === 'engagement' && meta.isBounce) {
-    const conversionRules = await getConversionRules(siteId);
-    if (conversionRules.length > 0) {
-      const eventData = {
-        event_type: eventType,
-        page: payload.page_path,
-        payload: data
-      };
-      const matchedRule = matchConversionRule(conversionRules, eventData);
-      if (matchedRule) {
-        logger.debug('Conversion rule matched (single event)', {
-          siteId,
-          ruleId: matchedRule.id,
-          ruleName: matchedRule.name,
-          action: matchedRule.action,
-          page: payload.page_path
-        });
-
-        if (matchedRule.action === 'exclude_bounce') {
-          meta.isBounce = false;
-          meta.ruleApplied = matchedRule.id;
-        } else if (matchedRule.action === 'force_conversion') {
-          meta.isBounce = false;
-          meta.isConversion = true;
-          meta.ruleApplied = matchedRule.id;
-        }
-      }
-    }
-  }
-
-  // Create ZT record using core library (reusable across products)
-  const record = createZTRecord({
-    siteId,
-    ip,
-    userAgent,
-    headers,
-    secret: getRequiredHashSecret(),
-    eventType,
-    payload,
-    meta
-  });
-
-  // Safety check - ensure no PII leaked into record
-  if (!validateNoPII(record)) {
-    logger.error('PII detected in record, blocking storage', null, {
-      siteId,
-      eventType
-    });
-    return new Response(JSON.stringify({ error: 'Data validation failed' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  // Check usage limits before ingesting
-  const usageCheck = await checkSiteOwnerUsage(site, logger);
-
-  // If over limit, return success but don't actually store
-  if (!usageCheck.allowed) {
-    logger.info('Usage limit exceeded for single event', {
-      siteId,
-      ownerId: usageCheck.ownerId
-    });
-    return new Response(JSON.stringify({ success: true, limited: true }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': allowedOrigin || '*'
-      }
-    });
-  }
-
-  // Send to database
-  logger.info('Ingesting single event', {
-    siteId,
-    eventType
-  });
-  await ingestEvents('pageviews', record);
-
-  // Increment usage for pageview events
-  if (usageCheck.ownerId) {
-    if (eventType === 'pageview') {
-      await incrementUsage(usageCheck.ownerId, siteId, 'pageview');
-      await incrementDailyUsage(siteId, usageCheck.ownerId, 'pageview').catch(() => {});
-    } else {
-      await incrementDailyUsage(siteId, usageCheck.ownerId, 'event').catch(() => {});
-    }
-  }
-
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': allowedOrigin || '*'
-    }
-  });
+  // Convert single event to batch format and reuse batch handler
+  return handleBatch(req, context, origin, data.siteId, [data], logger);
 }
 
 export const config = {

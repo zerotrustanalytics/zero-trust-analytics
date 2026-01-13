@@ -838,14 +838,19 @@ function getCurrentMonth() {
 }
 
 async function incrementUsage(teamId, siteId, type = 'pageview') {
+  return incrementUsageBatch(teamId, siteId, type, 1);
+}
+
+async function incrementUsageBatch(teamId, siteId, type = 'pageview', count = 1) {
+  if (count <= 0) return;
   const month = getCurrentMonth();
   const now = new Date().toISOString();
   const column = type === 'pageview' ? 'pageviews' : type === 'visitor' ? 'unique_visitors' : 'events';
 
   await turso.execute({
-    sql: `INSERT INTO monthly_usage (team_id, site_id, month, ${column}, updated_at) VALUES (?, ?, ?, 1, ?)
-          ON CONFLICT(team_id, site_id, month) DO UPDATE SET ${column} = ${column} + 1, updated_at = ?`,
-    args: [teamId, siteId, month, now, now]
+    sql: `INSERT INTO monthly_usage (team_id, site_id, month, ${column}, updated_at) VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(team_id, site_id, month) DO UPDATE SET ${column} = ${column} + ?, updated_at = ?`,
+    args: [teamId, siteId, month, count, now, count, now]
   });
 }
 
@@ -969,6 +974,7 @@ export {
   // Usage
   getCurrentMonth,
   incrementUsage,
+  incrementUsageBatch,
   getTeamUsage,
   getTeamUsageBySite,
   getTeamUsageHistory,
