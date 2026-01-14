@@ -1,18 +1,126 @@
 import { createZTRecord, validateNoPII } from './lib/zero-trust-core.js';
 import { ingestEvents, checkUsageLimit, incrementUsageBatch } from './lib/turso.js';
-import { getSite, getUserById, getConversionRules, matchConversionRule } from './lib/storage.js';
-import { checkRateLimit, rateLimitResponse, hashIP } from './lib/rate-limit.js';
+import { getSite, getUserById, matchConversionRule } from './lib/storage.js';
+import { hashIP } from './lib/rate-limit.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 import { Config } from './lib/config.js';
 import { incrementDailyUsageBatch } from './lib/usage-metrics.js';
 
-// Get required hash secret - throws if not configured
+// ============================================
+// IN-MEMORY CACHES (survive within function instance)
+// ============================================
+
+// Site cache: 60 second TTL - sites rarely change
+const siteCache = new Map();
+const SITE_CACHE_TTL = 60000;
+
+// User/plan cache: 5 minute TTL - plans change even less often
+const userPlanCache = new Map();
+const USER_PLAN_CACHE_TTL = 300000;
+
+// Usage limit cache: 30 second TTL - avoids DB query per request
+const usageLimitCache = new Map();
+const USAGE_LIMIT_CACHE_TTL = 30000;
+
+// Fast rate limiter for track endpoint (in-memory, no Blob I/O)
+const trackRateLimits = new Map();
+const TRACK_RATE_LIMIT = 1000;
+const TRACK_RATE_WINDOW = 60000;
+
+/**
+ * Get site with caching
+ */
+async function getCachedSite(siteId) {
+  const now = Date.now();
+  const cached = siteCache.get(siteId);
+
+  if (cached && now - cached.timestamp < SITE_CACHE_TTL) {
+    return cached.data;
+  }
+
+  const site = await getSite(siteId);
+  if (site) {
+    siteCache.set(siteId, { data: site, timestamp: now });
+  }
+  return site;
+}
+
+/**
+ * Get user plan with caching
+ */
+async function getCachedUserPlan(userId) {
+  if (!userId) return 'free';
+
+  const now = Date.now();
+  const cached = userPlanCache.get(userId);
+
+  if (cached && now - cached.timestamp < USER_PLAN_CACHE_TTL) {
+    return cached.plan;
+  }
+
+  const user = await getUserById(userId);
+  const plan = user?.plan || 'free';
+  userPlanCache.set(userId, { plan, timestamp: now });
+  return plan;
+}
+
+/**
+ * Check usage limit with caching (avoids DB query per request)
+ */
+async function getCachedUsageCheck(ownerId, limit) {
+  const now = Date.now();
+  const cacheKey = `${ownerId}:${limit}`;
+  const cached = usageLimitCache.get(cacheKey);
+
+  if (cached && now - cached.timestamp < USAGE_LIMIT_CACHE_TTL) {
+    return cached.result;
+  }
+
+  const result = await checkUsageLimit(ownerId, limit);
+  usageLimitCache.set(cacheKey, { result, timestamp: now });
+  return result;
+}
+
+/**
+ * Fast in-memory rate limiting for track endpoint
+ * Avoids Netlify Blob I/O on every request
+ */
+function checkTrackRateLimit(identifier) {
+  const now = Date.now();
+  let entry = trackRateLimits.get(identifier);
+
+  // Clean up expired entries periodically (1 in 100 requests)
+  if (Math.random() < 0.01) {
+    for (const [key, val] of trackRateLimits) {
+      if (now > val.resetTime) trackRateLimits.delete(key);
+    }
+  }
+
+  if (!entry || now > entry.resetTime) {
+    entry = { count: 0, resetTime: now + TRACK_RATE_WINDOW };
+  }
+
+  entry.count++;
+  trackRateLimits.set(identifier, entry);
+
+  return {
+    allowed: entry.count <= TRACK_RATE_LIMIT,
+    remaining: Math.max(0, TRACK_RATE_LIMIT - entry.count),
+    resetTime: entry.resetTime,
+    retryAfter: entry.count > TRACK_RATE_LIMIT ? Math.ceil((entry.resetTime - now) / 1000) : 0
+  };
+}
+
+// Get required hash secret - cached after first call
+let cachedHashSecret = null;
 function getRequiredHashSecret() {
+  if (cachedHashSecret) return cachedHashSecret;
   const secret = process.env.HASH_SECRET;
   if (!secret) {
     throw new Error('HASH_SECRET environment variable is required');
   }
+  cachedHashSecret = secret;
   return secret;
 }
 
@@ -79,7 +187,7 @@ function getPlanPageviewLimit(plan) {
   return tier.monthlyPageviews;
 }
 
-// Check if site owner is within usage limits
+// Check if site owner is within usage limits (fully cached)
 async function checkSiteOwnerUsage(site, logger) {
   try {
     const ownerId = site.userId;
@@ -87,10 +195,11 @@ async function checkSiteOwnerUsage(site, logger) {
       return { allowed: true, ownerId: null };
     }
 
-    const user = await getUserById(ownerId);
-    const plan = user?.plan || 'free';
+    // Use cached plan lookup instead of full user fetch
+    const plan = await getCachedUserPlan(ownerId);
     const limit = getPlanPageviewLimit(plan);
-    const usageCheck = await checkUsageLimit(ownerId, limit);
+    // Use cached usage check (30s TTL) to avoid DB query per request
+    const usageCheck = await getCachedUsageCheck(ownerId, limit);
 
     if (!usageCheck.isWithinLimit) {
       logger.info('Usage limit exceeded', { siteId: site.id, ownerId, plan });
@@ -132,16 +241,19 @@ export default async function handler(req, context) {
     });
   }
 
-  // Rate limiting: 1000 requests per minute per IP (generous for tracking)
+  // Fast in-memory rate limiting (avoids Blob I/O)
   const clientIP = context.ip || req.headers.get('x-forwarded-for') || 'unknown';
   const rateLimitKey = hashIP(clientIP);
-  const rateLimit = await checkRateLimit(rateLimitKey, { limit: 1000, windowMs: 60000 });
+  const rateLimit = checkTrackRateLimit(rateLimitKey);
 
   if (!rateLimit.allowed) {
     logger.warn('Rate limit exceeded for tracking', {
-      remainingTime: rateLimit.resetIn
+      remainingTime: rateLimit.retryAfter
     });
-    return rateLimitResponse(rateLimit);
+    return new Response(JSON.stringify({ error: 'Too many requests', retryAfter: rateLimit.retryAfter }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimit.retryAfter) }
+    });
   }
 
   try {
@@ -175,8 +287,8 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
     });
   }
 
-  // Verify site exists
-  const site = await getSite(siteId);
+  // Verify site exists (cached - avoids repeated Blob fetches)
+  const site = await getCachedSite(siteId);
   if (!site) {
     logger.warn('Invalid site ID in batch request', { siteId });
     return new Response(JSON.stringify({ error: 'Invalid site ID' }), {
@@ -220,8 +332,8 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
     'x-city': context.geo?.city || ''
   };
 
-  // Load conversion rules for this site
-  const conversionRules = await getConversionRules(siteId);
+  // Use conversion rules from cached site (no duplicate fetch)
+  const conversionRules = site.conversionRules || [];
 
   // Process all events into records
   const records = events.map(event => {

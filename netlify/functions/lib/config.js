@@ -356,6 +356,28 @@ export const Config = {
     issuer: config.MFA_ISSUER
   },
 
+  // Add-ons (purchasable extras)
+  addons: {
+    realtime: {
+      id: 'realtime',
+      name: 'Real-time Analytics',
+      description: 'See visitors online now with live dashboard updates',
+      price: 5,  // $5/month
+      stripePriceId: process.env.STRIPE_PRICE_REALTIME_ADDON,
+      features: [
+        'Live visitor count',
+        'Real-time page activity',
+        '60-second heartbeat',
+        'Active sessions view'
+      ],
+      // Config applied when enabled
+      config: {
+        enableHeartbeat: true,
+        heartbeatInterval: 60000  // 60 seconds
+      }
+    }
+  },
+
   // Pricing Tiers
   pricing: {
     tiers: {
@@ -390,9 +412,9 @@ export const Config = {
       scale: {
         name: 'Scale',
         monthlyPageviews: 5000000,
-        price: 99,
+        price: 149,  // Increased from $99 for better margin
         stripePriceId: process.env.STRIPE_PRICE_SCALE,
-        features: ['Unlimited sites', 'Full analytics', 'Unlimited data retention', 'Priority support', 'API access', 'Team members (20)']
+        features: ['Unlimited sites', 'Full analytics', 'Unlimited data retention', 'Priority support', 'API access', 'Team members (20)', 'Real-time Analytics included']
       },
       enterprise: {
         name: 'Enterprise',
