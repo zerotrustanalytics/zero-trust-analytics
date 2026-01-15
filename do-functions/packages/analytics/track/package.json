@@ -1,0 +1,8 @@
+{
+  "name": "track",
+  "version": "1.0.0",
+  "description": "Zero Trust Analytics - Pageview Tracking Function",
+  "main": "track.js",
+  "type": "commonjs",
+  "dependencies": {}
+}

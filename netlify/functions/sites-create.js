@@ -5,6 +5,7 @@ import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 import { validateRequest, siteCreateSchema } from './lib/schemas.js';
 import { Config } from './lib/config.js';
+import { syncSiteToTurso } from './lib/sites-sync.js';
 
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
@@ -84,6 +85,9 @@ export default async function handler(req, context) {
     // Generate site ID and create
     const siteId = generateSiteId();
     const site = await createSite(auth.user.id, siteId, domain);
+
+    // Sync to Turso for DO Functions (fire-and-forget)
+    syncSiteToTurso(site).catch(() => {});
 
     logger.info('Site created successfully', {
       userId: auth.user.id,

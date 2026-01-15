@@ -2,6 +2,7 @@ import { authenticateRequest, corsPreflightResponse, successResponse, Errors, ge
 import { getSite, updateSite } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
+import { syncSiteToTurso } from './lib/sites-sync.js';
 
 export default async function handler(req, context) {
   const logger = createFunctionLogger('sites-update', req, context);
@@ -65,10 +66,13 @@ export default async function handler(req, context) {
       updates.nickname = nickname.trim() || null;
     }
 
-    logger.debug('Updating site', { userId: user.id, siteId, updates });
+    logger.debug('Updating site', { userId: auth.user.id, siteId, updates });
     const updated = await updateSite(siteId, updates);
 
-    logger.info('Site updated successfully', { userId: user.id, siteId });
+    // Sync to Turso for DO Functions (fire-and-forget)
+    syncSiteToTurso(updated).catch(() => {});
+
+    logger.info('Site updated successfully', { userId: auth.user.id, siteId });
     return successResponse({ success: true, site: updated }, 200, origin);
   } catch (err) {
     logger.error('Site update failed', err, { userId: auth.user.id });

@@ -1,0 +1,20 @@
+# DigitalOcean Functions Project Configuration
+# Deploy with: doctl serverless deploy .
+
+packages:
+  - name: analytics
+    environment:
+      TURSO_DATABASE_URL: ${TURSO_DATABASE_URL}
+      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN}
+      HASH_SECRET: ${HASH_SECRET}
+    functions:
+      - name: track
+        runtime: nodejs:18
+        web: true
+        main: track.main
+        limits:
+          timeout: 10000
+          memory: 512
+        # Limits: 128MB RAM, 10s timeout
+        # Estimated GiB-seconds per invocation: 0.128 * 0.1 = 0.0128
+        # Free tier allows 90,000 GiB-seconds = ~7M invocations/month

@@ -298,6 +298,114 @@ Unsubscribe: ${data.unsubscribeUrl}
   `.trim();
 }
 
+// Team Invite Email Template
+function getTeamInviteEmailHtml(data) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #e4e4e7;">
+              <h1 style="margin: 0; font-size: 24px; font-weight: 600; color: #18181b;">Zero Trust Analytics</h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px;">
+              <h2 style="margin: 0 0 16px; font-size: 20px; font-weight: 600; color: #18181b;">You're invited to join a team</h2>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #52525b;">
+                <strong>${data.inviterName || 'Someone'}</strong> has invited you to join <strong>${data.teamName}</strong> as a <strong>${data.role}</strong>.
+              </p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 0 0 24px;">
+                    <a href="${data.inviteUrl}" style="display: inline-block; padding: 12px 32px; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #2563eb; text-decoration: none; border-radius: 6px;">Accept Invitation</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0 0 16px; font-size: 14px; line-height: 22px; color: #71717a;">
+                This invitation will expire in <strong>7 days</strong>.
+              </p>
+              <p style="margin: 0; font-size: 14px; line-height: 22px; color: #71717a;">
+                If you weren't expecting this invitation, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; text-align: center; border-top: 1px solid #e4e4e7; background-color: #fafafa; border-radius: 0 0 8px 8px;">
+              <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+                Zero Trust Analytics &bull; Privacy-first web analytics
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+function getTeamInviteEmailText(data) {
+  return `
+You're invited to join a team on Zero Trust Analytics
+
+${data.inviterName || 'Someone'} has invited you to join "${data.teamName}" as a ${data.role}.
+
+Accept the invitation by clicking this link:
+${data.inviteUrl}
+
+This invitation will expire in 7 days.
+
+If you weren't expecting this invitation, you can safely ignore this email.
+
+---
+Zero Trust Analytics - Privacy-first web analytics
+  `.trim();
+}
+
+// Send team invite email with fallback
+export async function sendTeamInviteEmail(email, data) {
+  const subject = `You're invited to join ${data.teamName} on Zero Trust Analytics`;
+  const html = getTeamInviteEmailHtml(data);
+  const text = getTeamInviteEmailText(data);
+
+  // Try Resend first
+  if (resend) {
+    try {
+      const result = await sendViaResend(email, subject, html, text);
+      return result;
+    } catch (error) {
+      console.error('Resend failed for team invite:', error.message);
+      // Resend failed, will try SendGrid
+    }
+  }
+
+  // Fallback to SendGrid
+  if (process.env.SENDGRID_API_KEY) {
+    try {
+      const result = await sendViaSendGrid(email, subject, html, text);
+      return result;
+    } catch (error) {
+      console.error('SendGrid failed for team invite:', error.message);
+      throw new Error('All email providers failed');
+    }
+  }
+
+  throw new Error('No email provider configured');
+}
+
 // Send analytics report email with branding
 export async function sendAnalyticsReportEmail(email, data, branding = DEFAULT_BRANDING) {
   const b = branding.enabled ? branding : DEFAULT_BRANDING;

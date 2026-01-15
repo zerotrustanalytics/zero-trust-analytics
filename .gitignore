@@ -36,3 +36,7 @@ nul
 
 # Nested nextjs folders
 nextjs/nextjs/
+
+# DigitalOcean Functions
+do-functions/.env
+do-functions/.deployed/

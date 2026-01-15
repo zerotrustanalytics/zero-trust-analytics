@@ -79,7 +79,7 @@
   ZTA.init = function(siteId, options) {
     options = options || {};
     ZTA.config.siteId = siteId;
-    ZTA.config.endpoint = options.endpoint || 'https://ztas.io/api/track';
+    ZTA.config.endpoint = options.endpoint || 'https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-8859ab2d-54c9-4ca1-b3aa-8f2ee26c90be/analytics/track';
     ZTA.config.debug = options.debug || false;
     ZTA.config.sampleRate = options.sampleRate !== undefined ? options.sampleRate : 1.0;
     ZTA.config.trackScrollDepth = options.trackScrollDepth !== false;

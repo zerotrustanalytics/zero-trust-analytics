@@ -19,6 +19,7 @@ import {
   TeamRoles
 } from './lib/storage.js';
 import { Config } from './lib/config.js';
+import { sendTeamInviteEmail } from './lib/email.js';
 
 export default async function handler(req, context) {
   if (req.method === 'OPTIONS') {
@@ -186,8 +187,23 @@ export default async function handler(req, context) {
           });
         }
 
-        // Get team name for invite URL (team already fetched above)
+        // Build invite URL
         const inviteUrl = `${url.origin}/accept-invite?token=${result.token}`;
+
+        // Send invite email (don't block response on email failure)
+        let emailSent = false;
+        try {
+          await sendTeamInviteEmail(email, {
+            inviteUrl,
+            teamName: team.name,
+            inviterName: userEmail,
+            role: inviteRole
+          });
+          emailSent = true;
+        } catch (emailError) {
+          console.error('Failed to send invite email:', emailError.message);
+          // Continue - invite was created, email just failed
+        }
 
         return new Response(JSON.stringify({
           invite: {
@@ -197,7 +213,8 @@ export default async function handler(req, context) {
             expiresAt: result.expiresAt
           },
           inviteUrl,
-          teamName: team.name
+          teamName: team.name,
+          emailSent
         }), {
           status: 201,
           headers: {
