@@ -16,6 +16,9 @@
 
 ---
 
+
+
+
 ## Cost Per Pageview (Marginal Cost)
 
 For each pageview tracked by a customer's site:
