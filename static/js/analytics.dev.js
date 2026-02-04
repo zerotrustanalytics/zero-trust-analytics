@@ -178,7 +178,7 @@
   ZTA.init = function(siteId, options) {
     options = options || {};
     cfg.siteId = siteId;
-    cfg.endpoint = options.endpoint || 'https://ztas.io/api/track';
+    cfg.endpoint = options.endpoint || 'https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-8859ab2d-54c9-4ca1-b3aa-8f2ee26c90be/analytics/track';
     cfg.debug = options.debug || false;
     cfg.sampleRate = options.sampleRate !== undefined ? options.sampleRate : 1.0;
 

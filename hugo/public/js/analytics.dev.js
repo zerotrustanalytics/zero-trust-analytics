@@ -5,28 +5,8 @@
   var cfg = {
     endpoint: null,
     siteId: null,
-    debug: false,
-    sampleRate: 1.0
+    debug: false
   };
-  var sampled = true;
-
-  function checkSampling() {
-    if (cfg.sampleRate >= 1.0) return true;
-    if (cfg.sampleRate <= 0) return false;
-    var key = 'zta_sample';
-    var val = null;
-    try {
-      val = localStorage.getItem(key);
-      if (val === null) {
-        val = Math.random().toString();
-        localStorage.setItem(key, val);
-      }
-      val = parseFloat(val);
-    } catch (e) {
-      val = Math.random();
-    }
-    return val < cfg.sampleRate;
-  }
 
   var session = {
     id: null,
@@ -138,15 +118,15 @@
   }
 
   function send(data) {
-    if (!sampled || !cfg.siteId) return;
+    if (!cfg.siteId) return;
 
     queue.events.push(data);
 
-    if (queue.events.length >= 25) {
+    if (queue.events.length >= 10) {
       flush();
     } else {
       if (queue.timer) clearTimeout(queue.timer);
-      queue.timer = setTimeout(flush, 15000);
+      queue.timer = setTimeout(flush, 5000);
     }
   }
 
@@ -178,16 +158,8 @@
   ZTA.init = function(siteId, options) {
     options = options || {};
     cfg.siteId = siteId;
-    cfg.endpoint = options.endpoint || 'https://ztas.io/api/track';
+    cfg.endpoint = options.endpoint || 'https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-8859ab2d-54c9-4ca1-b3aa-8f2ee26c90be/analytics/track';
     cfg.debug = options.debug || false;
-    cfg.sampleRate = options.sampleRate !== undefined ? options.sampleRate : 1.0;
-
-    // Check sampling - if out, don't initialize
-    sampled = checkSampling();
-    if (!sampled) {
-      if (cfg.debug) console.log('[ZTA] Sampled out:', cfg.sampleRate);
-      return;
-    }
 
     initSession();
 
@@ -405,12 +377,10 @@
 
   if (script) {
     var siteId = script.getAttribute('data-site-id');
-    var sampleRate = script.getAttribute('data-sample-rate');
     if (siteId) {
       ZTA.init(siteId, {
         autoTrack: script.getAttribute('data-auto-track') !== 'false',
-        debug: script.getAttribute('data-debug') === 'true',
-        sampleRate: sampleRate !== null ? parseFloat(sampleRate) : 1.0
+        debug: script.getAttribute('data-debug') === 'true'
       });
 
       // Setup auto-tracking for data-zta-track elements
