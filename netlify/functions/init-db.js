@@ -9,13 +9,17 @@ export default async function handler(req, context) {
     });
   }
 
-  // Simple auth check - require a secret in header or query param
-  const url = new URL(req.url);
-  const authHeader = req.headers.get('x-init-secret');
-  const authQuery = url.searchParams.get('secret');
-  const expectedSecret = process.env.INIT_DB_SECRET || 'init-secret-change-me';
+  // Auth check - require INIT_DB_SECRET env var (no default fallback)
+  const expectedSecret = process.env.INIT_DB_SECRET;
+  if (!expectedSecret) {
+    return new Response(JSON.stringify({ error: 'INIT_DB_SECRET not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
-  if (authHeader !== expectedSecret && authQuery !== expectedSecret) {
+  const authHeader = req.headers.get('x-init-secret');
+  if (authHeader !== expectedSecret) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }

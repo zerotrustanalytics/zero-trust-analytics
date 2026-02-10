@@ -80,7 +80,7 @@ export default async function handler(req, context) {
     return new Response(null, {
       status: 204,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': process.env.CORS_ADMIN_ORIGIN || 'https://ztas.io',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Key'
       }
@@ -296,9 +296,7 @@ async function handlePost(path, req, logger) {
       } catch (err) {
         logger.error('Backfill failed', err);
         return jsonResponse({
-          error: 'Backfill failed',
-          message: err.message,
-          stack: err.stack
+          error: 'Backfill failed'
         }, 500);
       }
     }
@@ -518,7 +516,7 @@ function jsonResponse(data, status = 200) {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': process.env.CORS_ADMIN_ORIGIN || 'https://ztas.io'
     }
   });
 }

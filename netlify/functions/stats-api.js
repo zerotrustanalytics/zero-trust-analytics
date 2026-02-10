@@ -247,8 +247,9 @@ function applyFilters(data, filters) {
 
     for (const filter of filters) {
       if (filter.operator === '==' && filter.value.includes('*')) {
-        // Wildcard match
-        const pattern = filter.value.replace(/\*/g, '.*');
+        // Wildcard match - escape regex metacharacters first to prevent ReDoS
+        const escaped = filter.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = escaped.replace(/\\\*/g, '.*');
         const regex = new RegExp(`^${pattern}$`);
         if (!regex.test(key)) {
           matches = false;

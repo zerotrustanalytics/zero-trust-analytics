@@ -998,16 +998,22 @@ async function getTeamsForUser(userId) {
  * Update team
  */
 async function updateTeam(teamId, updates) {
+  const ALLOWED_COLUMNS = ['name', 'plan', 'status', 'stripe_customer_id', 'stripe_subscription_id', 'monthly_limit'];
   const fields = [];
   const args = [];
 
   for (const [key, value] of Object.entries(updates)) {
     // Map camelCase to snake_case
     const dbField = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    if (!ALLOWED_COLUMNS.includes(dbField)) {
+      console.warn(`[turso] updateTeam: rejected invalid column "${dbField}"`);
+      continue;
+    }
     fields.push(`${dbField} = ?`);
     args.push(value);
   }
 
+  if (fields.length === 0) return;
   fields.push('updated_at = ?');
   args.push(new Date().toISOString());
   args.push(teamId);

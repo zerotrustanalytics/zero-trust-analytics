@@ -1,9 +1,17 @@
 import { debugGetCount, debugGetRecent } from './lib/turso.js';
 
 export default async function handler(req, context) {
-  // Simple auth
+  // Auth check - require INIT_DB_SECRET env var (no default fallback)
+  const expectedSecret = process.env.INIT_DB_SECRET;
+  if (!expectedSecret) {
+    return new Response(JSON.stringify({ error: 'Debug endpoint not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   const authHeader = req.headers.get('x-init-secret');
-  if (authHeader !== (process.env.INIT_DB_SECRET || 'init-secret-change-me')) {
+  if (authHeader !== expectedSecret) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
@@ -12,7 +20,13 @@ export default async function handler(req, context) {
 
   try {
     const url = new URL(req.url);
-    const siteId = url.searchParams.get('siteId') || 'site_577f4b1efc8b5758';
+    const siteId = url.searchParams.get('siteId');
+    if (!siteId) {
+      return new Response(JSON.stringify({ error: 'siteId parameter required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const [count, recent] = await Promise.all([
       debugGetCount(siteId),
@@ -29,9 +43,9 @@ export default async function handler(req, context) {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (err) {
+    console.error('[debug] Error:', err.message, err.stack);
     return new Response(JSON.stringify({
-      error: err.message,
-      stack: err.stack
+      error: 'Internal server error'
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

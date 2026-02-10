@@ -196,24 +196,22 @@ export function verifyToken(token, user = null) {
 }
 
 // SECURITY: Generate CSRF token tied to user session
-// CSRF tokens are session-specific and prevent cross-site request forgery
+// Token is self-verifying: HMAC(userId:timestamp, secret) with no random component
 export function generateCSRFToken(userId) {
   if (!JWT_SECRET) {
     throw new Error('JWT_SECRET is not configured');
   }
 
-  // Create a hash of userId + secret + timestamp for uniqueness
   const timestamp = Date.now();
-  const data = `${userId}:${timestamp}:${crypto.randomBytes(16).toString('hex')}`;
+  const data = `csrf:${userId}:${timestamp}`;
   const hash = crypto.createHmac('sha256', JWT_SECRET)
     .update(data)
     .digest('hex');
 
-  // Return token that includes timestamp and hash (format: timestamp.hash)
   return `${timestamp}.${hash}`;
 }
 
-// SECURITY: Validate CSRF token
+// SECURITY: Validate CSRF token by recomputing the HMAC
 // Token format: timestamp.hash
 // Tokens are valid for 24 hours
 export function validateCSRFToken(token, userId) {
@@ -240,16 +238,20 @@ export function validateCSRFToken(token, userId) {
     return false;
   }
 
-  // Note: We can't fully validate the hash without the random component
-  // But we can check if it's a valid hex string of correct length
-  if (!/^[a-f0-9]{64}$/.test(hash)) {
+  // Recompute the expected HMAC and compare using timing-safe comparison
+  const expectedData = `csrf:${userId}:${timestamp}`;
+  const expectedHash = crypto.createHmac('sha256', JWT_SECRET)
+    .update(expectedData)
+    .digest('hex');
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(hash, 'hex'),
+      Buffer.from(expectedHash, 'hex')
+    );
+  } catch (e) {
     return false;
   }
-
-  // In a production system, you would store the CSRF token in a session store
-  // and validate against that. For this implementation, we're using a simpler
-  // approach where the token is self-contained.
-  return true;
 }
 
 // Extract token from Authorization header

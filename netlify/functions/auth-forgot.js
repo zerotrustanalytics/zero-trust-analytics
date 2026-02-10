@@ -23,7 +23,7 @@ export default async function handler(req, context) {
   // Rate limit by IP - strict limit for password reset (3 per minute)
   const ip = context?.ip || req.headers.get?.('x-forwarded-for')?.split(',')[0] || 'unknown';
   const rateLimitKey = hashIP(ip);
-  const rateLimit = checkRateLimit(rateLimitKey, { limit: 3, windowMs: 60000 });
+  const rateLimit = await checkRateLimit(rateLimitKey, { limit: 3, windowMs: 60000 });
 
   if (!rateLimit.allowed) {
     logger.warn('Password reset rate limit exceeded');

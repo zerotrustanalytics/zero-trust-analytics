@@ -18,6 +18,10 @@ Thumbs.db
 # Local Netlify folder
 .netlify
 
+# Environment files (catch-all, allowlist .env.example)
+**/.env
+!.env.example
+
 # Docker
 docker/.env
 docker/certbot/

@@ -571,7 +571,8 @@ async function exportData(siteId, startDate, endDate, type = 'pageviews', limit 
 async function migrateExistingData(siteId = null) {
   console.log('[turso] Starting migration...');
 
-  const whereClause = siteId ? `WHERE site_id = '${siteId}'` : '';
+  const whereClause = siteId ? 'WHERE site_id = ?' : '';
+  const whereArgs = siteId ? [siteId] : [];
 
   // 1. Add new columns if they don't exist (safe to run multiple times)
   const newColumns = [
@@ -596,8 +597,8 @@ async function migrateExistingData(siteId = null) {
   }
 
   // 2. Populate denormalized columns from existing payload
-  await turso.execute(`
-    UPDATE pageviews SET
+  await turso.execute({
+    sql: `UPDATE pageviews SET
       page_path = JSON_EXTRACT(payload, '$.page_path'),
       referrer_domain = JSON_EXTRACT(payload, '$.referrer_domain'),
       utm_source = JSON_EXTRACT(payload, '$.utm_source'),
@@ -606,8 +607,9 @@ async function migrateExistingData(siteId = null) {
       utm_content = JSON_EXTRACT(payload, '$.utm_content'),
       utm_term = JSON_EXTRACT(payload, '$.utm_term'),
       city = JSON_EXTRACT(payload, '$.city')
-    ${whereClause}
-  `);
+    ${whereClause}`,
+    args: whereArgs
+  });
   console.log('[turso] Updated denormalized columns');
 
   // 3. Rebuild rollup tables
@@ -620,7 +622,8 @@ async function migrateExistingData(siteId = null) {
  * Rebuild rollup tables from pageviews data
  */
 async function rebuildRollups(siteId = null) {
-  const whereClause = siteId ? `AND site_id = '${siteId}'` : '';
+  const whereClause = siteId ? 'AND site_id = ?' : '';
+  const whereArgs = siteId ? [siteId] : [];
 
   // Clear existing rollups for this site
   if (siteId) {
@@ -633,8 +636,8 @@ async function rebuildRollups(siteId = null) {
   }
 
   // Rebuild daily rollups
-  await turso.execute(`
-    INSERT INTO daily_rollups (site_id, date, pageviews, unique_visitors, sessions, updated_at)
+  await turso.execute({
+    sql: `INSERT INTO daily_rollups (site_id, date, pageviews, unique_visitors, sessions, updated_at)
     SELECT site_id, DATE(timestamp) as date,
            COUNT(*) as pageviews,
            COUNT(DISTINCT identity_hash) as unique_visitors,
@@ -647,12 +650,13 @@ async function rebuildRollups(siteId = null) {
       pageviews = excluded.pageviews,
       unique_visitors = excluded.unique_visitors,
       sessions = excluded.sessions,
-      updated_at = excluded.updated_at
-  `);
+      updated_at = excluded.updated_at`,
+    args: [...whereArgs]
+  });
 
   // Rebuild page rollups
-  await turso.execute(`
-    INSERT INTO page_rollups (site_id, date, page_path, views, visitors)
+  await turso.execute({
+    sql: `INSERT INTO page_rollups (site_id, date, page_path, views, visitors)
     SELECT site_id, DATE(timestamp) as date, page_path,
            COUNT(*) as views,
            COUNT(DISTINCT identity_hash) as visitors
@@ -661,18 +665,20 @@ async function rebuildRollups(siteId = null) {
     GROUP BY site_id, DATE(timestamp), page_path
     ON CONFLICT(site_id, date, page_path) DO UPDATE SET
       views = excluded.views,
-      visitors = excluded.visitors
-  `);
+      visitors = excluded.visitors`,
+    args: [...whereArgs]
+  });
 
   // Rebuild dimension rollups
+  // Note: dimension/column names are hardcoded constants, not user input
   const dimensions = ['context_device:device', 'context_browser:browser', 'context_os:os',
                       'context_country:country', 'context_region:region', 'city:city', 'referrer_domain:referrer'];
 
   for (const dim of dimensions) {
     const [col, type] = dim.split(':');
-    await turso.execute(`
-      INSERT INTO dimension_rollups (site_id, date, dimension_type, dimension_value, views, visitors)
-      SELECT site_id, DATE(timestamp) as date, '${type}', ${col},
+    await turso.execute({
+      sql: `INSERT INTO dimension_rollups (site_id, date, dimension_type, dimension_value, views, visitors)
+      SELECT site_id, DATE(timestamp) as date, ?, ${col},
              COUNT(*) as views,
              COUNT(DISTINCT identity_hash) as visitors
       FROM pageviews
@@ -680,19 +686,21 @@ async function rebuildRollups(siteId = null) {
       GROUP BY site_id, DATE(timestamp), ${col}
       ON CONFLICT(site_id, date, dimension_type, dimension_value) DO UPDATE SET
         views = excluded.views,
-        visitors = excluded.visitors
-    `);
+        visitors = excluded.visitors`,
+      args: [type, ...whereArgs]
+    });
   }
 
   // Rebuild UTM rollups
+  // Note: utm column/type names are hardcoded constants, not user input
   const utmFields = ['utm_source:source', 'utm_medium:medium', 'utm_campaign:campaign',
                      'utm_content:content', 'utm_term:term'];
 
   for (const utm of utmFields) {
     const [col, type] = utm.split(':');
-    await turso.execute(`
-      INSERT INTO utm_rollups (site_id, date, utm_type, utm_value, views, visitors)
-      SELECT site_id, DATE(timestamp) as date, '${type}', ${col},
+    await turso.execute({
+      sql: `INSERT INTO utm_rollups (site_id, date, utm_type, utm_value, views, visitors)
+      SELECT site_id, DATE(timestamp) as date, ?, ${col},
              COUNT(*) as views,
              COUNT(DISTINCT identity_hash) as visitors
       FROM pageviews
@@ -700,8 +708,9 @@ async function rebuildRollups(siteId = null) {
       GROUP BY site_id, DATE(timestamp), ${col}
       ON CONFLICT(site_id, date, utm_type, utm_value) DO UPDATE SET
         views = excluded.views,
-        visitors = excluded.visitors
-    `);
+        visitors = excluded.visitors`,
+      args: [type, ...whereArgs]
+    });
   }
 
   console.log('[turso] Rollups rebuilt');
@@ -757,12 +766,19 @@ async function getTeamsForUser(userId) {
 }
 
 async function updateTeam(teamId, updates) {
+  const ALLOWED_COLUMNS = ['name', 'plan', 'status', 'stripe_customer_id', 'stripe_subscription_id', 'monthly_limit'];
   const fields = [];
   const args = [];
   for (const [key, value] of Object.entries(updates)) {
-    fields.push(`${key.replace(/([A-Z])/g, '_$1').toLowerCase()} = ?`);
+    const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    if (!ALLOWED_COLUMNS.includes(snakeKey)) {
+      console.warn(`[turso] updateTeam: rejected invalid column "${snakeKey}"`);
+      continue;
+    }
+    fields.push(`${snakeKey} = ?`);
     args.push(value);
   }
+  if (fields.length === 0) return;
   fields.push('updated_at = ?');
   args.push(new Date().toISOString());
   args.push(teamId);

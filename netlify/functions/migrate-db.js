@@ -22,10 +22,16 @@ export default async function handler(req, context) {
     });
   }
 
-  // Verify migration key (add MIGRATION_SECRET to your env vars)
-  const migrationKey = req.headers.get('x-migration-key');
-  const expectedKey = process.env.MIGRATION_SECRET || 'migrate-ztas-2024';
+  // Verify migration key - no default fallback, fail closed
+  const expectedKey = process.env.MIGRATION_SECRET;
+  if (!expectedKey) {
+    return new Response(JSON.stringify({ error: 'MIGRATION_SECRET not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
+  const migrationKey = req.headers.get('x-migration-key');
   if (migrationKey !== expectedKey) {
     return new Response(JSON.stringify({ error: 'Unauthorized - invalid migration key' }), {
       status: 401,
@@ -83,10 +89,11 @@ export default async function handler(req, context) {
     if (action === 'full' || action === 'denormalize') {
       console.log('[migrate-db] Step 3: Populating denormalized columns...');
 
-      const whereClause = siteId ? `WHERE site_id = '${siteId}'` : '';
+      const whereClause = siteId ? 'WHERE site_id = ?' : '';
+      const whereArgs = siteId ? [siteId] : [];
 
-      await turso.execute(`
-        UPDATE pageviews SET
+      await turso.execute({
+        sql: `UPDATE pageviews SET
           page_path = COALESCE(page_path, JSON_EXTRACT(payload, '$.page_path')),
           referrer_domain = COALESCE(referrer_domain, JSON_EXTRACT(payload, '$.referrer_domain')),
           utm_source = COALESCE(utm_source, JSON_EXTRACT(payload, '$.utm_source')),
@@ -95,8 +102,9 @@ export default async function handler(req, context) {
           utm_content = COALESCE(utm_content, JSON_EXTRACT(payload, '$.utm_content')),
           utm_term = COALESCE(utm_term, JSON_EXTRACT(payload, '$.utm_term')),
           city = COALESCE(city, JSON_EXTRACT(payload, '$.city'))
-        ${whereClause}
-      `);
+        ${whereClause}`,
+        args: whereArgs
+      });
       results.steps.push({ step: 'denormalize', status: 'completed' });
     }
 
@@ -132,9 +140,7 @@ export default async function handler(req, context) {
     console.error('[migrate-db] Migration failed:', error);
 
     return new Response(JSON.stringify({
-      error: 'Migration failed',
-      message: error.message,
-      stack: error.stack
+      error: 'Migration failed'
     }, null, 2), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
