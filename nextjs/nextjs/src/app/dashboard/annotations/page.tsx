@@ -169,7 +169,7 @@ export default function AnnotationsPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            id: editingAnnotation.id,
+            annotationId: editingAnnotation.id,
             siteId: selectedSiteId,
             title,
             description,

@@ -2090,7 +2090,7 @@ export async function updateAnnotation(annotationId, userId, updates) {
     return null;
   }
 
-  const allowedUpdates = ['title', 'description', 'color', 'icon', 'date'];
+  const allowedUpdates = ['title', 'description', 'color', 'icon', 'date', 'category'];
   for (const key of allowedUpdates) {
     if (updates[key] !== undefined) {
       annotation[key] = updates[key];
