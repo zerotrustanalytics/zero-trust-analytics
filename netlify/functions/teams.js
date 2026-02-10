@@ -1,6 +1,7 @@
 import { authenticateRequest } from './lib/auth.js';
 import {
   getUser,
+  getUserById,
   createTeam,
   getTeam,
   updateTeam,
@@ -62,11 +63,38 @@ export default async function handler(req, context) {
         }
 
         const team = await getTeam(teamId);
-        const members = await getTeamMembers(teamId);
+        const rawMembers = await getTeamMembers(teamId);
         const invites = role === TeamRoles.OWNER || role === TeamRoles.ADMIN
           ? await getTeamInvites(teamId)
           : [];
         const sites = await getTeamSites(teamId);
+
+        // Enrich members with user profile data
+        const members = await Promise.all(rawMembers.map(async (member) => {
+          const enriched = { ...member };
+
+          // Owner is always active
+          if (member.role === TeamRoles.OWNER) {
+            enriched.status = 'active';
+          } else {
+            enriched.status = enriched.status || 'active';
+          }
+
+          // Look up user profile for name/email if missing
+          if (!member.name || !member.email) {
+            try {
+              const userProfile = member.userId ? await getUserById(member.userId) : null;
+              if (userProfile) {
+                if (!enriched.name) enriched.name = userProfile.name || null;
+                if (!enriched.email) enriched.email = userProfile.email || null;
+              }
+            } catch (e) {
+              // Profile lookup failed, continue with stored data
+            }
+          }
+
+          return enriched;
+        }));
 
         return new Response(JSON.stringify({
           team,
