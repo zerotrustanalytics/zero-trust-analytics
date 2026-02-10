@@ -2041,6 +2041,7 @@ export async function createAnnotation(siteId, userId, config) {
     description: config.description || '',
     color: config.color || '#0d6efd', // Bootstrap primary blue
     icon: config.icon || 'star', // star, rocket, megaphone, flag, bug, etc.
+    category: config.category || 'other', // release, campaign, incident, other
     createdAt: new Date().toISOString()
   };
 

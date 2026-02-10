@@ -71,7 +71,7 @@ export default async function handler(req, context) {
   if (req.method === 'POST') {
     try {
       const body = await req.json();
-      const { siteId, date, title, description, color, icon } = body;
+      const { siteId, date, title, description, color, icon, category } = body;
 
       if (!siteId || !date) {
         return new Response(JSON.stringify({ error: 'Site ID and date required' }), {
@@ -102,7 +102,8 @@ export default async function handler(req, context) {
         title: title || 'Event',
         description: description || '',
         color: color || '#0d6efd',
-        icon: icon || 'star'
+        icon: icon || 'star',
+        category: category || 'other'
       });
 
       return new Response(JSON.stringify({ annotation }), {

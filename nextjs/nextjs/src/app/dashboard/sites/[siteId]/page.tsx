@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, JSX } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { format, parseISO, subDays } from 'date-fns'
 
 // Types
@@ -636,6 +636,14 @@ export default function SiteDetailsPage() {
   const [drilldownSource, setDrilldownSource] = useState<string | null>(null)
   const [locationTab, setLocationTab] = useState<'countries' | 'regions' | 'cities'>('countries')
   const [techTab, setTechTab] = useState<'browsers' | 'os' | 'devices'>('browsers')
+  const [annotations, setAnnotations] = useState<Array<{ id: string; title: string; date: string; category: string }>>([])
+
+  const annotationCategoryColors: Record<string, string> = {
+    release: '#10B981',
+    campaign: '#3B82F6',
+    incident: '#EF4444',
+    other: '#9CA3AF',
+  }
 
   const getPeriodDays = (p: string) => {
     switch (p) {
@@ -662,7 +670,7 @@ export default function SiteDetailsPage() {
       const prevEndDate = subDays(now, days)
       const prevStartDate = subDays(now, days * 2)
 
-      const [siteRes, statsRes, prevStatsRes, realtimeRes] = await Promise.all([
+      const [siteRes, statsRes, prevStatsRes, realtimeRes, annotationsRes] = await Promise.all([
         fetch(`${apiUrl}/api/sites/list`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
@@ -673,6 +681,9 @@ export default function SiteDetailsPage() {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
         fetch(`${apiUrl}/api/realtime?siteId=${siteId}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`${apiUrl}/api/annotations?siteId=${siteId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
       ])
@@ -697,6 +708,10 @@ export default function SiteDetailsPage() {
       if (statsRes.ok) setStats(statsData)
       if (prevStatsData) setPrevStats(prevStatsData)
       if (realtimeData) setRealtime(realtimeData)
+      if (annotationsRes.ok) {
+        const annotationsData = await annotationsRes.json()
+        setAnnotations(annotationsData.annotations || [])
+      }
     } catch {
       setError('Failed to load site data')
     } finally {
@@ -1106,6 +1121,31 @@ export default function SiteDetailsPage() {
                   strokeWidth={2}
                   dot={{ fill: showCumulative ? '#10B981' : '#3B82F6', r: 3 }}
                 />
+                {annotations
+                  .filter(a => {
+                    const label = format(new Date(a.date + 'T12:00:00'), 'MMM d')
+                    return chartData.some(d => d.formattedDate === label)
+                  })
+                  .map(a => {
+                    const label = format(new Date(a.date + 'T12:00:00'), 'MMM d')
+                    const color = annotationCategoryColors[a.category] || annotationCategoryColors.other
+                    return (
+                      <ReferenceLine
+                        key={a.id}
+                        x={label}
+                        stroke={color}
+                        strokeDasharray="4 3"
+                        strokeWidth={1.5}
+                        label={{
+                          value: a.title.length > 16 ? a.title.slice(0, 15) + '…' : a.title,
+                          position: 'top',
+                          fill: color,
+                          fontSize: 10,
+                          fontWeight: 500,
+                        }}
+                      />
+                    )
+                  })}
               </LineChart>
             </ResponsiveContainer>
           ) : (
