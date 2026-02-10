@@ -1,6 +1,5 @@
 import { authenticateRequest } from './lib/auth.js';
 import {
-  getUser,
   getUserById,
   createTeam,
   getTeam,
@@ -177,7 +176,7 @@ export default async function handler(req, context) {
 
         // Check team member limit based on team owner's plan
         const team = await getTeam(teamId);
-        const teamOwner = await getUser(team.ownerEmail || userEmail);
+        const teamOwner = await getUserById(team.ownerId);
         const plan = teamOwner?.plan || 'free';
         const memberLimit = Config.pricing.teamMemberLimits[plan] || Config.pricing.teamMemberLimits.free;
         const currentMembers = await getTeamMembers(teamId);
