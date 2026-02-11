@@ -3,7 +3,8 @@
 import { SidebarProvider } from './SidebarContext'
 import { UsageProvider } from './UsageContext'
 import { PlanProvider } from './PlanContext'
-import { Sidebar } from './Sidebar'
+import { SiteProvider } from './SiteContext'
+import { SidebarSwitcher } from './SidebarSwitcher'
 import { MainContent } from './MainContent'
 
 interface DashboardShellProps {
@@ -13,14 +14,16 @@ interface DashboardShellProps {
 export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <SidebarProvider>
-      <UsageProvider>
-        <PlanProvider>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Sidebar />
-            <MainContent>{children}</MainContent>
-          </div>
-        </PlanProvider>
-      </UsageProvider>
+      <SiteProvider>
+        <UsageProvider>
+          <PlanProvider>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+              <SidebarSwitcher />
+              <MainContent>{children}</MainContent>
+            </div>
+          </PlanProvider>
+        </UsageProvider>
+      </SiteProvider>
     </SidebarProvider>
   )
 }

@@ -5,7 +5,9 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { format, parseISO, subDays } from 'date-fns'
+import { format, subDays } from 'date-fns'
+import { useSiteContext } from '@/components/dashboard/SiteContext'
+import { ShareModal } from '@/components/dashboard/ShareModal'
 
 // Types
 interface Summary {
@@ -610,6 +612,7 @@ export default function SiteDetailsPage() {
   const params = useParams()
   const siteId = params.siteId as string
   const { getToken } = useAuth()
+  const { setActiveSite, setOnShareClick, setOnExportClick } = useSiteContext()
 
   const [site, setSite] = useState<Site | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
@@ -625,27 +628,10 @@ export default function SiteDetailsPage() {
   const [trafficTab, setTrafficTab] = useState<'channels' | 'sources'>('channels')
   const [utmTab, setUtmTab] = useState<'sources' | 'mediums' | 'campaigns'>('sources')
   const [showShareModal, setShowShareModal] = useState(false)
-  const [shareUrl, setShareUrl] = useState('')
-  const [shareCopied, setShareCopied] = useState(false)
-  const [shareTab, setShareTab] = useState<'link' | 'embed'>('link')
-  const [embedCopied, setEmbedCopied] = useState(false)
-  const [shareLoading, setShareLoading] = useState(false)
-  const [shareExpiry, setShareExpiry] = useState('30d')
-  const [existingShares, setExistingShares] = useState<Array<{token: string, shareUrl: string, expiresAt: string | null, createdAt: string}>>([])
-  const [sharesLoaded, setSharesLoaded] = useState(false)
   const [drilldownSource, setDrilldownSource] = useState<string | null>(null)
   const [locationTab, setLocationTab] = useState<'countries' | 'regions' | 'cities'>('countries')
   const [techTab, setTechTab] = useState<'browsers' | 'os' | 'devices'>('browsers')
   const [annotations, setAnnotations] = useState<Array<{ id: string; title: string; date: string; category: string }>>([])
-
-  // Danger zone state
-  const [dangerOpen, setDangerOpen] = useState(false)
-  const [deleteRangeStart, setDeleteRangeStart] = useState('')
-  const [deleteRangeEnd, setDeleteRangeEnd] = useState('')
-  const [purgeConfirmText, setPurgeConfirmText] = useState('')
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  const [deleteResult, setDeleteResult] = useState<{ message: string; success: boolean } | null>(null)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<'range' | 'all' | null>(null)
 
   const annotationCategoryColors: Record<string, string> = {
     release: '#10B981',
@@ -751,141 +737,25 @@ export default function SiteDetailsPage() {
     return () => clearInterval(interval)
   }, [getToken, siteId])
 
-  // Fetch existing shares for this site
-  const fetchShares = useCallback(async () => {
-    try {
-      const token = await getToken()
-      if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      const res = await fetch(`${apiUrl}/api/sites/share?siteId=${siteId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setExistingShares(data.shares || [])
-      }
-      setSharesLoaded(true)
-    } catch {
-      setSharesLoaded(true)
+  // Register with SiteContext for sidebar
+  useEffect(() => {
+    if (site) {
+      setActiveSite({ id: site.id, name: site.name, domain: site.domain })
     }
-  }, [getToken, siteId])
+    return () => setActiveSite(null)
+  }, [site, setActiveSite])
 
-  // Create a new share link
-  const createShare = async () => {
-    setShareLoading(true)
-    try {
-      const token = await getToken()
-      if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+  // Keep share callback fresh
+  useEffect(() => {
+    setOnShareClick(() => setShowShareModal(true))
+    return () => setOnShareClick(null)
+  }, [setOnShareClick])
 
-      // Get CSRF token from cookie
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''
-
-      const res = await fetch(`${apiUrl}/api/sites/share`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          siteId,
-          expiresIn: shareExpiry === 'never' ? null : shareExpiry,
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setShareUrl(data.shareUrl)
-        setExistingShares(prev => [data.share, ...prev])
-      } else {
-        const data = await res.json()
-        console.error('Failed to create share:', data.error)
-      }
-    } catch (err) {
-      console.error('Failed to create share:', err)
-    } finally {
-      setShareLoading(false)
-    }
-  }
-
-  // Delete a share link
-  const deleteShare = async (shareToken: string) => {
-    try {
-      const token = await getToken()
-      if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-
-      // Get CSRF token from cookie
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''
-
-      const res = await fetch(`${apiUrl}/api/sites/share?token=${shareToken}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken,
-        },
-        credentials: 'include',
-      })
-
-      if (res.ok) {
-        setExistingShares(prev => prev.filter(s => s.token !== shareToken))
-        if (shareUrl.includes(shareToken)) {
-          setShareUrl('')
-        }
-      }
-    } catch (err) {
-      console.error('Failed to delete share:', err)
-    }
-  }
-
-  // Delete site analytics data
-  const handleDeleteData = async (mode: 'range' | 'all') => {
-    setDeleteLoading(true)
-    setDeleteResult(null)
-    try {
-      const token = await getToken()
-      if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''
-
-      const body: Record<string, string> = { siteId, mode }
-      if (mode === 'range') {
-        body.startDate = deleteRangeStart
-        body.endDate = deleteRangeEnd
-      }
-
-      const res = await fetch(`${apiUrl}/api/sites/data/delete`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        credentials: 'include',
-        body: JSON.stringify(body),
-      })
-
-      const data = await res.json()
-      if (res.ok) {
-        setDeleteResult({ message: data.message, success: true })
-        setShowDeleteConfirm(null)
-        setPurgeConfirmText('')
-        setDeleteRangeStart('')
-        setDeleteRangeEnd('')
-        // Refresh dashboard data
-        setLoading(true)
-        fetchSiteAndStats()
-      } else {
-        setDeleteResult({ message: data.error || 'Deletion failed', success: false })
-      }
-    } catch {
-      setDeleteResult({ message: 'Failed to delete data. Please try again.', success: false })
-    } finally {
-      setDeleteLoading(false)
-    }
-  }
+  // Keep export callback fresh with current data
+  useEffect(() => {
+    setOnExportClick(() => exportToCSV(stats, site, period))
+    return () => setOnExportClick(null)
+  }, [stats, site, period, setOnExportClick])
 
   const calcChange = (current: number, previous: number): number | undefined => {
     if (!previous || previous === 0) return undefined
@@ -1004,53 +874,6 @@ export default function SiteDetailsPage() {
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
           </select>
-          <button
-            onClick={() => {
-              setShowShareModal(true)
-              setShareCopied(false)
-              if (!sharesLoaded) {
-                fetchShares()
-              }
-            }}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
-            title="Share Dashboard"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            Share
-          </button>
-          <button
-            onClick={() => exportToCSV(stats, site, period)}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
-            title="Export to CSV"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Export
-          </button>
-          <Link
-            href={`/dashboard/sites/${siteId}/conversion-rules`}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
-            title="Conversion Rules"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Rules
-          </Link>
-          <Link
-            href={`/dashboard/sites/${siteId}/page-values`}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
-            title="Page Value Rules"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Values
-          </Link>
           <button
             onClick={() => { setLoading(true); fetchSiteAndStats() }}
             className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm"
@@ -1581,388 +1404,13 @@ export default function SiteDetailsPage() {
         </div>
       )}
 
-      {/* Danger Zone */}
-      <div className="mt-8 border border-red-300 dark:border-red-800 rounded-lg overflow-hidden">
-        <button
-          onClick={() => setDangerOpen(!dangerOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition"
-        >
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <span className="font-semibold text-red-700 dark:text-red-400">Danger Zone</span>
-          </div>
-          <svg className={`w-5 h-5 text-red-600 dark:text-red-400 transition-transform ${dangerOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {dangerOpen && (
-          <div className="p-4 space-y-6 bg-white dark:bg-gray-800">
-            {/* Result banner */}
-            {deleteResult && (
-              <div className={`px-4 py-3 rounded-lg text-sm ${
-                deleteResult.success
-                  ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
-                  : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-              }`}>
-                {deleteResult.message}
-              </div>
-            )}
-
-            {/* Delete by date range */}
-            <div>
-              <h4 className="font-medium text-sm mb-1">Delete data by date range</h4>
-              <p className="text-xs text-muted-foreground mb-3">Remove analytics data for a specific period (e.g., test or junk data).</p>
-              <div className="flex flex-wrap gap-2 items-end">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Start date</label>
-                  <input
-                    type="date"
-                    value={deleteRangeStart}
-                    onChange={(e) => setDeleteRangeStart(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">End date</label>
-                  <input
-                    type="date"
-                    value={deleteRangeEnd}
-                    onChange={(e) => setDeleteRangeEnd(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm"
-                  />
-                </div>
-                <button
-                  onClick={() => setShowDeleteConfirm('range')}
-                  disabled={!deleteRangeStart || !deleteRangeEnd || deleteRangeStart > deleteRangeEnd}
-                  className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  Delete Range
-                </button>
-              </div>
-            </div>
-
-            <hr className="border-gray-200 dark:border-gray-700" />
-
-            {/* Purge all data */}
-            <div>
-              <h4 className="font-medium text-sm mb-1">Purge all analytics data</h4>
-              <p className="text-xs text-muted-foreground mb-3">
-                Permanently delete <strong>all</strong> pageviews, rollups, and usage data for this site. This cannot be undone.
-              </p>
-              <div className="flex flex-wrap gap-2 items-end">
-                <div className="flex-1 min-w-[200px]">
-                  <label className="block text-xs text-muted-foreground mb-1">
-                    Type <strong>{site?.domain}</strong> to confirm
-                  </label>
-                  <input
-                    type="text"
-                    value={purgeConfirmText}
-                    onChange={(e) => setPurgeConfirmText(e.target.value)}
-                    placeholder={site?.domain || ''}
-                    className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm"
-                  />
-                </div>
-                <button
-                  onClick={() => setShowDeleteConfirm('all')}
-                  disabled={purgeConfirmText !== site?.domain}
-                  className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  Purge All Data
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => !deleteLoading && setShowDeleteConfirm(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-            <div className="p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
-                  <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold">
-                  {showDeleteConfirm === 'all' ? 'Purge All Data' : 'Delete Date Range'}
-                </h3>
-              </div>
-
-              <p className="text-sm text-muted-foreground mb-2">
-                {showDeleteConfirm === 'all'
-                  ? `This will permanently delete ALL analytics data for ${site?.domain}. This action cannot be undone.`
-                  : `This will permanently delete analytics data from ${deleteRangeStart} to ${deleteRangeEnd}. This action cannot be undone.`
-                }
-              </p>
-
-              <p className="text-sm text-muted-foreground mb-4">
-                The following tables will be affected: pageviews, daily rollups, page rollups, dimension rollups, UTM rollups, and monthly usage.
-              </p>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setShowDeleteConfirm(null)}
-                  disabled={deleteLoading}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDeleteData(showDeleteConfirm)}
-                  disabled={deleteLoading}
-                  className="px-4 py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 flex items-center gap-2"
-                >
-                  {deleteLoading && (
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                  {deleteLoading ? 'Deleting...' : 'Delete Permanently'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Share Modal */}
-      {showShareModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold">Share Dashboard</h3>
-              <button
-                onClick={() => setShowShareModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setShareTab('link')}
-                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition ${
-                  shareTab === 'link'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                  Share Link
-                </div>
-              </button>
-              <button
-                onClick={() => setShareTab('embed')}
-                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition ${
-                  shareTab === 'embed'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                  Embed Code
-                </div>
-              </button>
-            </div>
-
-            <div className="p-4">
-              {shareTab === 'link' ? (
-                <>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Create a shareable link to give others read-only access to this dashboard.
-                  </p>
-
-                  {/* Create New Share */}
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg mb-4">
-                    <label className="block text-sm font-medium mb-2">Link Expiration</label>
-                    <div className="flex gap-2">
-                      <select
-                        value={shareExpiry}
-                        onChange={(e) => setShareExpiry(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
-                      >
-                        <option value="1d">1 day</option>
-                        <option value="7d">7 days</option>
-                        <option value="30d">30 days</option>
-                        <option value="90d">90 days</option>
-                        <option value="never">Never expires</option>
-                      </select>
-                      <button
-                        onClick={createShare}
-                        disabled={shareLoading}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
-                      >
-                        {shareLoading ? (
-                          <>
-                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Creating...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Create Link
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Current Share URL */}
-                  {shareUrl && (
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-2">Share URL</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={shareUrl}
-                          readOnly
-                          className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm font-mono text-xs"
-                        />
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(shareUrl)
-                            setShareCopied(true)
-                            setTimeout(() => setShareCopied(false), 2000)
-                          }}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                            shareCopied
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-primary text-primary-foreground hover:opacity-90'
-                          }`}
-                        >
-                          {shareCopied ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Existing Shares */}
-                  {existingShares.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Active Share Links</label>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {existingShares.map((share) => (
-                          <div key={share.token} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded-lg text-xs">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-mono truncate">{share.shareUrl || `https://ztas.io/shared/${share.token}`}</p>
-                              <p className="text-muted-foreground">
-                                {share.expiresAt
-                                  ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}`
-                                  : 'Never expires'}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => deleteShare(share.token)}
-                              className="ml-2 p-1 text-red-500 hover:text-red-700 dark:hover:text-red-400"
-                              title="Revoke this link"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-4">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Anyone with this link can view the analytics. Revoke anytime.</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Embed your analytics dashboard on your website or blog. Create a share link first, then use the embed code.
-                  </p>
-
-                  {shareUrl ? (
-                    <>
-                      <div className="mb-4">
-                        <textarea
-                          readOnly
-                          value={`<iframe
-  src="${shareUrl}"
-  width="100%"
-  height="600"
-  frameborder="0"
-  style="border: 1px solid #e5e7eb; border-radius: 8px;"
-  title="Analytics Dashboard - ${site?.domain || ''}"
-></iframe>`}
-                          className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm font-mono text-xs h-32 resize-none"
-                        />
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          const embedCode = `<iframe src="${shareUrl}" width="100%" height="600" frameborder="0" style="border: 1px solid #e5e7eb; border-radius: 8px;" title="Analytics Dashboard - ${site?.domain || ''}"></iframe>`
-                          navigator.clipboard.writeText(embedCode)
-                          setEmbedCopied(true)
-                          setTimeout(() => setEmbedCopied(false), 2000)
-                        }}
-                        className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition ${
-                          embedCopied
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-primary text-primary-foreground hover:opacity-90'
-                        }`}
-                      >
-                        {embedCopied ? 'Embed Code Copied!' : 'Copy Embed Code'}
-                      </button>
-
-                      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                        <p className="text-xs font-medium mb-2">Customization Options:</p>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          <li>- Adjust <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">width</code> and <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">height</code> to fit your layout</li>
-                          <li>- Add <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">?theme=dark</code> to the URL for dark mode</li>
-                          <li>- Add <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">?minimal=true</code> for a compact view</li>
-                        </ul>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-8">
-                      <svg className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                      <p className="text-sm text-muted-foreground mb-3">Create a share link first to get the embed code.</p>
-                      <button
-                        onClick={() => setShareTab('link')}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
-                      >
-                        Create Share Link
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        siteId={siteId}
+        siteDomain={site?.domain || ''}
+      />
     </div>
   )
 }

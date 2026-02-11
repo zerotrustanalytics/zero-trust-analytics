@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
+import { useSiteContext } from '@/components/dashboard/SiteContext'
 
 interface PageValueRule {
   id: string
@@ -42,6 +43,7 @@ function formatCurrency(value: number, currency: string): string {
 export default function PageValuesPage() {
   const params = useParams()
   const { getToken } = useAuth()
+  const { setActiveSite } = useSiteContext()
   const siteId = params.siteId as string
 
   const [rules, setRules] = useState<PageValueRule[]>([])
@@ -50,6 +52,27 @@ export default function PageValuesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Register with SiteContext for sidebar
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const token = await getToken()
+        if (!token || cancelled) return
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+        const res = await fetch(`${apiUrl}/api/sites/list`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        })
+        if (res.ok && !cancelled) {
+          const data = await res.json()
+          const site = data.sites?.find((s: { id: string }) => s.id === siteId)
+          if (site) setActiveSite({ id: site.id, name: site.name, domain: site.domain })
+        }
+      } catch {}
+    })()
+    return () => { cancelled = true; setActiveSite(null) }
+  }, [getToken, siteId, setActiveSite])
 
   // Modal state
   const [showModal, setShowModal] = useState(false)

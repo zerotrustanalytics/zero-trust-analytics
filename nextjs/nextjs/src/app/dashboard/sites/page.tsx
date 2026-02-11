@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { AddSiteModal } from '@/components/dashboard/AddSiteModal'
-import { ConfirmModal } from '@/components/ui'
 import { usePlan } from '@/components/dashboard/PlanContext'
 import Link from 'next/link'
 
@@ -22,8 +21,6 @@ export default function SitesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const fetchSites = useCallback(async () => {
@@ -60,37 +57,6 @@ export default function SitesPage() {
   useEffect(() => {
     fetchSites()
   }, [fetchSites])
-
-  const handleDelete = async () => {
-    if (!confirmDeleteId) return
-
-    setDeletingId(confirmDeleteId)
-    try {
-      const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
-
-      const res = await fetch(`${apiUrl}/api/sites/delete`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ siteId: confirmDeleteId }),
-      })
-
-      if (res.ok) {
-        setSites(sites.filter(s => s.id !== confirmDeleteId))
-        setConfirmDeleteId(null)
-      } else {
-        const data = await res.json()
-        setError(data.error || 'Failed to delete site')
-      }
-    } catch {
-      setError('Failed to delete site')
-    } finally {
-      setDeletingId(null)
-    }
-  }
 
   const copyTrackingCode = (siteId: string) => {
     const code = `<script src="https://ztas.io/js/analytics.js" data-site-id="${siteId}"></script>`
@@ -233,21 +199,12 @@ export default function SitesPage() {
                   )}
                 </button>
 
-                <div className="flex gap-2">
-                  <Link
-                    href={`/dashboard/sites/${site.id}`}
-                    className="flex-1 px-3 py-2 text-sm text-center bg-primary text-primary-foreground rounded hover:opacity-90 transition"
-                  >
-                    View Analytics
-                  </Link>
-                  <button
-                    onClick={() => setConfirmDeleteId(site.id)}
-                    disabled={deletingId === site.id}
-                    className="px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
-                  >
-                    {deletingId === site.id ? '...' : 'Delete'}
-                  </button>
-                </div>
+                <Link
+                  href={`/dashboard/sites/${site.id}`}
+                  className="w-full px-3 py-2 text-sm text-center bg-primary text-primary-foreground rounded hover:opacity-90 transition block"
+                >
+                  View Analytics
+                </Link>
               </div>
             </div>
           ))}
@@ -260,20 +217,6 @@ export default function SitesPage() {
         onSuccess={handleSiteAdded}
       />
 
-      <ConfirmModal
-        isOpen={!!confirmDeleteId}
-        onClose={() => setConfirmDeleteId(null)}
-        onConfirm={handleDelete}
-        title="Delete Site"
-        message={
-          <>
-            Are you sure you want to delete <strong>{sites.find(s => s.id === confirmDeleteId)?.name || sites.find(s => s.id === confirmDeleteId)?.domain}</strong>? This action cannot be undone and all analytics data will be lost.
-          </>
-        }
-        confirmText="Delete Site"
-        variant="danger"
-        loading={!!deletingId}
-      />
     </div>
   )
 }
