@@ -479,8 +479,12 @@ async function main(args) {
                 VALUES (?, ?, 1, 1, 1, ?)
                 ON CONFLICT(site_id, date) DO UPDATE SET
                   pageviews = pageviews + 1,
+                  unique_visitors = unique_visitors + CASE
+                    WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END,
+                  sessions = sessions + CASE
+                    WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND session_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END,
                   updated_at = ?`,
-          args: [siteId, eventDate, nowISO, nowISO]
+          args: [siteId, eventDate, nowISO, siteId, eventDate, identityHash, siteId, eventDate, sessionHash, nowISO]
         });
 
         // Page rollup
@@ -489,12 +493,15 @@ async function main(args) {
             sql: `INSERT INTO page_rollups (site_id, date, page_path, views, visitors)
                   VALUES (?, ?, ?, 1, 1)
                   ON CONFLICT(site_id, date, page_path) DO UPDATE SET
-                    views = views + 1`,
-            args: [siteId, eventDate, payload.page_path]
+                    views = views + 1,
+                    visitors = visitors + CASE
+                      WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND page_path = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
+            args: [siteId, eventDate, payload.page_path, siteId, eventDate, payload.page_path, identityHash]
           });
         }
 
         // Dimension rollups
+        const dimColMap = { device: 'context_device', browser: 'context_browser', os: 'context_os', country: 'context_country', region: 'context_region', referrer: 'referrer_domain' };
         const dimensions = [
           ['device', evt.device?.type || serverContext.device],
           ['browser', evt.device?.browser || serverContext.browser],
@@ -506,17 +513,21 @@ async function main(args) {
 
         for (const [dimType, dimValue] of dimensions) {
           if (dimValue && dimValue !== '' && dimValue !== 'unknown') {
+            const col = dimColMap[dimType];
             statements.push({
               sql: `INSERT INTO dimension_rollups (site_id, date, dimension_type, dimension_value, views, visitors)
                     VALUES (?, ?, ?, ?, 1, 1)
                     ON CONFLICT(site_id, date, dimension_type, dimension_value) DO UPDATE SET
-                      views = views + 1`,
-              args: [siteId, eventDate, dimType, dimValue]
+                      views = views + 1,
+                      visitors = visitors + CASE
+                        WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND ${col} = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
+              args: [siteId, eventDate, dimType, dimValue, siteId, eventDate, dimValue, identityHash]
             });
           }
         }
 
         // UTM rollups
+        const utmColMap = { source: 'utm_source', medium: 'utm_medium', campaign: 'utm_campaign' };
         const utms = [
           ['source', payload.utm_source],
           ['medium', payload.utm_medium],
@@ -525,12 +536,15 @@ async function main(args) {
 
         for (const [utmType, utmValue] of utms) {
           if (utmValue) {
+            const col = utmColMap[utmType];
             statements.push({
               sql: `INSERT INTO utm_rollups (site_id, date, utm_type, utm_value, views, visitors)
                     VALUES (?, ?, ?, ?, 1, 1)
                     ON CONFLICT(site_id, date, utm_type, utm_value) DO UPDATE SET
-                      views = views + 1`,
-              args: [siteId, eventDate, utmType, utmValue]
+                      views = views + 1,
+                      visitors = visitors + CASE
+                        WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND ${col} = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
+              args: [siteId, eventDate, utmType, utmValue, siteId, eventDate, utmValue, identityHash]
             });
           }
         }

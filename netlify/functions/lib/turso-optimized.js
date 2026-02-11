@@ -266,8 +266,12 @@ async function ingestEvents(tableName, events) {
             VALUES (?, ?, 1, 1, 1, ?)
             ON CONFLICT(site_id, date) DO UPDATE SET
               pageviews = pageviews + 1,
+              unique_visitors = unique_visitors + CASE
+                WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END,
+              sessions = sessions + CASE
+                WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND session_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END,
               updated_at = ?`,
-      args: [e.site_id, eventDate, now.toISOString(), now.toISOString()]
+      args: [e.site_id, eventDate, now.toISOString(), e.site_id, eventDate, e.identity_hash, e.site_id, eventDate, e.session_hash, now.toISOString()]
     });
 
     // Page rollup upsert
@@ -276,12 +280,15 @@ async function ingestEvents(tableName, events) {
         sql: `INSERT INTO page_rollups (site_id, date, page_path, views, visitors)
               VALUES (?, ?, ?, 1, 1)
               ON CONFLICT(site_id, date, page_path) DO UPDATE SET
-                views = views + 1`,
-        args: [e.site_id, eventDate, payload.page_path]
+                views = views + 1,
+                visitors = visitors + CASE
+                  WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND page_path = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
+        args: [e.site_id, eventDate, payload.page_path, e.site_id, eventDate, payload.page_path, e.identity_hash]
       });
     }
 
     // Dimension rollups
+    const dimColMap = { device: 'context_device', browser: 'context_browser', os: 'context_os', country: 'context_country', region: 'context_region', city: 'city', referrer: 'referrer_domain' };
     const dimensions = [
       ['device', e.context_device],
       ['browser', e.context_browser],
@@ -294,17 +301,21 @@ async function ingestEvents(tableName, events) {
 
     for (const [dimType, dimValue] of dimensions) {
       if (dimValue) {
+        const col = dimColMap[dimType];
         rollupStatements.push({
           sql: `INSERT INTO dimension_rollups (site_id, date, dimension_type, dimension_value, views, visitors)
                 VALUES (?, ?, ?, ?, 1, 1)
                 ON CONFLICT(site_id, date, dimension_type, dimension_value) DO UPDATE SET
-                  views = views + 1`,
-          args: [e.site_id, eventDate, dimType, dimValue]
+                  views = views + 1,
+                  visitors = visitors + CASE
+                    WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND ${col} = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
+          args: [e.site_id, eventDate, dimType, dimValue, e.site_id, eventDate, dimValue, e.identity_hash]
         });
       }
     }
 
     // UTM rollups
+    const utmColMap = { source: 'utm_source', medium: 'utm_medium', campaign: 'utm_campaign', content: 'utm_content', term: 'utm_term' };
     const utms = [
       ['source', payload.utm_source],
       ['medium', payload.utm_medium],
@@ -315,12 +326,15 @@ async function ingestEvents(tableName, events) {
 
     for (const [utmType, utmValue] of utms) {
       if (utmValue) {
+        const col = utmColMap[utmType];
         rollupStatements.push({
           sql: `INSERT INTO utm_rollups (site_id, date, utm_type, utm_value, views, visitors)
                 VALUES (?, ?, ?, ?, 1, 1)
                 ON CONFLICT(site_id, date, utm_type, utm_value) DO UPDATE SET
-                  views = views + 1`,
-          args: [e.site_id, eventDate, utmType, utmValue]
+                  views = views + 1,
+                  visitors = visitors + CASE
+                    WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND ${col} = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
+          args: [e.site_id, eventDate, utmType, utmValue, e.site_id, eventDate, utmValue, e.identity_hash]
         });
       }
     }
