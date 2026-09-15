@@ -38,10 +38,22 @@ const REQUIRED_VARS = {
  */
 const OPTIONAL_VARS = {
   AUTH_MODE: {
-    description: 'Authentication mode: clerk (SaaS), jwt (self-hosted multi-user), password (single password), none (no auth)',
+    description: 'Authentication mode: clerk (SaaS), oidc (gatekeep/OpenID Connect), jwt (self-hosted multi-user), password (single password), none (no auth)',
     default: 'clerk',
-    validator: (value) => ['clerk', 'jwt', 'password', 'none'].includes(value),
-    errorMessage: 'AUTH_MODE must be one of: clerk, jwt, password, none'
+    validator: (value) => ['clerk', 'oidc', 'jwt', 'password', 'none'].includes(value),
+    errorMessage: 'AUTH_MODE must be one of: clerk, oidc, jwt, password, none'
+  },
+  GATEKEEP_ISSUER: {
+    description: 'OIDC issuer URL for AUTH_MODE=oidc (e.g. https://auth.ztas.io). Required when AUTH_MODE=oidc.',
+    default: '',
+    validator: (value) => value === '' || /^https?:\/\//.test(value),
+    errorMessage: 'GATEKEEP_ISSUER must be a full http(s):// URL'
+  },
+  GATEKEEP_CLIENT_ID: {
+    description: 'OIDC client_id registered in gatekeep (token audience) for AUTH_MODE=oidc.',
+    default: 'zta',
+    validator: (value) => typeof value === 'string',
+    errorMessage: 'GATEKEEP_CLIENT_ID must be a string'
   },
   AUTH_PASSWORD: {
     description: 'Shared password for AUTH_MODE=password (required if using password mode)',
@@ -287,13 +299,22 @@ export const Config = {
 
   // Auth Mode (for self-hosted)
   auth: {
-    mode: config.AUTH_MODE,                    // 'clerk', 'jwt', 'password', 'none'
+    mode: config.AUTH_MODE,                    // 'clerk', 'oidc', 'jwt', 'password', 'none'
     password: config.AUTH_PASSWORD,            // Shared password for 'password' mode
     isClerk: config.AUTH_MODE === 'clerk',
+    isOidc: config.AUTH_MODE === 'oidc',
     isJwt: config.AUTH_MODE === 'jwt',
     isPassword: config.AUTH_MODE === 'password',
     isNone: config.AUTH_MODE === 'none',
     requiresAuth: config.AUTH_MODE !== 'none', // Does this mode require any auth?
+  },
+
+  // OIDC (gatekeep) — used when AUTH_MODE=oidc
+  oidc: {
+    issuer: config.GATEKEEP_ISSUER,
+    clientId: config.GATEKEEP_CLIENT_ID,       // token audience
+    // gatekeep publishes its keys at <issuer>/jwks.json (OIDC discovery F.12)
+    jwksUri: config.GATEKEEP_ISSUER ? `${config.GATEKEEP_ISSUER.replace(/\/$/, '')}/jwks.json` : '',
   },
 
   // Self-hosted mode

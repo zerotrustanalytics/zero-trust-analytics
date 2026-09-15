@@ -42,7 +42,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { verifyToken as verifyClerkToken } from '@clerk/backend';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { Config } from './config.js';
+import { getUser, createOAuthUser } from './storage.js';
 
 // Use centralized configuration with validation
 const JWT_SECRET = Config.jwt.secret;
@@ -323,8 +325,51 @@ export function validateCSRFFromRequest(headers, userId) {
   return { valid: true };
 }
 
+// --- OIDC (gatekeep) verification -------------------------------------------
+
+// Lazily-built remote JWKS resolver (caches keys, refetches on rotation).
+let _gatekeepJWKS = null;
+function gatekeepJWKS() {
+  if (!_gatekeepJWKS) {
+    if (!Config.oidc.jwksUri) {
+      throw new Error('AUTH_MODE=oidc but GATEKEEP_ISSUER is not set');
+    }
+    _gatekeepJWKS = createRemoteJWKSet(new URL(Config.oidc.jwksUri));
+  }
+  return _gatekeepJWKS;
+}
+
+/**
+ * Verify a gatekeep OIDC token (EdDSA) against the published JWKS.
+ * Enforces issuer + audience. Returns the verified claims, or throws
+ * (jose sets `err.code`, e.g. ERR_JWT_EXPIRED / ERR_JWS_SIGNATURE_VERIFICATION_FAILED).
+ * `keyResolver` is injectable so this can be unit-tested with a local key set.
+ */
+export async function verifyOidcToken(token, keyResolver = null) {
+  const resolver = keyResolver || gatekeepJWKS();
+  const { payload } = await jwtVerify(token, resolver, {
+    issuer: Config.oidc.issuer,
+    audience: Config.oidc.clientId,
+  });
+  return payload;
+}
+
+// Robust bearer-token extraction: works whether `headers` is a Web Headers
+// object (has .get()) or a plain object (Express-wrapped functions).
+function extractBearerToken(headers) {
+  let raw = null;
+  if (headers && typeof headers.get === 'function') {
+    raw = headers.get('authorization') || headers.get('Authorization');
+  } else if (headers) {
+    raw = headers.authorization || headers.Authorization;
+  }
+  if (!raw) return null;
+  const parts = raw.split(' ');
+  return parts.length === 2 && parts[0] === 'Bearer' ? parts[1] : null;
+}
+
 // Middleware helper - verify auth and return user
-// Supports multiple auth modes: clerk, jwt, password, none
+// Supports multiple auth modes: clerk, oidc, jwt, password, none
 export async function authenticateRequest(headers, user = null) {
   const authMode = Config.auth.mode;
 
@@ -365,6 +410,49 @@ export async function authenticateRequest(headers, user = null) {
         plan: 'enterprise',
         isSelfHosted: true
       }
+    };
+  }
+
+  // AUTH_MODE=oidc: gatekeep (OpenID Connect) — verify an EdDSA JWT against the
+  // published JWKS, then JIT-provision/resolve the ZTA user by the email claim.
+  if (authMode === 'oidc') {
+    const oidcToken = extractBearerToken(headers);
+    if (!oidcToken) {
+      return { error: 'No token provided', status: 401 };
+    }
+
+    let claims;
+    try {
+      claims = await verifyOidcToken(oidcToken);
+    } catch (err) {
+      if (err.code === 'ERR_JWT_EXPIRED') {
+        return { error: 'Token expired. Please log in again.', status: 401, expired: true };
+      }
+      console.log('OIDC token verification failed:', err.code || err.message);
+      return { error: 'Invalid token', status: 401 };
+    }
+
+    const email = claims.email;
+    if (!email) {
+      // gatekeep id_tokens carry email; access_tokens do not. The dashboard must
+      // present a token with the email claim (the id_token).
+      return { error: 'Token missing email claim', status: 401 };
+    }
+
+    // Resolve or just-in-time provision the ZTA account for this identity.
+    let ztaUser = await getUser(email);
+    if (!ztaUser) {
+      ztaUser = await createOAuthUser(email, 'gatekeep', claims.sub, claims.name || null);
+    }
+
+    return {
+      user: {
+        ...ztaUser,
+        id: ztaUser.id,
+        email,
+        gatekeepSub: claims.sub,
+        emailVerified: claims.email_verified === true,
+      },
     };
   }
 

@@ -13,6 +13,7 @@
     "@netlify/blobs": "^10.4.4",
     "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2",
     "otpauth": "^9.4.1",
     "resend": "^6.6.0",
