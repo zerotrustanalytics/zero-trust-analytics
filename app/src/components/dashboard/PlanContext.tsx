@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 
 interface PlanLimits {
   sites: {

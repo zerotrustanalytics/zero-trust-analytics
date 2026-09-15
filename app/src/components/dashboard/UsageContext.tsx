@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 
 interface UsageData {
   usage: {

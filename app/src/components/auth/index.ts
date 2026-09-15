@@ -1,1 +1,1 @@
-export { AuthProvider, useSelfHostedAuth, authMode, isClerkMode, isSelfHostedMode } from './AuthProvider'
+export { AuthProvider, useSelfHostedAuth, authMode, isOidcMode, isSelfHostedMode } from './AuthProvider'

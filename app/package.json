@@ -21,12 +21,12 @@
     "test:all": "npm run test:run && npm run test:e2e"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.36.5",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "next": "^16.1.1",
+    "next-auth": "^5.0.0-beta.32",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",

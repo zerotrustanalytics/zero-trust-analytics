@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, JSX } from 'react'
 import { useParams } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 import Link from 'next/link'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { format, subDays } from 'date-fns'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 
 export default function MigratePage() {
   const { getToken } = useAuth()

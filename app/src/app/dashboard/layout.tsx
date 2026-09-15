@@ -1,20 +1,20 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { DashboardShell } from '@/components/dashboard'
 
 // Check auth mode from environment
-const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE || 'clerk'
+const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE || 'oidc'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Only check Clerk auth if in Clerk mode
-  if (AUTH_MODE === 'clerk') {
-    const { userId } = await auth()
+  // In gatekeep OIDC mode, require a session (belt-and-suspenders with proxy.ts).
+  if (AUTH_MODE === 'oidc') {
+    const session = await auth()
 
-    if (!userId) {
+    if (!session) {
       redirect('/sign-in')
     }
   }

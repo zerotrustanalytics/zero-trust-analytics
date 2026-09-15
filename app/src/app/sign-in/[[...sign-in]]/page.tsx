@@ -1,4 +1,4 @@
-import { SignIn } from '@clerk/nextjs'
+import { SignIn } from '@/lib/gatekeep-auth'
 
 export default function SignInPage() {
   return (

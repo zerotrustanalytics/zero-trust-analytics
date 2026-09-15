@@ -1,10 +1,10 @@
 'use client'
 
-import { ClerkProvider } from '@clerk/nextjs'
+import { SessionProvider } from '@/lib/gatekeep-auth'
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
 
-// Auth mode from environment (set at build time or runtime)
-const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE || 'clerk'
+// Auth mode from environment (set at build time). Multi-user SSO = 'oidc' (gatekeep).
+const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE || 'oidc'
 
 // Context for auth state in non-Clerk modes
 interface SelfHostedAuthContext {
@@ -153,18 +153,18 @@ function SelfHostedAuthProvider({ children }: { children: ReactNode }) {
   return content
 }
 
-// Main auth provider - chooses between Clerk and self-hosted
+// Main auth provider. Always wraps SessionProvider so the Auth.js-backed shim
+// hooks (useAuth/useUser/...) work in every mode; for oidc it carries the
+// gatekeep session, for none/password it stays empty and the SelfHostedAuth
+// gate handles access.
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // For Clerk mode, use ClerkProvider
-  if (AUTH_MODE === 'clerk') {
-    return <ClerkProvider>{children}</ClerkProvider>
-  }
+  const inner =
+    AUTH_MODE === 'oidc' ? children : <SelfHostedAuthProvider>{children}</SelfHostedAuthProvider>
 
-  // For self-hosted modes (none, password, jwt), use our provider
-  return <SelfHostedAuthProvider>{children}</SelfHostedAuthProvider>
+  return <SessionProvider>{inner}</SessionProvider>
 }
 
 // Export auth mode for other components to check
 export const authMode = AUTH_MODE
-export const isClerkMode = AUTH_MODE === 'clerk'
-export const isSelfHostedMode = AUTH_MODE !== 'clerk'
+export const isOidcMode = AUTH_MODE === 'oidc'
+export const isSelfHostedMode = AUTH_MODE !== 'oidc'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 import { AddSiteModal } from '@/components/dashboard/AddSiteModal'
 import { usePlan } from '@/components/dashboard/PlanContext'
 import Link from 'next/link'

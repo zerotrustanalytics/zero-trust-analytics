@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useAuth, SignInButton } from '@clerk/nextjs'
+import { useAuth, SignInButton } from '@/lib/gatekeep-auth'
 import { Button, Card } from '@/components/ui'
 
 interface InviteDetails {

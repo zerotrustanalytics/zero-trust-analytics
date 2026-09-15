@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import { UserButton } from '@/lib/gatekeep-auth'
 import { clsx } from 'clsx'
 import { useSidebar } from './SidebarContext'
 

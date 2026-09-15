@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
 

@@ -1,4 +1,4 @@
-import { SignInButton, SignUpButton, SignedIn, SignedOut } from '@clerk/nextjs'
+import { SignInButton, SignUpButton, SignedIn, SignedOut } from '@/lib/gatekeep-auth'
 import Link from 'next/link'
 
 export default function Home() {

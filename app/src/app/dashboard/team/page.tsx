@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 import { Button, Card, Input } from '@/components/ui'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'

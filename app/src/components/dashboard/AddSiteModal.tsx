@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/gatekeep-auth'
 import { Modal, ModalFooter, Button, Input, Alert } from '@/components/ui'
 
 interface AddSiteModalProps {

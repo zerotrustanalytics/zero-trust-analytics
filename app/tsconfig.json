@@ -59,6 +59,9 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "__tests__",
+    "e2e",
+    "vitest.setup.tsx"
   ]
 }

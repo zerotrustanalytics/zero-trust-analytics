@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth, useUser } from '@clerk/nextjs'
+import { useAuth, useUser } from '@/lib/gatekeep-auth'
 import Link from 'next/link'
 
 interface Site {
