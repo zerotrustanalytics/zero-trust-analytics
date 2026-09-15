@@ -6,6 +6,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* are baked into the client bundle at build time and must
+        # match the runtime AUTH_MODE below. Empty API URL => same-origin /api.
+        NEXT_PUBLIC_AUTH_MODE: ${AUTH_MODE:-oidc}
+        NEXT_PUBLIC_API_URL: ""
     container_name: zero-trust-analytics
     restart: unless-stopped
     ports:
@@ -28,9 +33,18 @@ services:
       # Self-hosted mode
       SELF_HOSTED: "true"
 
-      # Authentication mode: none (no login), password (shared password), jwt (multi-user)
-      AUTH_MODE: ${AUTH_MODE:-none}
+      # Authentication mode: oidc (gatekeep SSO, default) | password | none.
+      # Must match the NEXT_PUBLIC_AUTH_MODE build arg above.
+      AUTH_MODE: ${AUTH_MODE:-oidc}
       AUTH_PASSWORD: ${AUTH_PASSWORD:-}
+
+      # gatekeep OIDC SSO (required when AUTH_MODE=oidc). Issuer is gatekeep's
+      # canonical URL; the API verifies EdDSA JWTs against <issuer>/jwks.json and
+      # enforces audience = GATEKEEP_CLIENT_ID. AUTH_SECRET signs the Auth.js
+      # session cookie in the Next dashboard. Set all three in docker/.env.
+      GATEKEEP_ISSUER: ${GATEKEEP_ISSUER:-https://auth.ztas.io}
+      GATEKEEP_CLIENT_ID: ${GATEKEEP_CLIENT_ID:-zta}
+      AUTH_SECRET: ${AUTH_SECRET}
 
       # Security Secrets (CHANGE THESE!)
       HASH_SECRET: ${HASH_SECRET}

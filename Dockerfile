@@ -20,7 +20,10 @@ COPY app/ ./
 
 # Build-time config (overridable via --build-arg). NEXT_PUBLIC_* is baked into
 # the client bundle, so it must be set at build time, not runtime.
-ARG NEXT_PUBLIC_AUTH_MODE=none
+# Default to gatekeep SSO (oidc). MUST match the runtime AUTH_MODE below — if the
+# client is built for oidc it sends the gatekeep Bearer token, so the API must
+# also run in oidc mode. Empty NEXT_PUBLIC_API_URL => same-origin relative /api.
+ARG NEXT_PUBLIC_AUTH_MODE=oidc
 ARG NEXT_PUBLIC_API_URL=""
 ENV NEXT_PUBLIC_AUTH_MODE=${NEXT_PUBLIC_AUTH_MODE}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
@@ -78,11 +81,17 @@ COPY --chown=nodejs:nodejs server ./server
 # Create data directory for the local libSQL/SQLite database
 RUN mkdir -p /app/data && chown -R nodejs:nodejs /app/data
 
-# Runtime environment (override via compose/.env as needed)
+# Runtime environment (override via compose/.env as needed).
+# AUTH_MODE=oidc must match the NEXT_PUBLIC_AUTH_MODE the client was built with.
+# GATEKEEP_* + AUTH_SECRET are consumed at runtime by both the API (lib/auth.js)
+# and the spawned Next process (src/auth.ts) — provide real values via compose.
 ENV NODE_ENV=production \
     PORT=3000 \
     SELF_HOSTED=true \
-    AUTH_MODE=none \
+    AUTH_MODE=oidc \
+    GATEKEEP_ISSUER="" \
+    GATEKEEP_CLIENT_ID=zta \
+    AUTH_SECRET="" \
     TURSO_DATABASE_URL=file:/app/data/analytics.db \
     TURSO_AUTH_TOKEN=""
 

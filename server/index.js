@@ -66,7 +66,10 @@ function proxyToNextjs(req, res) {
   const options = {
     hostname: 'localhost',
     port: NEXTJS_PORT,
-    path: req.url,
+    // Use originalUrl (full path) — app.use('/dashboard', ...) strips the mount
+    // prefix from req.url, which would send Next the wrong path (/sites instead
+    // of /dashboard/sites). Next has no basePath, so it needs the full path.
+    path: req.originalUrl,
     method: req.method,
     headers: {
       ...req.headers,
@@ -90,6 +93,16 @@ function proxyToNextjs(req, res) {
 // Proxy dashboard routes to Next.js
 app.use('/dashboard', proxyToNextjs);
 app.use('/_next', proxyToNextjs);  // Next.js static assets
+
+// In gatekeep OIDC mode, Auth.js (next-auth) owns the entire /api/auth/*
+// namespace (session, signin, signout, callback, csrf, providers) and is served
+// by Next. Proxy it here — registered BEFORE the function router (registerRoutes
+// in start()) so the legacy ZTA /api/auth/* functions never shadow Auth.js.
+// In none/password modes this is skipped and the function router keeps serving
+// /api/auth/config for the password gate.
+if ((process.env.AUTH_MODE || 'none') === 'oidc') {
+  app.use('/api/auth', proxyToNextjs);
+}
 
 /**
  * Convert Netlify Function to Express middleware
@@ -159,13 +172,17 @@ const NON_ROUTE_FUNCTIONS = new Set([
   'init-db',              // invoked internally at startup
   'migrate-db',
   'migrate-sites-to-turso',
+  // Legacy social-OAuth login — replaced by gatekeep OIDC (Auth.js). Dead in
+  // every self-host mode; denylisted so they can't claim /api/auth/callback/*.
+  'auth-oauth-callback',
+  'auth-google',
+  'auth-github',
 ]);
 
 // Explicit path overrides for functions whose HTTP path does not follow the
-// dashes<->slashes convention (e.g. OAuth callbacks match a fixed redirect URI).
-const ROUTE_OVERRIDES = {
-  'auth-oauth-callback': ['/api/auth/callback', '/api/auth/callback/*'],
-};
+// dashes<->slashes convention. (None currently — the old auth-oauth-callback
+// override is gone; gatekeep OIDC handles /api/auth/callback via Auth.js.)
+const ROUTE_OVERRIDES = {};
 
 /**
  * Compute the Express paths a function answers on. The frontend uses mixed
