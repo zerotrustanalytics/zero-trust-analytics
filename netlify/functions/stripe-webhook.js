@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { getStore } from '@netlify/blobs';
+import { getStore } from './lib/blob-store.js';
 import { getUser, updateUser, getUserByCustomerId } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, ExternalServiceError } from './lib/error-handler.js';

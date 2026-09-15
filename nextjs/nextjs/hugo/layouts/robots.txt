@@ -1,4 +1,0 @@
-User-agent: *
-sitemap: {{ .Site.BaseURL }}sitemap.xml
-Disallow: /tags
-Disallow: /provenance

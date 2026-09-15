@@ -38,9 +38,8 @@ nul
 .vercel
 .env*.local
 
-# Nested nextjs folders
-nextjs/nextjs/
-
-# DigitalOcean Functions
-do-functions/.env
-do-functions/.deployed/
+# Test / build artifacts (post-flatten layout)
+test-results/
+playwright-report/
+coverage/
+*.tsbuildinfo

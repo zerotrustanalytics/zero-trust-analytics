@@ -6,7 +6,7 @@
  */
 
 import { authenticateRequest } from './lib/auth.js';
-import { getStore } from '@netlify/blobs';
+import { getStore } from './lib/blob-store.js';
 
 // Supported import formats
 const SUPPORTED_FORMATS = ['csv', 'json', 'ga4-api', 'ua-csv'];

@@ -1,6 +1,6 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getUserSites, getSite } from './lib/storage.js';
-import { getStore } from '@netlify/blobs';
+import { getStore } from './lib/blob-store.js';
 
 const ERRORS_STORE = 'errors';
 const DEDUP_WINDOW_MS = 3600000; // 1 hour deduplication window

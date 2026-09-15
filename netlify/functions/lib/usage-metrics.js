@@ -627,7 +627,7 @@ export async function backfillUsageFromPageviews() {
   console.log(`[backfill] Found ${siteIds.length} unique sites`);
 
   // Try to get user_id for each site from the sites store
-  const { getStore } = await import('@netlify/blobs');
+  const { getStore } = await import('./blob-store.js');
   const sitesStore = getStore({ name: 'sites', consistency: 'strong' });
 
   const siteUserMap = {};

@@ -6,7 +6,7 @@
  */
 
 import { authenticateRequest } from './lib/auth.js';
-import { getStore } from '@netlify/blobs';
+import { getStore } from './lib/blob-store.js';
 
 // Google OAuth endpoints
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';

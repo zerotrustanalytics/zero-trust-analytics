@@ -30,7 +30,7 @@ import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 import { getCacheMetrics, resetCacheMetrics } from './lib/cache.js';
 import { turso } from './lib/turso.js';
-import { getStore } from '@netlify/blobs';
+import { getStore } from './lib/blob-store.js';
 import { getUserById } from './lib/storage.js';
 import {
   initUsageMetricsSchema,

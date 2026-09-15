@@ -3,10 +3,10 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   lint:
@@ -23,19 +23,19 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
-            nextjs/package-lock.json
+            app/package-lock.json
             netlify/functions/package-lock.json
 
       - name: Install Next.js dependencies
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm ci
 
       - name: Run ESLint
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm run lint
 
       - name: Run TypeScript type check
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm run type-check
 
   test-functions:
@@ -57,7 +57,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
-            nextjs/package-lock.json
+            app/package-lock.json
             netlify/functions/package-lock.json
 
       - name: Install Netlify functions dependencies
@@ -82,15 +82,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
-            nextjs/package-lock.json
+            app/package-lock.json
             netlify/functions/package-lock.json
 
       - name: Install Next.js dependencies
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm ci
 
       - name: Build Next.js
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm run build
         env:
           # Provide minimal env vars for build
@@ -110,23 +110,23 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
-            nextjs/package-lock.json
+            app/package-lock.json
             netlify/functions/package-lock.json
 
       - name: Install Next.js dependencies
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm ci
 
       - name: Run unit tests
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm run test:run
 
       - name: Install Playwright browsers
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npx playwright install --with-deps
 
       - name: Run E2E tests
-        working-directory: ./nextjs
+        working-directory: ./app
         run: npm run test:e2e
 
       - name: Upload test results
@@ -134,7 +134,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: nextjs/playwright-report/
+          path: app/playwright-report/
           retention-days: 7
 
   status-check:

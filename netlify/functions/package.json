@@ -11,9 +11,11 @@
     "@clerk/backend": "^2.29.0",
     "@libsql/client": "^0.15.15",
     "@netlify/blobs": "^10.4.4",
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "otpauth": "^9.4.1",
+    "resend": "^6.6.0",
     "stripe": "^20.1.0"
   },
   "devDependencies": {

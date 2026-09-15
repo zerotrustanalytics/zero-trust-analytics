@@ -1,5 +1,5 @@
 import { authenticateRequest } from './lib/auth.js';
-import { getStore } from '@netlify/blobs';
+import { getStore } from './lib/blob-store.js';
 import { getTeamUsage, getTeamUsageBySite, getTeamUsageHistory, checkUsageLimit, getActualUsageFromPageviews, getCurrentMonth } from './lib/turso.js';
 import { Config } from './lib/config.js';
 import { getUser, getUserById, getUserSites, getUserTeams, getTeamMembers } from './lib/storage.js';
