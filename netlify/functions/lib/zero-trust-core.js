@@ -10,7 +10,7 @@
  * - ZT Surveys (anonymous feedback)
  */
 
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 // Daily salt rotates at midnight UTC
 function getDailySalt(secret) {

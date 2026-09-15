@@ -94,7 +94,8 @@ ENV NODE_ENV=production \
     GATEKEEP_CLIENT_ID=zta \
     AUTH_SECRET="" \
     TURSO_DATABASE_URL=file:/app/data/analytics.db \
-    TURSO_AUTH_TOKEN=""
+    TURSO_AUTH_TOKEN="" \
+    INIT_DB_SECRET=selfhost-init-db
 
 # Switch to non-root user
 USER nodejs

@@ -120,14 +120,20 @@ function netlifyToExpress(netlifyFunction) {
         }
       };
 
-      // Create Netlify-compatible request object
+      // Create Netlify-compatible request object.
+      // Netlify's Request.url is an ABSOLUTE URL, and functions rely on that
+      // (many do `new URL(req.url)` directly, and lib/logger.js does too). Pass
+      // an absolute URL built from the incoming host, not the bare path, or
+      // `new URL(req.url)` throws ERR_INVALID_URL for ~40 handlers.
+      const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+      const host = req.headers.host || 'localhost';
       const netlifyReq = {
         method: req.method,
         headers: {
           get: (name) => req.headers[name.toLowerCase()],
         },
         json: async () => req.body,
-        url: req.originalUrl,
+        url: `${proto}://${host}${req.originalUrl}`,
       };
 
       // Call the Netlify function
@@ -264,8 +270,18 @@ async function initializeDatabase() {
     };
     const mockContext = { ip: 'localhost' };
 
-    await initDb.default(mockReq, mockContext);
-    console.log('Database initialized successfully');
+    const res = await initDb.default(mockReq, mockContext);
+    // init-db returns a Response; a non-2xx (e.g. 503 when INIT_DB_SECRET is
+    // unset) means the schema was NOT created. Don't report false success —
+    // that previously hid an empty-DB failure at startup.
+    const status = res && typeof res.status === 'number' ? res.status : 200;
+    if (status >= 200 && status < 300) {
+      console.log('Database initialized successfully');
+    } else {
+      let detail = '';
+      try { detail = await res.text(); } catch { /* ignore */ }
+      console.error(`Database initialization FAILED (status ${status}): ${detail}`);
+    }
   } catch (error) {
     console.error('Database initialization failed:', error.message);
     // Continue anyway - database might already be initialized

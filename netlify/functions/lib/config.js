@@ -598,8 +598,16 @@ export const Config = {
 export function checkConfig() {
   const missing = [];
 
-  for (const name of Object.keys(REQUIRED_VARS)) {
-    if (!process.env[name]) {
+  for (const [name, varConfig] of Object.entries(REQUIRED_VARS)) {
+    const value = process.env[name];
+    // Use each var's own validator, not a truthy check — TURSO_AUTH_TOKEN is
+    // legitimately an empty string for local file databases, and a truthy
+    // check would flag it as missing (making the health endpoint report 503
+    // and the container never become healthy).
+    const ok = typeof varConfig.validator === 'function'
+      ? varConfig.validator(value)
+      : value !== undefined && value !== null;
+    if (!ok) {
       missing.push(name);
     }
   }

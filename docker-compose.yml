@@ -30,6 +30,10 @@ services:
       TURSO_DATABASE_URL: file:/app/data/analytics.db
       TURSO_AUTH_TOKEN: ""
 
+      # Secret guarding the internal init-db call at startup (never exposed as a
+      # route). Any non-empty value works; override in docker/.env if desired.
+      INIT_DB_SECRET: ${INIT_DB_SECRET:-selfhost-init-db}
+
       # Self-hosted mode
       SELF_HOSTED: "true"
 
