@@ -11,3 +11,13 @@ process.env.STRIPE_PRICE_STARTER = 'price_test_starter';
 process.env.STRIPE_PRICE_GROWTH = 'price_test_growth';
 process.env.STRIPE_PRICE_BUSINESS = 'price_test_business';
 process.env.STRIPE_PRICE_SCALE = 'price_test_scale';
+
+// A complete, production-like config, so lib/config.js validates and every
+// machine runs the same mode. (When validation failed it fell back to test
+// defaults with AUTH_MODE=none, where every user is on the unlimited plan, so
+// plan limits passed locally and failed in CI.)
+process.env.AUTH_MODE = 'oidc';
+process.env.GATEKEEP_ISSUER = 'https://id.gatekeep.test';
+process.env.GATEKEEP_CLIENT_ID = 'zta';
+process.env.TURSO_DATABASE_URL = process.env.TURSO_DATABASE_URL || 'file:test.db';
+process.env.TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN || 'test-token';

@@ -102,20 +102,18 @@ describe('Teams Endpoint', () => {
     __clearAllStores();
     process.env.JWT_SECRET = 'test-jwt-secret';
 
-    // Create test users
+    // Create test users. Team owners are on Business (5 members) so invites are
+    // within plan limits; getUserById resolves an id through user_id_map_<id>.
     const usersStore = getStore({ name: 'users' });
-    await usersStore.setJSON('user@example.com', {
-      id: 'user_123',
-      email: 'user@example.com'
-    });
-    await usersStore.setJSON('admin@example.com', {
-      id: 'user_456',
-      email: 'admin@example.com'
-    });
-    await usersStore.setJSON('member@example.com', {
-      id: 'user_789',
-      email: 'member@example.com'
-    });
+    const users = [
+      { id: 'user_123', email: 'user@example.com', plan: 'business' },
+      { id: 'user_456', email: 'admin@example.com', plan: 'business' },
+      { id: 'user_789', email: 'member@example.com' }
+    ];
+    for (const u of users) {
+      await usersStore.setJSON(u.email, u);
+      await usersStore.set(`user_id_map_${u.id}`, u.email);
+    }
 
     // Create test sites
     const sitesStore = getStore({ name: 'sites' });
@@ -467,6 +465,56 @@ describe('Teams Endpoint', () => {
       expect(data.inviteUrl).toContain('accept-invite?token=');
       expect(data.teamName).toBe('Invite Team');
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    });
+
+    it('should refuse invites beyond the owner\'s plan (Free: just the owner)', async () => {
+      const { default: handler } = await import('../../netlify/functions/teams.js');
+
+      // A Free owner: their plan allows one member, themselves.
+      await getStore({ name: 'users' }).setJSON('user@example.com', { id: 'user_123', email: 'user@example.com', plan: 'free' });
+
+      // Create a team
+      const teamsStore = getStore({ name: 'teams' });
+      const team = {
+        id: 'team_invite',
+        name: 'Invite Team',
+        ownerId: 'user_123',
+        createdAt: new Date().toISOString()
+      };
+      await teamsStore.setJSON('team_invite', team);
+
+      // Add owner as member
+      const member = {
+        teamId: 'team_invite',
+        userId: 'user_123',
+        email: 'user@example.com',
+        role: 'owner',
+        joinedAt: new Date().toISOString()
+      };
+      await teamsStore.setJSON('team_members_team_invite', [member]);
+
+      const url = new URL('https://example.com/api/teams');
+
+      const req = toRequest({
+        method: 'POST',
+        headers: createHeaders({
+          authorization: 'Bearer valid_token',
+          'content-type': 'application/json'
+        }),
+        url: url.toString(),
+        json: async () => ({
+          action: 'invite',
+          teamId: 'team_invite',
+          email: 'newmember@example.com',
+          role: 'viewer'
+        })
+      });
+
+      const response = await handler(req, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe('Team member limit reached');
     });
 
     it('should invite a member as team admin', async () => {
