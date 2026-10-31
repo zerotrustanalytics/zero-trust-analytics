@@ -1,0 +1,13 @@
+{{ define "main" }}
+<article class="sec" style="padding-top:56px">
+  <div class="wrap stack" style="gap:24px;max-width:860px">
+    <header class="stack" style="gap:10px">
+      <span class="eyebrow">Legal</span>
+      <h1 class="h1">{{ .Title }}</h1>
+      <p class="sm faint">Last updated {{ site.Params.legalUpdated }}</p>
+    </header>
+    <div class="prose">{{ .Content }}</div>
+    <p class="sm muted" style="border-top:2px dashed var(--soft-2);padding-top:20px">Questions about this page? <a class="link" href="{{ "/contact/" | relURL }}">Contact us</a>.</p>
+  </div>
+</article>
+{{ end }}

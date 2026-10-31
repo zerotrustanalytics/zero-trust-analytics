@@ -67,7 +67,7 @@ export function UsageProvider({ children }: { children: ReactNode }) {
       const token = await getToken()
       if (!token) return
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       await fetch(`${apiUrl}/api/usage-notification`, {
         method: 'POST',
         headers: {
@@ -88,7 +88,7 @@ export function UsageProvider({ children }: { children: ReactNode }) {
       const token = await getToken()
       if (!token) return
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/usage`, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -187,8 +187,8 @@ function UsageToastRenderer({ toasts, onClear }: { toasts: Array<{ type: 'warnin
 
         const title = toast.type === 'limit' ? 'Usage Limit Reached' : 'Usage Warning'
         const message = toast.type === 'limit'
-          ? `You've used ${toast.percent}% of your monthly pageviews. Data is being collected but hidden until you upgrade.`
-          : `You've used ${toast.percent}% of your monthly pageviews. Consider upgrading to avoid interruption.`
+          ? `You've used ${toast.percent}% of your monthly events (pageviews + custom events). Data is being collected but hidden until you upgrade.`
+          : `You've used ${toast.percent}% of your monthly events (pageviews + custom events). Consider upgrading to avoid interruption.`
         const textColor = toast.type === 'limit' ? 'text-red-800 dark:text-red-200' : 'text-yellow-800 dark:text-yellow-200'
 
         toastEl.innerHTML = `

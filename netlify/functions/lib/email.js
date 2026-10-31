@@ -96,7 +96,7 @@ Zero Trust Analytics - Privacy-first web analytics
 }
 
 // Send email via Resend
-async function sendViaResend(to, subject, html, text) {
+async function sendViaResend(to, subject, html, text, replyTo) {
   if (!resend) {
     throw new Error('Resend not configured');
   }
@@ -106,7 +106,8 @@ async function sendViaResend(to, subject, html, text) {
     to: [to],
     subject,
     html,
-    text
+    text,
+    ...(replyTo ? { reply_to: replyTo } : {})
   });
 
   if (error) {
@@ -117,7 +118,7 @@ async function sendViaResend(to, subject, html, text) {
 }
 
 // Send email via SendGrid
-async function sendViaSendGrid(to, subject, html, text) {
+async function sendViaSendGrid(to, subject, html, text, replyTo) {
   if (!process.env.SENDGRID_API_KEY) {
     throw new Error('SendGrid not configured');
   }
@@ -127,11 +128,37 @@ async function sendViaSendGrid(to, subject, html, text) {
     from: { email: FROM_EMAIL, name: FROM_NAME },
     subject,
     text,
-    html
+    html,
+    ...(replyTo ? { replyTo } : {})
   };
 
   const response = await sgMail.send(msg);
   return { provider: 'sendgrid', statusCode: response[0].statusCode };
+}
+
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Forward a ztas.io contact-form message to the team inbox (CONTACT_EMAIL).
+// Reply-To is the sender, so answering the email answers them.
+export async function sendContactEmail({ name, email, message }) {
+  const to = process.env.CONTACT_EMAIL;
+  if (!to) throw new Error('CONTACT_EMAIL not configured');
+  const subject = `Contact form: ${name.slice(0, 80)}`;
+  const text = `From: ${name} <${email}>\n\n${message}\n`;
+  const html = `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>`
+    + `<p style="white-space:pre-wrap">${escapeHtml(message)}</p>`;
+
+  if (resend) {
+    try {
+      return await sendViaResend(to, subject, html, text, email);
+    } catch (error) {
+      // fall through to SendGrid
+    }
+  }
+  if (process.env.SENDGRID_API_KEY) {
+    return sendViaSendGrid(to, subject, html, text, email);
+  }
+  throw new Error('No email provider configured');
 }
 
 // Send password reset email with fallback

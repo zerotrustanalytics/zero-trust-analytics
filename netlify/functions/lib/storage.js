@@ -1,4 +1,5 @@
 import { getStore } from './blob-store.js';
+import { purgeSiteData } from './turso.js';
 
 // Store names
 const STORES = {
@@ -154,7 +155,35 @@ export async function deleteUser(email) {
   const user = await getUser(email);
   if (!user) return false;
   await users.delete(email);
+  // The id -> email index holds the email too.
+  if (user.id) await users.delete(`user_id_map_${user.id}`);
   return true;
+}
+
+/**
+ * Erase every site a user owns, active or soft-deleted, with all of its
+ * analytics, immediately (account deletion: no restore window).
+ */
+export async function purgeAllUserSites(userId) {
+  const sites = store(STORES.SITES);
+  const read = async (key) => {
+    try {
+      return (await sites.get(key, { type: 'json' })) || [];
+    } catch {
+      return [];
+    }
+  };
+  const ids = [...new Set([
+    ...(await read(`user_sites_${userId}`)),
+    ...(await read(`user_deleted_sites_${userId}`)),
+  ])];
+  for (const siteId of ids) {
+    await sites.delete(siteId);
+    await purgeSiteData(siteId);
+  }
+  await sites.delete(`user_sites_${userId}`);
+  await sites.delete(`user_deleted_sites_${userId}`);
+  return ids.length;
 }
 
 // Create user from OAuth provider (no password)
@@ -754,8 +783,9 @@ export async function cleanupExpiredSites() {
       if (site && site.deleted && site.expiresAt) {
         const expiresAt = new Date(site.expiresAt);
         if (expiresAt <= now) {
-          // Permanently delete the site
+          // Permanently delete the site and everything recorded for it
           await sites.delete(blob.key);
+          await purgeSiteData(blob.key);
 
           // Remove from user's deleted sites list
           if (site.deletedBy) {
@@ -2698,20 +2728,22 @@ export async function updateGoalProgress(goalId, currentValue) {
 }
 
 // Calculate current value for a goal metric
-export function calculateGoalValue(stats, metric) {
+// `summary` is the summary block of getStats() in lib/turso.js; events are
+// counted separately (countEvents) because the summary covers pageviews only.
+export function calculateGoalValue(summary, metric, eventCount = 0) {
   switch (metric) {
     case GoalMetrics.PAGEVIEWS:
-      return stats.pageviews || 0;
+      return summary.pageviews || 0;
     case GoalMetrics.VISITORS:
-      return stats.uniqueVisitors || 0;
+      return summary.unique_visitors || 0;
     case GoalMetrics.SESSIONS:
-      return stats.uniqueSessions || 0;
+      return summary.sessions || 0;
     case GoalMetrics.EVENTS:
-      return stats.totalEvents || 0;
+      return eventCount;
     case GoalMetrics.BOUNCE_RATE:
-      return stats.bounceRate || 0;
+      return summary.bounce_rate || 0;
     case GoalMetrics.SESSION_DURATION:
-      return stats.avgSessionDuration || 0;
+      return summary.avg_duration || 0;
     default:
       return 0;
   }

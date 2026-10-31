@@ -38,13 +38,13 @@ const REQUIRED_VARS = {
  */
 const OPTIONAL_VARS = {
   AUTH_MODE: {
-    description: 'Authentication mode: clerk (SaaS), oidc (gatekeep/OpenID Connect), jwt (self-hosted multi-user), password (single password), none (no auth)',
-    default: 'clerk',
-    validator: (value) => ['clerk', 'oidc', 'jwt', 'password', 'none'].includes(value),
-    errorMessage: 'AUTH_MODE must be one of: clerk, oidc, jwt, password, none'
+    description: 'Authentication mode: oidc (gatekeep/OpenID Connect), jwt (self-hosted multi-user), password (single password), none (no auth)',
+    default: 'oidc',
+    validator: (value) => ['oidc', 'jwt', 'password', 'none'].includes(value),
+    errorMessage: 'AUTH_MODE must be one of: oidc, jwt, password, none'
   },
   GATEKEEP_ISSUER: {
-    description: 'OIDC issuer URL for AUTH_MODE=oidc (e.g. https://auth.ztas.io). Required when AUTH_MODE=oidc.',
+    description: 'OIDC issuer URL for AUTH_MODE=oidc (e.g. https://id.gatekeepauth.com). Required when AUTH_MODE=oidc.',
     default: '',
     validator: (value) => value === '' || /^https?:\/\//.test(value),
     errorMessage: 'GATEKEEP_ISSUER must be a full http(s):// URL'
@@ -299,9 +299,8 @@ export const Config = {
 
   // Auth Mode (for self-hosted)
   auth: {
-    mode: config.AUTH_MODE,                    // 'clerk', 'oidc', 'jwt', 'password', 'none'
+    mode: config.AUTH_MODE,                    // 'oidc', 'jwt', 'password', 'none'
     password: config.AUTH_PASSWORD,            // Shared password for 'password' mode
-    isClerk: config.AUTH_MODE === 'clerk',
     isOidc: config.AUTH_MODE === 'oidc',
     isJwt: config.AUTH_MODE === 'jwt',
     isPassword: config.AUTH_MODE === 'password',
@@ -407,21 +406,21 @@ export const Config = {
         monthlyPageviews: 5000,
         price: 0,
         stripePriceId: null,
-        features: ['1 site', 'Basic analytics', '30-day data retention']
+        features: ['Unlimited sites', 'Basic analytics', '30-day data retention']
       },
       starter: {
         name: 'Starter',
         monthlyPageviews: 50000,
         price: 9,
         stripePriceId: process.env.STRIPE_PRICE_STARTER,
-        features: ['3 sites', 'Full analytics', '6-month data retention', 'Email reports']
+        features: ['Unlimited sites', 'Full analytics', '6-month data retention', 'Email reports']
       },
       growth: {
         name: 'Growth',
         monthlyPageviews: 200000,
         price: 19,
         stripePriceId: process.env.STRIPE_PRICE_GROWTH,
-        features: ['10 sites', 'Full analytics', '1-year data retention', 'Email reports', 'API access']
+        features: ['Unlimited sites', 'Full analytics', '1-year data retention', 'Email reports', 'API access']
       },
       business: {
         name: 'Business',
@@ -433,7 +432,7 @@ export const Config = {
       scale: {
         name: 'Scale',
         monthlyPageviews: 5000000,
-        price: 149,  // Increased from $99 for better margin
+        price: 99,
         stripePriceId: process.env.STRIPE_PRICE_SCALE,
         features: ['Unlimited sites', 'Full analytics', 'Unlimited data retention', 'Priority support', 'API access', 'Team members (20)', 'Real-time Analytics included']
       },
@@ -445,11 +444,12 @@ export const Config = {
         features: ['Unlimited everything', 'Dedicated support', 'Custom integrations', 'SLA']
       }
     },
-    // Site limits per tier
+    // Site limits per tier. Unlimited on every plan: plans are priced on
+    // monthly events, never on the number of sites.
     siteLimits: {
-      free: 1,
-      starter: 3,
-      growth: 10,
+      free: Infinity,
+      starter: Infinity,
+      growth: Infinity,
       business: Infinity,
       scale: Infinity,
       enterprise: Infinity
@@ -644,3 +644,14 @@ export function getConfigSummary() {
 }
 
 export default Config;
+
+/**
+ * The plan whose limits apply to a user. Single-user self-hosted installs
+ * (AUTH_MODE=none or password) have no accounts or billing, so they get the
+ * unlimited Enterprise plan — otherwise the lone local user would fall back to
+ * Free and the install would stop recording after 5,000 events a month.
+ */
+export function effectivePlan(user) {
+  if (Config.auth.isNone || Config.auth.isPassword) return 'enterprise';
+  return (user && user.plan) || 'free';
+}

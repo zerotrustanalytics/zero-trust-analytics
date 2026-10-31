@@ -1,0 +1,30 @@
+{{ define "main" }}
+<section class="sec" style="padding-top:48px">
+  <div class="wrap docs">
+    {{ partial "zt/help-nav.html" . }}
+    <article class="docs-main stack" style="gap:20px">
+      <nav class="xs faint" aria-label="Breadcrumb">
+        <a href="{{ "/help/" | relURL }}" style="text-decoration:none">Help center</a>
+      </nav>
+      <header class="stack" style="gap:10px">
+        <h1 class="h1">{{ .Title }}</h1>
+        {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+      </header>
+      <div class="prose">{{ .Content }}</div>
+      <footer class="row between" style="border-top:2px dashed var(--soft-2);padding-top:20px;margin-top:20px">
+        <span class="sm muted">Still stuck? <a class="link" href="{{ "/contact/" | relURL }}">Ask us</a>.</span>
+        {{- /* next guide by weight (NextInSection's direction depends on sort config) */ -}}
+        {{- $next := false }}{{ $found := false }}
+        {{- range .CurrentSection.RegularPages.ByWeight }}{{ if and $found (not $next) }}{{ $next = . }}{{ end }}{{ if eq .RelPermalink $.RelPermalink }}{{ $found = true }}{{ end }}{{ end }}
+        {{ with $next }}<a class="sm link" href="{{ .RelPermalink }}">Next: {{ .LinkTitle }} →</a>{{ end }}
+      </footer>
+    </article>
+    {{ if gt (len .TableOfContents) 40 }}
+    <aside class="docs-toc hide-phone" aria-label="On this page">
+      <span class="lbl">On this page</span>
+      {{ .TableOfContents }}
+    </aside>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

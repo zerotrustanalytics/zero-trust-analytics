@@ -32,7 +32,7 @@ Get all active sessions for your account.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/user/sessions" \
+curl "https://app.ztas.io/api/user/sessions" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -89,7 +89,7 @@ Sign out from a specific device or browser.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/user/sessions?sessionId=sess_def456" \
+curl -X DELETE "https://app.ztas.io/api/user/sessions?sessionId=sess_def456" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -117,7 +117,7 @@ Sign out from all devices except the one you're currently using.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/user/sessions?all=true" \
+curl -X DELETE "https://app.ztas.io/api/user/sessions?all=true" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -143,15 +143,15 @@ If you lose your phone or it's stolen:
 
 ```bash
 # 1. List all sessions to find the phone's session
-curl "https://ztas.io/api/user/sessions" \
+curl "https://app.ztas.io/api/user/sessions" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 2. Revoke the phone's session
-curl -X DELETE "https://ztas.io/api/user/sessions?sessionId=sess_def456" \
+curl -X DELETE "https://app.ztas.io/api/user/sessions?sessionId=sess_def456" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 3. Consider changing your password
-curl -X PATCH "https://ztas.io/api/user/password" \
+curl -X PATCH "https://app.ztas.io/api/user/password" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -166,11 +166,11 @@ If you notice unfamiliar sessions:
 
 ```bash
 # 1. Review all active sessions
-curl "https://ztas.io/api/user/sessions" \
+curl "https://app.ztas.io/api/user/sessions" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 2. Revoke all sessions except current
-curl -X DELETE "https://ztas.io/api/user/sessions?all=true" \
+curl -X DELETE "https://app.ztas.io/api/user/sessions?all=true" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 3. Change password immediately
@@ -183,7 +183,7 @@ If you forgot to sign out from a public computer:
 
 ```bash
 # Revoke specific session
-curl -X DELETE "https://ztas.io/api/user/sessions?sessionId=sess_ghi789" \
+curl -X DELETE "https://app.ztas.io/api/user/sessions?sessionId=sess_ghi789" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -194,7 +194,7 @@ curl -X DELETE "https://ztas.io/api/user/sessions?sessionId=sess_ghi789" \
 Check your active sessions weekly:
 
 ```bash
-curl "https://ztas.io/api/user/sessions" \
+curl "https://app.ztas.io/api/user/sessions" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   | jq '.sessions[] | "\(.device) - Last active: \(.lastActiveAt)"'
 ```
@@ -205,11 +205,11 @@ Remove sessions that haven't been active recently:
 
 ```bash
 # Example: Revoke sessions older than 30 days
-curl "https://ztas.io/api/user/sessions" \
+curl "https://app.ztas.io/api/user/sessions" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   | jq -r '.sessions[] | select(.lastActiveAt < "2024-11-12") | .id' \
   | while read session_id; do
-    curl -X DELETE "https://ztas.io/api/user/sessions?sessionId=$session_id" \
+    curl -X DELETE "https://app.ztas.io/api/user/sessions?sessionId=$session_id" \
       -H "Authorization: Bearer YOUR_TOKEN"
   done
 ```
@@ -226,7 +226,7 @@ Always sign out when using public or shared devices:
 Set up alerts for new session creation (if available in your plan):
 
 ```bash
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -343,7 +343,7 @@ This can happen if:
 All session management actions are logged in the [Activity Log](/docs/api/activity-log/):
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=security" \
+curl "https://app.ztas.io/api/activity-log?type=security" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -373,7 +373,7 @@ TOKEN="YOUR_TOKEN"
 THRESHOLD_DAYS=7
 
 echo "Fetching active sessions..."
-sessions=$(curl -s "https://ztas.io/api/user/sessions" \
+sessions=$(curl -s "https://app.ztas.io/api/user/sessions" \
   -H "Authorization: Bearer $TOKEN")
 
 echo "Active sessions:"
@@ -395,7 +395,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     select((.lastActiveAt | fromdateiso8601) < (now - ($days | tonumber) * 86400)) |
     .id' | while read session_id; do
     echo "Revoking $session_id..."
-    curl -s -X DELETE "https://ztas.io/api/user/sessions?sessionId=$session_id" \
+    curl -s -X DELETE "https://app.ztas.io/api/user/sessions?sessionId=$session_id" \
       -H "Authorization: Bearer $TOKEN"
   done
   echo "Done!"
@@ -415,4 +415,3 @@ Excessive requests may temporarily lock your account for security reasons.
 - [Authentication](/docs/api/authentication/) - Log in and create sessions
 - [Account](/docs/api/account/) - Manage account settings
 - [Activity Log](/docs/api/activity-log/) - View security events
-- [Two-Factor Authentication](/docs/api/2fa/) - Additional security layer

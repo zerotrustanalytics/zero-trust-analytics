@@ -41,7 +41,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { verifyToken as verifyClerkToken } from '@clerk/backend';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { Config } from './config.js';
 import { getUser, createOAuthUser } from './storage.js';
@@ -308,8 +307,18 @@ export function createAuthResponse(user, token, requestOrigin = null) {
 }
 
 // SECURITY: Validate CSRF token from request headers
-// Frontend should send CSRF token in X-CSRF-Token header for state-changing requests
+// Frontend should send CSRF token in X-CSRF-Token header for state-changing requests.
+//
+// CSRF only threatens credentials a browser attaches automatically (cookies).
+// API auth here is header-only — a Bearer token (oidc/jwt/clerk) or
+// X-Auth-Password (password mode) — and a cross-site form or link cannot set
+// those headers, so a request that authenticated with one is not forgeable and
+// needs no token. (The gatekeep dashboard never had a CSRF token to send.)
 export function validateCSRFFromRequest(headers, userId) {
+  if (extractBearerToken(headers) || headers.get?.('x-auth-password')) {
+    return { valid: true };
+  }
+
   const csrfToken = headers.get?.('x-csrf-token') || headers.get?.('X-CSRF-Token');
 
   if (!csrfToken) {
@@ -352,6 +361,15 @@ export async function verifyOidcToken(token, keyResolver = null) {
     audience: Config.oidc.clientId,
   });
   return payload;
+}
+
+// Constant-time string comparison for shared secrets (hash first so lengths
+// match and the comparison time reveals nothing about the secret).
+export function timingSafeStringEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const ha = crypto.createHash('sha256').update(a).digest();
+  const hb = crypto.createHash('sha256').update(b).digest();
+  return crypto.timingSafeEqual(ha, hb);
 }
 
 // Robust bearer-token extraction: works whether `headers` is a Web Headers
@@ -399,7 +417,7 @@ export async function authenticateRequest(headers, user = null) {
       return { error: 'Password required', status: 401, needsPassword: true };
     }
 
-    if (providedPassword !== expectedPassword) {
+    if (!timingSafeStringEqual(providedPassword, expectedPassword)) {
       return { error: 'Invalid password', status: 401 };
     }
 
@@ -439,55 +457,39 @@ export async function authenticateRequest(headers, user = null) {
       return { error: 'Token missing email claim', status: 401 };
     }
 
+    // Accounts are keyed by email, so an unverified email must never resolve
+    // to (or pre-create) the account of whoever really owns that address.
+    // gatekeep's sign-up verifies email by link, so real users always pass.
+    if (claims.email_verified !== true) {
+      return { error: 'Email address not verified', status: 403 };
+    }
+
     // Resolve or just-in-time provision the ZTA account for this identity.
     let ztaUser = await getUser(email);
     if (!ztaUser) {
-      ztaUser = await createOAuthUser(email, 'gatekeep', claims.sub, claims.name || null);
+      ztaUser = await createOAuthUser(email, 'gatekeep', claims.sub, claims.name || null, 'free');
     }
 
     return {
       user: {
         ...ztaUser,
-        id: ztaUser.id,
+        // ownerId: the id that owns this account's sites/keys/teams when it
+        // differs from the record id (Clerk-era accounts; set during migration
+        // by scripts/link-owner-ids.mjs).
+        id: ztaUser.ownerId || ztaUser.id,
         email,
         gatekeepSub: claims.sub,
-        emailVerified: claims.email_verified === true,
+        emailVerified: true,
       },
     };
   }
 
-  // AUTH_MODE=clerk or AUTH_MODE=jwt: Token-based auth
-  const token = getTokenFromHeader(headers);
+  // AUTH_MODE=jwt: legacy ZTA-issued HS256 tokens
+  const token = extractBearerToken(headers);
   if (!token) {
     return { error: 'No token provided', status: 401 };
   }
 
-  // Try Clerk verification first (only if AUTH_MODE=clerk)
-  if (authMode === 'clerk') {
-    try {
-      const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-      if (clerkSecretKey) {
-        const verifiedToken = await verifyClerkToken(token, {
-          secretKey: clerkSecretKey,
-        });
-
-        if (verifiedToken) {
-          return {
-            user: {
-              id: verifiedToken.sub,
-              clerkUserId: verifiedToken.sub,
-              email: verifiedToken.email || null,
-            }
-          };
-        }
-      }
-    } catch (clerkError) {
-      console.log('Clerk token verification failed:', clerkError.message);
-      return { error: 'Invalid token', status: 401 };
-    }
-  }
-
-  // JWT verification (AUTH_MODE=jwt or fallback)
   const decoded = verifyToken(token, user);
   if (!decoded) {
     return { error: 'Invalid token', status: 401 };

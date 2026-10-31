@@ -1,0 +1,13 @@
+{{- $current := . -}}
+<nav class="docs-nav" aria-label="Help center">
+  <h2>Help center</h2>
+  {{ with site.GetPage "/help" }}
+    <a href="{{ .RelPermalink }}"{{ if eq $current .Page }} aria-current="page"{{ end }}>All guides</a>
+    {{ range .RegularPages.ByWeight }}
+      <a href="{{ .RelPermalink }}"{{ if eq $current .Page }} aria-current="page"{{ end }}>{{ .LinkTitle }}</a>
+    {{ end }}
+  {{ end }}
+  <h2>Setup</h2>
+  <a href="{{ "/docs/quickstart/" | relURL }}">Install the tracker</a>
+  <a href="{{ "/contact/" | relURL }}">Contact us</a>
+</nav>

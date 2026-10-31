@@ -1,7 +1,7 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getStore } from './lib/blob-store.js';
 import { getTeamUsage, getTeamUsageBySite, getTeamUsageHistory, checkUsageLimit, getActualUsageFromPageviews, getCurrentMonth } from './lib/turso.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 import { getUser, getUserById, getUserSites, getUserTeams, getTeamMembers } from './lib/storage.js';
 
 /**
@@ -48,43 +48,14 @@ export default async function handler(req, context) {
   }
 
   const userId = auth.user.id;
-  let userEmail = auth.user.email;
+  const userEmail = auth.user.email;
   const url = new URL(req.url);
   const month = url.searchParams.get('month'); // Optional: specific month YYYY-MM
 
   try {
-    // If no email from auth, fetch from Clerk API
-    if (!userEmail && userId?.startsWith('user_')) {
-      try {
-        const clerkResponse = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (clerkResponse.ok) {
-          const clerkUser = await clerkResponse.json();
-          const primaryEmail = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
-          userEmail = primaryEmail?.email_address || clerkUser.email_addresses?.[0]?.email_address;
-
-          // Create userId -> email mapping for track.js lookups
-          if (userEmail) {
-            try {
-              const users = getStore({ name: 'users', consistency: 'strong' });
-              await users.set(`user_id_map_${userId}`, userEmail);
-            } catch (mapErr) {
-              console.error('Failed to create userId mapping:', mapErr.message);
-            }
-          }
-        }
-      } catch (clerkErr) {
-        console.error('Failed to fetch email from Clerk:', clerkErr.message);
-      }
-    }
-
     // Get user to determine their plan
     const user = userEmail ? await getUser(userEmail) : null;
-    const plan = user?.plan || 'free';
+    const plan = effectivePlan(user);
     const planLimits = getPlanLimits(plan);
 
     // ALWAYS ensure userId -> email mapping exists for track.js
@@ -117,15 +88,20 @@ export default async function handler(req, context) {
     try {
       // Get actual pageview counts from the pageviews table
       const actualUsage = await getActualUsageFromPageviews(userSites, targetMonth);
+      // Non-pageview events are only tallied in monthly_usage (track.js).
+      const metered = await getTeamUsage(userId, targetMonth);
       currentUsage = {
         month: actualUsage.month,
         pageviews: actualUsage.pageviews,
         visitors: actualUsage.visitors,
-        events: 0
+        events: metered.events
       };
     } catch (usageErr) {
       console.error('Error calculating actual usage:', usageErr.message);
     }
+
+    // Every stored event counts toward the plan limit (matches checkUsageLimit).
+    const usedTotal = currentUsage.pageviews + currentUsage.events;
 
     // Try to get historical data from monthly_usage table (may not exist)
     try {
@@ -137,11 +113,11 @@ export default async function handler(req, context) {
 
     // Calculate limit check based on actual usage
     const limitCheck = {
-      isWithinLimit: currentUsage.pageviews < planLimits.monthlyPageviews,
-      currentUsage: currentUsage.pageviews,
+      isWithinLimit: usedTotal < planLimits.monthlyPageviews,
+      currentUsage: usedTotal,
       limit: planLimits.monthlyPageviews,
-      percentUsed: planLimits.monthlyPageviews > 0 ? Math.round((currentUsage.pageviews / planLimits.monthlyPageviews) * 100) : 0,
-      remaining: Math.max(0, planLimits.monthlyPageviews - currentUsage.pageviews)
+      percentUsed: planLimits.monthlyPageviews > 0 ? Math.round((usedTotal / planLimits.monthlyPageviews) * 100) : 0,
+      remaining: Math.max(0, planLimits.monthlyPageviews - usedTotal)
     };
 
     // Get team member counts

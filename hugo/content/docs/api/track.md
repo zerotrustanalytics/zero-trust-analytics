@@ -72,7 +72,7 @@ Content-Type: application/json
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `type` | string | Yes | Event type: `pageview`, `event`, `engagement`, `heartbeat` |
+| `type` | string | Yes | Event type: `pageview`, `event` or `engagement`. Other types are ignored |
 | `siteId` | string | Yes | Your unique Site ID |
 | `path` | string | No | Page path (defaults to `/`) |
 | `referrer` | string | No | Referring URL |
@@ -84,9 +84,19 @@ Content-Type: application/json
 | `category` | string | No | Event category |
 | `label` | string | No | Event label |
 | `value` | number | No | Event value |
-| `sessionId` | string | No | Session identifier |
 | `timeOnPage` | number | No | Time spent on page in seconds |
 | `isBounce` | boolean | No | Whether this was a bounce |
+
+### Limits and data handling
+
+- At most 50 events per request; extra events are dropped.
+- Paths keep only the URL path (no query string or fragment) and are capped at
+  500 characters. Event names are capped at 100 characters, labels at 200.
+- Text that looks like an email address, phone number or IP address is
+  replaced with `[redacted]`.
+- Sessions are assigned server-side; any client-supplied session ID is ignored.
+- Every stored event (page views and custom events) counts toward the plan's
+  monthly allowance.
 
 ## Response
 
@@ -108,7 +118,7 @@ Content-Type: application/json
 
 ## CORS
 
-The Track endpoint supports CORS for browser-based requests. The `Origin` header must match your registered site domain.
+The Track endpoint supports CORS for browser-based requests. The `Origin` header must match your registered site domain or one of its subdomains.
 
 ## Server-Side Tracking
 
@@ -116,7 +126,7 @@ For server-side tracking (Node.js, Python, etc.), call the endpoint directly:
 
 ```javascript
 // Node.js example
-const response = await fetch('https://ztas.io/api/track', {
+const response = await fetch('https://app.ztas.io/api/track', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'

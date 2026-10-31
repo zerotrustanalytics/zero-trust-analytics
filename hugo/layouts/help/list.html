@@ -1,0 +1,26 @@
+{{ define "main" }}
+<section class="sec" style="padding-top:64px">
+  <div class="wrap stack" style="gap:32px;max-width:860px">
+    <header class="stack" style="gap:12px">
+      <span class="eyebrow">Help center</span>
+      <h1 class="h1">How to use ZTA</h1>
+      <p class="lead">Step-by-step guides to the dashboard: adding sites, reading your numbers, sharing, teams and billing.</p>
+    </header>
+    {{ with .Pages }}
+      <div class="g2">
+        {{ range .ByWeight }}
+        <a class="card post" href="{{ .RelPermalink }}">
+          <span class="h3">{{ .LinkTitle }}</span>
+          {{ with .Description }}<span class="sm muted">{{ . }}</span>{{ end }}
+        </a>
+        {{ end }}
+      </div>
+    {{ else }}
+      <div class="alert a-info">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>
+        <span>The full user guide is on its way. Until then, the <a class="link" href="{{ "/docs/quickstart/" | relURL }}">quickstart</a> covers setup, and you can <a class="link" href="{{ "/contact/" | relURL }}">ask us anything</a>.</span>
+      </div>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

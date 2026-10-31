@@ -34,7 +34,7 @@ Get all annotations for a site within a date range.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/annotations?siteId=site_abc123&startDate=2024-12-01&endDate=2024-12-31" \
+curl "https://app.ztas.io/api/annotations?siteId=site_abc123&startDate=2024-12-01&endDate=2024-12-31" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -86,7 +86,7 @@ Add a new annotation to mark an important event.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/annotations" \
+curl -X POST "https://app.ztas.io/api/annotations" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -149,7 +149,7 @@ Modify an existing annotation.
 ### Request
 
 ```bash
-curl -X PATCH "https://ztas.io/api/annotations" \
+curl -X PATCH "https://app.ztas.io/api/annotations" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -199,7 +199,7 @@ Remove an annotation from your charts.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/annotations?annotationId=ann_abc123" \
+curl -X DELETE "https://app.ztas.io/api/annotations?annotationId=ann_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -249,7 +249,7 @@ Mark the start of a marketing campaign and analyze its impact:
 
 ```bash
 # 1. Create annotation for campaign start
-curl -X POST "https://ztas.io/api/annotations" \
+curl -X POST "https://app.ztas.io/api/annotations" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -262,11 +262,11 @@ curl -X POST "https://ztas.io/api/annotations" \
   }'
 
 # 2. View analytics for the campaign period
-curl "https://ztas.io/api/stats?siteId=site_abc123&startDate=2024-12-01&endDate=2024-12-31" \
+curl "https://app.ztas.io/api/stats?siteId=site_abc123&startDate=2024-12-01&endDate=2024-12-31" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 3. Add follow-up annotation
-curl -X POST "https://ztas.io/api/annotations" \
+curl -X POST "https://app.ztas.io/api/annotations" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -285,7 +285,7 @@ Track multiple release milestones:
 
 ```bash
 # Beta release
-curl -X POST "https://ztas.io/api/annotations" \
+curl -X POST "https://app.ztas.io/api/annotations" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -298,7 +298,7 @@ curl -X POST "https://ztas.io/api/annotations" \
   }'
 
 # Public launch
-curl -X POST "https://ztas.io/api/annotations" \
+curl -X POST "https://app.ztas.io/api/annotations" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -311,7 +311,7 @@ curl -X POST "https://ztas.io/api/annotations" \
   }'
 
 # First update
-curl -X POST "https://ztas.io/api/annotations" \
+curl -X POST "https://app.ztas.io/api/annotations" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -432,7 +432,7 @@ Import multiple annotations at once using a script:
 # 2024-12-15,Campaign,Marketing campaign,#198754,megaphone
 
 while IFS=, read -r date title description color icon; do
-  curl -X POST "https://ztas.io/api/annotations" \
+  curl -X POST "https://app.ztas.io/api/annotations" \
     -H "Authorization: Bearer YOUR_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{
@@ -452,7 +452,7 @@ done < annotations.csv
 Export all annotations for documentation or backup:
 
 ```bash
-curl "https://ztas.io/api/annotations?siteId=site_abc123" \
+curl "https://app.ztas.io/api/annotations?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   | jq -r '.annotations[] | [.date, .title, .description] | @csv' \
   > annotations.csv

@@ -45,14 +45,14 @@ const plans = [
     name: 'Free',
     price: 0,
     pageviews: '5,000',
-    features: ['1 website', '5,000 pageviews/mo', '30-day data retention', 'Basic analytics'],
+    features: ['Unlimited websites', '5,000 events/mo', '30-day data retention', 'Basic analytics'],
   },
   {
     id: 'starter',
     name: 'Starter',
     price: 9,
     pageviews: '50,000',
-    features: ['3 websites', '50,000 pageviews/mo', '6-month data retention', 'Full analytics', 'Email reports'],
+    features: ['Unlimited websites', '50,000 events/mo', '6-month data retention', 'Full analytics', 'Email reports'],
   },
   {
     id: 'growth',
@@ -60,21 +60,21 @@ const plans = [
     price: 19,
     popular: true,
     pageviews: '200,000',
-    features: ['10 websites', '200,000 pageviews/mo', '1-year data retention', 'Full analytics', 'API access', '3 team members'],
+    features: ['Unlimited websites', '200,000 events/mo', '1-year data retention', 'Full analytics', 'API access', '3 team members'],
   },
   {
     id: 'business',
     name: 'Business',
     price: 49,
     pageviews: '1,000,000',
-    features: ['Unlimited websites', '1M pageviews/mo', '2-year data retention', '5 team members', 'Priority support'],
+    features: ['Unlimited websites', '1M events/mo', '2-year data retention', '5 team members', 'Priority support'],
   },
   {
     id: 'scale',
     name: 'Scale',
     price: 99,
     pageviews: '5,000,000',
-    features: ['Unlimited websites', '5M pageviews/mo', 'Unlimited retention', '20 team members', 'Priority support'],
+    features: ['Unlimited websites', '5M events/mo', 'Unlimited retention', '20 team members', 'Priority support'],
   },
   {
     id: 'enterprise',
@@ -95,7 +95,7 @@ export default function BillingPage() {
     async function fetchUsage() {
       try {
         const token = await getToken()
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
         const res = await fetch(`${apiUrl}/api/usage`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -121,7 +121,7 @@ export default function BillingPage() {
     setLoading(planId)
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/stripe/checkout`, {
         method: 'POST',
         headers: {
@@ -146,7 +146,7 @@ export default function BillingPage() {
     setLoading('portal')
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/stripe/portal`, {
         method: 'POST',
         headers: {
@@ -166,7 +166,10 @@ export default function BillingPage() {
   }
 
   const currentPlan = usageData?.plan.tier || 'free'
-  const formatNumber = (num: number) => num.toLocaleString()
+  const formatNumber = (num: number | null | undefined) => (num ?? 0).toLocaleString()
+  // Unlimited is Infinity on the server, which JSON serializes as null.
+  const isUnlimited = (n: number | null | undefined) => n == null || n === Infinity
+  const formatLimit = (n: number | null | undefined) => (isUnlimited(n) ? 'Unlimited' : formatNumber(n))
 
   return (
     <div>
@@ -231,7 +234,7 @@ export default function BillingPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatNumber(usageData.usage.current.pageviews)} / {usageData.usage.limit === Infinity ? 'Unlimited' : formatNumber(usageData.usage.limit)}
+                {formatNumber(usageData.usage.current.pageviews)} / {formatLimit(usageData.usage.limit)}
               </p>
             </div>
             <div>
@@ -240,21 +243,21 @@ export default function BillingPage() {
               <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${
-                    usageData.plan.limits.sites !== Infinity && (usageData.counts?.sites || 0) > usageData.plan.limits.sites
+                    (usageData.plan.limits.sites != null && usageData.plan.limits.sites !== Infinity) && (usageData.counts?.sites || 0) > usageData.plan.limits.sites
                       ? 'bg-red-500'
-                      : usageData.plan.limits.sites !== Infinity && (usageData.counts?.sites || 0) >= usageData.plan.limits.sites
+                      : (usageData.plan.limits.sites != null && usageData.plan.limits.sites !== Infinity) && (usageData.counts?.sites || 0) >= usageData.plan.limits.sites
                         ? 'bg-yellow-500'
                         : 'bg-primary'
                   }`}
                   style={{
-                    width: usageData.plan.limits.sites === Infinity
+                    width: (usageData.plan.limits.sites == null || usageData.plan.limits.sites === Infinity)
                       ? '10%'
                       : `${Math.min(((usageData.counts?.sites || 0) / usageData.plan.limits.sites) * 100, 100)}%`
                   }}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {usageData.counts?.sites || 0} / {usageData.plan.limits.sites === Infinity ? 'Unlimited' : usageData.plan.limits.sites}
+                {usageData.counts?.sites || 0} / {(usageData.plan.limits.sites == null || usageData.plan.limits.sites === Infinity) ? 'Unlimited' : usageData.plan.limits.sites}
               </p>
             </div>
             <div>
@@ -264,14 +267,14 @@ export default function BillingPage() {
                 <div
                   className="h-full rounded-full bg-primary"
                   style={{
-                    width: usageData.plan.limits.teamMembers === Infinity
+                    width: isUnlimited(usageData.plan.limits.teamMembers)
                       ? '10%'
                       : `${Math.min(((usageData.counts?.teamMembers || 0) / usageData.plan.limits.teamMembers) * 100, 100)}%`
                   }}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {usageData.counts?.teamMembers || 0} / {usageData.plan.limits.teamMembers === Infinity ? 'Unlimited' : usageData.plan.limits.teamMembers}
+                {usageData.counts?.teamMembers || 0} / {formatLimit(usageData.plan.limits.teamMembers)}
               </p>
             </div>
           </div>
@@ -316,7 +319,7 @@ export default function BillingPage() {
               ) : (
                 <p className="text-xl font-bold">Contact Us</p>
               )}
-              <p className="text-sm text-muted-foreground">{plan.pageviews} pageviews/mo</p>
+              <p className="text-sm text-muted-foreground">{plan.pageviews} events/mo</p>
             </div>
             <ul className="space-y-2 mb-6">
               {plan.features.map((feature, i) => (

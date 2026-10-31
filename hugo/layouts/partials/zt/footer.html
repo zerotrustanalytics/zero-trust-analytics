@@ -1,0 +1,44 @@
+<footer class="ft">
+  <div class="wrap">
+    <div class="ft-grid">
+      <div class="ft-col">
+        <a class="row" href="{{ "/" | relURL }}" aria-label="ZTA home" style="gap:10px">
+          {{ partial "tally/zta-mark.html" (dict "size" 36) }}
+          <b style="font:700 24px/1 'Fredoka',sans-serif;color:#F7F2FF">ZTA</b>
+        </a>
+        <p class="sm" style="color:#E2D5F8;max-width:34ch">Privacy-first web analytics. No cookies, no stored IPs, nothing written to your visitors' devices.</p>
+      </div>
+      <nav class="ft-col" aria-labelledby="ft-product">
+        <h2 class="ft-h" id="ft-product">Product</h2>
+        <a href="{{ "/demo/" | relURL }}">Live demo</a>
+        <a href="{{ "/pricing/" | relURL }}">Pricing</a>
+        <a href="{{ "/vs/" | relURL }}">Compare</a>
+        <a href="https://app.ztas.io/sign-in">Sign in</a>
+      </nav>
+      <nav class="ft-col" aria-labelledby="ft-help">
+        <h2 class="ft-h" id="ft-help">Help</h2>
+        <a href="{{ "/help/" | relURL }}">Help center</a>
+        <a href="{{ "/docs/" | relURL }}">Docs</a>
+        <a href="{{ "/docs/api/" | relURL }}">API reference</a>
+        <a href="{{ "/docs/self-hosting/" | relURL }}">Self-hosting</a>
+      </nav>
+      <nav class="ft-col" aria-labelledby="ft-company">
+        <h2 class="ft-h" id="ft-company">Company</h2>
+        <a href="{{ "/about/" | relURL }}">About</a>
+        <a href="{{ "/blog/" | relURL }}">Blog</a>
+        <a href="{{ "/contact/" | relURL }}">Contact</a>
+      </nav>
+      <nav class="ft-col" aria-labelledby="ft-legal">
+        <h2 class="ft-h" id="ft-legal">Legal</h2>
+        <a href="{{ "/privacy-policy/" | relURL }}">Privacy</a>
+        <a href="{{ "/terms-of-use/" | relURL }}">Terms</a>
+        <a href="{{ "/accessibility-statement/" | relURL }}">Accessibility</a>
+        <a href="{{ "/hipaa/" | relURL }}">HIPAA</a>
+      </nav>
+    </div>
+    <div class="row between xs" style="border-top:2px dashed #4F4268;padding:24px 0 32px;color:#E2D5F8">
+      <span>&copy; {{ now.Year }} Zero Trust Analytics</span>
+      <span>Counted by Tally. Seen by nobody.</span>
+    </div>
+  </div>
+</footer>

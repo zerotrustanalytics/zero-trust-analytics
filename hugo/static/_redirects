@@ -1,1 +1,20 @@
-# old new 301
+# Cloudflare Pages redirects for ztas.io (the marketing site).
+# The dashboard and API live on app.ztas.io; these keep old links working.
+
+# Shared dashboards moved into the app (links customers already sent out)
+/shared/*      https://app.ztas.io/shared/:splat   301
+/shared        https://app.ztas.io/                301
+
+# Account shortcuts (formerly in netlify.toml)
+/login         https://app.ztas.io/sign-in         301
+/sign-in       https://app.ztas.io/sign-in         301
+/register      https://app.ztas.io/sign-up         301
+/sign-up       https://app.ztas.io/sign-up         301
+/dashboard     https://app.ztas.io/dashboard       301
+/dashboard/*   https://app.ztas.io/dashboard/:splat 301
+
+# The API moved to app.ztas.io. 308 keeps the method and body (POST stays
+# POST), so old integrations and cached trackers still reach it. Clients that
+# send an Authorization header should call app.ztas.io directly: many drop
+# credentials when a redirect changes host.
+/api/*         https://app.ztas.io/api/:splat      308

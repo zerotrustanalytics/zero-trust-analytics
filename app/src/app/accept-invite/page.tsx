@@ -35,7 +35,7 @@ function AcceptInviteContent() {
   const [processing, setProcessing] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
   useEffect(() => {
     if (!token) {

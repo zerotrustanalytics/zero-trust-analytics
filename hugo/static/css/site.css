@@ -1,0 +1,32 @@
+/* ztas.io additions on top of the ZTA × Tally handoff (zta.css stays untouched).
+   Uses only the handoff's tokens. */
+
+/* Markdown prose: code, tables, quotes */
+.prose pre{background:var(--code-bg);color:var(--code-fg);border:2.5px solid #23163A;border-radius:var(--r);padding:18px 20px;margin:0 0 24px;overflow-x:auto;font:400 15px/1.7 "DM Mono",monospace;box-shadow:var(--pop-sm)}
+.prose pre code{background:none;padding:0;font-size:inherit;color:inherit}
+.prose :not(pre) > code{font-family:"DM Mono",monospace;font-size:.86em;background:var(--soft);padding:2px 7px;border-radius:6px}
+.prose table{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:16px;display:block;overflow-x:auto}
+.prose th{text-align:left;font:600 15px "Fredoka",sans-serif;color:var(--ink-3);padding:10px 12px;border-bottom:2.5px solid var(--line);white-space:nowrap}
+.prose td{padding:10px 12px;border-bottom:2px dashed var(--soft-2);vertical-align:top}
+.prose blockquote{margin:0 0 24px;padding:16px 20px;border:2.5px solid var(--line);border-radius:var(--r);background:var(--sky-soft)}
+.prose blockquote p:last-child{margin:0}
+.prose h2,.prose h3{scroll-margin-top:24px}
+.prose img{max-width:100%;height:auto;border:2.5px solid var(--line);border-radius:var(--r)}
+.prose hr{border:0;border-top:2px dashed var(--soft-2);margin:40px 0}
+.prose ul,.prose ol{padding-left:1.4em}
+
+/* Chroma highlight classes → ZTA code palette */
+.highlight .c,.highlight .c1,.highlight .cm,.highlight .cs{color:var(--code-com);font-style:italic}
+.highlight .k,.highlight .kd,.highlight .kn,.highlight .kc,.highlight .kr,.highlight .nt,.highlight .o{color:var(--code-kw)}
+.highlight .s,.highlight .s1,.highlight .s2,.highlight .sb,.highlight .sd,.highlight .se,.highlight .si,.highlight .sx,.highlight .m,.highlight .mi,.highlight .mf{color:var(--code-str)}
+.highlight .na,.highlight .nx,.highlight .nf,.highlight .nb{color:#C9B8F2}
+
+/* Docs table of contents (Hugo's TableOfContents markup) */
+.docs-toc nav ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.docs-toc nav ul ul{padding-left:12px;margin-top:8px}
+.docs-toc nav a{color:var(--ink-3);text-decoration:none}
+.docs-toc nav a:hover{color:var(--ink);text-decoration:underline}
+.docs-nav h2{font:600 13px "Fredoka",sans-serif;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;margin:18px 14px 6px}
+.docs-nav h2:first-child{margin-top:0}
+@media (min-width:761px){.docs-nav,.docs-toc{position:sticky;top:24px}}
+.prose td code{white-space:nowrap}

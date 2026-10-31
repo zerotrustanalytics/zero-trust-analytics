@@ -99,7 +99,7 @@ export default async function handler(req, context) {
       logger.info('Share created successfully', { userId, siteId, shareToken: share.token });
       return successResponse({
         share,
-        shareUrl: `https://ztas.io/shared/${share.token}`,
+        shareUrl: `https://app.ztas.io/shared/${share.token}`,
         site: { domain: site?.domain }
       }, 201, origin);
 

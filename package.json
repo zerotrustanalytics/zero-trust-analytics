@@ -12,7 +12,8 @@
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config tests/jest.config.js --coverage",
     "build": "node build.js",
     "build:legacy": "npx javascript-obfuscator src/analytics.js --output static/js/analytics.obfuscated.js --compact true --control-flow-flattening true --dead-code-injection true --string-array true --string-array-encoding base64 --string-array-threshold 0.75",
-    "generate-branding": "node generate-branding-assets.js"
+    "generate-branding": "node generate-branding-assets.js",
+    "build:tally3d": "esbuild src/tally3d.js --bundle --format=esm --minify --target=es2020 --legal-comments=linked --outfile=hugo/static/js/tally3d.js"
   },
   "repository": {
     "type": "git",
@@ -34,7 +35,8 @@
     "postcss": "^8.5.6",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.19",
-    "terser": "^5.44.1"
+    "terser": "^5.44.1",
+    "three": "0.170.0"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",

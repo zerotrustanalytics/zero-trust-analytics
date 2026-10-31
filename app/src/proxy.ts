@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   /^\/sign-in/,
   /^\/sign-up/,
   /^\/accept-invite/,
+  /^\/shared\//, // public read-only dashboards (access is by share token)
   /^\/api\/health/,
   /^\/api\/auth\//, // Auth.js endpoints (session, signin, callback, csrf, ...)
 ]

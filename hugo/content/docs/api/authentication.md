@@ -41,7 +41,7 @@ POST /api/auth/login
 ### Example
 
 ```bash
-curl -X POST https://ztas.io/api/auth/login \
+curl -X POST https://app.ztas.io/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "you@example.com", "password": "your-password"}'
 ```
@@ -57,7 +57,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 ### Example
 
 ```bash
-curl https://ztas.io/api/stats?siteId=site_abc123&period=7d \
+curl https://app.ztas.io/api/stats?siteId=site_abc123&period=7d \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -97,7 +97,7 @@ POST /api/auth/forgot
 **Example:**
 
 ```bash
-curl -X POST https://ztas.io/api/auth/forgot \
+curl -X POST https://app.ztas.io/api/auth/forgot \
   -H "Content-Type: application/json" \
   -d '{"email": "you@example.com"}'
 ```
@@ -131,7 +131,7 @@ GET /api/auth/verify-reset-token?token=YOUR_RESET_TOKEN
 **Example:**
 
 ```bash
-curl "https://ztas.io/api/auth/verify-reset-token?token=abc123def456..."
+curl "https://app.ztas.io/api/auth/verify-reset-token?token=abc123def456..."
 ```
 
 ### Step 3: Reset Password
@@ -181,7 +181,7 @@ POST /api/auth/reset
 **Example:**
 
 ```bash
-curl -X POST https://ztas.io/api/auth/reset \
+curl -X POST https://app.ztas.io/api/auth/reset \
   -H "Content-Type: application/json" \
   -d '{"token": "abc123def456...", "password": "new-secure-password"}'
 ```

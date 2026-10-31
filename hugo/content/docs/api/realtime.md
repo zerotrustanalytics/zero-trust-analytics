@@ -26,7 +26,7 @@ GET /api/realtime
 ## Example Request
 
 ```bash
-curl "https://ztas.io/api/realtime?siteId=site_abc123" \
+curl "https://app.ztas.io/api/realtime?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -84,7 +84,7 @@ For live dashboards, poll this endpoint every 5-10 seconds:
 ```javascript
 async function updateRealtime() {
   const response = await fetch(
-    'https://ztas.io/api/realtime?siteId=site_abc123',
+    'https://app.ztas.io/api/realtime?siteId=site_abc123',
     { headers: { 'Authorization': 'Bearer YOUR_TOKEN' } }
   )
   const data = await response.json()

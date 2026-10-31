@@ -31,7 +31,7 @@ Retrieve heatmap data for a specific page.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/pricing&type=click&period=7d" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/pricing&type=click&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -242,7 +242,7 @@ Get the most clicked elements on a page.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/heatmaps/elements?siteId=site_abc123&path=/pricing&period=7d&limit=10" \
+curl "https://app.ztas.io/api/heatmaps/elements?siteId=site_abc123&path=/pricing&period=7d&limit=10" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -299,7 +299,7 @@ Identify areas where users repeatedly click in frustration (rage clicks).
 ### Request
 
 ```bash
-curl "https://ztas.io/api/heatmaps/rage-clicks?siteId=site_abc123&path=/checkout&period=7d" \
+curl "https://app.ztas.io/api/heatmaps/rage-clicks?siteId=site_abc123&path=/checkout&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -348,7 +348,7 @@ Identify clicks on non-interactive elements.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/heatmaps/dead-clicks?siteId=site_abc123&path=/&period=7d" \
+curl "https://app.ztas.io/api/heatmaps/dead-clicks?siteId=site_abc123&path=/&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -416,11 +416,11 @@ Get heatmaps for specific device types:
 
 ```bash
 # Desktop heatmap
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&device=desktop" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&device=desktop" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Mobile heatmap
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&device=mobile" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&device=mobile" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -443,7 +443,7 @@ This allows aggregating data from users with different screen sizes.
 Identify if users are clicking your primary CTA:
 
 ```bash
-curl "https://ztas.io/api/heatmaps/elements?siteId=site_abc123&path=/&period=30d" \
+curl "https://app.ztas.io/api/heatmaps/elements?siteId=site_abc123&path=/&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -458,11 +458,11 @@ Find rage clicks and dead clicks:
 
 ```bash
 # Find rage clicks (frustrated users)
-curl "https://ztas.io/api/heatmaps/rage-clicks?siteId=site_abc123&path=/checkout" \
+curl "https://app.ztas.io/api/heatmaps/rage-clicks?siteId=site_abc123&path=/checkout" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Find dead clicks (confusing UI)
-curl "https://ztas.io/api/heatmaps/dead-clicks?siteId=site_abc123&path=/" \
+curl "https://app.ztas.io/api/heatmaps/dead-clicks?siteId=site_abc123&path=/" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -471,7 +471,7 @@ curl "https://ztas.io/api/heatmaps/dead-clicks?siteId=site_abc123&path=/" \
 See how far users scroll on blog posts:
 
 ```bash
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/blog/article&type=scroll" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/blog/article&type=scroll" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -483,11 +483,11 @@ Compare heatmaps before and after design changes:
 
 ```bash
 # Before: Oct 1-31
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&startDate=2024-10-01&endDate=2024-10-31" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&startDate=2024-10-01&endDate=2024-10-31" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # After: Nov 1-30
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&startDate=2024-11-01&endDate=2024-11-30" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&startDate=2024-11-01&endDate=2024-11-30" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -600,7 +600,7 @@ Compare heatmaps across periods to see trends:
 
 ```bash
 # Last month
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&period=30d" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -609,7 +609,7 @@ curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&period=3
 Always analyze mobile and desktop separately:
 
 ```bash
-curl "https://ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&device=mobile" \
+curl "https://app.ztas.io/api/heatmaps?siteId=site_abc123&path=/&type=click&device=mobile" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

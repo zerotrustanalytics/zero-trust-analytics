@@ -49,7 +49,7 @@ export default async function handler(req, context) {
       return Errors.badRequest('This plan is not available for purchase');
     }
 
-    // Get user - try email first, then by Clerk ID
+    // Get user - try email first, then by ID
     let user = null;
     let customerEmail = auth.user.email;
 
@@ -59,27 +59,6 @@ export default async function handler(req, context) {
     if (!user && auth.user.id) {
       user = await getUserById(auth.user.id);
       customerEmail = customerEmail || user?.email;
-    }
-
-    // If still no email, fetch from Clerk API (user ID starts with "user_" for Clerk)
-    if (!customerEmail && auth.user.id?.startsWith('user_')) {
-      try {
-        const clerkResponse = await fetch(`https://api.clerk.com/v1/users/${auth.user.id}`, {
-          headers: {
-            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (clerkResponse.ok) {
-          const clerkUser = await clerkResponse.json();
-          // Get primary email from Clerk
-          const primaryEmail = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
-          customerEmail = primaryEmail?.email_address || clerkUser.email_addresses?.[0]?.email_address;
-          logger.info('Got email from Clerk API', { email: customerEmail });
-        }
-      } catch (clerkErr) {
-        logger.warn('Failed to fetch email from Clerk', { error: clerkErr.message });
-      }
     }
 
     logger.info('User lookup result', {

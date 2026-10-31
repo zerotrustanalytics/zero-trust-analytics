@@ -32,7 +32,7 @@ Get all alerts configured for a site.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/alerts?siteId=site_abc123" \
+curl "https://app.ztas.io/api/alerts?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -91,7 +91,7 @@ Create a new alert to monitor metrics.
 Triggered when a metric crosses a threshold:
 
 ```bash
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -111,7 +111,7 @@ curl -X POST "https://ztas.io/api/alerts" \
 Triggered when a metric changes significantly compared to a previous period:
 
 ```bash
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -132,7 +132,7 @@ curl -X POST "https://ztas.io/api/alerts" \
 Triggered when unusual patterns are detected using machine learning:
 
 ```bash
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -218,7 +218,7 @@ Remove an alert and stop monitoring.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/alerts?id=alert_abc123" \
+curl -X DELETE "https://app.ztas.io/api/alerts?id=alert_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -244,7 +244,7 @@ Toggle an alert on or off without deleting it.
 ### Request
 
 ```bash
-curl -X PATCH "https://ztas.io/api/alerts" \
+curl -X PATCH "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -279,7 +279,7 @@ Get the history of alert triggers.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/alerts/alert_abc123/history?limit=50" \
+curl "https://app.ztas.io/api/alerts/alert_abc123/history?limit=50" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -389,7 +389,7 @@ Content-Type: application/json
 
 ```bash
 # High traffic alert
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -404,7 +404,7 @@ curl -X POST "https://ztas.io/api/alerts" \
   }'
 
 # Low traffic alert
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -423,7 +423,7 @@ curl -X POST "https://ztas.io/api/alerts" \
 
 ```bash
 # Low conversion rate
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -438,7 +438,7 @@ curl -X POST "https://ztas.io/api/alerts" \
   }'
 
 # Conversion drop compared to last week
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -458,7 +458,7 @@ curl -X POST "https://ztas.io/api/alerts" \
 
 ```bash
 # Goal completion threshold
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -477,7 +477,7 @@ curl -X POST "https://ztas.io/api/alerts" \
 
 ```bash
 # High bounce rate
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -541,7 +541,7 @@ Integrate alerts with your workflow tools:
 
 ```bash
 # Send alert to PagerDuty
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -556,7 +556,7 @@ curl -X POST "https://ztas.io/api/alerts" \
   }'
 
 # Configure webhook in webhook settings
-curl -X POST "https://ztas.io/api/webhooks" \
+curl -X POST "https://app.ztas.io/api/webhooks" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -588,7 +588,7 @@ Verify alerts work correctly before relying on them:
 
 ```bash
 # Temporarily lower threshold to trigger alert
-curl -X PATCH "https://ztas.io/api/alerts" \
+curl -X PATCH "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

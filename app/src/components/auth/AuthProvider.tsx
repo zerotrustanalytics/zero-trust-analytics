@@ -76,7 +76,7 @@ function PasswordGate({ children }: { children: ReactNode }) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <input
+            <input aria-label="Password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -161,7 +161,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const inner =
     AUTH_MODE === 'oidc' ? children : <SelfHostedAuthProvider>{children}</SelfHostedAuthProvider>
 
-  return <SessionProvider>{inner}</SessionProvider>
+  // Self-hosted modes have no Auth.js backend: hand the provider an explicit
+  // empty session so it never requests /api/auth/session.
+  return AUTH_MODE === 'oidc' ? (
+    <SessionProvider>{inner}</SessionProvider>
+  ) : (
+    <SessionProvider session={null} refetchOnWindowFocus={false}>
+      {inner}
+    </SessionProvider>
+  )
 }
 
 // Export auth mode for other components to check

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, JSX } from 'react'
 import { useParams } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { format, parseISO } from 'date-fns'
+import { chart } from '@/lib/chart-theme'
 
 interface PublicStats {
   site: {
@@ -85,7 +86,7 @@ export default function SharedDashboardPage() {
     setError('')
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/public/stats?token=${token}&period=${period}`)
 
       if (!res.ok) {
@@ -193,7 +194,7 @@ export default function SharedDashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <select
+            <select aria-label="Time period"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
               className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
@@ -241,13 +242,13 @@ export default function SharedDashboardPage() {
               <LineChart data={chartData}>
                 <XAxis
                   dataKey="label"
-                  stroke="#9ca3af"
+                  stroke={chart.axis}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
-                  stroke="#9ca3af"
+                  stroke={chart.axis}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -264,7 +265,7 @@ export default function SharedDashboardPage() {
                 <Line
                   type="monotone"
                   dataKey="visitors"
-                  stroke="#3B82F6"
+                  stroke={chart.primary}
                   strokeWidth={2}
                   dot={false}
                   name="Visitors"
@@ -272,7 +273,7 @@ export default function SharedDashboardPage() {
                 <Line
                   type="monotone"
                   dataKey="pageviews"
-                  stroke="#10B981"
+                  stroke={chart.secondary}
                   strokeWidth={2}
                   dot={false}
                   name="Page Views"

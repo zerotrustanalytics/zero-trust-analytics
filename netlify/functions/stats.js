@@ -4,7 +4,7 @@ import { getStats, getActualUsageFromPageviews, getCurrentMonth, getUsageLimitHi
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError, ValidationError, ForbiddenError } from './lib/error-handler.js';
 import { validateRequest, statsQuerySchema, validateDateRangeInData } from './lib/schemas.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 import { incrementDailyUsage } from './lib/usage-metrics.js';
 
 export default async function handler(req, context) {
@@ -78,7 +78,7 @@ export default async function handler(req, context) {
     try {
       // Use getUserById since Clerk JWT doesn't include email
       const user = await getUserById(auth.user.id);
-      const plan = user?.plan || 'free';
+      const plan = effectivePlan(user);
       const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
       const monthlyLimit = planConfig.monthlyPageviews;
 

@@ -32,7 +32,7 @@ Get all goals configured for a site.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/goals?siteId=site_abc123" \
+curl "https://app.ztas.io/api/goals?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -89,7 +89,7 @@ Create a new goal to track conversions.
 Triggered when a visitor views a specific page:
 
 ```bash
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -106,7 +106,7 @@ curl -X POST "https://ztas.io/api/goals" \
 Triggered when a custom event fires:
 
 ```bash
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -124,7 +124,7 @@ curl -X POST "https://ztas.io/api/goals" \
 Triggered when time on site exceeds a threshold:
 
 ```bash
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -178,7 +178,7 @@ Remove a goal and stop tracking completions.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/goals?id=goal_abc123" \
+curl -X DELETE "https://app.ztas.io/api/goals?id=goal_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -206,7 +206,7 @@ Get detailed statistics for a specific goal.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/goals/goal_abc123/stats?period=30d" \
+curl "https://app.ztas.io/api/goals/goal_abc123/stats?period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -360,7 +360,7 @@ Matches paths using regular expressions:
 Assign monetary values to goals to measure revenue:
 
 ```bash
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -407,7 +407,7 @@ For example:
 Get notified when goals are completed via [Webhooks](/docs/api/webhooks/):
 
 ```bash
-curl -X POST "https://ztas.io/api/webhooks" \
+curl -X POST "https://app.ztas.io/api/webhooks" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -515,7 +515,7 @@ Don't just track final conversions. Track micro-conversions too:
 Set up [Alerts](/docs/api/alerts/) for significant changes:
 
 ```bash
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -531,7 +531,7 @@ Combine goals into [Funnels](/docs/api/funnels/) to analyze conversion paths:
 
 ```bash
 # Create a funnel: Visit → View Pricing → Sign Up
-curl -X POST "https://ztas.io/api/funnels" \
+curl -X POST "https://app.ztas.io/api/funnels" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -551,7 +551,7 @@ Track the complete purchase funnel:
 
 ```bash
 # 1. Product page view
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -564,7 +564,7 @@ curl -X POST "https://ztas.io/api/goals" \
   }'
 
 # 2. Add to cart
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -576,7 +576,7 @@ curl -X POST "https://ztas.io/api/goals" \
   }'
 
 # 3. Start checkout
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -588,7 +588,7 @@ curl -X POST "https://ztas.io/api/goals" \
   }'
 
 # 4. Complete purchase
-curl -X POST "https://ztas.io/api/goals" \
+curl -X POST "https://app.ztas.io/api/goals" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

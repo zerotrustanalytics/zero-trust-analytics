@@ -52,7 +52,7 @@ export default function ImportPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/sites/list`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -104,7 +104,7 @@ export default function ImportPage() {
 
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       const res = await fetch(`${apiUrl}/api/import/ga`, {
         method: 'POST',
@@ -144,7 +144,7 @@ export default function ImportPage() {
 
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       const res = await fetch(`${apiUrl}/api/import/ga`, {
         method: 'POST',
@@ -245,10 +245,10 @@ export default function ImportPage() {
 
       {/* Site Selection */}
       <Card className="p-6 mb-6">
-        <label className="block text-sm font-medium mb-2">
+        <label htmlFor="import-select-target-site" className="block text-sm font-medium mb-2">
           Select Target Site
         </label>
-        <select
+        <select id="import-select-target-site"
           value={selectedSite}
           onChange={(e) => setSelectedSite(e.target.value)}
           className="w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
@@ -269,7 +269,7 @@ export default function ImportPage() {
 
       {/* File Upload */}
       <Card className="p-6 mb-6">
-        <label className="block text-sm font-medium mb-2">
+        <label htmlFor="file-upload" className="block text-sm font-medium mb-2">
           Upload GA Export File
         </label>
 
@@ -287,7 +287,7 @@ export default function ImportPage() {
             htmlFor="file-upload"
             className="cursor-pointer"
           >
-            <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             {fileName ? (

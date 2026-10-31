@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { AuthProvider } from '@/components/auth'
 import { Analytics } from '@/components/Analytics'
+import '@/styles/fonts.css'
+import '@/styles/zta.css'
 import '@/styles/globals.scss'
 
 export const metadata: Metadata = {
   title: 'Zero Trust Analytics',
-  description: 'Privacy-first analytics for modern websites. No cookies, GDPR compliant, under 2KB.',
+  description: 'Privacy-first analytics for modern websites. No cookies, no stored IPs, unlimited sites.',
   keywords: ['analytics', 'privacy', 'GDPR', 'cookieless', 'web analytics'],
   authors: [{ name: 'Jason Sutter' }],
   openGraph: {

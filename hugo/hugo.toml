@@ -8,9 +8,19 @@ CompanyName = 'Zero Trust Analytics'
 repoName = 'zero-trust-analytics'
 tagline = 'Privacy-focused analytics that respects your users'
 price = '$10/month'
+# Used by the legal pages (privacy, terms, accessibility). Fill these in.
+legalName = 'Zero Trust Analytics'
+jurisdiction = '[GOVERNING STATE]'
+hostingLocation = 'the United States'
+legalUpdated = 'October 30, 2026'
 
 [environments.development]
 baseURL = 'http://localhost:1313/'
 
 [environments.production]
 baseURL = 'https://ztas.io/'
+
+# Code highlighting emits classes (styled with the ZTA code palette in
+# layouts/partials/zt/head.html) instead of a built-in inline color theme.
+[markup.highlight]
+  noClasses = false

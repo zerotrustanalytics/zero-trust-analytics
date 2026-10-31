@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/gatekeep-auth'
 import { AddSiteModal } from '@/components/dashboard/AddSiteModal'
 import { usePlan } from '@/components/dashboard/PlanContext'
 import Link from 'next/link'
+import { TallyArt } from '@/components/ui/TallyArt'
 
 interface Site {
   id: string
@@ -32,7 +33,7 @@ export default function SitesPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/sites/list`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -87,7 +88,7 @@ export default function SitesPage() {
             Manage your tracked websites
             {planData && (
               <span className="ml-2 text-xs">
-                ({planData.limits.sites.current} / {planData.limits.sites.max === Infinity ? 'Unlimited' : planData.limits.sites.max})
+                ({planData.limits.sites.current} / {(planData.limits.sites.max == null || planData.limits.sites.max === Infinity) ? 'Unlimited' : planData.limits.sites.max})
               </span>
             )}
           </p>
@@ -112,7 +113,7 @@ export default function SitesPage() {
       </div>
 
       {/* Site limit exceeded banner */}
-      {planData && planData.limits.sites.max !== Infinity && sites.length > planData.limits.sites.max && (
+      {planData && planData.limits.sites.max != null && planData.limits.sites.max !== Infinity && sites.length > planData.limits.sites.max && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 rounded-lg mb-6">
           <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,11 +145,9 @@ export default function SitesPage() {
 
       {sites.length === 0 && !error ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-          </svg>
+          <TallyArt pose="sleep" size={150} className="mx-auto mb-2" />
           <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No sites yet</h3>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">Get started by adding your first website.</p>
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Tally is ready to count. Add your first website and paste one line.</p>
           <button
             onClick={() => setShowAddModal(true)}
             className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition"

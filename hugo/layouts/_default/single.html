@@ -1,3 +1,11 @@
 {{ define "main" }}
-  {{ .Content }}
+<article class="sec" style="padding-top:56px">
+  <div class="wrap stack" style="gap:24px;max-width:860px">
+    <header class="stack" style="gap:12px">
+      <h1 class="h1">{{ .Title }}</h1>
+      {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+    </header>
+    <div class="prose">{{ .Content }}</div>
+  </div>
+</article>
 {{ end }}

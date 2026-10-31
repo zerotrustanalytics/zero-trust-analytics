@@ -33,7 +33,7 @@ Get all team members with access to a site.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/teams?siteId=site_abc123" \
+curl "https://app.ztas.io/api/teams?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -85,7 +85,7 @@ Send an invitation to a new team member.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/teams" \
+curl -X POST "https://app.ztas.io/api/teams" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -132,7 +132,7 @@ Remove a team member or cancel a pending invitation.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/teams?siteId=site_abc123&userId=user_def456" \
+curl -X DELETE "https://app.ztas.io/api/teams?siteId=site_abc123&userId=user_def456" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -161,7 +161,7 @@ Change a team member's role.
 ### Request
 
 ```bash
-curl -X PATCH "https://ztas.io/api/teams" \
+curl -X PATCH "https://app.ztas.io/api/teams" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -267,7 +267,7 @@ Invitations expire after 7 days. You can resend an invitation by inviting the sa
 Get all sites where you're a team member:
 
 ```bash
-curl "https://ztas.io/api/teams" \
+curl "https://app.ztas.io/api/teams" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -303,7 +303,7 @@ All team management actions are logged in the [Activity Log](/docs/api/activity-
 - Role changed
 
 ```bash
-curl "https://ztas.io/api/activity-log?siteId=site_abc123&type=team" \
+curl "https://app.ztas.io/api/activity-log?siteId=site_abc123&type=team" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -387,11 +387,11 @@ Remove team members who no longer need access:
 
 ```bash
 # List all members
-curl "https://ztas.io/api/teams?siteId=site_abc123" \
+curl "https://app.ztas.io/api/teams?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Remove inactive members
-curl -X DELETE "https://ztas.io/api/teams?siteId=site_abc123&userId=user_xyz" \
+curl -X DELETE "https://app.ztas.io/api/teams?siteId=site_abc123&userId=user_xyz" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -400,7 +400,7 @@ curl -X DELETE "https://ztas.io/api/teams?siteId=site_abc123&userId=user_xyz" \
 Check the activity log for suspicious team member actions:
 
 ```bash
-curl "https://ztas.io/api/activity-log?siteId=site_abc123&type=team&period=7d" \
+curl "https://app.ztas.io/api/activity-log?siteId=site_abc123&type=team&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -409,7 +409,7 @@ curl "https://ztas.io/api/activity-log?siteId=site_abc123&type=team&period=7d" \
 If an invitation expires, simply send a new one to the same email:
 
 ```bash
-curl -X POST "https://ztas.io/api/teams" \
+curl -X POST "https://app.ztas.io/api/teams" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

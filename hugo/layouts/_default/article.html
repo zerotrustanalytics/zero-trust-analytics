@@ -1,0 +1,21 @@
+{{ define "main" }}
+<article class="sec" style="padding-top:56px">
+  <div class="wrap stack" style="gap:24px;max-width:860px">
+    <header class="stack" style="gap:12px">
+      {{ with .Params.eyebrow }}<span class="eyebrow">{{ . }}</span>{{ end }}
+      <h1 class="h1">{{ .Params.heading | default .Title }}</h1>
+      {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+    </header>
+    <div class="prose">{{ .Content }}</div>
+    {{ with .Params.cta }}
+    <aside class="card stack" style="padding:28px;gap:14px;background:var(--sun-soft)" aria-label="Try ZTA">
+      <h2 class="h2">{{ . }}</h2>
+      <div class="row">
+        <a class="btn btn-go" href="https://app.ztas.io/sign-up">Start free</a>
+        <a class="btn" href="{{ "/contact/" | relURL }}">Contact us</a>
+      </div>
+    </aside>
+    {{ end }}
+  </div>
+</article>
+{{ end }}

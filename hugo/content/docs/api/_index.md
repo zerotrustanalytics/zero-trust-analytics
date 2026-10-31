@@ -9,14 +9,14 @@ priority: 0.7
 
 The Zero Trust Analytics API provides programmatic access to your analytics data, site management, and advanced features like webhooks, goals, and funnels. All API endpoints use HTTPS and return JSON responses.
 
-**Base URL:** `https://ztas.io/api`
+**Base URL:** `https://app.ztas.io/api`
 
 ## Authentication
 
 Most API endpoints require authentication using JWT (JSON Web Tokens). See the [Authentication](/docs/api/authentication/) guide for details on obtaining and using tokens.
 
 ```bash
-curl https://ztas.io/api/stats?siteId=site_abc123 \
+curl https://app.ztas.io/api/stats?siteId=site_abc123 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -30,13 +30,13 @@ curl https://ztas.io/api/stats?siteId=site_abc123 \
 
 ```bash
 # Get JWT token
-TOKEN=$(curl -X POST https://ztas.io/api/auth/login \
+TOKEN=$(curl -X POST https://app.ztas.io/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "you@example.com", "password": "your-password"}' \
   | jq -r '.token')
 
 # Fetch analytics data
-curl "https://ztas.io/api/stats?siteId=site_abc123&period=7d" \
+curl "https://app.ztas.io/api/stats?siteId=site_abc123&period=7d" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -137,7 +137,7 @@ Always handle errors gracefully:
 
 ```javascript
 try {
-  const response = await fetch('https://ztas.io/api/stats?siteId=site_abc123', {
+  const response = await fetch('https://app.ztas.io/api/stats?siteId=site_abc123', {
     headers: {
       'Authorization': `Bearer ${token}`
     }

@@ -1,4 +1,29 @@
 {{ define "main" }}
-    <meta http-equiv="refresh" content="0; URL='/resources/state-resources/'">
-    <p>Please wait while you are redirected to the new page...</p>
+<section class="sec" style="padding-top:64px">
+  <div class="wrap stack" style="gap:32px">
+    <header class="stack" style="gap:10px">
+      {{ with .Data.Singular }}<span class="eyebrow">{{ . | title }}</span>{{ end }}
+      <h1 class="h1">{{ .Title }}</h1>
+      {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+    </header>
+    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+    {{ if eq .Kind "taxonomy" }}
+      <div class="plans" style="justify-content:flex-start">
+        {{ range .Data.Terms.ByCount }}
+          <a class="chip" href="{{ .Page.RelPermalink }}">{{ .Page.Title }} <span class="faint">{{ .Count }}</span></a>
+        {{ end }}
+      </div>
+    {{ else }}
+      <div class="g3">
+        {{ range .Pages.ByDate.Reverse }}
+        <a class="card post" href="{{ .RelPermalink }}">
+          {{ if not .Date.IsZero }}<time class="xs faint" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>{{ end }}
+          <span class="h3">{{ .Title }}</span>
+          {{ with .Description }}<span class="sm muted">{{ . }}</span>{{ end }}
+        </a>
+        {{ end }}
+      </div>
+    {{ end }}
+  </div>
+</section>
 {{ end }}

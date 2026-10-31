@@ -1,7 +1,7 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getUserSites, getUser, getUserById } from './lib/storage.js';
 import { getRealtime, getActualUsageFromPageviews, getCurrentMonth } from './lib/turso.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 
 export default async function handler(req, context) {
   // Handle CORS preflight
@@ -68,7 +68,7 @@ export default async function handler(req, context) {
     try {
       // Use getUserById since Clerk JWT doesn't include email
       const user = await getUserById(auth.user.id);
-      const plan = user?.plan || 'free';
+      const plan = effectivePlan(user);
       const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
       const monthlyLimit = planConfig.monthlyPageviews;
 

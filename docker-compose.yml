@@ -14,7 +14,10 @@ services:
     container_name: zero-trust-analytics
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # Loopback only: traffic arrives via the Cloudflare Tunnel, and the API
+      # trusts CF-Connecting-IP for visitor hashing, which is only sound when
+      # nothing else can reach the port.
+      - "127.0.0.1:3000:3000"
     volumes:
       # Persist SQLite database
       - zta-data:/app/data
@@ -30,10 +33,6 @@ services:
       TURSO_DATABASE_URL: file:/app/data/analytics.db
       TURSO_AUTH_TOKEN: ""
 
-      # Secret guarding the internal init-db call at startup (never exposed as a
-      # route). Any non-empty value works; override in docker/.env if desired.
-      INIT_DB_SECRET: ${INIT_DB_SECRET:-selfhost-init-db}
-
       # Self-hosted mode
       SELF_HOSTED: "true"
 
@@ -46,9 +45,13 @@ services:
       # canonical URL; the API verifies EdDSA JWTs against <issuer>/jwks.json and
       # enforces audience = GATEKEEP_CLIENT_ID. AUTH_SECRET signs the Auth.js
       # session cookie in the Next dashboard. Set all three in docker/.env.
-      GATEKEEP_ISSUER: ${GATEKEEP_ISSUER:-https://auth.ztas.io}
+      GATEKEEP_ISSUER: ${GATEKEEP_ISSUER:-https://id.gatekeepauth.com}
       GATEKEEP_CLIENT_ID: ${GATEKEEP_CLIENT_ID:-zta}
       AUTH_SECRET: ${AUTH_SECRET}
+      # Public Auth.js base URL. Required: behind the Express proxy Next only
+      # sees its own localhost listener, and the OAuth callback built from that
+      # would not match the redirect_uri registered in gatekeep's clients.toml.
+      AUTH_URL: ${AUTH_URL:-https://app.ztas.io/api/auth}
 
       # Security Secrets (CHANGE THESE!)
       HASH_SECRET: ${HASH_SECRET}

@@ -64,7 +64,9 @@ async function build() {
   console.log('Building ZTA Analytics Scripts\n');
   console.log('================================\n');
 
-  const distDir = path.join(__dirname, 'static', 'js');
+  // Hugo publishes hugo/static/ (served at https://ztas.io/js/...), so the
+  // scripts must be built there — anything else never reaches the site.
+  const distDir = path.join(__dirname, 'hugo', 'static', 'js');
   if (!fs.existsSync(distDir)) {
     fs.mkdirSync(distDir, { recursive: true });
   }
@@ -76,12 +78,14 @@ async function build() {
     path.join(distDir, 'analytics.min.js')
   );
 
-  // Build full version (with comments stripped)
+  // Build full version (with comments stripped). analytics.js is the file the
+  // install snippet loads; analytics.full.min.js is kept for older snippets.
   console.log('Full Version (All Features):');
   await buildScript(
     path.join(__dirname, 'src', 'analytics.js'),
-    path.join(distDir, 'analytics.full.min.js')
+    path.join(distDir, 'analytics.js')
   );
+  fs.copyFileSync(path.join(distDir, 'analytics.js'), path.join(distDir, 'analytics.full.min.js'));
 
   // Build dev version (readable)
   console.log('Development Version:');
@@ -100,7 +104,7 @@ async function build() {
   console.log('Build complete!\n');
   console.log('Recommended usage:');
   console.log('  - analytics.min.js (core, <2KB) - For most sites');
-  console.log('  - analytics.full.min.js (all features) - For advanced tracking');
+  console.log('  - analytics.js (all features) - The install snippet default');
   console.log('  - analytics.dev.js (readable) - For development/debugging');
 }
 

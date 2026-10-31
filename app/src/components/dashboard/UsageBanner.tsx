@@ -67,7 +67,7 @@ export function UsageBanner() {
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-medium ${styles.text}`}>
             {isWarning
-              ? `You've used ${Math.round(percentUsed)}% of your monthly pageviews`
+              ? `You've used ${Math.round(percentUsed)}% of your monthly events (pageviews + custom events)`
               : `Monthly pageview limit exceeded (${currentPageviews.toLocaleString()} / ${pageviewLimit.toLocaleString()})`
             }
           </p>

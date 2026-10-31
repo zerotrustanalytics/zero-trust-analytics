@@ -40,7 +40,7 @@ export default function RealtimePage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/sites/list`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -76,7 +76,7 @@ export default function RealtimePage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/realtime?siteId=${selectedSiteId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -145,8 +145,8 @@ export default function RealtimePage() {
 
       {/* Site Selector */}
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Select Site</label>
-        <select
+        <label htmlFor="realtime-select-site" className="block text-sm font-medium mb-2">Select Site</label>
+        <select id="realtime-select-site"
           value={selectedSiteId}
           onChange={(e) => setSelectedSiteId(e.target.value)}
           className="w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
@@ -168,7 +168,7 @@ export default function RealtimePage() {
 
       {sites.length === 0 ? (
         <Card className="p-8 text-center">
-          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
           </svg>
           <h3 className="font-medium mb-2">No sites yet</h3>
@@ -176,7 +176,7 @@ export default function RealtimePage() {
         </Card>
       ) : !selectedSiteId ? (
         <Card className="p-8 text-center">
-          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <h3 className="font-medium mb-2">Select a site</h3>
@@ -224,7 +224,7 @@ export default function RealtimePage() {
             </div>
             {!data?.visitors || data.visitors.length === 0 ? (
               <div className="p-8 text-center">
-                <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <h3 className="font-medium mb-2">No recent visitors</h3>

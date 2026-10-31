@@ -45,6 +45,17 @@ TURSO_DATABASE_URL="file:$DB" node import-blobs.mjs ../backups/blobs-YYYYMMDD.nd
 `import-blobs.mjs` prints parsed-vs-in-db counts per store — confirm they match
 the export summary from step 2 (parity check).
 
+### 3c. Link Clerk-era accounts to their data
+Under Clerk, sites/keys/teams may be owned by the Clerk user id while the user
+record has a different id. gatekeep signs users in by email, so check first:
+```bash
+TURSO_DATABASE_URL="file:$DB" node link-owner-ids.mjs           # report only
+TURSO_DATABASE_URL="file:$DB" node link-owner-ids.mjs --apply   # write ownerId for FIX rows
+```
+`FIX` rows are set automatically with `--apply`. `SPLIT` rows (data under more
+than one id) need a manual decision before cutover — those customers would
+otherwise see only part of their data.
+
 ## 4. Place it on the SR8 and start
 ```bash
 # container must be DOWN so the file isn't open twice

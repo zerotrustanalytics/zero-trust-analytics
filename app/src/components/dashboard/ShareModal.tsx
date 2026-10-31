@@ -26,7 +26,7 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
     try {
       const token = await getToken()
       if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/sites/share?siteId=${siteId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -51,7 +51,7 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
     try {
       const token = await getToken()
       if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''
 
       const res = await fetch(`${apiUrl}/api/sites/share`, {
@@ -87,7 +87,7 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
     try {
       const token = await getToken()
       if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''
 
       const res = await fetch(`${apiUrl}/api/sites/share?token=${shareToken}`, {
@@ -119,7 +119,7 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
           <h3 className="text-lg font-semibold">Share Dashboard</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -170,9 +170,9 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
 
               {/* Create New Share */}
               <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg mb-4">
-                <label className="block text-sm font-medium mb-2">Link Expiration</label>
+                <label htmlFor="share-link-expiration" className="block text-sm font-medium mb-2">Link Expiration</label>
                 <div className="flex gap-2">
-                  <select
+                  <select id="share-link-expiration"
                     value={shareExpiry}
                     onChange={(e) => setShareExpiry(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
@@ -211,9 +211,9 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
               {/* Current Share URL */}
               {shareUrl && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Share URL</label>
+                  <label htmlFor="share-url" className="block text-sm font-medium mb-2">Share URL</label>
                   <div className="flex gap-2">
-                    <input
+                    <input id="share-url"
                       type="text"
                       value={shareUrl}
                       readOnly
@@ -240,12 +240,12 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
               {/* Existing Shares */}
               {existingShares.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">Active Share Links</label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                  <h3 id="share-active-links" className="block text-sm font-medium mb-2">Active Share Links</h3>
+                  <div role="list" aria-labelledby="share-active-links" className="space-y-2 max-h-40 overflow-y-auto">
                     {existingShares.map((share) => (
-                      <div key={share.token} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded-lg text-xs">
+                      <div key={share.token} role="listitem" className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded-lg text-xs">
                         <div className="flex-1 min-w-0">
-                          <p className="font-mono truncate">{share.shareUrl || `https://ztas.io/shared/${share.token}`}</p>
+                          <p className="font-mono truncate">{share.shareUrl || `https://app.ztas.io/shared/${share.token}`}</p>
                           <p className="text-muted-foreground">
                             {share.expiresAt
                               ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}`
@@ -283,7 +283,7 @@ export function ShareModal({ isOpen, onClose, siteId, siteDomain }: ShareModalPr
               {shareUrl ? (
                 <>
                   <div className="mb-4">
-                    <textarea
+                    <textarea aria-label="Embed code"
                       readOnly
                       value={`<iframe\n  src="${shareUrl}"\n  width="100%"\n  height="600"\n  frameborder="0"\n  style="border: 1px solid #e5e7eb; border-radius: 8px;"\n  title="Analytics Dashboard - ${siteDomain}"\n></iframe>`}
                       className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm font-mono text-xs h-32 resize-none"

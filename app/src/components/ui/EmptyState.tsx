@@ -89,7 +89,7 @@ export function EmptyState({
       )}
     >
       {icon && (
-        <div className="mx-auto text-gray-400 mb-4">
+        <div className="mx-auto text-gray-500 mb-4">
           {icon}
         </div>
       )}

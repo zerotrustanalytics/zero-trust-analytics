@@ -19,7 +19,7 @@ export default function BrandingSettingsPage() {
     enabled: false,
     companyName: 'Zero Trust Analytics',
     logoUrl: null,
-    primaryColor: '#3B82F6'
+    primaryColor: '#FF6B4A'
   })
   const [canUseBranding, setCanUseBranding] = useState(false)
   const [plan, setPlan] = useState('free')
@@ -31,7 +31,7 @@ export default function BrandingSettingsPage() {
   const fetchBranding = useCallback(async () => {
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/branding`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -43,7 +43,8 @@ export default function BrandingSettingsPage() {
       }
 
       const data = await res.json()
-      setBranding(data.branding)
+      // null until branding is first saved: keep the defaults
+      if (data.branding) setBranding(data.branding)
       setCanUseBranding(data.canUseBranding)
       setPlan(data.plan)
     } catch (err) {
@@ -64,7 +65,7 @@ export default function BrandingSettingsPage() {
 
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/branding`, {
         method: 'POST',
         headers: {
@@ -80,7 +81,8 @@ export default function BrandingSettingsPage() {
       }
 
       const data = await res.json()
-      setBranding(data.branding)
+      // null until branding is first saved: keep the defaults
+      if (data.branding) setBranding(data.branding)
       setSuccess('Branding settings saved successfully!')
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
@@ -159,7 +161,7 @@ export default function BrandingSettingsPage() {
                   Replace Zero Trust Analytics branding with your own
                 </div>
               </div>
-              <button
+              <button role="switch" aria-checked={branding.enabled} aria-label="Enable white-label branding"
                 type="button"
                 onClick={() => setBranding({ ...branding, enabled: !branding.enabled })}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
@@ -176,10 +178,10 @@ export default function BrandingSettingsPage() {
 
             {/* Company Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="branding-company-name" className="block text-sm font-medium text-gray-700 mb-1">
                 Company Name
               </label>
-              <input
+              <input id="branding-company-name"
                 type="text"
                 value={branding.companyName}
                 onChange={(e) => setBranding({ ...branding, companyName: e.target.value })}
@@ -195,10 +197,10 @@ export default function BrandingSettingsPage() {
 
             {/* Logo URL */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="branding-logo-url" className="block text-sm font-medium text-gray-700 mb-1">
                 Logo URL
               </label>
-              <input
+              <input id="branding-logo-url"
                 type="url"
                 value={branding.logoUrl || ''}
                 onChange={(e) => setBranding({ ...branding, logoUrl: e.target.value || null })}
@@ -226,18 +228,18 @@ export default function BrandingSettingsPage() {
 
             {/* Primary Color */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="branding-primary-color" className="block text-sm font-medium text-gray-700 mb-1">
                 Primary Color
               </label>
               <div className="flex gap-3">
-                <input
+                <input id="branding-primary-color"
                   type="color"
                   value={branding.primaryColor}
                   onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })}
                   disabled={!branding.enabled}
                   className="w-12 h-10 border rounded cursor-pointer disabled:opacity-50"
                 />
-                <input
+                <input aria-label="Primary color hex value"
                   type="text"
                   value={branding.primaryColor}
                   onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })}

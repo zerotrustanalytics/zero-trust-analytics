@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import { useAuth } from '@/lib/gatekeep-auth'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 interface ApiOptions extends Omit<RequestInit, 'headers'> {
   headers?: Record<string, string>

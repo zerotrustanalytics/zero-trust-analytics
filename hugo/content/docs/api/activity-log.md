@@ -35,7 +35,7 @@ Retrieve the activity log for your account or a specific site.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/activity-log?siteId=site_abc123&period=7d&limit=50" \
+curl "https://app.ztas.io/api/activity-log?siteId=site_abc123&period=7d&limit=50" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -239,49 +239,49 @@ Filter by specific activity types:
 ### Recent Logins
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=auth&action=auth.login&period=30d" \
+curl "https://app.ztas.io/api/activity-log?type=auth&action=auth.login&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Failed Login Attempts
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=auth&action=auth.failed_login&period=7d" \
+curl "https://app.ztas.io/api/activity-log?type=auth&action=auth.failed_login&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### API Key Usage
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=api_key&period=24h" \
+curl "https://app.ztas.io/api/activity-log?type=api_key&period=24h" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Team Changes
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=team&period=30d" \
+curl "https://app.ztas.io/api/activity-log?type=team&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Alert Triggers
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=alert&action=alert.triggered&period=7d" \
+curl "https://app.ztas.io/api/activity-log?type=alert&action=alert.triggered&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Site-Specific Activity
 
 ```bash
-curl "https://ztas.io/api/activity-log?siteId=site_abc123&period=30d" \
+curl "https://app.ztas.io/api/activity-log?siteId=site_abc123&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### User-Specific Activity
 
 ```bash
-curl "https://ztas.io/api/activity-log?userId=user_abc123&period=30d" \
+curl "https://app.ztas.io/api/activity-log?userId=user_abc123&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -291,15 +291,15 @@ For large result sets, use pagination:
 
 ```bash
 # First page (50 results)
-curl "https://ztas.io/api/activity-log?limit=50&offset=0" \
+curl "https://app.ztas.io/api/activity-log?limit=50&offset=0" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Second page (next 50 results)
-curl "https://ztas.io/api/activity-log?limit=50&offset=50" \
+curl "https://app.ztas.io/api/activity-log?limit=50&offset=50" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Third page
-curl "https://ztas.io/api/activity-log?limit=50&offset=100" \
+curl "https://app.ztas.io/api/activity-log?limit=50&offset=100" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -308,7 +308,7 @@ curl "https://ztas.io/api/activity-log?limit=50&offset=100" \
 Export the entire activity log to CSV:
 
 ```bash
-curl "https://ztas.io/api/activity-log/export?period=90d&format=csv" \
+curl "https://app.ztas.io/api/activity-log/export?period=90d&format=csv" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -327,7 +327,7 @@ Timestamp,Type,Action,Actor Email,Actor Name,Target Type,Target ID,IP Address,Us
 Subscribe to real-time activity updates via webhooks:
 
 ```bash
-curl -X POST "https://ztas.io/api/webhooks" \
+curl -X POST "https://app.ztas.io/api/webhooks" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -378,11 +378,11 @@ Monitor for suspicious activity:
 
 ```bash
 # Failed login attempts
-curl "https://ztas.io/api/activity-log?type=auth&action=auth.failed_login" \
+curl "https://app.ztas.io/api/activity-log?type=auth&action=auth.failed_login" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # API key usage from unexpected IPs
-curl "https://ztas.io/api/activity-log?type=api_key&action=api_key.used" \
+curl "https://app.ztas.io/api/activity-log?type=api_key&action=api_key.used" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -392,11 +392,11 @@ Generate compliance reports:
 
 ```bash
 # All team changes in the last 90 days
-curl "https://ztas.io/api/activity-log?type=team&period=90d" \
+curl "https://app.ztas.io/api/activity-log?type=team&period=90d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # All data exports
-curl "https://ztas.io/api/activity-log?type=export&period=365d" \
+curl "https://app.ztas.io/api/activity-log?type=export&period=365d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -406,11 +406,11 @@ Troubleshoot issues:
 
 ```bash
 # Recent webhook failures
-curl "https://ztas.io/api/activity-log?type=webhook&action=webhook.failed&period=7d" \
+curl "https://app.ztas.io/api/activity-log?type=webhook&action=webhook.failed&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Recent alert triggers
-curl "https://ztas.io/api/activity-log?type=alert&action=alert.triggered&period=24h" \
+curl "https://app.ztas.io/api/activity-log?type=alert&action=alert.triggered&period=24h" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -420,7 +420,7 @@ Track what team members are doing:
 
 ```bash
 # Activity by specific user
-curl "https://ztas.io/api/activity-log?userId=user_abc123&period=30d" \
+curl "https://app.ztas.io/api/activity-log?userId=user_abc123&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -470,7 +470,7 @@ Review activity logs regularly:
 
 ```bash
 # Weekly security review
-curl "https://ztas.io/api/activity-log?type=auth&period=7d" \
+curl "https://app.ztas.io/api/activity-log?type=auth&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -480,7 +480,7 @@ Set up alerts for failed login attempts:
 
 ```bash
 # Alert on 5+ failed logins in 1 hour
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -499,7 +499,7 @@ Export logs before they're deleted:
 
 ```bash
 # Export logs quarterly for compliance
-curl "https://ztas.io/api/activity-log/export?period=90d&format=csv" \
+curl "https://app.ztas.io/api/activity-log/export?period=90d&format=csv" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -509,10 +509,10 @@ Cross-reference activity with analytics:
 
 ```bash
 # Check if a site deletion corresponded with a traffic drop
-curl "https://ztas.io/api/activity-log?type=site&action=site.deleted" \
+curl "https://app.ztas.io/api/activity-log?type=site&action=site.deleted" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
-curl "https://ztas.io/api/stats?siteId=site_abc123&period=30d" \
+curl "https://app.ztas.io/api/stats?siteId=site_abc123&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -522,7 +522,7 @@ Monitor team member contributions:
 
 ```bash
 # Goals created by each team member
-curl "https://ztas.io/api/activity-log?type=goal&action=goal.created&period=30d" \
+curl "https://app.ztas.io/api/activity-log?type=goal&action=goal.created&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -536,19 +536,19 @@ const API_KEY = 'zta_live_abc123...';
 async function getSecurityMetrics() {
   // Failed logins
   const failedLogins = await fetch(
-    'https://ztas.io/api/activity-log?type=auth&action=auth.failed_login&period=24h',
+    'https://app.ztas.io/api/activity-log?type=auth&action=auth.failed_login&period=24h',
     { headers: { 'Authorization': `Bearer ${API_KEY}` } }
   ).then(r => r.json());
 
   // API key usage
   const apiKeyUsage = await fetch(
-    'https://ztas.io/api/activity-log?type=api_key&period=24h',
+    'https://app.ztas.io/api/activity-log?type=api_key&period=24h',
     { headers: { 'Authorization': `Bearer ${API_KEY}` } }
   ).then(r => r.json());
 
   // Team changes
   const teamChanges = await fetch(
-    'https://ztas.io/api/activity-log?type=team&period=7d',
+    'https://app.ztas.io/api/activity-log?type=team&period=7d',
     { headers: { 'Authorization': `Bearer ${API_KEY}` } }
   ).then(r => r.json());
 
@@ -583,7 +583,7 @@ end_date = datetime.now().replace(day=1) - timedelta(days=1)
 start_date = end_date.replace(day=1)
 
 response = requests.get(
-    'https://ztas.io/api/activity-log',
+    'https://app.ztas.io/api/activity-log',
     params={
         'startDate': start_date.isoformat(),
         'endDate': end_date.isoformat()

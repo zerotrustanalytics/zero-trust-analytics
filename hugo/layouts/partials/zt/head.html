@@ -1,0 +1,31 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ block "title" . }}{{ with .Params.PageTitle }}{{ . }}{{ else }}{{ if .IsHome }}{{ site.Title }} — analytics with its eyes closed{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}{{ end }}{{ end }}</title>
+
+{{ partial "seo_schema" . }}
+
+<link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
+<link rel="icon" href="{{ "favicon-32x32.png" | relURL }}" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{{ "apple-touch-icon.png" | relURL }}" sizes="180x180">
+<meta name="theme-color" content="#F7F2FF">
+{{ if not .Params.canonical }}<link rel="canonical" href="{{ .Permalink }}">{{ end }}
+
+<!-- Fonts are self-hosted: no third-party requests, so visitors' IPs never reach a font CDN. -->
+<link rel="preload" href="{{ "fonts/fredoka-400-700-latin.woff2" | relURL }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ "fonts/dmsans-400-700-latin.woff2" | relURL }}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ "fonts/fonts.css" | relURL }}">
+<link rel="stylesheet" href="{{ "css/zta.css" | relURL }}">
+<link rel="stylesheet" href="{{ "css/site.css" | relURL }}">
+<style>
+  .skip-link{position:absolute;left:16px;top:-80px;z-index:100;background:var(--sun);color:var(--on-accent);border:2.5px solid var(--line);border-radius:12px;padding:10px 16px;font:600 16px "Fredoka",sans-serif}
+  .skip-link:focus{top:16px}
+  body.zt{margin:0}
+  /* zta.css sets display on .stack/.alert/.card…, which would beat the
+     hidden attribute; make hidden always win. */
+  .zt [hidden]{display:none !important}
+  .zt .list{padding:0;list-style:none}
+</style>
+{{ partial "zt/motion.html" . }}
+
+<!-- Zero Trust Analytics, counting its own site (stores nothing on your device) -->
+<script defer src="{{ "js/analytics.js" | relURL }}" data-site-id="site_f8b511bfa9ae7cb6"></script>

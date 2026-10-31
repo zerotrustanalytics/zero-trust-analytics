@@ -8,7 +8,7 @@
  */
 
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders, validateCSRFFromRequest } from './lib/auth.js';
-import { getUser, getUserSites, deleteSite, deleteUser, revokeAllSessions, deleteAllUserApiKeys } from './lib/storage.js';
+import { getUser, purgeAllUserSites, deleteUser, revokeAllSessions, deleteAllUserApiKeys } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 
@@ -82,12 +82,9 @@ export default async function handler(req, context) {
       apiKeys: 0
     };
 
-    // 1. Delete all user's sites (and their analytics data)
-    const siteIds = await getUserSites(userId);
-    for (const siteId of siteIds) {
-      await deleteSite(siteId, userId);
-      deletionStats.sites++;
-    }
+    // 1. Erase all of the user's sites, including soft-deleted ones, and
+    //    their analytics data. No restore window: this is a hard delete.
+    deletionStats.sites = await purgeAllUserSites(userId);
     logger.info('Deleted user sites', { userId, count: deletionStats.sites });
 
     // 2. Revoke all sessions

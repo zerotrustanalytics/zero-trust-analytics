@@ -63,7 +63,7 @@ export default function ReportsPage() {
       const token = await getToken()
       if (!token) return
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       // Fetch sites
       const sitesRes = await fetch(`${apiUrl}/api/sites/list`, {
@@ -104,7 +104,7 @@ export default function ReportsPage() {
       const token = await getToken()
       if (!token) return
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       // Calculate date range for last 7 days
       const endDate = new Date()
@@ -268,7 +268,7 @@ export default function ReportsPage() {
       {/* Reports List */}
       {reports.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
           <h3 className="font-medium mb-2">No email reports configured</h3>
@@ -331,9 +331,9 @@ export default function ReportsPage() {
                     </button>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
+                    <button aria-label="Delete report"
                       onClick={() => handleDeleteReport(report.id)}
-                      className="text-gray-400 hover:text-red-500 transition"
+                      className="text-gray-500 hover:text-red-500 transition"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -352,7 +352,7 @@ export default function ReportsPage() {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-sm font-semibold">Email Report Preview</h2>
           {sites.length > 1 && (
-            <select
+            <select aria-label="Preview site"
               value={newReport.siteId}
               onChange={(e) => setNewReport({ ...newReport, siteId: e.target.value })}
               className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
@@ -430,9 +430,9 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Create Email Report</h3>
-              <button
+              <button aria-label="Close"
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -442,8 +442,8 @@ export default function ReportsPage() {
 
             <form onSubmit={handleCreateReport} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Site</label>
-                <select
+                <label htmlFor="reports-site" className="block text-sm font-medium mb-1">Site</label>
+                <select id="reports-site"
                   value={newReport.siteId}
                   onChange={(e) => setNewReport({ ...newReport, siteId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm"
@@ -456,8 +456,8 @@ export default function ReportsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Frequency</label>
-                <select
+                <label htmlFor="reports-frequency" className="block text-sm font-medium mb-1">Frequency</label>
+                <select id="reports-frequency"
                   value={newReport.frequency}
                   onChange={(e) => setNewReport({ ...newReport, frequency: e.target.value as EmailReport['frequency'] })}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm"
@@ -469,8 +469,8 @@ export default function ReportsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Recipients</label>
-                <input
+                <label htmlFor="reports-recipients" className="block text-sm font-medium mb-1">Recipients</label>
+                <input id="reports-recipients"
                   type="text"
                   value={newReport.recipients}
                   onChange={(e) => setNewReport({ ...newReport, recipients: e.target.value })}

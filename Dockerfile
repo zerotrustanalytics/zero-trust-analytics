@@ -64,11 +64,11 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copy Next.js standalone build. (No `public/` COPY: this app has no public/
-# dir — icons/favicons come from app-router metadata files, and the standalone
-# build emits no public/. Re-add a COPY here if static public assets are added.)
+# Copy Next.js standalone build. The standalone output does not include
+# public/ (self-hosted fonts, Tally illustrations), so copy it alongside.
 COPY --from=nextjs-builder --chown=nodejs:nodejs /app/.next/standalone ./dashboard
 COPY --from=nextjs-builder --chown=nodejs:nodejs /app/.next/static ./dashboard/.next/static
+COPY --from=nextjs-builder --chown=nodejs:nodejs /app/public ./dashboard/public
 
 # Copy Node.js dependencies for API
 COPY --from=node-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
@@ -94,8 +94,7 @@ ENV NODE_ENV=production \
     GATEKEEP_CLIENT_ID=zta \
     AUTH_SECRET="" \
     TURSO_DATABASE_URL=file:/app/data/analytics.db \
-    TURSO_AUTH_TOKEN="" \
-    INIT_DB_SECRET=selfhost-init-db
+    TURSO_AUTH_TOKEN=""
 
 # Switch to non-root user
 USER nodejs

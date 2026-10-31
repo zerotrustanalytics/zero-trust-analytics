@@ -141,6 +141,9 @@ async function initSchema() {
   await turso.execute(`CREATE INDEX IF NOT EXISTS idx_pv_site_date ON pageviews(site_id, DATE(timestamp))`);
   await turso.execute(`CREATE INDEX IF NOT EXISTS idx_pv_site_event_ts ON pageviews(site_id, event_type, timestamp DESC)`);
   await turso.execute(`CREATE INDEX IF NOT EXISTS idx_pv_session ON pageviews(session_hash)`);
+  // Per-visitor lookups: server-side sessionization and the rollup "first time
+  // seen today" checks both filter on (site_id, identity_hash, timestamp).
+  await turso.execute(`CREATE INDEX IF NOT EXISTS idx_pv_site_identity_ts ON pageviews(site_id, identity_hash, timestamp)`);
 
   // Rollups - fast lookups
   await turso.execute(`CREATE INDEX IF NOT EXISTS idx_daily_site_date ON daily_rollups(site_id, date DESC)`);
@@ -192,6 +195,20 @@ async function initSchema() {
     )
   `);
 
+  // Mirror of the site list kept by lib/sites-sync.js (originally for the
+  // DigitalOcean track function, which could not read Netlify Blobs).
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS sites_config (
+      id TEXT PRIMARY KEY,
+      domain TEXT NOT NULL,
+      user_id TEXT,
+      conversion_rules TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  `);
+  await turso.execute(`CREATE INDEX IF NOT EXISTS idx_sites_config_user ON sites_config(user_id)`);
+
   await turso.execute(`CREATE INDEX IF NOT EXISTS idx_teams_owner ON teams(owner_id)`);
   await turso.execute(`CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members(team_id)`);
   await turso.execute(`CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id)`);
@@ -200,6 +217,150 @@ async function initSchema() {
 /**
  * Ingest events - extracts JSON fields at write time
  */
+function parsePayload(e) {
+  try {
+    return typeof e.payload === 'string' ? JSON.parse(e.payload) : (e.payload || {});
+  } catch {
+    return {};
+  }
+}
+
+// YYYY-MM-DD of a stored timestamp ("YYYY-MM-DD HH:MM:SS" or ISO).
+function eventDateOf(e) {
+  return e.timestamp.split('T')[0].split(' ')[0];
+}
+
+// [start, end) timestamp bounds for a date — a range (unlike DATE(timestamp))
+// lets SQLite use the (site_id, identity_hash, timestamp) index.
+function dayBounds(date) {
+  const next = new Date(`${date}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return [`${date} 00:00:00`, `${next.toISOString().split('T')[0]} 00:00:00`];
+}
+
+// [type, value, column] for each non-empty rollup dimension of a pageview.
+function rollupDimensions(e, payload) {
+  return [
+    ['device', e.context_device, 'context_device'],
+    ['browser', e.context_browser, 'context_browser'],
+    ['os', e.context_os, 'context_os'],
+    ['country', e.context_country, 'context_country'],
+    ['region', e.context_region, 'context_region'],
+    ['city', payload.city, 'city'],
+    ['referrer', payload.referrer_domain, 'referrer_domain']
+  ].filter(([, value]) => value);
+}
+
+function rollupUtms(payload) {
+  return [
+    ['source', payload.utm_source, 'utm_source'],
+    ['medium', payload.utm_medium, 'utm_medium'],
+    ['campaign', payload.utm_campaign, 'utm_campaign'],
+    ['content', payload.utm_content, 'utm_content'],
+    ['term', payload.utm_term, 'utm_term']
+  ].filter(([, value]) => value);
+}
+
+// Every "first time seen today" key a pageview's rollups check (see ingestEvents).
+function firstSeenKeys(e) {
+  const payload = parsePayload(e);
+  const d = eventDateOf(e);
+  const keys = [`v|${e.site_id}|${d}|${e.identity_hash}`, `s|${e.site_id}|${d}|${e.session_hash}`];
+  if (payload.page_path) keys.push(`p|${e.site_id}|${d}|${payload.page_path}|${e.identity_hash}`);
+  for (const [type, value] of rollupDimensions(e, payload)) keys.push(`d|${e.site_id}|${d}|${type}|${value}|${e.identity_hash}`);
+  for (const [type, value] of rollupUtms(payload)) keys.push(`u|${e.site_id}|${d}|${type}|${value}|${e.identity_hash}`);
+  return keys;
+}
+
+/**
+ * Server-side sessionization (the tracker stores nothing on the device).
+ * Returns the session_hash of this visitor's most recent event on the site if
+ * it was within `idleMs`, else null (caller starts a new session). The visitor
+ * hash rotates daily, so sessions also end at midnight UTC.
+ */
+async function findActiveSession(siteId, identityHash, idleMs = 30 * 60 * 1000) {
+  const since = new Date(Date.now() - idleMs).toISOString().replace('T', ' ').split('.')[0];
+  const result = await turso.execute({
+    sql: `SELECT session_hash FROM pageviews
+          WHERE site_id = ? AND identity_hash = ? AND timestamp >= ?
+          ORDER BY timestamp DESC LIMIT 1`,
+    args: [siteId, identityHash, since]
+  });
+  return result.rows.length > 0 ? result.rows[0].session_hash : null;
+}
+
+/**
+ * Permanently erase everything stored for one site: raw events, every rollup,
+ * usage counters, and its records in the key-value store (the site itself,
+ * goals, funnels, alerts, webhooks, shares, annotations, errors, imports…).
+ * Used when a soft-deleted site expires and when an account is erased
+ * (GDPR Art. 17). Returns per-table counts.
+ *
+ * KV records are matched by the site ID in the key, or by "siteId":"<id>" in
+ * the value (records keyed by their own ID). Site IDs are `site_` + 16 random
+ * hex chars, so a substring match cannot hit another site.
+ */
+const SITE_TABLES = ['pageviews', 'daily_rollups', 'page_rollups', 'dimension_rollups', 'utm_rollups', 'monthly_usage'];
+
+async function purgeSiteData(siteId) {
+  if (typeof siteId !== 'string' || !/^site_[A-Za-z0-9_]+$/.test(siteId)) {
+    throw new Error('purgeSiteData: invalid site id');
+  }
+  const results = await turso.batch(
+    SITE_TABLES.map((t) => ({ sql: `DELETE FROM ${t} WHERE site_id = ?`, args: [siteId] })),
+    'write'
+  );
+  const deleted = {};
+  SITE_TABLES.forEach((t, i) => { deleted[t] = results[i].rowsAffected; });
+
+  try {
+    const kv = await turso.execute({
+      sql: 'DELETE FROM kv_blobs WHERE instr(key, ?) > 0 OR instr(value, ?) > 0',
+      args: [siteId, `"siteId":"${siteId}"`]
+    });
+    deleted.kv_blobs = kv.rowsAffected;
+  } catch (e) {
+    // No kv_blobs table: KV lives in Netlify Blobs, not this database.
+    if (!/no such table/i.test(String(e?.message))) throw e;
+    deleted.kv_blobs = 0;
+  }
+  return deleted;
+}
+
+/**
+ * Delete raw events older than `cutoff` ("YYYY-MM-DD HH:MM:SS") for one site.
+ * Rollup tables are untouched, so historical charts and totals survive.
+ * With dryRun, only counts what would be deleted.
+ */
+async function purgeEventsBefore(siteId, cutoff, { dryRun = true } = {}) {
+  if (dryRun) {
+    const result = await turso.execute({
+      sql: 'SELECT COUNT(*) AS n FROM pageviews WHERE site_id = ? AND timestamp < ?',
+      args: [siteId, cutoff]
+    });
+    return { siteId, cutoff, dryRun: true, rows: Number(result.rows[0].n) };
+  }
+  // Chunked so a large backlog never holds the write lock (and blocks ingest)
+  // for long.
+  let rows = 0;
+  for (;;) {
+    const result = await turso.execute({
+      sql: `DELETE FROM pageviews WHERE id IN (
+              SELECT id FROM pageviews WHERE site_id = ? AND timestamp < ? LIMIT 5000)`,
+      args: [siteId, cutoff]
+    });
+    rows += result.rowsAffected;
+    if (result.rowsAffected < 5000) break;
+  }
+  return { siteId, cutoff, dryRun: false, rows };
+}
+
+// Distinct site IDs that have raw events stored (for retention sweeps).
+async function listSitesWithEvents() {
+  const result = await turso.execute('SELECT DISTINCT site_id FROM pageviews');
+  return result.rows.map(r => r.site_id);
+}
+
 async function ingestEvents(tableName, events) {
   const eventsArray = Array.isArray(events) ? events : [events];
   const now = new Date();
@@ -208,10 +369,7 @@ async function ingestEvents(tableName, events) {
   // Prepare batch insert with denormalized fields
   const insertStatements = eventsArray.map(e => {
     // Parse payload once at write time
-    let payload = {};
-    try {
-      payload = typeof e.payload === 'string' ? JSON.parse(e.payload) : (e.payload || {});
-    } catch {}
+    const payload = parsePayload(e);
 
     return {
       sql: `INSERT INTO ${tableName} (
@@ -250,95 +408,96 @@ async function ingestEvents(tableName, events) {
     };
   });
 
-  // Update rollups for pageview events
+  // Update rollups for pageview events.
+  //
+  // The "first time seen today?" checks below run AFTER this batch's rows are
+  // inserted (same batch() call), so a key appearing n times in the batch
+  // already has n rows when its rollup runs. Count it on its first occurrence
+  // in the batch only, and only if the DB holds exactly n rows (none from
+  // earlier batches). The old `= 1` check never counted a visitor whose first
+  // two pageviews of the day arrived in the same batch.
   const pageviewEvents = eventsArray.filter(e => e.event_type === 'pageview');
   const rollupStatements = [];
 
+  const occurrences = new Map();
   for (const e of pageviewEvents) {
-    let payload = {};
-    try {
-      payload = typeof e.payload === 'string' ? JSON.parse(e.payload) : (e.payload || {});
-    } catch {}
+    for (const key of firstSeenKeys(e)) occurrences.set(key, (occurrences.get(key) || 0) + 1);
+  }
+  const counted = new Set();
+  // SQL fragment adding 1 when `key` is new today, else 0; `countSql` counts the
+  // key's rows for the day and takes `args`.
+  function firstSeen(key, countSql, args) {
+    if (counted.has(key)) return { sql: '0', args: [] };
+    counted.add(key);
+    return { sql: `CASE WHEN (${countSql}) = ? THEN 1 ELSE 0 END`, args: [...args, occurrences.get(key)] };
+  }
 
-    const eventDate = e.timestamp.split('T')[0].split(' ')[0];
+  for (const e of pageviewEvents) {
+    const payload = parsePayload(e);
+    const eventDate = eventDateOf(e);
+    const [dayStart, dayEnd] = dayBounds(eventDate);
+    const today = `site_id = ? AND timestamp >= ? AND timestamp < ? AND event_type = 'pageview'`;
+    const todayArgs = [e.site_id, dayStart, dayEnd];
 
     // Daily rollup upsert
+    const visitor = firstSeen(`v|${e.site_id}|${eventDate}|${e.identity_hash}`,
+      `SELECT COUNT(*) FROM pageviews WHERE ${today} AND identity_hash = ?`, [...todayArgs, e.identity_hash]);
+    const session = firstSeen(`s|${e.site_id}|${eventDate}|${e.session_hash}`,
+      `SELECT COUNT(*) FROM pageviews WHERE ${today} AND session_hash = ?`, [...todayArgs, e.session_hash]);
     rollupStatements.push({
       sql: `INSERT INTO daily_rollups (site_id, date, pageviews, unique_visitors, sessions, updated_at)
             VALUES (?, ?, 1, 1, 1, ?)
             ON CONFLICT(site_id, date) DO UPDATE SET
               pageviews = pageviews + 1,
-              unique_visitors = unique_visitors + CASE
-                WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END,
-              sessions = sessions + CASE
-                WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND session_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END,
+              unique_visitors = unique_visitors + ${visitor.sql},
+              sessions = sessions + ${session.sql},
               updated_at = ?`,
-      args: [e.site_id, eventDate, now.toISOString(), e.site_id, eventDate, e.identity_hash, e.site_id, eventDate, e.session_hash, now.toISOString()]
+      args: [e.site_id, eventDate, now.toISOString(), ...visitor.args, ...session.args, now.toISOString()]
     });
 
     // Page rollup upsert
     if (payload.page_path) {
+      const pageVisitor = firstSeen(`p|${e.site_id}|${eventDate}|${payload.page_path}|${e.identity_hash}`,
+        `SELECT COUNT(*) FROM pageviews WHERE ${today} AND page_path = ? AND identity_hash = ?`,
+        [...todayArgs, payload.page_path, e.identity_hash]);
       rollupStatements.push({
         sql: `INSERT INTO page_rollups (site_id, date, page_path, views, visitors)
               VALUES (?, ?, ?, 1, 1)
               ON CONFLICT(site_id, date, page_path) DO UPDATE SET
                 views = views + 1,
-                visitors = visitors + CASE
-                  WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND page_path = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
-        args: [e.site_id, eventDate, payload.page_path, e.site_id, eventDate, payload.page_path, e.identity_hash]
+                visitors = visitors + ${pageVisitor.sql}`,
+        args: [e.site_id, eventDate, payload.page_path, ...pageVisitor.args]
       });
     }
 
     // Dimension rollups
-    const dimColMap = { device: 'context_device', browser: 'context_browser', os: 'context_os', country: 'context_country', region: 'context_region', city: 'city', referrer: 'referrer_domain' };
-    const dimensions = [
-      ['device', e.context_device],
-      ['browser', e.context_browser],
-      ['os', e.context_os],
-      ['country', e.context_country],
-      ['region', e.context_region],
-      ['city', payload.city],
-      ['referrer', payload.referrer_domain]
-    ];
-
-    for (const [dimType, dimValue] of dimensions) {
-      if (dimValue) {
-        const col = dimColMap[dimType];
-        rollupStatements.push({
-          sql: `INSERT INTO dimension_rollups (site_id, date, dimension_type, dimension_value, views, visitors)
-                VALUES (?, ?, ?, ?, 1, 1)
-                ON CONFLICT(site_id, date, dimension_type, dimension_value) DO UPDATE SET
-                  views = views + 1,
-                  visitors = visitors + CASE
-                    WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND ${col} = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
-          args: [e.site_id, eventDate, dimType, dimValue, e.site_id, eventDate, dimValue, e.identity_hash]
-        });
-      }
+    for (const [dimType, dimValue, col] of rollupDimensions(e, payload)) {
+      const dimVisitor = firstSeen(`d|${e.site_id}|${eventDate}|${dimType}|${dimValue}|${e.identity_hash}`,
+        `SELECT COUNT(*) FROM pageviews WHERE ${today} AND ${col} = ? AND identity_hash = ?`,
+        [...todayArgs, dimValue, e.identity_hash]);
+      rollupStatements.push({
+        sql: `INSERT INTO dimension_rollups (site_id, date, dimension_type, dimension_value, views, visitors)
+              VALUES (?, ?, ?, ?, 1, 1)
+              ON CONFLICT(site_id, date, dimension_type, dimension_value) DO UPDATE SET
+                views = views + 1,
+                visitors = visitors + ${dimVisitor.sql}`,
+        args: [e.site_id, eventDate, dimType, dimValue, ...dimVisitor.args]
+      });
     }
 
     // UTM rollups
-    const utmColMap = { source: 'utm_source', medium: 'utm_medium', campaign: 'utm_campaign', content: 'utm_content', term: 'utm_term' };
-    const utms = [
-      ['source', payload.utm_source],
-      ['medium', payload.utm_medium],
-      ['campaign', payload.utm_campaign],
-      ['content', payload.utm_content],
-      ['term', payload.utm_term]
-    ];
-
-    for (const [utmType, utmValue] of utms) {
-      if (utmValue) {
-        const col = utmColMap[utmType];
-        rollupStatements.push({
-          sql: `INSERT INTO utm_rollups (site_id, date, utm_type, utm_value, views, visitors)
-                VALUES (?, ?, ?, ?, 1, 1)
-                ON CONFLICT(site_id, date, utm_type, utm_value) DO UPDATE SET
-                  views = views + 1,
-                  visitors = visitors + CASE
-                    WHEN (SELECT COUNT(*) FROM pageviews WHERE site_id = ? AND DATE(timestamp) = ? AND ${col} = ? AND identity_hash = ? AND event_type = 'pageview') = 1 THEN 1 ELSE 0 END`,
-          args: [e.site_id, eventDate, utmType, utmValue, e.site_id, eventDate, utmValue, e.identity_hash]
-        });
-      }
+    for (const [utmType, utmValue, col] of rollupUtms(payload)) {
+      const utmVisitor = firstSeen(`u|${e.site_id}|${eventDate}|${utmType}|${utmValue}|${e.identity_hash}`,
+        `SELECT COUNT(*) FROM pageviews WHERE ${today} AND ${col} = ? AND identity_hash = ?`,
+        [...todayArgs, utmValue, e.identity_hash]);
+      rollupStatements.push({
+        sql: `INSERT INTO utm_rollups (site_id, date, utm_type, utm_value, views, visitors)
+              VALUES (?, ?, ?, ?, 1, 1)
+              ON CONFLICT(site_id, date, utm_type, utm_value) DO UPDATE SET
+                views = views + 1,
+                visitors = visitors + ${utmVisitor.sql}`,
+        args: [e.site_id, eventDate, utmType, utmValue, ...utmVisitor.args]
+      });
     }
   }
 
@@ -361,6 +520,19 @@ async function ingestEvents(tableName, events) {
  * Before: 17 queries scanning all rows
  * After: 5 queries reading pre-aggregated rollups
  */
+/**
+ * Number of custom events (everything that is not a pageview) for a site in
+ * [startDate, endDate]. Used by goals on the "events" metric.
+ */
+async function countEvents(siteId, startDate, endDate) {
+  const result = await turso.execute({
+    sql: `SELECT COUNT(*) as n FROM pageviews
+          WHERE site_id = ? AND event_type != 'pageview' AND timestamp >= ? AND timestamp <= ?`,
+    args: [siteId, startDate, endDate]
+  });
+  return Number(result.rows[0]?.n || 0);
+}
+
 async function getStats(siteId, startDate, endDate) {
   const [
     dailyStats,
@@ -915,12 +1087,15 @@ async function getTeamUsageHistory(teamId, months = 6) {
 
 async function checkUsageLimit(teamId, limit) {
   const usage = await getTeamUsage(teamId);
+  // Every stored event counts toward the plan limit, not just pageviews —
+  // otherwise custom/telemetry events grow the DB without bound for free.
+  const used = usage.pageviews + usage.events;
   return {
-    isWithinLimit: usage.pageviews < limit,
-    currentUsage: usage.pageviews,
+    isWithinLimit: used < limit,
+    currentUsage: used,
     limit,
-    percentUsed: limit > 0 ? Math.round((usage.pageviews / limit) * 100) : 0,
-    remaining: Math.max(0, limit - usage.pageviews)
+    percentUsed: limit > 0 ? Math.round((used / limit) * 100) : 0,
+    remaining: Math.max(0, limit - used)
   };
 }
 
@@ -979,7 +1154,12 @@ export {
   turso,
   initSchema,
   ingestEvents,
+  findActiveSession,
+  purgeEventsBefore,
+  purgeSiteData,
+  listSitesWithEvents,
   getStatsCached as getStats,
+  countEvents,
   getRealtimeCached as getRealtime,
   exportData,
   debugGetCount,

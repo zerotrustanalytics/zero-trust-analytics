@@ -5,13 +5,13 @@ import {
   getSiteGoals,
   updateGoal,
   deleteGoal,
-  getStats,
   calculateGoalValue,
   getGoalDateRange,
   updateGoalProgress,
   GoalMetrics,
   GoalPeriods
 } from './lib/storage.js';
+import { getStats, countEvents } from './lib/turso.js';
 
 export default async function handler(req, context) {
   if (req.method === 'OPTIONS') {
@@ -63,8 +63,11 @@ export default async function handler(req, context) {
       // Calculate current progress for each goal
       const goalsWithProgress = await Promise.all(goals.map(async (goal) => {
         const dateRange = getGoalDateRange(goal.period);
-        const stats = await getStats(siteId, dateRange.startDate, dateRange.endDate);
-        const currentValue = calculateGoalValue(stats, goal.metric);
+        const start = `${dateRange.startDate} 00:00:00`;
+        const end = `${dateRange.endDate} 23:59:59`;
+        const stats = await getStats(siteId, start, end);
+        const events = goal.metric === GoalMetrics.EVENTS ? await countEvents(siteId, start, end) : 0;
+        const currentValue = calculateGoalValue(stats.summary, goal.metric, events);
 
         // Update the stored progress
         await updateGoalProgress(goal.id, currentValue);
@@ -142,6 +145,13 @@ export default async function handler(req, context) {
         });
       }
 
+      if (comparison && !['gte', 'lte'].includes(comparison)) {
+        return new Response(JSON.stringify({ error: 'Invalid comparison' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
       const goal = await createGoal(siteId, userId, {
         name,
         metric,
@@ -180,6 +190,16 @@ export default async function handler(req, context) {
           headers: { 'Content-Type': 'application/json' }
         });
       }
+
+      if ((updates.period !== undefined && !Object.values(GoalPeriods).includes(updates.period)) ||
+          (updates.comparison !== undefined && !['gte', 'lte'].includes(updates.comparison)) ||
+          (updates.target !== undefined && !(Number.isFinite(Number(updates.target)) && Number(updates.target) >= 1))) {
+        return new Response(JSON.stringify({ error: 'Invalid goal update' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (updates.target !== undefined) updates.target = Math.floor(Number(updates.target));
 
       const updated = await updateGoal(goalId, userId, updates);
 

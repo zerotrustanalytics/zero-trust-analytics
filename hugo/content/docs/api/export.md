@@ -34,7 +34,7 @@ GET /api/export
 Daily aggregated data:
 
 ```bash
-curl "https://ztas.io/api/export?siteId=site_abc123&type=summary&period=30d" \
+curl "https://app.ztas.io/api/export?siteId=site_abc123&type=summary&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -68,7 +68,7 @@ curl "https://ztas.io/api/export?siteId=site_abc123&type=summary&period=30d" \
 Individual pageview records:
 
 ```bash
-curl "https://ztas.io/api/export?siteId=site_abc123&type=pageviews&period=7d" \
+curl "https://app.ztas.io/api/export?siteId=site_abc123&type=pageviews&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -87,7 +87,7 @@ curl "https://ztas.io/api/export?siteId=site_abc123&type=pageviews&period=7d" \
 Custom event records:
 
 ```bash
-curl "https://ztas.io/api/export?siteId=site_abc123&type=events&period=30d" \
+curl "https://app.ztas.io/api/export?siteId=site_abc123&type=events&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -105,7 +105,7 @@ curl "https://ztas.io/api/export?siteId=site_abc123&type=events&period=30d" \
 Add `format=csv` for CSV output:
 
 ```bash
-curl "https://ztas.io/api/export?siteId=site_abc123&type=summary&format=csv" \
+curl "https://app.ztas.io/api/export?siteId=site_abc123&type=summary&format=csv" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -o analytics-export.csv
 ```
@@ -124,7 +124,7 @@ For large date ranges, use the `limit` parameter or paginate:
 
 ```bash
 # First 10,000 records
-curl "https://ztas.io/api/export?siteId=site_abc123&type=pageviews&limit=10000" \
+curl "https://app.ztas.io/api/export?siteId=site_abc123&type=pageviews&limit=10000" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -134,7 +134,7 @@ curl "https://ztas.io/api/export?siteId=site_abc123&type=pageviews&limit=10000" 
 
 ```bash
 # Weekly backup script
-curl "https://ztas.io/api/export?siteId=site_abc123&type=pageviews&format=csv&period=7d" \
+curl "https://app.ztas.io/api/export?siteId=site_abc123&type=pageviews&format=csv&period=7d" \
   -H "Authorization: Bearer $ZTA_TOKEN" \
   -o "backup-$(date +%Y-%m-%d).csv"
 ```
@@ -153,7 +153,7 @@ import requests
 import pandas as pd
 
 response = requests.get(
-    'https://ztas.io/api/export',
+    'https://app.ztas.io/api/export',
     params={'siteId': 'site_abc123', 'type': 'summary', 'period': '30d'},
     headers={'Authorization': 'Bearer YOUR_TOKEN'}
 )

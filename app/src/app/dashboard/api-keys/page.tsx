@@ -38,7 +38,7 @@ export default function ApiKeysPage() {
     setLoading(true)
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/api-keys`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,7 +76,7 @@ export default function ApiKeysPage() {
     if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) return
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       await fetch(`${apiUrl}/api/api-keys/${keyId}`, {
         method: 'DELETE',
         credentials: 'include',
@@ -177,8 +177,8 @@ export default function ApiKeysPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Permissions</label>
-              <div className="space-y-2">
+              <p id="api-key-permissions" className="block text-sm font-medium mb-2">Permissions</p>
+              <div role="group" aria-labelledby="api-key-permissions" className="space-y-2">
                 {['read', 'write', 'admin'].map((scope) => (
                   <label key={scope} className="flex items-center gap-2">
                     <input

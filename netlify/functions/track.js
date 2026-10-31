@@ -1,10 +1,10 @@
-import { createZTRecord, validateNoPII } from './lib/zero-trust-core.js';
-import { ingestEvents, checkUsageLimit, incrementUsageBatch } from './lib/turso.js';
+import { createZTRecord, createSessionHash, scrubPII, originMatchesDomain, validateNoPII } from './lib/zero-trust-core.js';
+import { ingestEvents, checkUsageLimit, incrementUsageBatch, findActiveSession } from './lib/turso.js';
 import { getSite, getUserById, matchConversionRule } from './lib/storage.js';
 import { hashIP } from './lib/rate-limit.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 import { incrementDailyUsageBatch } from './lib/usage-metrics.js';
 
 // ============================================
@@ -23,10 +23,22 @@ const USER_PLAN_CACHE_TTL = 300000;
 const usageLimitCache = new Map();
 const USAGE_LIMIT_CACHE_TTL = 30000;
 
-// Fast rate limiter for track endpoint (in-memory, no Blob I/O)
+// Fast rate limiter for track endpoint (in-memory, no Blob I/O).
+// Per client IP — an abuse brake, not the volume control (that's the monthly
+// plan quota). Kept generous because a whole office can share one NAT address.
 const trackRateLimits = new Map();
-const TRACK_RATE_LIMIT = 1000;
+const TRACK_RATE_LIMIT = 600;
 const TRACK_RATE_WINDOW = 60000;
+
+// Ingest limits. The tracker flushes at 25 events; anything beyond 50 in one
+// request is not from our script and is dropped.
+const MAX_BATCH_EVENTS = 50;
+const MAX_LEN = { path: 500, eventName: 100, category: 100, label: 200, utm: 200, domain: 253 };
+
+// Event types the dashboard understands. Custom events are stored under their
+// own name, so these names are reserved — a custom event called "pageview"
+// must not be counted as one.
+const RESERVED_EVENT_TYPES = new Set(['pageview', 'engagement', 'heartbeat']);
 
 /**
  * Get site with caching
@@ -60,7 +72,7 @@ async function getCachedUserPlan(userId) {
   }
 
   const user = await getUserById(userId);
-  const plan = user?.plan || 'free';
+  const plan = effectivePlan(user);
   userPlanCache.set(userId, { plan, timestamp: now });
   return plan;
 }
@@ -144,27 +156,9 @@ function isBot(userAgent) {
   return botPatterns.some(pattern => ua.includes(pattern));
 }
 
-// Validate origin against registered site domain
-function validateOrigin(origin, siteDomain) {
-  if (!origin) return false;
-
-  try {
-    const originUrl = new URL(origin);
-    const originHost = originUrl.hostname.toLowerCase();
-    const siteHost = siteDomain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
-
-    // Exact match or www variant
-    return originHost === siteHost ||
-           originHost === `www.${siteHost}` ||
-           `www.${originHost}` === siteHost;
-  } catch {
-    return false;
-  }
-}
-
 // Get allowed origin for CORS header
 function getAllowedOrigin(origin, siteDomain) {
-  if (validateOrigin(origin, siteDomain)) {
+  if (originMatchesDomain(origin, siteDomain)) {
     return origin;
   }
   return null;
@@ -266,7 +260,7 @@ export default async function handler(req, context) {
         siteId,
         eventCount: events.length
       });
-      return await handleBatch(req, context, origin, siteId, events, logger);
+      return await handleBatch(req, context, origin, siteId, events, logger, data.sampleRate);
     }
 
     // Handle single event (legacy support)
@@ -278,7 +272,7 @@ export default async function handler(req, context) {
 }
 
 // Handle batch of events (single database write)
-async function handleBatch(req, context, origin, siteId, events, logger) {
+async function handleBatch(req, context, origin, siteId, events, logger, clientSampleRate) {
   if (!siteId) {
     logger.warn('Batch request missing site ID');
     return new Response(JSON.stringify({ error: 'Site ID required' }), {
@@ -335,9 +329,19 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
   // Use conversion rules from cached site (no duplicate fetch)
   const conversionRules = site.conversionRules || [];
 
+  if (events.length > MAX_BATCH_EVENTS) {
+    logger.warn('Oversized batch truncated', { siteId, eventCount: events.length });
+    events = events.slice(0, MAX_BATCH_EVENTS);
+  }
+
+  // Unknown types and heartbeats are dropped here (parseEvent -> null).
+  const parsed = events
+    .filter(event => event && typeof event === 'object')
+    .map(event => ({ event, ...parseEvent(event) }))
+    .filter(p => p.eventType !== null);
+
   // Process all events into records
-  const records = events.map(event => {
-    const { eventType, payload, meta } = parseEvent(event);
+  let records = parsed.map(({ event, eventType, payload, meta }) => {
 
     // Apply conversion rules to engagement events
     if (eventType === 'engagement' && meta.isBounce && conversionRules.length > 0) {
@@ -379,7 +383,28 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
       payload,
       meta
     });
-  }).filter(record => validateNoPII(record));
+  }).filter(record => validateNoPII(record)); // last-resort guard; fields are scrubbed in parseEvent
+
+  if (records.length > 0) {
+    // Every record in a request shares one visitor (same IP + user agent).
+    const identityHash = records[0].identity_hash;
+
+    // Sampling, decided server-side so the tracker needs no device storage.
+    // Bucketing by the daily visitor hash keeps a visitor consistently in or
+    // out for the day. The stricter of the site's and the snippet's rate wins.
+    const sampleRate = Math.min(normalizeRate(site.sampleRate), normalizeRate(clientSampleRate));
+    if (sampleRate < 1 && parseInt(identityHash.slice(0, 8), 16) / 0x100000000 >= sampleRate) {
+      return new Response(JSON.stringify({ success: true, count: 0, sampled: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': allowedOrigin || '*' }
+      });
+    }
+
+    // Sessions, decided server-side: continue this visitor's session if they
+    // were active on the site within 30 minutes, else start a new one.
+    const sessionHash = (await findActiveSession(siteId, identityHash)) || createSessionHash();
+    records = records.map(record => ({ ...record, session_hash: sessionHash }));
+  }
 
   // Check usage limits before ingesting
   const usageCheck = await checkSiteOwnerUsage(site, logger);
@@ -417,6 +442,8 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
         incrementDailyUsageBatch(siteId, usageCheck.ownerId, 'pageview', pageviewCount).catch(() => {});
       }
       if (eventCount > 0) {
+        // Metered against the monthly quota too (checkUsageLimit counts both).
+        incrementUsageBatch(usageCheck.ownerId, siteId, 'event', eventCount).catch(() => {});
         incrementDailyUsageBatch(siteId, usageCheck.ownerId, 'event', eventCount).catch(() => {});
       }
     }
@@ -433,78 +460,91 @@ async function handleBatch(req, context, origin, siteId, events, logger) {
   });
 }
 
-// Parse event data into eventType, payload, meta
+// Client-supplied text: stringified, PII-scrubbed, length-capped.
+function cleanText(value, max) {
+  if (value === null || value === undefined) return '';
+  return scrubPII(value).slice(0, max);
+}
+
+// URL path only — query strings and fragments routinely carry tokens/emails.
+function cleanPath(value) {
+  const path = String(value || '/').split(/[?#]/)[0];
+  return cleanText(path.startsWith('/') ? path : `/${path}`, MAX_LEN.path);
+}
+
+function cleanNumber(value, min, max) {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : null;
+}
+
+function normalizeRate(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 && n < 1 ? n : 1;
+}
+
+/**
+ * Parse one client event into { eventType, payload, meta }, keeping only the
+ * fields the dashboard uses, each sanitized. Returns eventType null for events
+ * that must not be stored: unknown types, and heartbeats (realtime reads
+ * pageviews only, so stored heartbeats were never read). A missing type is a
+ * pageview, for legacy single-event API callers.
+ */
 function parseEvent(data) {
-  const type = data.type;
-  let eventType = 'pageview';
-  let payload = {};
-  let meta = {};
+  const type = data.type === undefined ? 'pageview' : data.type;
 
   switch (type) {
     case 'pageview':
-      eventType = 'pageview';
-      payload = {
-        page_path: data.path || '/',
-        referrer_domain: extractReferrerDomain(data.referrer),
-        utm_source: data.utm?.source || '',
-        utm_medium: data.utm?.medium || '',
-        utm_campaign: data.utm?.campaign || '',
-        sessionId: data.sessionId,
-        landingPage: data.landingPage,
-        isNewVisitor: data.isNewVisitor,
-        trafficSource: data.trafficSource
+      return {
+        eventType: 'pageview',
+        payload: {
+          page_path: cleanPath(data.path),
+          referrer_domain: cleanText(extractReferrerDomain(data.referrer), MAX_LEN.domain),
+          utm_source: cleanText(data.utm?.source, MAX_LEN.utm),
+          utm_medium: cleanText(data.utm?.medium, MAX_LEN.utm),
+          utm_campaign: cleanText(data.utm?.campaign, MAX_LEN.utm),
+          utm_content: cleanText(data.utm?.content, MAX_LEN.utm),
+          utm_term: cleanText(data.utm?.term, MAX_LEN.utm)
+        },
+        meta: {}
       };
-      break;
 
     case 'engagement':
-      eventType = 'engagement';
-      payload = {
-        page_path: data.path || '/',
-        sessionId: data.sessionId
+      return {
+        eventType: 'engagement',
+        payload: { page_path: cleanPath(data.path) },
+        meta: {
+          isBounce: data.isBounce === true,
+          duration: Math.round(cleanNumber(data.timeOnPage, 0, 86400) || 0)
+        }
       };
-      meta = {
-        isBounce: data.isBounce || false,
-        duration: data.timeOnPage || 0
-      };
-      break;
 
-    case 'event':
-      eventType = data.action || 'custom_event';
-      payload = {
-        page_path: data.path || '/',
-        event_name: data.action,
-        event_data: JSON.stringify({
-          category: data.category,
-          label: data.label,
-          value: data.value
-        }),
-        sessionId: data.sessionId
+    case 'event': {
+      const name = cleanText(data.action, MAX_LEN.eventName) || 'custom_event';
+      return {
+        eventType: RESERVED_EVENT_TYPES.has(name) ? `custom_${name}` : name,
+        payload: {
+          page_path: cleanPath(data.path),
+          event_name: name,
+          event_data: JSON.stringify({
+            category: cleanText(data.category, MAX_LEN.category),
+            label: cleanText(data.label, MAX_LEN.label),
+            value: cleanNumber(data.value, -1e12, 1e12)
+          })
+        },
+        meta: {}
       };
-      break;
+    }
 
-    case 'heartbeat':
-      eventType = 'heartbeat';
-      payload = {
-        page_path: data.path || '/',
-        sessionId: data.sessionId
-      };
-      break;
-
-    default:
-      eventType = 'pageview';
-      payload = {
-        page_path: data.path || '/',
-        referrer_domain: extractReferrerDomain(data.referrer)
-      };
+    default: // 'heartbeat' and anything unrecognized
+      return { eventType: null, payload: {}, meta: {} };
   }
-
-  return { eventType, payload, meta };
 }
 
 // Handle single event (legacy/fallback) - delegates to batch handler
 async function handleSingleEvent(req, context, origin, data, logger) {
   // Convert single event to batch format and reuse batch handler
-  return handleBatch(req, context, origin, data.siteId, [data], logger);
+  return handleBatch(req, context, origin, data.siteId, [data], logger, data.sampleRate);
 }
 
 export const config = {

@@ -95,7 +95,7 @@ No npm packages to install. No build step integration. No configuration files. W
 Every plan includes API access. Build custom dashboards, integrate with your tools, export data programmatically.
 
 ```bash
-curl "https://ztas.io/api/stats?siteId=YOUR_SITE&period=7d" \
+curl "https://app.ztas.io/api/stats?siteId=YOUR_SITE&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

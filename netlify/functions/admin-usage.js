@@ -28,6 +28,7 @@
 
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
+import { timingSafeStringEqual } from './lib/auth.js';
 import { getCacheMetrics, resetCacheMetrics } from './lib/cache.js';
 import { turso } from './lib/turso.js';
 import { getStore } from './lib/blob-store.js';
@@ -58,14 +59,15 @@ function authenticateAdmin(req) {
   const authHeader = req.headers.get('authorization');
   const apiKey = req.headers.get('x-admin-key');
 
-  // Check bearer token or API key
-  const token = authHeader?.replace('Bearer ', '') || apiKey;
+  // Admin key header first (the dashboard sends it; a signed-in user's gatekeep
+  // Bearer token must never shadow it), then a Bearer admin secret.
+  const token = apiKey || authHeader?.replace('Bearer ', '');
 
   if (!ADMIN_SECRET) {
     return { error: 'Admin access not configured', status: 503 };
   }
 
-  if (!token || token !== ADMIN_SECRET) {
+  if (!token || !timingSafeStringEqual(token, ADMIN_SECRET)) {
     return { error: 'Unauthorized', status: 401 };
   }
 

@@ -1,38 +1,15 @@
 (function() {
   'use strict';
 
+  // Zero Trust Analytics (core). Stores nothing on the visitor's device;
+  // visitors, sessions and sampling are derived server-side.
   var ZTA = window.ZTA || {};
+  var DEFAULT_API = 'https://app.ztas.io';
   var cfg = {
     endpoint: null,
     siteId: null,
     debug: false,
     sampleRate: 1.0
-  };
-  var sampled = true;
-
-  function checkSampling() {
-    if (cfg.sampleRate >= 1.0) return true;
-    if (cfg.sampleRate <= 0) return false;
-    var key = 'zta_sample';
-    var val = null;
-    try {
-      val = localStorage.getItem(key);
-      if (val === null) {
-        val = Math.random().toString();
-        localStorage.setItem(key, val);
-      }
-      val = parseFloat(val);
-    } catch (e) {
-      val = Math.random();
-    }
-    return val < cfg.sampleRate;
-  }
-
-  var session = {
-    id: null,
-    startTime: null,
-    pageCount: 0,
-    visitorId: null
   };
 
   var queue = {
@@ -40,105 +17,19 @@
     timer: null
   };
 
-  function generateId() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0;
-      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-    });
-  }
-
-  function initSession() {
-    var TIMEOUT = 1800000; // 30 min
-    var stored = null;
-    var now = Date.now();
-
+  // Referrer origin only; same-site referrers omitted.
+  function getReferrer() {
+    if (!document.referrer) return null;
     try {
-      stored = JSON.parse(sessionStorage.getItem('zta_session'));
-    } catch (e) {}
-
-    if (stored && (now - stored.lastActivity) < TIMEOUT) {
-      session.id = stored.id;
-      session.startTime = stored.startTime;
-      session.pageCount = stored.pageCount;
-    } else {
-      session.id = generateId();
-      session.startTime = now;
-      session.pageCount = 0;
-    }
-
-    var visitorId = localStorage.getItem('zta_visitor');
-    if (!visitorId) {
-      visitorId = generateId();
-      localStorage.setItem('zta_visitor', visitorId);
-    }
-    session.visitorId = visitorId;
-    session.pageCount++;
-
-    try {
-      sessionStorage.setItem('zta_session', JSON.stringify({
-        id: session.id,
-        startTime: session.startTime,
-        pageCount: session.pageCount,
-        lastActivity: now
-      }));
-    } catch (e) {}
-  }
-
-  function getDevice() {
-    var ua = navigator.userAgent;
-    var type = 'desktop';
-    if (/tablet|ipad|playbook|silk/i.test(ua)) {
-      type = 'tablet';
-    } else if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) {
-      type = 'mobile';
-    }
-
-    var browser = 'Unknown';
-    if (/firefox/i.test(ua)) browser = 'Firefox';
-    else if (/edg/i.test(ua)) browser = 'Edge';
-    else if (/chrome/i.test(ua)) browser = 'Chrome';
-    else if (/safari/i.test(ua)) browser = 'Safari';
-
-    var os = 'Unknown';
-    if (/windows/i.test(ua)) os = 'Windows';
-    else if (/mac/i.test(ua)) os = 'macOS';
-    else if (/linux/i.test(ua)) os = 'Linux';
-    else if (/android/i.test(ua)) os = 'Android';
-    else if (/iphone|ipad/i.test(ua)) os = 'iOS';
-
-    return {
-      type: type,
-      browser: browser,
-      os: os,
-      width: window.innerWidth,
-      height: window.innerHeight,
-      lang: navigator.language || 'en'
-    };
-  }
-
-  function getSource() {
-    var ref = document.referrer;
-    if (!ref) return { type: 'direct', source: null };
-
-    try {
-      var refHost = new URL(ref).hostname.toLowerCase();
-
-      if (/google\./i.test(refHost)) return { type: 'organic', source: 'google' };
-      if (/bing\./i.test(refHost)) return { type: 'organic', source: 'bing' };
-      if (/facebook\.|fb\./i.test(refHost)) return { type: 'social', source: 'facebook' };
-      if (/twitter\.|t\.co|x\.com/i.test(refHost)) return { type: 'social', source: 'twitter' };
-      if (/linkedin\./i.test(refHost)) return { type: 'social', source: 'linkedin' };
-
-      if (refHost === window.location.hostname) return { type: 'internal', source: refHost };
-
-      return { type: 'referral', source: refHost };
+      var ref = new URL(document.referrer);
+      return ref.hostname === window.location.hostname ? null : ref.origin;
     } catch (e) {
-      return { type: 'referral', source: ref };
+      return null;
     }
   }
 
   function send(data) {
-    if (!sampled || !cfg.siteId) return;
+    if (!cfg.siteId) return;
 
     queue.events.push(data);
 
@@ -161,15 +52,19 @@
     var events = queue.events;
     queue.events = [];
 
+    var body = {
+      batch: true,
+      siteId: cfg.siteId,
+      events: events
+    };
+    if (cfg.sampleRate < 1) body.sampleRate = cfg.sampleRate;
+
     fetch(cfg.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        batch: true,
-        siteId: cfg.siteId,
-        events: events
-      }),
-      keepalive: true
+      body: JSON.stringify(body),
+      keepalive: true,
+      credentials: 'omit'
     }).catch(function(err) {
       if (cfg.debug) console.log('[ZTA] Error:', err);
     });
@@ -178,18 +73,9 @@
   ZTA.init = function(siteId, options) {
     options = options || {};
     cfg.siteId = siteId;
-    cfg.endpoint = options.endpoint || 'https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-8859ab2d-54c9-4ca1-b3aa-8f2ee26c90be/analytics/track';
+    cfg.endpoint = options.endpoint || DEFAULT_API + '/api/track';
     cfg.debug = options.debug || false;
     cfg.sampleRate = options.sampleRate !== undefined ? options.sampleRate : 1.0;
-
-    // Check sampling - if out, don't initialize
-    sampled = checkSampling();
-    if (!sampled) {
-      if (cfg.debug) console.log('[ZTA] Sampled out:', cfg.sampleRate);
-      return;
-    }
-
-    initSession();
 
     if (options.autoTrack !== false) {
       ZTA.trackPageView();
@@ -211,66 +97,43 @@
     if (cfg.debug) console.log('[ZTA] Initialized:', siteId);
   };
 
-  ZTA.trackPageView = function(customData) {
+  ZTA.trackPageView = function() {
     var params = new URLSearchParams(window.location.search);
-    var data = {
+    send({
       type: 'pageview',
-      siteId: cfg.siteId,
-      url: window.location.href,
       path: window.location.pathname,
-      title: document.title,
-      referrer: document.referrer || null,
-      sessionId: session.id,
-      visitorId: session.visitorId,
-      pageCount: session.pageCount,
-      device: getDevice(),
-      source: getSource(),
+      referrer: getReferrer(),
       utm: {
         source: params.get('utm_source'),
         medium: params.get('utm_medium'),
-        campaign: params.get('utm_campaign')
-      },
-      timestamp: new Date().toISOString()
-    };
-
-    if (customData) {
-      for (var key in customData) {
-        data[key] = customData[key];
+        campaign: params.get('utm_campaign'),
+        term: params.get('utm_term'),
+        content: params.get('utm_content')
       }
-    }
-
-    send(data);
+    });
   };
 
+  // Only `label` and `value` (or `amount`) are recorded.
   ZTA.track = function(eventName, properties) {
     properties = properties || {};
     send({
       type: 'event',
-      siteId: cfg.siteId,
-      sessionId: session.id,
-      visitorId: session.visitorId,
-      category: 'custom',
+      category: properties.category || 'custom',
       action: eventName,
       label: properties.label || null,
       value: properties.value || properties.amount || null,
-      properties: properties,
-      path: window.location.pathname,
-      timestamp: new Date().toISOString()
+      path: window.location.pathname
     });
   };
 
   ZTA.trackEvent = function(category, action, label, value) {
     send({
       type: 'event',
-      siteId: cfg.siteId,
-      sessionId: session.id,
-      visitorId: session.visitorId,
       category: category,
       action: action,
       label: label || null,
       value: value || null,
-      path: window.location.pathname,
-      timestamp: new Date().toISOString()
+      path: window.location.pathname
     });
   };
 
@@ -406,8 +269,11 @@
   if (script) {
     var siteId = script.getAttribute('data-site-id');
     var sampleRate = script.getAttribute('data-sample-rate');
+    // data-api lets self-hosters point the script at their own server.
+    var api = (script.getAttribute('data-api') || DEFAULT_API).replace(/\/+$/, '');
     if (siteId) {
       ZTA.init(siteId, {
+        endpoint: api + '/api/track',
         autoTrack: script.getAttribute('data-auto-track') !== 'false',
         debug: script.getAttribute('data-debug') === 'true',
         sampleRate: sampleRate !== null ? parseFloat(sampleRate) : 1.0

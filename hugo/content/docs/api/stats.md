@@ -29,7 +29,7 @@ GET /api/stats
 ## Example Request
 
 ```bash
-curl "https://ztas.io/api/stats?siteId=site_abc123&period=30d" \
+curl "https://app.ztas.io/api/stats?siteId=site_abc123&period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -126,7 +126,7 @@ Breakdowns by device type, browser, and geographic location.
 For custom date ranges, use `startDate` and `endDate`:
 
 ```bash
-curl "https://ztas.io/api/stats?siteId=site_abc123&startDate=2024-11-01&endDate=2024-11-30" \
+curl "https://app.ztas.io/api/stats?siteId=site_abc123&startDate=2024-11-01&endDate=2024-11-30" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

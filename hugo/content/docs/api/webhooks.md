@@ -33,7 +33,7 @@ Get all webhooks configured for your account.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/webhooks?siteId=site_abc123" \
+curl "https://app.ztas.io/api/webhooks?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -68,7 +68,7 @@ Register a new webhook endpoint to receive event notifications.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/webhooks" \
+curl -X POST "https://app.ztas.io/api/webhooks" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -124,7 +124,7 @@ Remove a webhook endpoint.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/webhooks?id=wh_abc123" \
+curl -X DELETE "https://app.ztas.io/api/webhooks?id=wh_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

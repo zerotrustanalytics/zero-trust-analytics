@@ -18,7 +18,7 @@ import {
   getUserSites,
   TeamRoles
 } from './lib/storage.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 import { sendTeamInviteEmail } from './lib/email.js';
 
 export default async function handler(req, context) {
@@ -177,7 +177,7 @@ export default async function handler(req, context) {
         // Check team member limit based on team owner's plan
         const team = await getTeam(teamId);
         const teamOwner = await getUserById(team.ownerId);
-        const plan = teamOwner?.plan || 'free';
+        const plan = effectivePlan(teamOwner);
         const memberLimit = Config.pricing.teamMemberLimits[plan] || Config.pricing.teamMemberLimits.free;
         const currentMembers = await getTeamMembers(teamId);
         const pendingInvites = await getTeamInvites(teamId);

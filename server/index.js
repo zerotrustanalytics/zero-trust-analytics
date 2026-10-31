@@ -12,10 +12,18 @@ import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import http from 'http';
 import { readdir } from 'fs/promises';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
+
+// init-db is only ever invoked in-process at startup (never routed), so its
+// secret never needs to be known outside this process. Generate one per boot
+// rather than shipping a guessable default.
+if (!process.env.INIT_DB_SECRET) {
+  process.env.INIT_DB_SECRET = crypto.randomBytes(32).toString('hex');
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,26 +32,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const NEXTJS_PORT = process.env.NEXTJS_PORT || 3001;
 
+// Max request body accepted by API functions (GA/CSV imports are the largest).
+const MAX_BODY_BYTES = 10 * 1024 * 1024;
+
 // Track Next.js process for graceful shutdown
 let nextjsProcess = null;
 
-// Middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// No global body parsers: API functions read the raw body themselves (Stripe
+// signature checks need the exact bytes), and proxied Next routes (Auth.js
+// sign-in/sign-out POSTs) need the request stream left untouched.
 
-// CORS middleware for analytics tracking
+// CORS preflight. Functions set their own (allowlisted) CORS headers on actual
+// responses; this only answers preflights, and never with credentials — a
+// wildcard origin is safe precisely because browsers refuse credentials on it.
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Site-ID');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
   if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Site-ID');
+    res.setHeader('Access-Control-Max-Age', '86400');
     return res.status(204).end();
   }
   next();
@@ -71,9 +78,14 @@ function proxyToNextjs(req, res) {
     // of /dashboard/sites). Next has no basePath, so it needs the full path.
     path: req.originalUrl,
     method: req.method,
+    // Keep the public origin visible to Next (the original Host is passed
+    // through; Next overrides X-Forwarded-Host with Host): Auth.js (trustHost)
+    // builds its OAuth callback URL from it, and gatekeep only accepts the
+    // registered https://app.ztas.io/api/auth/callback/gatekeep.
     headers: {
       ...req.headers,
-      host: `localhost:${NEXTJS_PORT}`,
+      'x-forwarded-host': req.headers['x-forwarded-host'] || req.headers.host,
+      'x-forwarded-proto': req.headers['x-forwarded-proto'] || req.protocol,
     },
   };
 
@@ -108,67 +120,104 @@ if ((process.env.AUTH_MODE || 'none') === 'oidc') {
  * Convert Netlify Function to Express middleware
  * Netlify functions use a different signature than Express handlers
  */
+/**
+ * Real client IP. Behind the Cloudflare Tunnel every request arrives from
+ * cloudflared, so the socket address is the same for all visitors — which
+ * would collapse visitor hashing and per-IP rate limits into one bucket.
+ * Cloudflare sets CF-Connecting-IP; fall back to the first X-Forwarded-For hop,
+ * then the socket. (These headers are only trustworthy because the container
+ * port is not exposed beyond the host — see docker-compose.yml.)
+ */
+function clientIp(req) {
+  const cf = req.headers['cf-connecting-ip'];
+  if (cf) return cf.trim();
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return xff.split(',')[0].trim();
+  return req.socket.remoteAddress || 'unknown';
+}
+
+/** Buffer the raw request body, refusing anything over MAX_BODY_BYTES. */
+function readRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        reject(Object.assign(new Error('Request body too large'), { status: 413 }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
+/**
+ * Convert a Netlify Function (Web Request -> Web Response) to Express middleware.
+ * Functions get a genuine Web `Request` — iterable headers, text()/json()/
+ * arrayBuffer(), absolute url — exactly what Netlify hands them, so handler
+ * code (e.g. Object.fromEntries(req.headers), Stripe's raw-body signature
+ * check, new URL(req.url)) behaves the same in both environments.
+ */
 function netlifyToExpress(netlifyFunction) {
   return async (req, res) => {
     try {
-      // Create Netlify-compatible context object
+      // Netlify-compatible context. Geo comes from Cloudflare headers
+      // (city/region need the "visitor location headers" managed transform).
       const context = {
-        ip: req.ip || req.connection.remoteAddress,
+        ip: clientIp(req),
         geo: {
           country: { code: req.headers['cf-ipcountry'] || '' },
-          subdivision: { code: req.headers['cf-region'] || '' }
-        }
+          subdivision: { code: req.headers['cf-region-code'] || req.headers['cf-region'] || '' },
+          city: req.headers['cf-ipcity'] || '',
+        },
       };
 
-      // Create Netlify-compatible request object.
-      // Netlify's Request.url is an ABSOLUTE URL, and functions rely on that
-      // (many do `new URL(req.url)` directly, and lib/logger.js does too). Pass
-      // an absolute URL built from the incoming host, not the bare path, or
-      // `new URL(req.url)` throws ERR_INVALID_URL for ~40 handlers.
       const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
       const host = req.headers.host || 'localhost';
-      const netlifyReq = {
+
+      const headers = new Headers();
+      for (const [key, value] of Object.entries(req.headers)) {
+        if (Array.isArray(value)) value.forEach((v) => headers.append(key, v));
+        else if (value !== undefined) headers.set(key, value);
+      }
+
+      const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
+      const body = hasBody ? await readRawBody(req) : undefined;
+
+      const webReq = new Request(`${proto}://${host}${req.originalUrl}`, {
         method: req.method,
-        headers: {
-          get: (name) => req.headers[name.toLowerCase()],
-        },
-        json: async () => req.body,
-        url: `${proto}://${host}${req.originalUrl}`,
-      };
+        headers,
+        body: body && body.length > 0 ? body : undefined,
+      });
 
-      // Call the Netlify function
-      const response = await netlifyFunction.default(netlifyReq, context);
+      const response = await netlifyFunction.default(webReq, context);
 
-      // Convert Netlify Response to Express response
       if (response instanceof Response) {
-        // Handle Web API Response object
-        const status = response.status;
-        const body = await response.text();
-
-        // Set headers
         response.headers.forEach((value, key) => {
-          res.setHeader(key, value);
+          if (key !== 'set-cookie') res.setHeader(key, value);
         });
+        const cookies = response.headers.getSetCookie();
+        if (cookies.length > 0) res.setHeader('set-cookie', cookies);
 
-        // Send response
-        res.status(status);
-        if (response.headers.get('content-type')?.includes('application/json')) {
-          res.json(JSON.parse(body));
-        } else {
-          res.send(body);
-        }
+        res.status(response.status);
+        res.end(Buffer.from(await response.arrayBuffer()));
       } else {
-        // Fallback for non-standard responses
+        // Fallback for legacy { statusCode, headers, body } handlers
         res.status(response.statusCode || 200)
            .set(response.headers || {})
            .send(response.body);
       }
     } catch (error) {
+      if (error.status === 413) {
+        return res.status(413).json({ error: 'Request body too large' });
+      }
+      // Log the detail server-side only; never echo internals to the caller.
       console.error('Function error:', error);
-      res.status(500).json({
-        error: 'Internal server error',
-        message: error.message
-      });
+      res.status(500).json({ error: 'Internal server error' });
     }
   };
 }
@@ -183,25 +232,62 @@ const NON_ROUTE_FUNCTIONS = new Set([
   'auth-oauth-callback',
   'auth-google',
   'auth-github',
+  // Raw pageview dump guarded only by a shared secret — a Netlify-era debugging
+  // aid with no place on a public origin.
+  'debug',
 ]);
 
-// Explicit path overrides for functions whose HTTP path does not follow the
-// dashes<->slashes convention. (None currently — the old auth-oauth-callback
-// override is gone; gatekeep OIDC handles /api/auth/callback via Auth.js.)
-const ROUTE_OVERRIDES = {};
-
 /**
- * Compute the Express paths a function answers on. The frontend uses mixed
- * conventions — /api/sites/list (slashes) AND /api/page-value-rules (dashes) —
- * so we register BOTH the dash form and the slash form of each name, each with
- * a wildcard suffix so sub-routes fall through (e.g. /api/admin/usage/customer
- * -> admin-usage). Unused aliases are harmless.
+ * Compute the Express paths a function answers on: the path(s) it declares in
+ * `export const config = { path }` (what Netlify routes on — e.g. api-keys.js
+ * serves /api/keys, activity-log.js serves /api/activity), plus the dash and
+ * slash forms of its file name, since the frontend uses mixed conventions
+ * (/api/sites/list AND /api/page-value-rules). Each gets a wildcard suffix so
+ * sub-routes fall through (/api/admin/usage/customer -> admin-usage).
  */
-function pathsForFunction(name) {
-  if (ROUTE_OVERRIDES[name]) return ROUTE_OVERRIDES[name];
+function pathsForFunction(name, declared) {
   const dash = `/api/${name}`;
   const slash = `/api/${name.replace(/-/g, '/')}`;
-  return [...new Set([dash, slash, `${dash}/*`, `${slash}/*`])];
+  const own = declared ? [].concat(declared).map((p) => p.replace(/\/\*$/, '')) : [];
+  return [...new Set([...own, dash, slash].flatMap((p) => [p, `${p}/*`]))];
+}
+
+// Netlify cron shorthands supported by the in-process scheduler.
+const SCHEDULE_INTERVALS = {
+  '@hourly': 60 * 60 * 1000,
+  '@daily': 24 * 60 * 60 * 1000,
+  '@weekly': 7 * 24 * 60 * 60 * 1000,
+};
+const SCHEDULE_FIRST_RUN_DELAY = 10 * 60 * 1000; // let the box settle after boot
+
+/**
+ * Run Netlify scheduled functions (config.schedule) in-process — there is no
+ * Netlify scheduler off-platform. Invoked the way Netlify invokes them: a POST
+ * with context.triggerType = 'scheduled'.
+ */
+function scheduleFunction(name, mod) {
+  const schedule = mod.config && mod.config.schedule;
+  const interval = SCHEDULE_INTERVALS[schedule];
+  if (!interval) {
+    console.warn(`Schedule "${schedule}" for ${name}.js is not supported — not scheduled`);
+    return;
+  }
+  const run = async () => {
+    try {
+      const res = await mod.default(
+        new Request(`http://localhost/internal/scheduled/${name}`, { method: 'POST' }),
+        { triggerType: 'scheduled', ip: 'localhost', geo: {} }
+      );
+      console.log(`Scheduled ${name} finished with status ${res && res.status}`);
+    } catch (error) {
+      console.error(`Scheduled ${name} failed:`, error);
+    }
+  };
+  setTimeout(() => {
+    run();
+    setInterval(run, interval).unref();
+  }, SCHEDULE_FIRST_RUN_DELAY).unref();
+  console.log(`Scheduled ${name}.js ${schedule}`);
 }
 
 /**
@@ -221,18 +307,26 @@ async function registerRoutes() {
   const owner = new Map(); // base path -> function name (collision guard)
   let count = 0;
 
+  const failed = [];
+
   for (const name of names) {
     let mod;
+    let handler;
     try {
       mod = await import(path.join(functionsDir, `${name}.js`));
+      if (typeof mod.default !== 'function') continue; // not an HTTP handler
+      handler = netlifyToExpress(mod);
+      if (mod.config && mod.config.schedule) scheduleFunction(name, mod);
     } catch (error) {
+      // Usually a missing env var at module load (e.g. the Stripe functions
+      // without STRIPE_SECRET_KEY). Keep the route answering with an explicit
+      // 503 instead of silently falling through to the dashboard.
+      failed.push(name);
       console.error(`Failed to import ${name}.js:`, error.message);
-      continue;
+      handler = (req, res) => res.status(503).json({ error: `${name} is not configured on this server` });
     }
-    if (typeof mod.default !== 'function') continue; // not an HTTP handler
 
-    const handler = netlifyToExpress(mod);
-    for (const p of pathsForFunction(name)) {
+    for (const p of pathsForFunction(name, mod && mod.config && mod.config.path)) {
       const base = p.replace(/\/\*$/, '');
       const prior = owner.get(base);
       if (prior && prior !== name) {
@@ -246,6 +340,9 @@ async function registerRoutes() {
   }
 
   console.log(`Registered ${count} API functions across ${owner.size} route paths`);
+  if (failed.length > 0) {
+    console.error(`WARNING: ${failed.length} function(s) failed to load and answer 503: ${failed.join(', ')}`);
+  }
 }
 
 // Initialize database on startup
@@ -254,7 +351,7 @@ async function initializeDatabase() {
     const initDbPath = path.join(__dirname, '..', 'netlify', 'functions', 'init-db.js');
     const initDb = await import(initDbPath);
 
-    const initSecret = process.env.INIT_DB_SECRET || 'init-secret-change-me';
+    const initSecret = process.env.INIT_DB_SECRET;
 
     // Create a mock request for initialization
     const mockReq = {
@@ -353,6 +450,10 @@ async function start() {
 
     // Register API routes
     await registerRoutes();
+
+    // Unknown /api/* paths are API 404s, not dashboard pages. (Auth.js's
+    // /api/auth/* is proxied to Next above, before this point.)
+    app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
     // Non-API routes fall through to the Next.js dashboard (app-only origin).
     // Registered AFTER the API routes so /api/* is matched first — the old

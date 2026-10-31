@@ -54,7 +54,7 @@ export default function AnnotationsPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/sites/list`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -90,7 +90,7 @@ export default function AnnotationsPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/annotations?siteId=${selectedSiteId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -159,7 +159,7 @@ export default function AnnotationsPage() {
     setError('')
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       if (editingAnnotation) {
         const res = await fetch(`${apiUrl}/api/annotations`, {
@@ -227,7 +227,7 @@ export default function AnnotationsPage() {
     setDeleting(true)
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       const res = await fetch(`${apiUrl}/api/annotations?id=${confirmDeleteId}&siteId=${selectedSiteId}`, {
         method: 'DELETE',
@@ -281,8 +281,8 @@ export default function AnnotationsPage() {
 
       {/* Site Selector */}
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Select Site</label>
-        <select
+        <label htmlFor="annotations-select-site" className="block text-sm font-medium mb-2">Select Site</label>
+        <select id="annotations-select-site"
           value={selectedSiteId}
           onChange={(e) => setSelectedSiteId(e.target.value)}
           className="w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
@@ -305,7 +305,7 @@ export default function AnnotationsPage() {
 
       {sites.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
           </svg>
           <h3 className="font-medium mb-2">No sites yet</h3>
@@ -313,7 +313,7 @@ export default function AnnotationsPage() {
         </div>
       ) : !selectedSiteId ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
           </svg>
           <h3 className="font-medium mb-2">Select a site</h3>
@@ -325,7 +325,7 @@ export default function AnnotationsPage() {
         </div>
       ) : sortedAnnotations.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
           <h3 className="font-medium mb-2">No annotations yet</h3>
@@ -400,8 +400,8 @@ export default function AnnotationsPage() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Title</label>
-                  <input
+                  <label htmlFor="annotations-title" className="block text-sm font-medium mb-1">Title</label>
+                  <input id="annotations-title"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -411,8 +411,8 @@ export default function AnnotationsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea
+                  <label htmlFor="annotations-description" className="block text-sm font-medium mb-1">Description</label>
+                  <textarea id="annotations-description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief description of the event..."
@@ -422,8 +422,8 @@ export default function AnnotationsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Date</label>
-                    <input
+                    <label htmlFor="annotations-date" className="block text-sm font-medium mb-1">Date</label>
+                    <input id="annotations-date"
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
@@ -432,8 +432,8 @@ export default function AnnotationsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Category</label>
-                    <select
+                    <label htmlFor="annotations-category" className="block text-sm font-medium mb-1">Category</label>
+                    <select id="annotations-category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value as Annotation['category'])}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"

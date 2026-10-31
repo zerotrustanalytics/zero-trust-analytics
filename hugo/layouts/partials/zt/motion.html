@@ -1,0 +1,61 @@
+{{- /*
+  Site motion (ZTA × Tally): floating confetti with a little pointer
+  parallax, and [data-reveal] elements easing in as they scroll into view.
+  Everything is opt-in via html.motion, set only when the visitor has not
+  asked for reduced motion — without JS or with reduced motion, nothing
+  is hidden and nothing moves.
+*/ -}}
+<style>
+  .tally-stage{width:300px;height:250px;display:grid;place-items:center}
+  html.motion .confetti > *{transform-box:fill-box;transform-origin:center;animation:zt-float 7s ease-in-out infinite}
+  html.motion .confetti > :nth-child(2n){animation-duration:9s;animation-delay:-2s}
+  html.motion .confetti > :nth-child(3n){animation-duration:11s;animation-delay:-4s}
+  html.motion .confetti{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+  @keyframes zt-float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-12px) rotate(14deg)}}
+  html.motion [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+  html.motion [data-reveal].in{opacity:1;transform:none}
+  html.motion .g3 > [data-reveal]:nth-child(2){transition-delay:.08s}
+  html.motion .g3 > [data-reveal]:nth-child(3){transition-delay:.16s}
+  /* Waving Tally: arm waves from the shoulder in bursts (3 waves, then a
+     rest), body breathes from the bottom so the feet stay planted. */
+  html.motion .tally-wave .tw-body{transform-origin:120px 214px;animation:tw-breathe 2.6s ease-in-out infinite}
+  html.motion .tally-wave .tw-arm{transform-origin:52px 132px;animation:tw-wave 4.2s ease-in-out infinite}
+  html.motion .tally-wave .tw-lines{animation:tw-lines 4.2s linear infinite}
+  html.motion .tally-wave .tw-sprout{transform-box:fill-box;transform-origin:50% 100%;animation:tw-sprout 1.8s ease-in-out infinite}
+  @keyframes tw-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.975)}}
+  @keyframes tw-wave{0%,48%,100%{transform:rotate(0)}6%{transform:rotate(-16deg)}14%{transform:rotate(10deg)}22%{transform:rotate(-16deg)}30%{transform:rotate(10deg)}38%{transform:rotate(-12deg)}}
+  @keyframes tw-lines{0%,40%{opacity:1}41%,100%{opacity:0}}
+  @keyframes tw-sprout{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(7deg)}}
+  @media (prefers-reduced-motion:reduce){html.motion .confetti > *,html.motion .tally-wave *{animation:none}}
+</style>
+<script>
+  (function () {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.documentElement.classList.add('motion');
+    document.addEventListener('DOMContentLoaded', function () {
+      var items = document.querySelectorAll('[data-reveal]');
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+          });
+        }, { rootMargin: '0px 0px -10% 0px' });
+        items.forEach(function (el) { io.observe(el); });
+      } else {
+        items.forEach(function (el) { el.classList.add('in'); });
+      }
+      // Confetti drifts slightly against the pointer.
+      var layers = document.querySelectorAll('.confetti');
+      if (!layers.length) return;
+      var raf = 0, x = 0, y = 0;
+      window.addEventListener('pointermove', function (e) {
+        x = (e.clientX / window.innerWidth - 0.5) * -18;
+        y = (e.clientY / window.innerHeight - 0.5) * -12;
+        if (!raf) raf = requestAnimationFrame(function () {
+          layers.forEach(function (l) { l.style.transform = 'translate(' + x + 'px,' + y + 'px)'; });
+          raf = 0;
+        });
+      }, { passive: true });
+    });
+  })();
+</script>

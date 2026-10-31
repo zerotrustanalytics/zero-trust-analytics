@@ -40,7 +40,7 @@ export default function IntegrationsPage() {
   const fetchGscStatus = useCallback(async () => {
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       const res = await fetch(`${apiUrl}/api/gsc?action=status`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -76,7 +76,7 @@ export default function IntegrationsPage() {
     setConnectingGsc(true)
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       const res = await fetch(`${apiUrl}/api/gsc?action=connect`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -102,7 +102,7 @@ export default function IntegrationsPage() {
 
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       const res = await fetch(`${apiUrl}/api/gsc?action=disconnect`, {
         method: 'DELETE',
@@ -252,6 +252,29 @@ export default function IntegrationsPage() {
         </div>
       )}
 
+      {/* Built in: email reports need no outside service */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-4">Built In</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium">Email Reports</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Scheduled daily, weekly or monthly summaries sent by email</p>
+              </div>
+            </div>
+            <Link href="/dashboard/reports" className="text-sm font-medium text-primary hover:underline whitespace-nowrap">
+              Set up reports
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Future Integrations */}
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Coming Soon</h2>
@@ -259,20 +282,7 @@ export default function IntegrationsPage() {
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 opacity-60">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium">Email Reports</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Automated weekly/monthly report delivery</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 opacity-60">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </div>

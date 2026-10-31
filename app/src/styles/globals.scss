@@ -2,58 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-// Hugo SCSS imports
-@import './scss/shared/shared';
-@import './scss/auth';
-@import './scss/dashboard';
-
+/*
+ * ZTA × Tally. Tokens and component classes come from zta.css (the design
+ * handoff) and fonts from fonts.css, both imported in app/layout.tsx before
+ * this file. The variables below keep the shadcn-style names the existing
+ * components use (bg-background, text-muted-foreground, bg-primary…), mapped
+ * onto the Tally palette as RGB triplets.
+ */
 :root {
-  --background: 255 255 255;
-  --foreground: 15 23 42;
-  --primary: 37 99 235;
-  --primary-foreground: 255 255 255;
-  --secondary: 241 245 249;
-  --secondary-foreground: 15 23 42;
-  --muted: 241 245 249;
-  --muted-foreground: 71 85 105; /* #475569 - 7.0:1 contrast ratio */
-  --accent: 241 245 249;
-  --accent-foreground: 15 23 42;
-  --destructive: 239 68 68;
+  --background: 247 242 255;        /* --bg #F7F2FF */
+  --foreground: 35 22 58;           /* --ink #23163A */
+  --primary: 255 107 74;            /* --tomato #FF6B4A */
+  --primary-foreground: 35 22 58;   /* plum on tomato (5.98:1) — never white */
+  --secondary: 237 228 252;         /* --soft */
+  --secondary-foreground: 35 22 58;
+  --muted: 237 228 252;
+  --muted-foreground: 105 93 130;   /* --ink-3 #695D82 (5.47:1 on bg) */
+  --accent: 255 201 60;             /* --sun */
+  --accent-foreground: 35 22 58;
+  --destructive: 192 40 27;         /* --bad */
   --destructive-foreground: 255 255 255;
-  --success: 34 197 94;
+  --success: 17 115 79;             /* --mint-text */
   --success-foreground: 255 255 255;
-  --warning: 234 179 8;
-  --warning-foreground: 0 0 0;
-  --info: 59 130 246;
+  --warning: 255 201 60;
+  --warning-foreground: 35 22 58;
+  --info: 28 95 168;                /* --sky-text */
   --info-foreground: 255 255 255;
-  --border: 226 232 240;
-  --input: 226 232 240;
-  --ring: 37 99 235;
-  --radius: 0.5rem;
+  --border: 226 213 248;            /* --soft-2 */
+  --input: 105 93 130;
+  --ring: 47 107 255;               /* --focus */
+  --radius: 16px;
 }
 
 .dark {
-  --background: 15 23 42;
-  --foreground: 241 245 249;
-  --primary: 59 130 246;
-  --primary-foreground: 255 255 255;
-  --secondary: 30 41 59;
-  --secondary-foreground: 241 245 249;
-  --muted: 30 41 59;
-  --muted-foreground: 203 213 225; /* #cbd5e1 - 9.8:1 contrast ratio */
-  --accent: 30 41 59;
-  --accent-foreground: 241 245 249;
-  --destructive: 239 68 68;
-  --destructive-foreground: 255 255 255;
-  --success: 34 197 94;
-  --success-foreground: 255 255 255;
-  --warning: 250 204 21;
-  --warning-foreground: 0 0 0;
-  --info: 96 165 250;
-  --info-foreground: 255 255 255;
-  --border: 51 65 85;
-  --input: 51 65 85;
-  --ring: 59 130 246;
+  --background: 23 16 42;           /* #17102A */
+  --foreground: 243 237 255;        /* #F3EDFF */
+  --primary: 255 107 74;
+  --primary-foreground: 35 22 58;
+  --secondary: 46 34 72;
+  --secondary-foreground: 243 237 255;
+  --muted: 46 34 72;                /* #2E2248 */
+  --muted-foreground: 168 152 200;  /* #A898C8 (6.98:1 on bg) */
+  --accent: 255 201 60;
+  --accent-foreground: 35 22 58;
+  --destructive: 255 138 128;
+  --destructive-foreground: 35 22 58;
+  --success: 95 227 181;
+  --success-foreground: 35 22 58;
+  --warning: 255 201 60;
+  --warning-foreground: 35 22 58;
+  --info: 156 203 255;
+  --info-foreground: 35 22 58;
+  --border: 58 44 88;               /* #3A2C58 */
+  --input: 110 92 153;
+  --ring: 143 176 255;
 }
 
 @layer base {
@@ -61,8 +63,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground font-sans;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  code, kbd, pre, samp {
+    font-family: 'DM Mono', ui-monospace, monospace;
   }
 }
 
@@ -92,22 +103,30 @@
 
 /* Focus visible styles for keyboard navigation */
 :focus-visible {
-  outline: 2px solid rgb(var(--ring));
-  outline-offset: 2px;
+  outline: 3px solid rgb(var(--ring));
+  outline-offset: 3px;
 }
 
-/* Skip to main content link for screen readers */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: rgb(var(--primary));
-  color: rgb(var(--primary-foreground));
-  padding: 8px 16px;
-  z-index: 100;
-  transition: top 0.3s;
+/*
+ * Tomato (#FF6B4A) is a fill color: plum text on it passes AA, but tomato
+ * text on white is only 2.9:1. Text set in the primary color uses the
+ * handoff's darker --tomato-text instead (5.4:1 light, 7.4:1 dark).
+ */
+.text-primary,
+.hover\:text-primary:hover,
+.group:hover .group-hover\:text-primary {
+  color: var(--tomato-text) !important;
 }
 
-.skip-link:focus {
-  top: 0;
+/* Big stat numbers read as the handoff's KPI figures (Fredoka). */
+.text-2xl.font-bold,
+.text-3xl.font-bold,
+.text-4xl.font-bold {
+  font-family: 'Fredoka', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* hidden must win over zta.css display rules */
+[hidden] {
+  display: none !important;
 }

@@ -33,7 +33,7 @@ Get all API keys for your account.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/api-keys" \
+curl "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -82,7 +82,7 @@ Generate a new API key for programmatic access.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/api-keys" \
+curl -X POST "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -133,7 +133,7 @@ Revoke an API key and immediately stop all access.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/api-keys?id=key_abc123" \
+curl -X DELETE "https://app.ztas.io/api/api-keys?id=key_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -159,7 +159,7 @@ All requests using this key will immediately fail with `401 Unauthorized`.
 Include your API key in the `Authorization` header with the `Bearer` scheme:
 
 ```bash
-curl "https://ztas.io/api/stats?siteId=site_abc123&period=7d" \
+curl "https://app.ztas.io/api/stats?siteId=site_abc123&period=7d" \
   -H "Authorization: Bearer zta_live_abc123def456ghi789jkl012mno345pqr678"
 ```
 
@@ -168,7 +168,7 @@ curl "https://ztas.io/api/stats?siteId=site_abc123&period=7d" \
 ```javascript
 const API_KEY = 'zta_live_abc123def456ghi789jkl012mno345pqr678';
 
-const response = await fetch('https://ztas.io/api/stats?siteId=site_abc123&period=7d', {
+const response = await fetch('https://app.ztas.io/api/stats?siteId=site_abc123&period=7d', {
   headers: {
     'Authorization': `Bearer ${API_KEY}`
   }
@@ -186,7 +186,7 @@ import requests
 API_KEY = 'zta_live_abc123def456ghi789jkl012mno345pqr678'
 
 response = requests.get(
-    'https://ztas.io/api/stats',
+    'https://app.ztas.io/api/stats',
     params={'siteId': 'site_abc123', 'period': '7d'},
     headers={'Authorization': f'Bearer {API_KEY}'}
 )
@@ -200,7 +200,7 @@ print(data)
 ```bash
 API_KEY="zta_live_abc123def456ghi789jkl012mno345pqr678"
 
-curl "https://ztas.io/api/stats?siteId=site_abc123&period=7d" \
+curl "https://app.ztas.io/api/stats?siteId=site_abc123&period=7d" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
@@ -235,7 +235,7 @@ Limit API key permissions for security:
 Perfect for dashboards and reporting:
 
 ```bash
-curl -X POST "https://ztas.io/api/api-keys" \
+curl -X POST "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -259,7 +259,7 @@ Cannot:
 For sending tracking data:
 
 ```bash
-curl -X POST "https://ztas.io/api/api-keys" \
+curl -X POST "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -283,7 +283,7 @@ Cannot:
 Full access (use with caution):
 
 ```bash
-curl -X POST "https://ztas.io/api/api-keys" \
+curl -X POST "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -299,7 +299,7 @@ Can do everything a user can do via the API.
 Limit a key to a single site for added security:
 
 ```bash
-curl -X POST "https://ztas.io/api/api-keys" \
+curl -X POST "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -316,7 +316,7 @@ This key can only access data for `site_abc123`. Attempts to access other sites 
 Create temporary keys that automatically expire:
 
 ```bash
-curl -X POST "https://ztas.io/api/api-keys" \
+curl -X POST "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -338,7 +338,7 @@ Regularly rotate API keys to maintain security:
 1. **Create a new key:**
 
 ```bash
-curl -X POST "https://ztas.io/api/api-keys" \
+curl -X POST "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -354,7 +354,7 @@ curl -X POST "https://ztas.io/api/api-keys" \
 4. **Revoke the old key:**
 
 ```bash
-curl -X DELETE "https://ztas.io/api/api-keys?id=key_old123" \
+curl -X DELETE "https://app.ztas.io/api/api-keys?id=key_old123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -364,7 +364,7 @@ Track API key usage to detect unauthorized access:
 
 ```bash
 # List all keys with last used timestamp
-curl "https://ztas.io/api/api-keys" \
+curl "https://app.ztas.io/api/api-keys" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -421,7 +421,7 @@ Rotate keys every 90 days:
 Check the activity log for suspicious API key usage:
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=api_key&period=7d" \
+curl "https://app.ztas.io/api/activity-log?type=api_key&period=7d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -431,7 +431,7 @@ Remove keys that aren't being used:
 
 ```bash
 # If lastUsed is null or > 90 days ago, consider revoking
-curl -X DELETE "https://ztas.io/api/api-keys?id=key_unused" \
+curl -X DELETE "https://app.ztas.io/api/api-keys?id=key_unused" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -461,7 +461,7 @@ Use a secret management service:
 All API key actions are logged:
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=api_key" \
+curl "https://app.ztas.io/api/activity-log?type=api_key" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -545,7 +545,7 @@ SITE_ID = 'site_abc123'
 yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 
 response = requests.get(
-    'https://ztas.io/api/stats',
+    'https://app.ztas.io/api/stats',
     params={
         'siteId': SITE_ID,
         'startDate': yesterday,
@@ -584,7 +584,7 @@ const SLACK_WEBHOOK = 'https://hooks.slack.com/services/...';
 async function sendDailyReport() {
   // Fetch yesterday's stats
   const response = await fetch(
-    `https://ztas.io/api/stats?siteId=${SITE_ID}&period=24h`,
+    `https://app.ztas.io/api/stats?siteId=${SITE_ID}&period=24h`,
     {
       headers: { 'Authorization': `Bearer ${API_KEY}` }
     }

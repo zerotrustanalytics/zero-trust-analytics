@@ -81,7 +81,7 @@ export default function AdminDashboard() {
   const [userDetails, setUserDetails] = useState<any>(null)
   const [userLoading, setUserLoading] = useState(false)
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
   const fetchUserDetails = async (userId: string) => {
     setUserLoading(true)
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
           <p className="text-sm text-muted-foreground mb-4">
             Enter your admin key to access usage metrics.
           </p>
-          <input
+          <input aria-label="Admin key"
             type="password"
             value={adminKey}
             onChange={(e) => setAdminKey(e.target.value)}
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">Internal metrics for pricing leverage</p>
         </div>
         <div className="flex gap-2">
-          <select
+          <select aria-label="Time range"
             value={days}
             onChange={(e) => setDays(parseInt(e.target.value))}
             className="px-3 py-2 border rounded bg-background"
@@ -471,14 +471,14 @@ export default function AdminDashboard() {
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Tag Customer</h3>
           <div className="space-y-3">
-            <input
+            <input aria-label="User ID to tag"
               type="text"
               value={tagUserId}
               onChange={(e) => setTagUserId(e.target.value)}
               placeholder="User ID"
               className="w-full px-3 py-2 border rounded bg-background text-sm"
             />
-            <select
+            <select aria-label="Customer tag"
               value={tagType}
               onChange={(e) => setTagType(e.target.value)}
               className="w-full px-3 py-2 border rounded bg-background text-sm"
@@ -488,7 +488,7 @@ export default function AdminDashboard() {
               <option value="enterprise">Enterprise</option>
               <option value="high_touch">High Touch</option>
             </select>
-            <input
+            <input aria-label="Tag notes"
               type="text"
               value={tagNotes}
               onChange={(e) => setTagNotes(e.target.value)}
@@ -504,21 +504,21 @@ export default function AdminDashboard() {
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Log Support Time</h3>
           <div className="space-y-3">
-            <input
+            <input aria-label="User ID for support time"
               type="text"
               value={supportUserId}
               onChange={(e) => setSupportUserId(e.target.value)}
               placeholder="User ID"
               className="w-full px-3 py-2 border rounded bg-background text-sm"
             />
-            <input
+            <input aria-label="Minutes spent"
               type="number"
               value={supportMinutes}
               onChange={(e) => setSupportMinutes(e.target.value)}
               placeholder="Minutes spent"
               className="w-full px-3 py-2 border rounded bg-background text-sm"
             />
-            <select
+            <select aria-label="Support category"
               value={supportCategory}
               onChange={(e) => setSupportCategory(e.target.value)}
               className="w-full px-3 py-2 border rounded bg-background text-sm"
@@ -529,7 +529,7 @@ export default function AdminDashboard() {
               <option value="feature">Feature Request</option>
               <option value="billing">Billing</option>
             </select>
-            <input
+            <input aria-label="Support notes"
               type="text"
               value={supportNotes}
               onChange={(e) => setSupportNotes(e.target.value)}

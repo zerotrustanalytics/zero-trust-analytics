@@ -34,7 +34,7 @@ Get all funnels configured for a site.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/funnels?siteId=site_abc123" \
+curl "https://app.ztas.io/api/funnels?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -88,7 +88,7 @@ Create a new funnel to analyze conversion paths.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/funnels" \
+curl -X POST "https://app.ztas.io/api/funnels" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -193,7 +193,7 @@ Remove a funnel and stop tracking conversions.
 ### Request
 
 ```bash
-curl -X DELETE "https://ztas.io/api/funnels?id=funnel_abc123" \
+curl -X DELETE "https://app.ztas.io/api/funnels?id=funnel_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -221,7 +221,7 @@ Get detailed analytics for a specific funnel.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/funnels/funnel_abc123/stats?period=30d" \
+curl "https://app.ztas.io/api/funnels/funnel_abc123/stats?period=30d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -423,7 +423,7 @@ Overall Conversion Rate = Completions / Total Visitors × 100
 Track the complete purchase journey:
 
 ```bash
-curl -X POST "https://ztas.io/api/funnels" \
+curl -X POST "https://app.ztas.io/api/funnels" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -466,7 +466,7 @@ curl -X POST "https://ztas.io/api/funnels" \
 Track user registration:
 
 ```bash
-curl -X POST "https://ztas.io/api/funnels" \
+curl -X POST "https://app.ztas.io/api/funnels" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -527,7 +527,7 @@ Focus on steps with the highest drop-off rates:
 
 ```bash
 # Get funnel stats
-curl "https://ztas.io/api/funnels/funnel_abc123/stats" \
+curl "https://app.ztas.io/api/funnels/funnel_abc123/stats" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Look for steps with drop-off > 50%
@@ -548,10 +548,10 @@ Compare funnel performance across segments:
 
 ```bash
 # Compare desktop vs mobile
-curl "https://ztas.io/api/funnels/funnel_abc123/stats?device=desktop" \
+curl "https://app.ztas.io/api/funnels/funnel_abc123/stats?device=desktop" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
-curl "https://ztas.io/api/funnels/funnel_abc123/stats?device=mobile" \
+curl "https://app.ztas.io/api/funnels/funnel_abc123/stats?device=mobile" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -561,7 +561,7 @@ Track funnel performance trends:
 
 ```bash
 # Get 90-day trend
-curl "https://ztas.io/api/funnels/funnel_abc123/stats?period=90d" \
+curl "https://app.ztas.io/api/funnels/funnel_abc123/stats?period=90d" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -584,7 +584,7 @@ POST /api/funnels
 Get notified when funnel performance changes via [Alerts](/docs/api/alerts/):
 
 ```bash
-curl -X POST "https://ztas.io/api/alerts" \
+curl -X POST "https://app.ztas.io/api/alerts" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -650,7 +650,7 @@ Compare multiple funnels to find the best conversion path:
 
 ```bash
 # Get all funnels
-curl "https://ztas.io/api/funnels?siteId=site_abc123" \
+curl "https://app.ztas.io/api/funnels?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Compare conversion rates

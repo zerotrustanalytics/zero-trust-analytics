@@ -48,7 +48,7 @@ export default function ConversionRulesPage() {
       try {
         const token = await getToken()
         if (!token || cancelled) return
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
         const res = await fetch(`${apiUrl}/api/sites/list`, {
           headers: { 'Authorization': `Bearer ${token}` },
         })
@@ -78,7 +78,7 @@ export default function ConversionRulesPage() {
   const fetchRules = useCallback(async () => {
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/conversion-rules?siteId=${siteId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -153,7 +153,7 @@ export default function ConversionRulesPage() {
         enabled: formData.enabled
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const url = editingRule
         ? `${apiUrl}/api/conversion-rules?siteId=${siteId}&ruleId=${editingRule.id}`
         : `${apiUrl}/api/conversion-rules?siteId=${siteId}`
@@ -186,7 +186,7 @@ export default function ConversionRulesPage() {
 
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/conversion-rules?siteId=${siteId}&ruleId=${ruleId}`, {
         method: 'DELETE',
         headers: {
@@ -207,7 +207,7 @@ export default function ConversionRulesPage() {
   const handleToggle = async (rule: ConversionRule) => {
     try {
       const token = await getToken()
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/conversion-rules?siteId=${siteId}&ruleId=${rule.id}`, {
         method: 'PATCH',
         headers: {
@@ -363,7 +363,7 @@ export default function ConversionRulesPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
+                    <button aria-label={rule.enabled ? `Disable rule ${rule.name}` : `Enable rule ${rule.name}`}
                       onClick={() => handleToggle(rule)}
                       className={`p-2 rounded-lg transition-colors ${
                         rule.enabled
@@ -436,10 +436,10 @@ export default function ConversionRulesPage() {
             <div className="space-y-4">
               {/* Rule name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="conversion-rules-rule-name" className="block text-sm font-medium text-gray-700 mb-1">
                   Rule Name
                 </label>
-                <input
+                <input id="conversion-rules-rule-name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -450,10 +450,10 @@ export default function ConversionRulesPage() {
 
               {/* Page condition */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="conversion-rules-page-path-optional" className="block text-sm font-medium text-gray-700 mb-1">
                   Page Path (optional)
                 </label>
-                <input
+                <input id="conversion-rules-page-path-optional"
                   type="text"
                   value={formData.page}
                   onChange={(e) => setFormData({ ...formData, page: e.target.value })}
@@ -467,10 +467,10 @@ export default function ConversionRulesPage() {
 
               {/* Event condition */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="conversion-rules-event-type-optional" className="block text-sm font-medium text-gray-700 mb-1">
                   Event Type (optional)
                 </label>
-                <input
+                <input id="conversion-rules-event-type-optional"
                   type="text"
                   value={formData.event}
                   onChange={(e) => setFormData({ ...formData, event: e.target.value })}
@@ -481,19 +481,19 @@ export default function ConversionRulesPage() {
 
               {/* Event data condition */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="conversion-rules-event-data-optional" className="block text-sm font-medium text-gray-700 mb-1">
                   Event Data (optional)
                 </label>
                 <div className="flex gap-2">
-                  <input
+                  <input id="conversion-rules-event-data-optional"
                     type="text"
                     value={formData.eventDataKey}
                     onChange={(e) => setFormData({ ...formData, eventDataKey: e.target.value })}
                     placeholder="key (e.g., button)"
                     className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
-                  <span className="text-gray-400 self-center">=</span>
-                  <input
+                  <span className="text-gray-500 self-center">=</span>
+                  <input aria-label="Event data value"
                     type="text"
                     value={formData.eventDataValue}
                     onChange={(e) => setFormData({ ...formData, eventDataValue: e.target.value })}
@@ -505,10 +505,10 @@ export default function ConversionRulesPage() {
 
               {/* Action */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <p id="conversion-rules-action" className="block text-sm font-medium text-gray-700 mb-2">
                   Action
-                </label>
-                <div className="space-y-2">
+                </p>
+                <div role="radiogroup" aria-labelledby="conversion-rules-action" className="space-y-2">
                   <label
                     className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                       formData.action === 'exclude_bounce'
@@ -568,7 +568,7 @@ export default function ConversionRulesPage() {
               {/* Enabled toggle */}
               <div className="flex items-center justify-between py-2">
                 <span className="text-sm font-medium text-gray-700">Enabled</span>
-                <button
+                <button role="switch" aria-checked={formData.enabled} aria-label="Enabled"
                   type="button"
                   onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
                   className={`relative w-11 h-6 rounded-full transition-colors ${

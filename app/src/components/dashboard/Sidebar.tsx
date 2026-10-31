@@ -49,6 +49,15 @@ const navigation: NavSection[] = [
           </svg>
         ),
       },
+      {
+        label: 'Goals',
+        href: '/dashboard/goals',
+        icon: (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+          </svg>
+        ),
+      },
     ],
   },
   {
@@ -145,12 +154,13 @@ export function Sidebar() {
           <Link
             href="/dashboard"
             className={clsx(
-              'font-bold text-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded',
+              'inline-flex items-center gap-2 font-display font-bold text-foreground transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded',
               collapsed ? 'text-lg' : 'text-xl'
             )}
             aria-label="Zero Trust Analytics - Go to Dashboard"
           >
-            {collapsed ? 'Z' : 'ZTA'}
+            <img src="/tally/zta-mark.svg" alt="" width={30} height={30} />
+            {!collapsed && <span>ZTA</span>}
           </Link>
           <button
             type="button"
@@ -195,17 +205,20 @@ export function Sidebar() {
               )}
               <ul className="space-y-1" role="list">
                 {section.items.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  // /dashboard is the parent of every route, so it only matches exactly.
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
                   return (
                     <li key={item.href}>
                       <Link
                         href={item.href}
                         className={clsx(
-                          'flex items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                          'flex items-center rounded-xl font-display text-[15px] transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                           collapsed ? 'justify-center p-2' : 'gap-3 px-4 py-2',
                           isActive
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-foreground'
+                            ? 'bg-sun text-on-accent border-[1.5px] border-line font-semibold'
+                            : 'border-[1.5px] border-transparent text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-foreground'
                         )}
                         title={collapsed ? item.label : undefined}
                         aria-current={isActive ? 'page' : undefined}

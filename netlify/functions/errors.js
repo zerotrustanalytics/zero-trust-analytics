@@ -1,12 +1,41 @@
 import { authenticateRequest } from './lib/auth.js';
 import { getUserSites, getSite } from './lib/storage.js';
 import { getStore } from './lib/blob-store.js';
+import { scrubPII, originMatchesDomain, parseContext } from './lib/zero-trust-core.js';
 
 const ERRORS_STORE = 'errors';
 const DEDUP_WINDOW_MS = 3600000; // 1 hour deduplication window
+const MAX_SITE_ERRORS = 1000;    // error records kept per site
 
 // Valid error types
 const VALID_ERROR_TYPES = ['404', '403', '401', '500', '502', '503', 'js_error', 'network_error'];
+
+// Client-supplied text: PII-scrubbed and length-capped (null when absent).
+function cleanText(value, max) {
+  if (value === null || value === undefined || value === '') return null;
+  return scrubPII(typeof value === 'string' ? value : JSON.stringify(value)).slice(0, max);
+}
+
+// Path only — query strings and fragments routinely carry tokens/emails.
+function cleanUrlPath(value) {
+  let path = String(value);
+  try {
+    path = new URL(path, 'https://placeholder.invalid').pathname;
+  } catch {
+    path = path.split(/[?#]/)[0];
+  }
+  return cleanText(path, 500);
+}
+
+// Referrer origin only.
+function cleanReferrer(value) {
+  if (!value) return null;
+  try {
+    return new URL(value).origin.slice(0, 300);
+  } catch {
+    return null;
+  }
+}
 
 export default async function handler(req, context) {
   if (req.method === 'OPTIONS') {
@@ -26,7 +55,12 @@ export default async function handler(req, context) {
   if (req.method === 'POST') {
     try {
       const body = await req.json();
-      const { site_id, type, url: errorUrl, referrer, user_agent, message, stack, metadata } = body;
+      const { site_id, type, user_agent } = body;
+      const errorUrl = body.url ? cleanUrlPath(body.url) : null;
+      const referrer = cleanReferrer(body.referrer);
+      const message = cleanText(body.message, 500);
+      const stack = cleanText(body.stack, 4000);
+      const metadata = cleanText(body.metadata, 2000);
 
       // Validate required fields
       if (!site_id) {
@@ -36,8 +70,8 @@ export default async function handler(req, context) {
         });
       }
 
-      if (!type) {
-        return new Response(JSON.stringify({ error: 'type is required' }), {
+      if (!VALID_ERROR_TYPES.includes(type)) {
+        return new Response(JSON.stringify({ error: `type must be one of ${VALID_ERROR_TYPES.join(', ')}` }), {
           status: 400,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
@@ -56,6 +90,15 @@ export default async function handler(req, context) {
         return new Response(JSON.stringify({ error: 'Site not found' }), {
           status: 404,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+
+      // Browsers must post from the site's own domain (same rule as /api/track)
+      const origin = req.headers.get('origin');
+      if (origin && !originMatchesDomain(origin, site.domain)) {
+        return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'null' }
         });
       }
 
@@ -100,11 +143,13 @@ export default async function handler(req, context) {
         site_id,
         type,
         url: errorUrl,
-        referrer: referrer || null,
-        user_agent: user_agent || null,
-        message: message || null,
-        stack: stack || null,
-        metadata: metadata || null,
+        referrer,
+        // Coarse browser/OS only — the full user-agent string is a
+        // fingerprinting signal and is never stored.
+        client: user_agent ? parseContext(String(user_agent)) : null,
+        message,
+        stack,
+        metadata,
         count: 1,
         first_seen: timestamp,
         last_seen: timestamp
@@ -122,9 +167,15 @@ export default async function handler(req, context) {
         timestamp
       });
 
-      // Keep only last 1000 error references per site
-      if (siteErrors.length > 1000) {
-        siteErrors.length = 1000;
+      // Keep only the most recent error records per site. Delete the records
+      // that fall off the index too — otherwise every distinct URL leaves a
+      // record behind forever.
+      if (siteErrors.length > MAX_SITE_ERRORS) {
+        const evicted = siteErrors.splice(MAX_SITE_ERRORS);
+        const kept = new Set(siteErrors.map(e => e.key));
+        await Promise.all(evicted
+          .filter(e => !kept.has(e.key))
+          .map(e => errorsStore.delete(e.key)));
       }
 
       await errorsStore.setJSON(siteErrorsKey, siteErrors);

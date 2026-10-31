@@ -4,7 +4,7 @@ import { generateSiteId } from './lib/hash.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 import { validateRequest, siteCreateSchema } from './lib/schemas.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 import { syncSiteToTurso } from './lib/sites-sync.js';
 
 export default async function handler(req, context) {
@@ -57,7 +57,7 @@ export default async function handler(req, context) {
 
     // Check site limit based on plan (use getUserById since Clerk JWT doesn't include email)
     const user = await getUserById(auth.user.id);
-    const plan = user?.plan || 'free';
+    const plan = effectivePlan(user);
     const siteLimit = Config.pricing.siteLimits[plan] || Config.pricing.siteLimits.free;
     const currentSites = await getUserSites(auth.user.id);
     const currentSiteCount = currentSites?.length || 0;

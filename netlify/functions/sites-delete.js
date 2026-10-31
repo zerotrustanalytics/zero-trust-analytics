@@ -2,7 +2,7 @@ import { authenticateRequest, corsPreflightResponse, successResponse, Errors, ge
 import { getSite, deleteSite, getUserById } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 
 export default async function handler(req, context) {
   const logger = createFunctionLogger('sites-delete', req, context);
@@ -61,7 +61,7 @@ export default async function handler(req, context) {
 
     // Get user's plan for soft delete retention period
     const user = await getUserById(auth.user.id);
-    const plan = user?.plan || 'free';
+    const plan = effectivePlan(user);
     const result = await deleteSite(siteId, auth.user.id, plan);
 
     if (!result) {

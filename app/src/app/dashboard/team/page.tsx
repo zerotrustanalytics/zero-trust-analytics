@@ -67,7 +67,7 @@ export default function TeamPage() {
   const [editTeamName, setEditTeamName] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
   // Fetch teams on load
   useEffect(() => {
@@ -354,8 +354,8 @@ export default function TeamPage() {
       {teams.length > 0 && (
         <Card className="p-4 mb-6">
           <div className="flex items-center gap-4">
-            <label className="text-sm font-medium">Select Team:</label>
-            <select
+            <label htmlFor="team-select-team" className="text-sm font-medium">Select Team:</label>
+            <select id="team-select-team"
               value={selectedTeam?.id || ''}
               onChange={(e) => {
                 const team = teams.find((t) => t.id === e.target.value)

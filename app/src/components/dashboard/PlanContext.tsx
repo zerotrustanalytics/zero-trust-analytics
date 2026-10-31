@@ -84,7 +84,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/plan-limits`, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -29,7 +29,7 @@ Get all sites in your account.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/sites" \
+curl "https://app.ztas.io/api/sites" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -77,7 +77,7 @@ Add a new website to track analytics.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/sites" \
+curl -X POST "https://app.ztas.io/api/sites" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -150,7 +150,7 @@ Modify site settings.
 ### Request
 
 ```bash
-curl -X PATCH "https://ztas.io/api/sites" \
+curl -X PATCH "https://app.ztas.io/api/sites" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -194,7 +194,7 @@ Delete a site (soft delete with recovery period).
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/sites/delete" \
+curl -X POST "https://app.ztas.io/api/sites/delete" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"siteId": "site_abc123"}'
@@ -242,7 +242,7 @@ Get all soft-deleted sites that can still be recovered.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/sites/deleted" \
+curl "https://app.ztas.io/api/sites/deleted" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -273,7 +273,7 @@ Restore a soft-deleted site before it expires.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/sites/restore" \
+curl -X POST "https://app.ztas.io/api/sites/restore" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"siteId": "site_abc123"}'
@@ -320,7 +320,7 @@ Get detailed information about a specific site.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/sites/site_abc123" \
+curl "https://app.ztas.io/api/sites/site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -372,7 +372,7 @@ curl "https://ztas.io/api/sites/site_abc123" \
 Make your analytics data publicly viewable:
 
 ```bash
-curl -X PATCH "https://ztas.io/api/sites" \
+curl -X PATCH "https://app.ztas.io/api/sites" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -479,7 +479,7 @@ Or use the Zero Trust Analytics WordPress plugin.
 Exclude certain paths from tracking:
 
 ```bash
-curl -X PATCH "https://ztas.io/api/sites" \
+curl -X PATCH "https://app.ztas.io/api/sites" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -495,7 +495,7 @@ curl -X PATCH "https://ztas.io/api/sites" \
 Ignore specific query parameters in URLs:
 
 ```bash
-curl -X PATCH "https://ztas.io/api/sites" \
+curl -X PATCH "https://app.ztas.io/api/sites" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -511,7 +511,7 @@ curl -X PATCH "https://ztas.io/api/sites" \
 Configure how long to keep analytics data:
 
 ```bash
-curl -X PATCH "https://ztas.io/api/sites" \
+curl -X PATCH "https://app.ztas.io/api/sites" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -534,7 +534,7 @@ curl -X PATCH "https://ztas.io/api/sites" \
 Export all site data before deleting:
 
 ```bash
-curl "https://ztas.io/api/sites/site_abc123/export" \
+curl "https://app.ztas.io/api/sites/site_abc123/export" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -551,7 +551,7 @@ See [Export API](/docs/api/export/) for more details.
 For certain features (custom domains, SSO), you may need to verify domain ownership:
 
 ```bash
-curl "https://ztas.io/api/sites/site_abc123/verify" \
+curl "https://app.ztas.io/api/sites/site_abc123/verify" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -570,7 +570,7 @@ Returns a TXT record to add to your DNS:
 Add this TXT record to your DNS, then verify:
 
 ```bash
-curl -X POST "https://ztas.io/api/sites/site_abc123/verify" \
+curl -X POST "https://app.ztas.io/api/sites/site_abc123/verify" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -687,7 +687,7 @@ Verify tracking works:
 
 ```bash
 # Send a test pageview
-curl -X POST "https://ztas.io/api/track" \
+curl -X POST "https://app.ztas.io/api/track" \
   -H "Content-Type: application/json" \
   -d '{
     "type": "pageview",
@@ -696,7 +696,7 @@ curl -X POST "https://ztas.io/api/track" \
   }'
 
 # Check realtime stats
-curl "https://ztas.io/api/realtime?siteId=site_abc123" \
+curl "https://app.ztas.io/api/realtime?siteId=site_abc123" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -715,7 +715,7 @@ const clients = [
 ];
 
 for (const client of clients) {
-  const response = await fetch('https://ztas.io/api/sites', {
+  const response = await fetch('https://app.ztas.io/api/sites', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
@@ -733,7 +733,7 @@ for (const client of clients) {
 }
 
 // List all sites
-const sitesResponse = await fetch('https://ztas.io/api/sites', {
+const sitesResponse = await fetch('https://app.ztas.io/api/sites', {
   headers: { 'Authorization': `Bearer ${API_KEY}` }
 });
 
@@ -753,7 +753,7 @@ API_KEY = 'zta_live_abc123...'
 
 # Get all sites
 response = requests.get(
-    'https://ztas.io/api/sites',
+    'https://app.ztas.io/api/sites',
     headers={'Authorization': f'Bearer {API_KEY}'}
 )
 

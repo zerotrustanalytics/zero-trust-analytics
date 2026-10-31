@@ -1,7 +1,7 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, getSecurityHeaders } from './lib/auth.js';
 import { getUser, getUserById, getUserSites } from './lib/storage.js';
 import { getTeamMembers } from './lib/storage.js';
-import { Config } from './lib/config.js';
+import { Config, effectivePlan } from './lib/config.js';
 
 export default async function handler(req, context) {
   const origin = req.headers.get('origin');
@@ -27,39 +27,9 @@ export default async function handler(req, context) {
   }
 
   try {
-    // Try to find user by email first, then by Clerk ID
+    // Find user by email first, then by ID
     let user = null;
-    let userEmail = auth.user.email;
-
-    console.log('Plan-limits debug:', {
-      authEmail: auth.user.email,
-      authId: auth.user.id,
-      hasClerkSecret: !!process.env.CLERK_SECRET_KEY
-    });
-
-    // If no email from auth, fetch from Clerk API
-    if (!userEmail && auth.user.id?.startsWith('user_')) {
-      try {
-        const clerkResponse = await fetch(`https://api.clerk.com/v1/users/${auth.user.id}`, {
-          headers: {
-            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        console.log('Clerk API response status:', clerkResponse.status);
-        if (clerkResponse.ok) {
-          const clerkUser = await clerkResponse.json();
-          const primaryEmail = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
-          userEmail = primaryEmail?.email_address || clerkUser.email_addresses?.[0]?.email_address;
-          console.log('Got email from Clerk:', userEmail);
-        } else {
-          const errorText = await clerkResponse.text();
-          console.error('Clerk API error:', errorText);
-        }
-      } catch (clerkErr) {
-        console.error('Failed to fetch email from Clerk:', clerkErr.message);
-      }
-    }
+    const userEmail = auth.user.email;
 
     if (userEmail) {
       user = await getUser(userEmail);
@@ -70,7 +40,7 @@ export default async function handler(req, context) {
       console.log('User lookup by ID:', { userId: auth.user.id, found: !!user, plan: user?.plan });
     }
 
-    const plan = user?.plan || 'free';
+    const plan = effectivePlan(user);
     console.log('Final plan:', plan);
     const planConfig = Config.pricing.tiers[plan] || Config.pricing.tiers.free;
 
@@ -135,7 +105,7 @@ function getUpgradePath(currentPlan) {
     price: nextConfig.price,
     benefits: [
       `${Config.pricing.siteLimits[nextPlan] === Infinity ? 'Unlimited' : Config.pricing.siteLimits[nextPlan]} sites`,
-      `${nextConfig.monthlyPageviews === Infinity ? 'Unlimited' : nextConfig.monthlyPageviews.toLocaleString()} pageviews/mo`,
+      `${nextConfig.monthlyPageviews === Infinity ? 'Unlimited' : nextConfig.monthlyPageviews.toLocaleString()} events/mo`,
       `${Config.pricing.teamMemberLimits[nextPlan] === Infinity ? 'Unlimited' : Config.pricing.teamMemberLimits[nextPlan]} team members`
     ]
   };

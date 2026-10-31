@@ -40,7 +40,7 @@ export default function SiteSettingsPage() {
         setLoading(false)
         return
       }
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const res = await fetch(`${apiUrl}/api/sites/list`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -74,7 +74,7 @@ export default function SiteSettingsPage() {
     try {
       const token = await getToken()
       if (!token) return
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''
 
       const body: Record<string, string> = { siteId, mode }
@@ -207,8 +207,8 @@ export default function SiteSettingsPage() {
               <p className="text-xs text-muted-foreground mb-3">Remove analytics data for a specific period (e.g., test or junk data).</p>
               <div className="flex flex-wrap gap-2 items-end">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Start date</label>
-                  <input
+                  <label htmlFor="settings-start-date" className="block text-xs text-muted-foreground mb-1">Start date</label>
+                  <input id="settings-start-date"
                     type="date"
                     value={deleteRangeStart}
                     onChange={(e) => setDeleteRangeStart(e.target.value)}
@@ -216,8 +216,8 @@ export default function SiteSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">End date</label>
-                  <input
+                  <label htmlFor="settings-end-date" className="block text-xs text-muted-foreground mb-1">End date</label>
+                  <input id="settings-end-date"
                     type="date"
                     value={deleteRangeEnd}
                     onChange={(e) => setDeleteRangeEnd(e.target.value)}
@@ -244,10 +244,10 @@ export default function SiteSettingsPage() {
               </p>
               <div className="flex flex-wrap gap-2 items-end">
                 <div className="flex-1 min-w-[200px]">
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <label htmlFor="settings-type-to-confirm" className="block text-xs text-muted-foreground mb-1">
                     Type <strong>{site?.domain}</strong> to confirm
                   </label>
-                  <input
+                  <input id="settings-type-to-confirm"
                     type="text"
                     value={purgeConfirmText}
                     onChange={(e) => setPurgeConfirmText(e.target.value)}

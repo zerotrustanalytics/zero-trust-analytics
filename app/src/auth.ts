@@ -13,9 +13,12 @@
  *   AUTH_SECRET         - Auth.js session-cookie signing secret
  */
 import NextAuth from 'next-auth'
+import { createTokenRefresher } from '@/lib/gatekeep-tokens'
 
 const issuer = process.env.GATEKEEP_ISSUER ?? ''
 const clientId = process.env.GATEKEEP_CLIENT_ID ?? 'zta'
+
+const ensureFresh = createTokenRefresher(issuer, clientId)
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -32,20 +35,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: '',
       client: { token_endpoint_auth_method: 'none' },
       checks: ['pkce', 'state'],
+      // gatekeep supports exactly these; offline_access yields the refresh
+      // token that keeps the 15-minute id_token fresh.
+      authorization: { params: { scope: 'openid email offline_access' } },
     },
   ],
   callbacks: {
     async jwt({ token, account, profile }) {
-      // Persist the gatekeep id_token + stable subject on first sign-in.
+      // Persist the gatekeep tokens + stable subject on first sign-in.
       if (account) {
         token.idToken = account.id_token
+        token.refreshToken = account.refresh_token
+        token.expiresAt = account.expires_at
         token.gatekeepSub = (account.providerAccountId as string) ?? (profile?.sub as string)
+        return token
       }
-      return token
+      // gatekeep id_tokens live 15 minutes — refresh before they lapse.
+      return ensureFresh(token)
     },
     async session({ session, token }) {
       // Expose the id_token + subject to the client (used by useApi -> Bearer).
       ;(session as { idToken?: string }).idToken = token.idToken as string | undefined
+      ;(session as { error?: string }).error = token.error as string | undefined
       if (session.user) {
         ;(session.user as { sub?: string }).sub = token.gatekeepSub as string | undefined
       }

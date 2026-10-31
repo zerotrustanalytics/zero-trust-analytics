@@ -396,6 +396,6 @@ document.getElementById('live-stats').innerHTML = `
 
 ## Related Documentation
 
-- [Dashboard Features](/docs/features/dashboard/)
-- [Sharing Dashboards](/docs/guides/sharing/)
-- [Analytics Privacy](/docs/privacy/)
+- [Dashboard Features](/help/your-dashboard/)
+- [Sharing Dashboards](/help/share-and-export/)
+- [Analytics Privacy](/docs/privacy-model/)

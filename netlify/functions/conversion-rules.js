@@ -1,4 +1,5 @@
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders, validateCSRFFromRequest } from './lib/auth.js';
+import { effectivePlan } from './lib/config.js';
 import { getSite, getUserById, getConversionRules, addConversionRule, updateConversionRule, deleteConversionRule } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
@@ -37,7 +38,7 @@ export default async function handler(req, context) {
 
   // Get user's plan
   const user = await getUserById(auth.user.id);
-  const plan = user?.plan || 'free';
+  const plan = effectivePlan(user);
 
   try {
     const url = new URL(req.url);

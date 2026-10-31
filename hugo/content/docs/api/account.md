@@ -31,7 +31,7 @@ Retrieve current account and subscription information.
 ### Request
 
 ```bash
-curl "https://ztas.io/api/user/status" \
+curl "https://app.ztas.io/api/user/status" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -254,7 +254,7 @@ Compare features across different plans:
 Determine if user is in trial and how many days remain:
 
 ```bash
-curl "https://ztas.io/api/user/status" \
+curl "https://app.ztas.io/api/user/status" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   | jq '{status: .status, daysLeft: .daysLeft}'
 ```
@@ -273,7 +273,7 @@ curl "https://ztas.io/api/user/status" \
 Check if user can access the platform:
 
 ```bash
-curl "https://ztas.io/api/user/status" \
+curl "https://app.ztas.io/api/user/status" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   | jq '.canAccess'
 ```
@@ -290,7 +290,7 @@ Display a trial reminder in your application:
 
 ```javascript
 // Fetch account status
-const response = await fetch('https://ztas.io/api/user/status', {
+const response = await fetch('https://app.ztas.io/api/user/status', {
   headers: {
     'Authorization': `Bearer ${token}`
   }
@@ -310,10 +310,10 @@ Verify if user has reached plan limits:
 
 ```bash
 # Get current usage
-usage=$(curl -s "https://ztas.io/api/usage" -H "Authorization: Bearer YOUR_TOKEN")
+usage=$(curl -s "https://app.ztas.io/api/usage" -H "Authorization: Bearer YOUR_TOKEN")
 
 # Get account status
-status=$(curl -s "https://ztas.io/api/user/status" -H "Authorization: Bearer YOUR_TOKEN")
+status=$(curl -s "https://app.ztas.io/api/user/status" -H "Authorization: Bearer YOUR_TOKEN")
 
 # Check if approaching limits
 echo "$usage" | jq '.sites.used'
@@ -326,7 +326,7 @@ Use account status to show upgrade prompts:
 
 ```javascript
 async function checkUpgradeNeeded(token) {
-  const response = await fetch('https://ztas.io/api/user/status', {
+  const response = await fetch('https://app.ztas.io/api/user/status', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 
@@ -369,11 +369,11 @@ Combine with billing endpoints to manage subscriptions:
 
 ```bash
 # 1. Check current status
-curl "https://ztas.io/api/user/status" \
+curl "https://app.ztas.io/api/user/status" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 2. Upgrade to Pro plan
-curl -X POST "https://ztas.io/api/billing/subscribe" \
+curl -X POST "https://app.ztas.io/api/billing/subscribe" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -382,7 +382,7 @@ curl -X POST "https://ztas.io/api/billing/subscribe" \
   }'
 
 # 3. Verify new status
-curl "https://ztas.io/api/user/status" \
+curl "https://app.ztas.io/api/user/status" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -426,7 +426,7 @@ Automate daily status checks:
 TOKEN="YOUR_TOKEN"
 EMAIL="alerts@example.com"
 
-status=$(curl -s "https://ztas.io/api/user/status" \
+status=$(curl -s "https://app.ztas.io/api/user/status" \
   -H "Authorization: Bearer $TOKEN")
 
 canAccess=$(echo "$status" | jq -r '.canAccess')
@@ -449,7 +449,7 @@ Create a simple status dashboard:
 
 ```javascript
 async function displayAccountStatus(token) {
-  const response = await fetch('https://ztas.io/api/user/status', {
+  const response = await fetch('https://app.ztas.io/api/user/status', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 
@@ -480,7 +480,6 @@ The account status endpoint has generous rate limits:
 ## Related Endpoints
 
 - [Billing](/docs/api/billing/) - Manage subscriptions and payments
-- [Usage](/docs/api/usage/) - View current usage and limits
 - [Authentication](/docs/api/authentication/) - Manage API tokens
 - [Teams](/docs/api/teams/) - Manage team members (requires appropriate plan)
 
@@ -505,7 +504,7 @@ class AccountStatusCache {
       return this.cache;
     }
 
-    const response = await fetch('https://ztas.io/api/user/status', {
+    const response = await fetch('https://app.ztas.io/api/user/status', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 

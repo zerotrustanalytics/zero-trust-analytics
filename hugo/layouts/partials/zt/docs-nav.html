@@ -1,0 +1,17 @@
+{{- $current := . -}}
+<nav class="docs-nav" aria-label="Documentation">
+  <h2>Guides</h2>
+  {{ with site.GetPage "/docs" }}
+    <a href="{{ .RelPermalink }}"{{ if eq $current .Page }} aria-current="page"{{ end }}>Overview</a>
+    {{ range .RegularPages.ByWeight }}
+      <a href="{{ .RelPermalink }}"{{ if eq $current .Page }} aria-current="page"{{ end }}>{{ .Title }}</a>
+    {{ end }}
+  {{ end }}
+  {{ with site.GetPage "/docs/api" }}
+    <h2>API reference</h2>
+    <a href="{{ .RelPermalink }}"{{ if eq $current .Page }} aria-current="page"{{ end }}>Overview</a>
+    {{ range .RegularPages.ByTitle }}
+      <a href="{{ .RelPermalink }}"{{ if eq $current .Page }} aria-current="page"{{ end }}>{{ .LinkTitle }}</a>
+    {{ end }}
+  {{ end }}
+</nav>

@@ -146,16 +146,55 @@ function createZTRecord({
  * @param {object} record
  * @returns {boolean}
  */
-function validateNoPII(record) {
-  const piiPatterns = [
-    { name: 'IPv4', pattern: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/ },
-    { name: 'IPv6', pattern: /\b(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}\b/ }, // Full IPv6 only
-    { name: 'Email', pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/ },
-    { name: 'Phone', pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/ },
-  ];
+const PII_PATTERNS = [
+  { name: 'IPv4', pattern: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g },
+  { name: 'IPv6', pattern: /\b(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}\b/g }, // Full IPv6 only
+  { name: 'Email', pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g },
+  { name: 'Phone', pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g },
+];
 
+/**
+ * Redact PII-looking substrings from a single client-supplied field.
+ * Applied to every field at ingest so a stray email or phone number in a URL
+ * path costs one redacted segment rather than the whole event.
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+function scrubPII(value) {
+  let out = String(value);
+  for (const { pattern } of PII_PATTERNS) {
+    out = out.replace(pattern, '[redacted]');
+  }
+  return out;
+}
+
+/**
+ * Whether a browser Origin belongs to a registered site domain: exact match,
+ * www variant, or any subdomain (app.example.com for example.com).
+ *
+ * @param {string|null} origin - Origin request header
+ * @param {string} siteDomain - Domain the site was registered with
+ * @returns {boolean}
+ */
+function originMatchesDomain(origin, siteDomain) {
+  if (!origin || !siteDomain) return false;
+  try {
+    const originHost = new URL(origin).hostname.toLowerCase();
+    const siteHost = siteDomain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const bareSite = siteHost.replace(/^www\./, '');
+    return originHost === siteHost ||
+           originHost === bareSite ||
+           originHost.endsWith(`.${bareSite}`);
+  } catch {
+    return false;
+  }
+}
+
+function validateNoPII(record) {
   const recordStr = JSON.stringify(record);
-  for (const { name, pattern } of piiPatterns) {
+  for (const { name, pattern } of PII_PATTERNS) {
+    pattern.lastIndex = 0;
     if (pattern.test(recordStr)) {
       console.error(`PII pattern matched: ${name}`);
       return false;
@@ -170,6 +209,8 @@ export {
   parseContext,
   parseGeo,
   createZTRecord,
+  scrubPII,
+  originMatchesDomain,
   validateNoPII,
   getDailySalt
 };

@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/gatekeep-auth'
 import Link from 'next/link'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { format, parseISO, subDays } from 'date-fns'
+import { chart } from '@/lib/chart-theme'
+import { TallyArt } from '@/components/ui/TallyArt'
 
 interface Site {
   id: string
@@ -67,7 +69,7 @@ export default function DashboardPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
       // Fetch sites
       const sitesRes = await fetch(`${apiUrl}/api/sites/list`, {
@@ -215,7 +217,7 @@ export default function DashboardPage() {
   const perSiteChartData = getPerSiteChartData()
 
   // Colors for per-site lines
-  const siteColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16']
+  const siteColors = chart.series
 
   // Format duration
   const formatDuration = (seconds: number): string => {
@@ -242,7 +244,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Overview across all your sites</p>
         </div>
         <div className="flex items-center gap-3">
-          <select
+          <select aria-label="Time period"
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
             className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
@@ -344,20 +346,20 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               {chartMode === 'combined' ? (
                 <LineChart data={chartData}>
-                  <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
+                  <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#F9FAFB' }}
+                    contentStyle={chart.tooltip}
                   />
-                  <Line type="monotone" dataKey="visitors" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 3 }} name="Visitors" />
-                  <Line type="monotone" dataKey="pageviews" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', r: 3 }} name="Page Views" />
+                  <Line type="monotone" dataKey="visitors" stroke={chart.primary} strokeWidth={2} dot={{ fill: chart.primary, r: 3 }} name="Visitors" />
+                  <Line type="monotone" dataKey="pageviews" stroke={chart.secondary} strokeWidth={2} dot={{ fill: chart.secondary, r: 3 }} name="Page Views" />
                 </LineChart>
               ) : (
                 <LineChart data={perSiteChartData}>
-                  <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
+                  <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#F9FAFB' }}
+                    contentStyle={chart.tooltip}
                   />
                   {siteStats.map((site, index) => (
                     <Line
@@ -401,11 +403,9 @@ export default function DashboardPage() {
 
         {sites.length === 0 ? (
           <div className="p-8 text-center">
-            <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-            </svg>
+            <TallyArt pose="sleep" size={150} className="mx-auto mb-2" />
             <h3 className="font-medium mb-2">No sites yet</h3>
-            <p className="text-muted-foreground mb-4">Add your first website to start tracking analytics.</p>
+            <p className="text-muted-foreground mb-4">Tally is ready to count. Add your first website and paste one line.</p>
             <Link
               href="/dashboard/sites"
               className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
@@ -512,7 +512,7 @@ export default function DashboardPage() {
                   <div className="h-16">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={siteChartData}>
-                        <Bar dataKey="visitors" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                        <Bar dataKey="visitors" fill={chart.primary} radius={[2, 2, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

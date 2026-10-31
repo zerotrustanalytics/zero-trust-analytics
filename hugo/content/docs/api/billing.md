@@ -276,5 +276,5 @@ OPTIONS preflight requests are handled automatically.
 ## Related Documentation
 
 - [Authentication API](/docs/api/authentication/)
-- [Dashboard Access](/docs/features/dashboard/)
+- [Dashboard Access](/help/your-dashboard/)
 - [Stripe Documentation](https://stripe.com/docs)

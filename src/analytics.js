@@ -1,77 +1,41 @@
 (function() {
   'use strict';
 
-  // Zero Trust Analytics - Privacy-focused tracking with Google Analytics parity
+  // Zero Trust Analytics - privacy-focused tracking.
+  //
+  // Stores NOTHING on the visitor's device (no cookies, localStorage or
+  // sessionStorage) and sends only what the dashboard uses. Visitors, sessions
+  // and sampling are all derived server-side from a daily-rotating hash.
   var ZTA = window.ZTA || {};
+
+  var DEFAULT_API = 'https://app.ztas.io';
 
   // Configuration
   ZTA.config = {
     endpoint: null,
     siteId: null,
     debug: false,
-    sampleRate: 1.0,              // 1.0 = 100%, 0.5 = 50%, 0.1 = 10% of visitors tracked
-    trackScrollDepth: true,       // Still tracks max scroll in engagement event
-    trackScrollMilestones: false, // DISABLED: Don't send separate events for 25/50/75/100%
+    sampleRate: 1.0,              // 1.0 = 100%; applied server-side per visitor
+    trackScrollMilestones: false, // Send events at 25/50/75/100% scroll depth
     trackOutboundLinks: true,
     trackFileDownloads: true,
-    trackFormSubmissions: true,
-    enableHeartbeat: false,       // DISABLED by default to save requests (only needed for real-time "users online now")
-    heartbeatInterval: 300000     // 5 minutes if enabled (was 60s - saves 80% of heartbeat requests)
+    trackFormSubmissions: true
   };
 
-  // Sampling state - determined once per visitor (persisted)
-  ZTA.sampled = true;
-
-  /**
-   * Check if this visitor should be sampled
-   * Uses a persistent random value so same visitor is always in/out
-   */
-  ZTA.checkSampling = function() {
-    if (ZTA.config.sampleRate >= 1.0) return true;  // 100% = track everyone
-    if (ZTA.config.sampleRate <= 0) return false;   // 0% = track no one
-
-    // Get or create a persistent sampling value for this visitor
-    var samplingKey = 'zta_sample';
-    var samplingValue = null;
-
-    try {
-      samplingValue = localStorage.getItem(samplingKey);
-      if (samplingValue === null) {
-        // Generate a random value between 0 and 1, store it forever
-        samplingValue = Math.random().toString();
-        localStorage.setItem(samplingKey, samplingValue);
-      }
-      samplingValue = parseFloat(samplingValue);
-    } catch (e) {
-      // localStorage unavailable, use session-based random
-      samplingValue = Math.random();
-    }
-
-    // If their random value is less than sampleRate, they're in
-    return samplingValue < ZTA.config.sampleRate;
-  };
-
-  // Session state
-  ZTA.session = {
-    id: null,
-    startTime: null,
-    pageCount: 0,
-    isNew: true,
-    landingPage: null
-  };
-
-  // Event queue for batching - optimized to reduce HTTP requests
+  // Event queue for batching - reduces HTTP requests
   ZTA.queue = {
     events: [],
     timer: null,
-    maxSize: 25,       // Send when queue reaches this size (increased from 10)
-    maxWait: 15000     // Or after 15 seconds (increased from 5s)
+    maxSize: 25,       // Send when queue reaches this size
+    maxWait: 15000     // Or after 15 seconds
   };
 
-  // Page state
+  // Page state (in memory only; reset on each page / SPA route)
   ZTA.page = {
+    path: null,
     startTime: null,
-    maxScrollDepth: 0,
+    viewsThisLoad: 0,
+    engagementSent: false,
     scrollMilestones: { 25: false, 50: false, 75: false, 100: false }
   };
 
@@ -79,67 +43,45 @@
   ZTA.init = function(siteId, options) {
     options = options || {};
     ZTA.config.siteId = siteId;
-    ZTA.config.endpoint = options.endpoint || 'https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-8859ab2d-54c9-4ca1-b3aa-8f2ee26c90be/analytics/track';
+    ZTA.config.endpoint = options.endpoint || DEFAULT_API + '/api/track';
     ZTA.config.debug = options.debug || false;
     ZTA.config.sampleRate = options.sampleRate !== undefined ? options.sampleRate : 1.0;
-    ZTA.config.trackScrollDepth = options.trackScrollDepth !== false;
+    ZTA.config.trackScrollMilestones = options.trackScrollMilestones === true;
     ZTA.config.trackOutboundLinks = options.trackOutboundLinks !== false;
     ZTA.config.trackFileDownloads = options.trackFileDownloads !== false;
     ZTA.config.trackFormSubmissions = options.trackFormSubmissions !== false;
 
-    // Determine if this visitor should be sampled (persistent per visitor)
-    ZTA.sampled = ZTA.checkSampling();
-    if (!ZTA.sampled) {
-      ZTA.log('Visitor sampled out (sampleRate:', ZTA.config.sampleRate + ')');
-      return; // Don't initialize anything else
-    }
-
-    // Initialize session
-    ZTA.initSession();
-
-    // Record page start time
+    ZTA.page.path = window.location.pathname;
     ZTA.page.startTime = Date.now();
 
-    // Auto-track page view on init
     if (options.autoTrack !== false) {
       ZTA.trackPageView();
     }
 
-    // Track on navigation (SPA support)
     if (options.spa) {
       ZTA.setupSPATracking();
     }
 
-    // Engagement tracking (time on page, scroll depth)
     ZTA.setupEngagementTracking();
 
-    // Setup scroll depth tracking
-    if (ZTA.config.trackScrollDepth) {
+    if (ZTA.config.trackScrollMilestones) {
       ZTA.setupScrollTracking();
     }
 
-    // Setup outbound link tracking
     if (ZTA.config.trackOutboundLinks) {
       ZTA.setupOutboundLinkTracking();
     }
 
-    // Setup file download tracking
     if (ZTA.config.trackFileDownloads) {
       ZTA.setupFileDownloadTracking();
     }
 
-    // Setup form submission tracking
     if (ZTA.config.trackFormSubmissions) {
       ZTA.setupFormTracking();
     }
 
-    // Setup declarative tracking (data-zta-track attributes)
+    // Declarative tracking (data-zta-track attributes)
     ZTA.setupDeclarativeTracking();
-
-    // Heartbeat for real-time visitor tracking (disabled by default to save requests)
-    if (ZTA.config.enableHeartbeat) {
-      ZTA.setupHeartbeat();
-    }
 
     // Flush queue on page unload to ensure no events are lost
     ZTA.setupUnloadFlush();
@@ -160,160 +102,6 @@
     });
   };
 
-  // Initialize or restore session
-  ZTA.initSession = function() {
-    var SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
-    var stored = null;
-
-    try {
-      stored = JSON.parse(sessionStorage.getItem('zta_session'));
-    } catch (e) {}
-
-    var now = Date.now();
-
-    if (stored && (now - stored.lastActivity) < SESSION_TIMEOUT) {
-      // Restore existing session
-      ZTA.session.id = stored.id;
-      ZTA.session.startTime = stored.startTime;
-      ZTA.session.pageCount = stored.pageCount;
-      ZTA.session.landingPage = stored.landingPage;
-      ZTA.session.isNew = false;
-    } else {
-      // Create new session
-      ZTA.session.id = ZTA.generateId();
-      ZTA.session.startTime = now;
-      ZTA.session.pageCount = 0;
-      ZTA.session.landingPage = window.location.pathname;
-      ZTA.session.isNew = true;
-    }
-
-    // Check if returning visitor
-    var visitorId = localStorage.getItem('zta_visitor');
-    if (!visitorId) {
-      visitorId = ZTA.generateId();
-      localStorage.setItem('zta_visitor', visitorId);
-      ZTA.session.isNewVisitor = true;
-    } else {
-      ZTA.session.isNewVisitor = false;
-    }
-    ZTA.session.visitorId = visitorId;
-
-    // Increment page count
-    ZTA.session.pageCount++;
-
-    // Save session
-    ZTA.saveSession();
-  };
-
-  // Save session to sessionStorage
-  ZTA.saveSession = function() {
-    try {
-      sessionStorage.setItem('zta_session', JSON.stringify({
-        id: ZTA.session.id,
-        startTime: ZTA.session.startTime,
-        pageCount: ZTA.session.pageCount,
-        landingPage: ZTA.session.landingPage,
-        lastActivity: Date.now()
-      }));
-    } catch (e) {}
-  };
-
-  // Generate unique ID
-  ZTA.generateId = function() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0;
-      var v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
-
-  // Get page load performance metrics (anonymized)
-  ZTA.getPerformanceMetrics = function() {
-    if (!window.performance || !window.performance.timing) {
-      return null;
-    }
-
-    var timing = window.performance.timing;
-    var navigationStart = timing.navigationStart;
-
-    // Only collect timing metrics, no fingerprinting data
-    return {
-      // Page load time (total time from navigation start to load complete)
-      pageLoadTime: timing.loadEventEnd > 0 ? timing.loadEventEnd - navigationStart : null,
-      // DOM content loaded time
-      domContentLoaded: timing.domContentLoadedEventEnd > 0 ? timing.domContentLoadedEventEnd - navigationStart : null,
-      // DNS lookup time
-      dnsTime: timing.domainLookupEnd - timing.domainLookupStart,
-      // TCP connection time
-      connectTime: timing.connectEnd - timing.connectStart,
-      // Time to first byte (server response time)
-      ttfb: timing.responseStart - timing.requestStart,
-      // DOM processing time
-      domProcessing: timing.domComplete - timing.domLoading
-    };
-  };
-
-  // Get device info
-  ZTA.getDeviceInfo = function() {
-    var ua = navigator.userAgent;
-
-    // Device type
-    var deviceType = 'desktop';
-    if (/tablet|ipad|playbook|silk/i.test(ua)) {
-      deviceType = 'tablet';
-    } else if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) {
-      deviceType = 'mobile';
-    }
-
-    // Browser detection
-    var browser = 'Unknown';
-    var browserVersion = '';
-    if (/firefox/i.test(ua)) {
-      browser = 'Firefox';
-      browserVersion = (ua.match(/firefox\/(\d+)/i) || [])[1] || '';
-    } else if (/edg/i.test(ua)) {
-      browser = 'Edge';
-      browserVersion = (ua.match(/edg\/(\d+)/i) || [])[1] || '';
-    } else if (/chrome/i.test(ua)) {
-      browser = 'Chrome';
-      browserVersion = (ua.match(/chrome\/(\d+)/i) || [])[1] || '';
-    } else if (/safari/i.test(ua)) {
-      browser = 'Safari';
-      browserVersion = (ua.match(/version\/(\d+)/i) || [])[1] || '';
-    } else if (/msie|trident/i.test(ua)) {
-      browser = 'IE';
-      browserVersion = (ua.match(/(?:msie |rv:)(\d+)/i) || [])[1] || '';
-    }
-
-    // OS detection
-    var os = 'Unknown';
-    if (/windows/i.test(ua)) {
-      os = 'Windows';
-    } else if (/macintosh|mac os x/i.test(ua)) {
-      os = 'macOS';
-    } else if (/linux/i.test(ua)) {
-      os = 'Linux';
-    } else if (/android/i.test(ua)) {
-      os = 'Android';
-    } else if (/iphone|ipad|ipod/i.test(ua)) {
-      os = 'iOS';
-    }
-
-    return {
-      type: deviceType,
-      browser: browser,
-      browserVersion: browserVersion,
-      os: os,
-      screenWidth: window.screen.width,
-      screenHeight: window.screen.height,
-      viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight,
-      language: navigator.language || navigator.userLanguage || 'en',
-      colorDepth: window.screen.colorDepth,
-      pixelRatio: window.devicePixelRatio || 1
-    };
-  };
-
   // Get UTM parameters
   ZTA.getUTMParams = function() {
     var params = new URLSearchParams(window.location.search);
@@ -326,208 +114,75 @@
     };
   };
 
-  // Categorize traffic source
-  ZTA.getTrafficSource = function() {
-    var referrer = document.referrer;
-    if (!referrer) {
-      return { type: 'direct', source: null };
-    }
-
+  // Referrer origin only (scheme + host) — never the path or query, which can
+  // carry search terms or tokens. Same-site referrers are omitted.
+  ZTA.getReferrer = function() {
+    if (!document.referrer) return null;
     try {
-      var refUrl = new URL(referrer);
-      var refHost = refUrl.hostname.toLowerCase();
-
-      // Search engines
-      var searchEngines = {
-        'google': /google\./i,
-        'bing': /bing\./i,
-        'yahoo': /yahoo\./i,
-        'duckduckgo': /duckduckgo\./i,
-        'baidu': /baidu\./i,
-        'yandex': /yandex\./i
-      };
-
-      for (var engine in searchEngines) {
-        if (searchEngines[engine].test(refHost)) {
-          return { type: 'organic', source: engine };
-        }
-      }
-
-      // Social networks
-      var socialNetworks = {
-        'facebook': /facebook\.|fb\./i,
-        'twitter': /twitter\.|t\.co/i,
-        'x': /x\.com/i,
-        'linkedin': /linkedin\./i,
-        'instagram': /instagram\./i,
-        'pinterest': /pinterest\./i,
-        'reddit': /reddit\./i,
-        'youtube': /youtube\./i,
-        'tiktok': /tiktok\./i
-      };
-
-      for (var network in socialNetworks) {
-        if (socialNetworks[network].test(refHost)) {
-          return { type: 'social', source: network };
-        }
-      }
-
-      // Check if same domain (internal)
-      if (refHost === window.location.hostname) {
-        return { type: 'internal', source: refHost };
-      }
-
-      // Default to referral
-      return { type: 'referral', source: refHost };
+      var ref = new URL(document.referrer);
+      if (ref.hostname === window.location.hostname) return null;
+      return ref.origin;
     } catch (e) {
-      return { type: 'referral', source: referrer };
+      return null;
     }
   };
 
-  // Track a page view (includes performance metrics to save a request)
-  ZTA.trackPageView = function(customData) {
-    var device = ZTA.getDeviceInfo();
-    var utm = ZTA.getUTMParams();
-    var traffic = ZTA.getTrafficSource();
-
-    var data = {
+  // Track a page view
+  ZTA.trackPageView = function() {
+    ZTA.page.viewsThisLoad++;
+    ZTA.send({
       type: 'pageview',
-      siteId: ZTA.config.siteId,
-
-      // Page info
-      url: window.location.href,
       path: window.location.pathname,
-      title: document.title,
-      referrer: document.referrer || null,
-
-      // Session info
-      sessionId: ZTA.session.id,
-      pageCount: ZTA.session.pageCount,
-      landingPage: ZTA.session.landingPage,
-      isNewVisitor: ZTA.session.isNewVisitor,
-      isNewSession: ZTA.session.isNew && ZTA.session.pageCount === 1,
-
-      // Device info
-      device: device,
-
-      // Traffic source
-      trafficSource: traffic,
-
-      // UTM parameters
-      utm: utm,
-
-      // Timestamp
-      timestamp: new Date().toISOString()
-    };
-
-    // Merge custom data
-    if (customData) {
-      for (var key in customData) {
-        data[key] = customData[key];
-      }
-    }
-
-    ZTA.send(data);
-    ZTA.saveSession();
-
-    // Add performance metrics to a follow-up update (merged into same batch, not separate request)
-    if (document.readyState === 'complete') {
-      ZTA.sendPerformanceMetrics();
-    } else {
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          ZTA.sendPerformanceMetrics();
-        }, 100);
-      });
-    }
-  };
-
-  // Send performance metrics (now batched with other events, not separate request)
-  ZTA.sendPerformanceMetrics = function() {
-    var metrics = ZTA.getPerformanceMetrics();
-    if (!metrics || metrics.pageLoadTime === null) return;
-
-    // Store for engagement event instead of sending separately
-    ZTA.page.performanceMetrics = metrics;
-    ZTA.log('Performance metrics captured:', metrics);
+      referrer: ZTA.getReferrer(),
+      utm: ZTA.getUTMParams()
+    });
   };
 
   // Track custom events (detailed)
   ZTA.trackEvent = function(category, action, label, value) {
-    var data = {
+    ZTA.send({
       type: 'event',
-      siteId: ZTA.config.siteId,
-      sessionId: ZTA.session.id,
       category: category,
       action: action,
       label: label || null,
       value: value || null,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: new Date().toISOString()
-    };
-
-    ZTA.send(data);
+      path: window.location.pathname
+    });
   };
 
   // Simple event tracking API
   // Usage: ZTA.track('signup')
-  //        ZTA.track('button_click')
-  //        ZTA.track('purchase', { amount: 99, product: 'Pro Plan' })
+  //        ZTA.track('purchase', { label: 'Pro Plan', value: 99 })
+  // Only `label` and `value` (or `amount`) are recorded.
   ZTA.track = function(eventName, properties) {
     properties = properties || {};
-
-    var data = {
+    ZTA.send({
       type: 'event',
-      siteId: ZTA.config.siteId,
-      sessionId: ZTA.session.id,
-      category: 'custom',
+      category: properties.category || 'custom',
       action: eventName,
       label: properties.label || null,
       value: properties.value || properties.amount || null,
-      properties: properties,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: new Date().toISOString()
-    };
-
-    ZTA.send(data);
+      path: window.location.pathname
+    });
     ZTA.log('Tracked event:', eventName, properties);
   };
 
-  // Track time on page (called on page unload)
-  // Includes performance metrics to avoid separate request
+  // Track time on page (called when the page is left or hidden)
   ZTA.trackEngagement = function() {
     // Prevent double-sending (pagehide + visibilitychange can both fire)
     if (ZTA.page.engagementSent) return;
     ZTA.page.engagementSent = true;
 
-    var timeOnPage = Math.round((Date.now() - ZTA.page.startTime) / 1000);
-    var sessionDuration = Math.round((Date.now() - ZTA.session.startTime) / 1000);
-
-    var data = {
+    ZTA.send({
       type: 'engagement',
-      siteId: ZTA.config.siteId,
-      sessionId: ZTA.session.id,
-      path: window.location.pathname,
-      timeOnPage: timeOnPage,
-      sessionDuration: sessionDuration,
-      maxScrollDepth: ZTA.page.maxScrollDepth,
-      pageCount: ZTA.session.pageCount,
-      isExitPage: true,
-      isBounce: ZTA.session.pageCount === 1,
-      // Include performance metrics here (saves a separate event)
-      performance: ZTA.page.performanceMetrics || null,
-      timestamp: new Date().toISOString()
-    };
-
-    ZTA.send(data);
+      path: ZTA.page.path,
+      timeOnPage: Math.round((Date.now() - ZTA.page.startTime) / 1000),
+      isBounce: ZTA.page.viewsThisLoad <= 1
+    });
   };
 
   // Setup engagement tracking on page unload
   ZTA.setupEngagementTracking = function() {
-    // Use both pagehide and visibilitychange for best coverage
-    // Double-send prevention is in trackEngagement()
     window.addEventListener('pagehide', function() {
       ZTA.trackEngagement();
     });
@@ -539,48 +194,37 @@
     });
   };
 
-  // Setup scroll depth tracking
-  // Only tracks maxScrollDepth for engagement event - no separate milestone events
+  // Scroll milestone events (opt-in: data-track-scroll="true")
   ZTA.setupScrollTracking = function() {
     var ticking = false;
 
     window.addEventListener('scroll', function() {
-      if (!ticking) {
-        window.requestAnimationFrame(function() {
-          var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-          var docHeight = Math.max(
-            document.body.scrollHeight,
-            document.documentElement.scrollHeight
-          ) - window.innerHeight;
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function() {
+        var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        var docHeight = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight
+        ) - window.innerHeight;
+        var scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 100;
 
-          var scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 100;
-
-          if (scrollPercent > ZTA.page.maxScrollDepth) {
-            ZTA.page.maxScrollDepth = scrollPercent;
+        [25, 50, 75, 100].forEach(function(milestone) {
+          if (scrollPercent >= milestone && !ZTA.page.scrollMilestones[milestone]) {
+            ZTA.page.scrollMilestones[milestone] = true;
+            ZTA.trackEvent('scroll', 'depth', milestone + '%', milestone);
           }
-
-          // Only send milestone events if explicitly enabled (disabled by default)
-          if (ZTA.config.trackScrollMilestones) {
-            var milestones = [25, 50, 75, 100];
-            milestones.forEach(function(milestone) {
-              if (scrollPercent >= milestone && !ZTA.page.scrollMilestones[milestone]) {
-                ZTA.page.scrollMilestones[milestone] = true;
-                ZTA.trackEvent('scroll', 'depth', milestone + '%', milestone);
-              }
-            });
-          }
-
-          ticking = false;
         });
-        ticking = true;
-      }
+
+        ticking = false;
+      });
     });
   };
 
   // Setup outbound link tracking
   ZTA.setupOutboundLinkTracking = function() {
     document.addEventListener('click', function(e) {
-      var link = e.target.closest('a');
+      var link = e.target.closest && e.target.closest('a');
       if (!link) return;
 
       var href = link.getAttribute('href');
@@ -588,9 +232,7 @@
 
       try {
         var url = new URL(href, window.location.origin);
-
-        // Check if external
-        if (url.hostname !== window.location.hostname) {
+        if ((url.protocol === 'http:' || url.protocol === 'https:') && url.hostname !== window.location.hostname) {
           ZTA.trackEvent('outbound', 'click', url.hostname);
         }
       } catch (err) {
@@ -604,15 +246,15 @@
     var downloadExtensions = /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|tar|gz|exe|dmg|mp3|mp4|avi|mov|csv)$/i;
 
     document.addEventListener('click', function(e) {
-      var link = e.target.closest('a');
+      var link = e.target.closest && e.target.closest('a');
       if (!link) return;
 
       var href = link.getAttribute('href');
       if (!href) return;
 
-      if (downloadExtensions.test(href)) {
-        var filename = href.split('/').pop().split('?')[0];
-        ZTA.trackEvent('download', 'file', filename);
+      var path = href.split(/[?#]/)[0];
+      if (downloadExtensions.test(path)) {
+        ZTA.trackEvent('download', 'file', path.split('/').pop());
       }
     });
   };
@@ -623,107 +265,71 @@
       var form = e.target;
       if (!form || form.tagName !== 'FORM') return;
 
-      // Get form identifier (id, name, or action)
-      var formId = form.id || form.name || '';
-      var formAction = form.action || '';
-
-      // Try to get a meaningful label for the form
+      // Form identifier: id, name, or the action path (never field values)
+      var formId = form.id || form.getAttribute('name') || '';
       var formLabel = formId;
       if (!formLabel) {
-        // Use action URL path
         try {
-          var actionUrl = new URL(formAction, window.location.origin);
-          formLabel = actionUrl.pathname;
+          formLabel = new URL(form.getAttribute('action') || '', window.location.href).pathname;
         } catch (err) {
           formLabel = 'unknown';
         }
       }
 
-      // Get form type based on common patterns
+      // Classify by common id/class patterns
+      var hint = (formId + ' ' + (form.className || '')).toLowerCase();
       var formType = 'form';
-      var formClasses = (form.className || '').toLowerCase();
-      var formIdLower = formId.toLowerCase();
-
-      if (/login|signin|sign-in/i.test(formIdLower + formClasses)) {
-        formType = 'login';
-      } else if (/register|signup|sign-up/i.test(formIdLower + formClasses)) {
-        formType = 'signup';
-      } else if (/contact|message/i.test(formIdLower + formClasses)) {
-        formType = 'contact';
-      } else if (/subscribe|newsletter|email/i.test(formIdLower + formClasses)) {
-        formType = 'subscribe';
-      } else if (/search/i.test(formIdLower + formClasses)) {
-        formType = 'search';
-      } else if (/checkout|payment|order/i.test(formIdLower + formClasses)) {
-        formType = 'checkout';
-      }
+      if (/login|signin|sign-in/.test(hint)) formType = 'login';
+      else if (/register|signup|sign-up/.test(hint)) formType = 'signup';
+      else if (/contact|message/.test(hint)) formType = 'contact';
+      else if (/subscribe|newsletter|email/.test(hint)) formType = 'subscribe';
+      else if (/search/.test(hint)) formType = 'search';
+      else if (/checkout|payment|order/.test(hint)) formType = 'checkout';
 
       ZTA.trackEvent('form', formType, formLabel);
       ZTA.log('Form submitted:', formType, formLabel);
     });
   };
 
-  // Setup declarative tracking via data attributes
-  // Usage: <button data-zta-track="event_name" data-zta-category="campaign" data-zta-label="summer_sale">
+  // Declarative tracking via data attributes (one delegated listener, so
+  // elements added later are covered and each click is counted once).
+  // Usage: <button data-zta-track="signup" data-zta-category="cta" data-zta-label="hero" data-zta-value="1">
   ZTA.setupDeclarativeTracking = function() {
     document.addEventListener('click', function(e) {
-      var el = e.target.closest('[data-zta-track]');
+      var el = e.target.closest && e.target.closest('[data-zta-track]');
       if (!el) return;
 
       var eventName = el.getAttribute('data-zta-track');
       if (!eventName) return;
 
-      var properties = {};
-      var category = el.getAttribute('data-zta-category');
-      var label = el.getAttribute('data-zta-label');
       var value = el.getAttribute('data-zta-value');
-
-      if (category) properties.category = category;
-      if (label) properties.label = label;
-      if (value) properties.value = parseFloat(value) || 0;
-
-      ZTA.track(eventName, properties);
-      ZTA.log('Declarative track:', eventName, properties);
+      ZTA.track(eventName, {
+        category: el.getAttribute('data-zta-category') || 'click',
+        label: el.getAttribute('data-zta-label') || null,
+        value: value ? parseFloat(value) || 0 : null
+      });
     });
   };
 
-  // Setup heartbeat for real-time tracking
-  ZTA.setupHeartbeat = function() {
-    setInterval(function() {
-      if (document.visibilityState === 'visible') {
-        var data = {
-          type: 'heartbeat',
-          siteId: ZTA.config.siteId,
-          sessionId: ZTA.session.id,
-          path: window.location.pathname,
-          timestamp: new Date().toISOString()
-        };
-        ZTA.send(data);
-      }
-    }, ZTA.config.heartbeatInterval);
-  };
+  // Kept for API compatibility: declarative tracking is delegated, so newly
+  // added [data-zta-track] elements need no re-scan.
+  ZTA.scanTrackElements = function() {};
 
-  // Queue event for batching (reduces API calls to avoid rate limits)
+  // Queue event for batching
   ZTA.send = function(data) {
-    // Don't send if sampled out
-    if (!ZTA.sampled) return;
-
     if (!ZTA.config.siteId) {
       ZTA.log('Error: Site ID not set');
       return;
     }
 
-    // Add to queue
     ZTA.queue.events.push(data);
     ZTA.log('Queued:', data.type, '(queue size:', ZTA.queue.events.length + ')');
 
-    // Send immediately if queue is full
     if (ZTA.queue.events.length >= ZTA.queue.maxSize) {
       ZTA.flushQueue();
       return;
     }
 
-    // Otherwise, set/reset timer to flush after maxWait
     if (ZTA.queue.timer) {
       clearTimeout(ZTA.queue.timer);
     }
@@ -736,35 +342,35 @@
   ZTA.flushQueue = function() {
     if (ZTA.queue.events.length === 0) return;
 
-    // Clear timer
     if (ZTA.queue.timer) {
       clearTimeout(ZTA.queue.timer);
       ZTA.queue.timer = null;
     }
 
-    // Grab events and clear queue
     var events = ZTA.queue.events;
     ZTA.queue.events = [];
 
     ZTA.log('Flushing', events.length, 'events');
-
-    // Send batch
     ZTA.sendBatch(events);
   };
 
   // Send a batch of events to the server
   ZTA.sendBatch = function(events) {
+    var body = {
+      batch: true,
+      siteId: ZTA.config.siteId,
+      events: events
+    };
+    if (ZTA.config.sampleRate < 1) {
+      body.sampleRate = ZTA.config.sampleRate;
+    }
+
     fetch(ZTA.config.endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        batch: true,
-        siteId: ZTA.config.siteId,
-        events: events
-      }),
-      keepalive: true
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      keepalive: true,
+      credentials: 'omit'
     }).then(function() {
       ZTA.log('Batch sent:', events.length, 'events');
     }).catch(function(err) {
@@ -772,23 +378,24 @@
     });
   };
 
-  // SPA tracking setup
+  // SPA tracking: a pageview per real route change. Routers also call
+  // replaceState for scroll restoration and query/hash updates; those keep the
+  // same pathname and must not count as pageviews.
   ZTA.setupSPATracking = function() {
-    // Track pushState
     var originalPushState = history.pushState;
     history.pushState = function() {
-      originalPushState.apply(history, arguments);
+      var result = originalPushState.apply(history, arguments);
       ZTA.onRouteChange();
+      return result;
     };
 
-    // Track replaceState
     var originalReplaceState = history.replaceState;
     history.replaceState = function() {
-      originalReplaceState.apply(history, arguments);
+      var result = originalReplaceState.apply(history, arguments);
       ZTA.onRouteChange();
+      return result;
     };
 
-    // Track popstate (back/forward)
     window.addEventListener('popstate', function() {
       ZTA.onRouteChange();
     });
@@ -798,56 +405,26 @@
 
   // Handle route change in SPA
   ZTA.onRouteChange = function() {
-    // Track engagement for previous page
+    var path = window.location.pathname;
+    if (path === ZTA.page.path) return;
+
+    // Engagement for the page being left
     ZTA.trackEngagement();
 
-    // Reset page state for new page
+    ZTA.page.path = path;
     ZTA.page.startTime = Date.now();
-    ZTA.page.maxScrollDepth = 0;
+    ZTA.page.engagementSent = false;
     ZTA.page.scrollMilestones = { 25: false, 50: false, 75: false, 100: false };
-    ZTA.page.engagementSent = false;  // Reset for new page
-    ZTA.page.performanceMetrics = null;
 
-    // Increment page count
-    ZTA.session.pageCount++;
-    ZTA.saveSession();
-
-    // Track new page view
     ZTA.trackPageView();
   };
 
   // Debug logging
   ZTA.log = function() {
-    if (ZTA.config.debug && console && console.log) {
+    if (ZTA.config.debug && window.console && console.log) {
       console.log.apply(console, ['[ZTA]'].concat(Array.prototype.slice.call(arguments)));
     }
   };
-
-  // Auto-track elements with data-zta-track attribute
-  function setupAutoTrack() {
-    var elements = document.querySelectorAll('[data-zta-track]');
-
-    elements.forEach(function(el) {
-      if (el._ztaTracked) return; // Already tracked
-      el._ztaTracked = true;
-
-      el.addEventListener('click', function() {
-        var eventName = el.getAttribute('data-zta-track');
-        var label = el.getAttribute('data-zta-label') || null;
-        var category = el.getAttribute('data-zta-category') || 'click';
-        var value = el.getAttribute('data-zta-value') || null;
-
-        if (ZTA.config.debug) {
-          ZTA.log('Auto-track click:', eventName, { label: label, category: category, value: value });
-        }
-
-        ZTA.trackEvent(category, eventName, label, value ? parseFloat(value) : null);
-      });
-    });
-  }
-
-  // Expose for manual re-scanning (useful for SPAs)
-  ZTA.scanTrackElements = setupAutoTrack;
 
   // Expose globally
   window.ZTA = ZTA;
@@ -860,63 +437,25 @@
 
   if (script) {
     var siteId = script.getAttribute('data-site-id');
-    var autoTrack = script.getAttribute('data-auto-track') !== 'false';
-    var spa = script.getAttribute('data-spa') === 'true';
-    var debug = script.getAttribute('data-debug') === 'true';
-    var trackScroll = script.getAttribute('data-track-scroll') !== 'false';
-    var trackOutbound = script.getAttribute('data-track-outbound') !== 'false';
-    var trackDownloads = script.getAttribute('data-track-downloads') !== 'false';
-    var trackForms = script.getAttribute('data-track-forms') !== 'false';
     var sampleRate = script.getAttribute('data-sample-rate');
-    sampleRate = sampleRate !== null ? parseFloat(sampleRate) : 1.0;
-
-    // Check if dynamic config is enabled (fetches real-time settings from server)
-    var dynamicConfig = script.getAttribute('data-dynamic-config') === 'true';
-    var configEndpoint = script.getAttribute('data-config-endpoint') || 'https://ztas.io/api/tracker-config';
+    // data-api lets self-hosters point the script at their own server.
+    var api = (script.getAttribute('data-api') || DEFAULT_API).replace(/\/+$/, '');
 
     if (siteId) {
-      var baseOptions = {
-        autoTrack: autoTrack,
-        spa: spa,
-        debug: debug,
-        sampleRate: sampleRate,
-        trackScrollDepth: trackScroll,
-        trackOutboundLinks: trackOutbound,
-        trackFileDownloads: trackDownloads,
-        trackFormSubmissions: trackForms
-      };
-
-      // If dynamic config enabled, fetch settings from server first
-      if (dynamicConfig) {
-        fetch(configEndpoint + '?siteId=' + encodeURIComponent(siteId))
-          .then(function(res) { return res.json(); })
-          .then(function(serverConfig) {
-            // Merge server config (real-time settings, etc.)
-            baseOptions.enableHeartbeat = serverConfig.enableHeartbeat || false;
-            baseOptions.heartbeatInterval = serverConfig.heartbeatInterval || 300000;
-            if (serverConfig.sampleRate !== undefined) {
-              baseOptions.sampleRate = serverConfig.sampleRate;
-            }
-            ZTA.init(siteId, baseOptions);
-            initAutoTrack();
-          })
-          .catch(function() {
-            // Fallback to static config on error
-            ZTA.init(siteId, baseOptions);
-            initAutoTrack();
-          });
-      } else {
-        // Static config (default - no extra request)
-        ZTA.init(siteId, baseOptions);
-        initAutoTrack();
-      }
-
-      function initAutoTrack() {
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', setupAutoTrack);
-        } else {
-          setupAutoTrack();
-        }
+      try {
+        ZTA.init(siteId, {
+          endpoint: api + '/api/track',
+          autoTrack: script.getAttribute('data-auto-track') !== 'false',
+          spa: script.getAttribute('data-spa') === 'true',
+          debug: script.getAttribute('data-debug') === 'true',
+          sampleRate: sampleRate !== null ? parseFloat(sampleRate) : 1.0,
+          trackScrollMilestones: script.getAttribute('data-track-scroll') === 'true',
+          trackOutboundLinks: script.getAttribute('data-track-outbound') !== 'false',
+          trackFileDownloads: script.getAttribute('data-track-downloads') !== 'false',
+          trackFormSubmissions: script.getAttribute('data-track-forms') !== 'false'
+        });
+      } catch (e) {
+        // Analytics must never break the host page.
       }
     }
   }

@@ -41,7 +41,7 @@ export function AddSiteModal({ isOpen, onClose, onSuccess }: AddSiteModalProps) 
 
     setLoading(true)
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const authToken = await getToken()
 
       if (!authToken) {

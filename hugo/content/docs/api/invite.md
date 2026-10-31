@@ -32,7 +32,7 @@ View invitation details before accepting (public endpoint).
 ### Request
 
 ```bash
-curl "https://ztas.io/api/invite?token=inv_abc123xyz"
+curl "https://app.ztas.io/api/invite?token=inv_abc123xyz"
 ```
 
 ### Parameters
@@ -74,7 +74,7 @@ Accept a team invitation and join the team.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/invite" \
+curl -X POST "https://app.ztas.io/api/invite" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -123,7 +123,7 @@ Decline a team invitation without joining.
 ### Request
 
 ```bash
-curl -X POST "https://ztas.io/api/invite" \
+curl -X POST "https://app.ztas.io/api/invite" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -158,7 +158,7 @@ A team owner or admin invites you:
 
 ```bash
 # (Performed by team owner/admin)
-curl -X POST "https://ztas.io/api/teams" \
+curl -X POST "https://app.ztas.io/api/teams" \
   -H "Authorization: Bearer OWNER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -182,7 +182,7 @@ You receive an email with:
 Click the link to preview details:
 
 ```bash
-curl "https://ztas.io/api/invite?token=inv_abc123xyz"
+curl "https://app.ztas.io/api/invite?token=inv_abc123xyz"
 ```
 
 ### 4. Accept or Decline
@@ -191,7 +191,7 @@ Make your decision:
 
 ```bash
 # Accept
-curl -X POST "https://ztas.io/api/invite" \
+curl -X POST "https://app.ztas.io/api/invite" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -199,7 +199,7 @@ curl -X POST "https://ztas.io/api/invite" \
   }'
 
 # OR Decline
-curl -X POST "https://ztas.io/api/invite" \
+curl -X POST "https://app.ztas.io/api/invite" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -223,12 +223,12 @@ The invitation must be accepted by the user whose email matches the invitation:
 # Must be accepted by user logged in as: alice@example.com
 
 # This will succeed:
-curl -X POST "https://ztas.io/api/invite" \
+curl -X POST "https://app.ztas.io/api/invite" \
   -H "Authorization: Bearer TOKEN_FOR_alice@example.com" \
   -d '{"token": "inv_123"}'
 
 # This will fail:
-curl -X POST "https://ztas.io/api/invite" \
+curl -X POST "https://app.ztas.io/api/invite" \
   -H "Authorization: Bearer TOKEN_FOR_bob@example.com" \
   -d '{"token": "inv_123"}'
 # Error: "This invitation is for a different email address"
@@ -349,7 +349,7 @@ TOKEN="inv_abc123xyz"
 
 # Step 2: Preview invitation details
 echo "Fetching invitation details..."
-invite=$(curl -s "https://ztas.io/api/invite?token=$TOKEN")
+invite=$(curl -s "https://app.ztas.io/api/invite?token=$TOKEN")
 
 echo "Invitation details:"
 echo "$invite" | jq '.'
@@ -374,7 +374,7 @@ echo
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo "Accepting invitation..."
-  result=$(curl -s -X POST "https://ztas.io/api/invite" \
+  result=$(curl -s -X POST "https://app.ztas.io/api/invite" \
     -H "Authorization: Bearer YOUR_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"token\": \"$TOKEN\"}")
@@ -390,7 +390,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   fi
 else
   echo "Declining invitation..."
-  result=$(curl -s -X POST "https://ztas.io/api/invite" \
+  result=$(curl -s -X POST "https://app.ztas.io/api/invite" \
     -H "Authorization: Bearer YOUR_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"token\": \"$TOKEN\", \"action\": \"decline\"}")
@@ -419,7 +419,7 @@ fi
 All invitation actions are logged:
 
 ```bash
-curl "https://ztas.io/api/activity-log?type=team" \
+curl "https://app.ztas.io/api/activity-log?type=team" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -435,7 +435,7 @@ Logged events:
 If an invitation expires, the team owner/admin can send a new one:
 
 ```bash
-curl -X POST "https://ztas.io/api/teams" \
+curl -X POST "https://app.ztas.io/api/teams" \
   -H "Authorization: Bearer OWNER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -455,7 +455,7 @@ Always check the expiration date before attempting to accept:
 
 ```javascript
 async function checkInvitation(token) {
-  const response = await fetch(`https://ztas.io/api/invite?token=${token}`);
+  const response = await fetch(`https://app.ztas.io/api/invite?token=${token}`);
   const data = await response.json();
 
   const expiresAt = new Date(data.invite.expiresAt);
@@ -478,11 +478,11 @@ Ensure you're logged in with the correct email:
 ```javascript
 async function verifyEmailMatch(inviteToken, authToken) {
   // Get invitation details
-  const inviteRes = await fetch(`https://ztas.io/api/invite?token=${inviteToken}`);
+  const inviteRes = await fetch(`https://app.ztas.io/api/invite?token=${inviteToken}`);
   const inviteData = await inviteRes.json();
 
   // Get current user
-  const userRes = await fetch('https://ztas.io/api/user/status', {
+  const userRes = await fetch('https://app.ztas.io/api/user/status', {
     headers: { 'Authorization': `Bearer ${authToken}` }
   });
   const userData = await userRes.json();
@@ -505,7 +505,7 @@ Provide clear feedback on errors:
 ```javascript
 async function acceptInvitation(token, authToken) {
   try {
-    const response = await fetch('https://ztas.io/api/invite', {
+    const response = await fetch('https://app.ztas.io/api/invite', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken}`,

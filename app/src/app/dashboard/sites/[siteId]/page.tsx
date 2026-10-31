@@ -8,6 +8,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { format, subDays } from 'date-fns'
 import { useSiteContext } from '@/components/dashboard/SiteContext'
 import { ShareModal } from '@/components/dashboard/ShareModal'
+import { chart } from '@/lib/chart-theme'
 
 // Types
 interface Summary {
@@ -634,10 +635,10 @@ export default function SiteDetailsPage() {
   const [annotations, setAnnotations] = useState<Array<{ id: string; title: string; date: string; category: string }>>([])
 
   const annotationCategoryColors: Record<string, string> = {
-    release: '#10B981',
-    campaign: '#3B82F6',
-    incident: '#EF4444',
-    other: '#9CA3AF',
+    release: chart.secondary,
+    campaign: chart.primary,
+    incident: chart.danger,
+    other: chart.axis,
   }
 
   const getPeriodDays = (p: string) => {
@@ -659,7 +660,7 @@ export default function SiteDetailsPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
       const days = getPeriodDays(period)
       const now = new Date()
       const prevEndDate = subDays(now, days)
@@ -724,7 +725,7 @@ export default function SiteDetailsPage() {
       try {
         const token = await getToken()
         if (!token) return
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ztas.io'
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
         const res = await fetch(`${apiUrl}/api/realtime?siteId=${siteId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         })
@@ -864,7 +865,7 @@ export default function SiteDetailsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <select
+          <select aria-label="Time period"
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
             className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
@@ -979,10 +980,10 @@ export default function SiteDetailsPage() {
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
+                <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#F9FAFB' }}
+                  contentStyle={chart.tooltip}
                   formatter={(value: number) => [
                     value.toLocaleString(),
                     showCumulative
@@ -996,9 +997,9 @@ export default function SiteDetailsPage() {
                     ? (chartMetric === 'visitors' ? 'cumulativeVisitors' : 'cumulativePageviews')
                     : chartMetric
                   }
-                  stroke={showCumulative ? '#10B981' : '#3B82F6'}
+                  stroke={showCumulative ? chart.secondary : chart.primary}
                   strokeWidth={2}
-                  dot={{ fill: showCumulative ? '#10B981' : '#3B82F6', r: 3 }}
+                  dot={{ fill: showCumulative ? chart.secondary : chart.primary, r: 3 }}
                 />
                 {annotations
                   .filter(a => {
@@ -1177,7 +1178,7 @@ export default function SiteDetailsPage() {
                       <div className="flex items-center gap-2">
                         {source.icon}
                         <span className="text-primary hover:underline">{source.name}</span>
-                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-3 h-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </div>
@@ -1349,9 +1350,9 @@ export default function SiteDetailsPage() {
                 <h3 className="text-lg font-semibold">Traffic from {drilldownSource}</h3>
                 <p className="text-sm text-muted-foreground">Pages visited by visitors from this source</p>
               </div>
-              <button
+              <button aria-label="Close"
                 onClick={() => setDrilldownSource(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

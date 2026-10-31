@@ -1,0 +1,37 @@
+{{- $nav := slice
+  (dict "name" "Live demo" "url" "/demo/" "section" "demo")
+  (dict "name" "Pricing" "url" "/pricing/" "section" "pricing")
+  (dict "name" "Docs" "url" "/docs/" "section" "docs")
+  (dict "name" "Blog" "url" "/blog/" "section" "blog")
+  (dict "name" "Compare" "url" "/vs/" "section" "vs")
+-}}
+{{- $section := .Section -}}
+<header class="hd">
+  <div class="wrap hd-in">
+    <a class="logo" href="{{ "/" | relURL }}" aria-label="ZTA home">
+      {{ partial "tally/zta-mark.html" (dict "size" 36) }}
+      <b>ZTA</b>
+    </a>
+    <nav class="hd-nav" aria-label="Main">
+      {{ range $nav }}
+        <a href="{{ .url | relURL }}"{{ if eq $section .section }} aria-current="page"{{ end }}>{{ .name }}</a>
+      {{ end }}
+    </nav>
+    <div class="row hd-cta">
+      <a class="btn btn-ghost btn-sm" href="https://app.ztas.io/sign-in">Sign in</a>
+      <a class="btn btn-go btn-sm" href="https://app.ztas.io/sign-up">Start free</a>
+    </div>
+    <details class="menu">
+      <summary class="btn btn-sm btn-icon" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </summary>
+      <nav class="menu-pop card" aria-label="Main (mobile)">
+        {{ range $nav }}
+          <a href="{{ .url | relURL }}"{{ if eq $section .section }} aria-current="page"{{ end }}>{{ .name }}</a>
+        {{ end }}
+        <a href="https://app.ztas.io/sign-in">Sign in</a>
+        <a class="btn btn-go btn-sm" href="https://app.ztas.io/sign-up">Start free</a>
+      </nav>
+    </details>
+  </div>
+</header>
