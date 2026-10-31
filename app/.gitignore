@@ -1,5 +1,4 @@
-# Hugo cache and generated files
-/public/
+# public/ is Next.js source (fonts, Tally art), not build output, so it is tracked.
 /resources/
 /.hugo_build.lock
 
