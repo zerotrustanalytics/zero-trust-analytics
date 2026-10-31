@@ -5,7 +5,6 @@ date: 2024-12-09
 author: "Zero Trust Analytics Team"
 category: "HIPAA Compliance"
 tags: ["HIPAA", "Healthcare", "Dental", "Privacy", "Google Analytics"]
-image: "/images/blog/hipaa-dental.jpg"
 priority: 0.8
 ---
 

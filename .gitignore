@@ -30,6 +30,8 @@ docker/ssl/
 *.db-shm
 *.db-wal
 data/
+# ...but Hugo's data/ is source (data/plans.yaml drives the pricing page)
+!hugo/data/
 backups/
 
 # Lead scraping output (contains business data)

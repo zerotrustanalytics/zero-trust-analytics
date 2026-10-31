@@ -10,18 +10,27 @@
 <meta name="date" content="{{ .Date }}" >
 
 <!-- Open Graph / Facebook -->
+{{- /* One share image for Open Graph and Twitter: a page's seoimage or image
+     param (with or without a leading slash), else the site card. */ -}}
+{{- $siteCard := "images/brand/share.png" -}}
+{{- $shareImage := .Params.seoimage | default .Params.image | default $siteCard -}}
+{{- $isSiteCard := eq (strings.TrimPrefix "/" $shareImage) $siteCard -}}
+{{- $shareImage = strings.TrimPrefix "/" $shareImage | absURL -}}
 {{ if .Params.PageTitle}}
-<meta name="og:title" content="{{ .Params.PageTitle }}">
+<meta property="og:title" content="{{ .Params.PageTitle }}">
 {{ else }}
-<meta name="og:title" content="{{ .Title }}">
+<meta property="og:title" content="{{ .Title }}">
 {{ end }}
 <meta property="og:date" content="{{ .Date }}" />
 <meta property="og:description" content="{{ .Description }}">
 
-<meta property="og:image" content="{{ .Site.BaseURL }}{{ .Params.seoimage | default "images/brand/share.png" }}">
+<meta property="og:image" content="{{ $shareImage }}">
+{{- if $isSiteCard }}
+<meta property="og:image:alt" content="Zero Trust Analytics: analytics with its eyes closed">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/png">
+{{- end }}
 <meta property="og:url" content="{{ .Permalink }}">
 <meta property="og:site_name" content="{{ .Site.Title }}" />
 <meta property="og:type" content="website">
@@ -45,7 +54,10 @@
 <meta name="twitter:title" content="{{ .Title }}">
 {{ end}}
 <meta name="twitter:description" content="{{ .Description }}">
-<meta name="twitter:image" content="{{ .Site.BaseURL }}{{ .Params.image | default "images/brand/share.png" }}">
+<meta name="twitter:image" content="{{ $shareImage }}">
+{{- if $isSiteCard }}
+<meta name="twitter:image:alt" content="Zero Trust Analytics: analytics with its eyes closed">
+{{- end }}
 <meta name="twitter:site" content="@ZeroTrustHQ">
 <meta name="twitter:creator" content="@ZeroTrustHQ">
 

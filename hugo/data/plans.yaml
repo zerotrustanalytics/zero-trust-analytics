@@ -1,0 +1,54 @@
+# Plan lineup shown on ztas.io/pricing.
+# MUST match what the app bills and enforces: netlify/functions/lib/config.js
+# (Config.pricing.tiers, teamMemberLimits, dataRetention). Change both together.
+# Every plan has unlimited sites; plans are priced on monthly events
+# (pageviews + custom events).
+- id: free
+  name: Free
+  blurb: For a personal site or trying ZTA out
+  price: 0
+  events: "5,000"
+  retention: 30 days
+  team: "1"
+  features: [Unlimited sites, Basic analytics]
+- id: starter
+  name: Starter
+  blurb: For small sites and side projects
+  price: 9
+  events: "50,000"
+  retention: 6 months
+  team: "1"
+  features: [Unlimited sites, Full analytics, Email reports]
+- id: growth
+  name: Growth
+  blurb: For growing businesses
+  price: 19
+  events: "200,000"
+  retention: 1 year
+  team: "3"
+  features: [Unlimited sites, Full analytics, Email reports, API access]
+  popular: true
+- id: business
+  name: Business
+  blurb: For agencies and teams
+  price: 49
+  events: "1M"
+  retention: 2 years
+  team: "5"
+  features: [Unlimited sites, Full analytics, Email reports, API access]
+- id: scale
+  name: Scale
+  blurb: For high-traffic sites
+  price: 99
+  events: "5M"
+  retention: Unlimited
+  team: "20"
+  features: [Unlimited sites, Full analytics, API access, Priority support]
+- id: enterprise
+  name: Enterprise
+  blurb: Custom volume, SLA and support
+  price: null
+  events: Custom
+  retention: Unlimited
+  team: Unlimited
+  features: [Unlimited everything, Dedicated support, Custom integrations, SLA]
