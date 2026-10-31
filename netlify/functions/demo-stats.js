@@ -1,7 +1,7 @@
 import { getStats } from './lib/turso.js';
 
 // Hardcoded site ID for ztas.io demo - this is public data shown on the demo page
-const DEMO_SITE_ID = 'site_f8b511bfa9ae7cb6';
+const DEMO_SITE_ID = 'site_b1c8004c5488df53';
 const DEMO_DOMAIN = 'ztas.io';
 
 export default async function handler(req, context) {
