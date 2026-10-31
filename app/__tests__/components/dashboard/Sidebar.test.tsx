@@ -21,8 +21,8 @@ vi.mock('next/link', () => ({
   )
 }))
 
-// Mock Clerk UserButton
-vi.mock('@clerk/nextjs', () => ({
+// Mock the gatekeep UserButton
+vi.mock('@/lib/gatekeep-auth', () => ({
   UserButton: ({ afterSignOutUrl }: { afterSignOutUrl: string }) => (
     <button data-testid="user-button" data-signout-url={afterSignOutUrl}>
       User
@@ -74,7 +74,7 @@ describe('Sidebar', () => {
       expect(screen.getByText('ZTA')).toBeInTheDocument()
     })
 
-    it('shows Z when collapsed', () => {
+    it('shows only the mark when collapsed, and the link keeps its name', () => {
       mockUseSidebar.mockReturnValue({
         collapsed: true,
         toggle: mockToggle
@@ -82,7 +82,8 @@ describe('Sidebar', () => {
 
       render(<Sidebar />)
 
-      expect(screen.getByText('Z')).toBeInTheDocument()
+      expect(screen.queryByText('ZTA')).not.toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /go to dashboard/i })).toBeInTheDocument()
     })
 
     it('renders toggle button', () => {

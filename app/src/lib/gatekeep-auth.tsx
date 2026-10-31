@@ -13,6 +13,7 @@
  * the OIDC Authorization Code + PKCE redirect.
  */
 import * as React from 'react'
+import Link from 'next/link'
 import type { Session } from 'next-auth'
 import { useSession, getSession, signIn as naSignIn, signOut as naSignOut } from 'next-auth/react'
 
@@ -65,7 +66,9 @@ export function useAuth() {
   // function per render makes every data-loading effect re-run forever. It
   // reads the latest session through a ref instead.
   const sessionRef = React.useRef(data)
-  sessionRef.current = data
+  React.useEffect(() => {
+    sessionRef.current = data
+  })
   const getToken = React.useCallback(() => freshIdToken(sessionRef.current), [])
 
   if (LOCAL_MODE) {
@@ -211,9 +214,9 @@ function AuthScreen({ mode, next }: AuthScreenProps) {
           </button>
           <p className="sm muted">
             {signUp ? (
-              <>Already have an account? <a className="link" href="/sign-in">Sign in</a></>
+              <>Already have an account? <Link className="link" href="/sign-in">Sign in</Link></>
             ) : (
-              <>New to ZTA? <a className="link" href="/sign-up">Create an account</a></>
+              <>New to ZTA? <Link className="link" href="/sign-up">Create an account</Link></>
             )}
           </p>
         </div>

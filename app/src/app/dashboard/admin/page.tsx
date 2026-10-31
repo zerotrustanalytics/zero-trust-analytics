@@ -56,6 +56,12 @@ interface AdminReport {
   }
 }
 
+interface UserDetails {
+  usage: { date: string; site_id: string; pageviews: number }[]
+  support?: { totalHours?: number }
+  tags?: { customerType?: string; isPilot?: boolean; notes?: string }
+}
+
 export default function AdminDashboard() {
   const [adminKey, setAdminKey] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
@@ -78,7 +84,7 @@ export default function AdminDashboard() {
 
   // User details view state
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-  const [userDetails, setUserDetails] = useState<any>(null)
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null)
   const [userLoading, setUserLoading] = useState(false)
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
@@ -412,7 +418,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {userDetails.usage.slice(0, 20).map((u: any, i: number) => (
+                        {userDetails.usage.slice(0, 20).map((u, i) => (
                           <tr key={i} className="border-b">
                             <td className="py-1">{u.date}</td>
                             <td className="py-1 font-mono">{u.site_id?.substring(0, 12)}...</td>

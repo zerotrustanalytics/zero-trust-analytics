@@ -23,23 +23,24 @@ vi.mock('next/link', () => ({
   },
 }))
 
-// Mock Clerk
-vi.mock('@clerk/nextjs', () => ({
-  useAuth: () => ({
-    getToken: vi.fn().mockResolvedValue('test-token'),
-    isLoaded: true,
-    isSignedIn: true,
-    userId: 'user_123',
-  }),
+// Mock the gatekeep auth shim (@/lib/gatekeep-auth). getToken is one stable
+// function, like the real hook's: a new function per render would re-run every
+// effect that depends on it, forever.
+const mockGetToken = vi.fn().mockResolvedValue('test-token')
+const mockSignOut = vi.fn()
+vi.mock('@/lib/gatekeep-auth', () => ({
+  useAuth: () => ({ getToken: mockGetToken, isLoaded: true, isSignedIn: true, userId: 'user_123', signOut: mockSignOut }),
   useUser: () => ({
-    user: { id: 'user_123', emailAddresses: [{ emailAddress: 'test@example.com' }] },
+    user: { id: 'user_123', primaryEmailAddress: { emailAddress: 'test@example.com' } },
     isLoaded: true,
     isSignedIn: true,
   }),
   UserButton: () => <button data-testid="user-button">User</button>,
   SignInButton: ({ children }: { children: React.ReactNode }) => children,
   SignUpButton: ({ children }: { children: React.ReactNode }) => children,
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
+  SignedIn: ({ children }: { children: React.ReactNode }) => children,
+  SignedOut: () => null,
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
 }))
 
 // Mock window.matchMedia

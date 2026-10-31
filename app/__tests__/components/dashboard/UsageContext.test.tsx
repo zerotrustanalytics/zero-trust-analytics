@@ -26,9 +26,9 @@ const localStorageMock = (() => {
 })()
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 
-// Mock Clerk
+// Mock the gatekeep auth shim
 const mockGetToken = vi.fn()
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/gatekeep-auth', () => ({
   useAuth: () => ({
     getToken: mockGetToken
   })

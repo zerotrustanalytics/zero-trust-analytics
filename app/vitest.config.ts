@@ -23,14 +23,10 @@ export default defineConfig({
     },
   },
   resolve: {
+    // Most specific first: '@' would otherwise also capture '@/test/...'.
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@/components': path.resolve(__dirname, './src/components'),
-      '@/lib': path.resolve(__dirname, './src/lib'),
-      '@/hooks': path.resolve(__dirname, './src/hooks'),
-      '@/types': path.resolve(__dirname, './src/types'),
-      '@/styles': path.resolve(__dirname, './src/styles'),
       '@/test': path.resolve(__dirname, './__tests__'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 })

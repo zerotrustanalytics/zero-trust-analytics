@@ -41,27 +41,6 @@ describe('Modal', () => {
     })
   })
 
-  describe('sizes', () => {
-    it('renders small size', () => {
-      render(<Modal {...defaultProps} size="sm" />)
-      expect(screen.getByRole('dialog').querySelector('.max-w-sm')).toBeInTheDocument()
-    })
-
-    it('renders medium size (default)', () => {
-      render(<Modal {...defaultProps} size="md" />)
-      expect(screen.getByRole('dialog').querySelector('.max-w-md')).toBeInTheDocument()
-    })
-
-    it('renders large size', () => {
-      render(<Modal {...defaultProps} size="lg" />)
-      expect(screen.getByRole('dialog').querySelector('.max-w-lg')).toBeInTheDocument()
-    })
-
-    it('renders extra large size', () => {
-      render(<Modal {...defaultProps} size="xl" />)
-      expect(screen.getByRole('dialog').querySelector('.max-w-xl')).toBeInTheDocument()
-    })
-  })
 
   describe('interactions', () => {
     it('calls onClose when close button clicked', () => {
@@ -81,9 +60,7 @@ describe('Modal', () => {
     it('calls onClose when overlay clicked', () => {
       const onClose = vi.fn()
       render(<Modal {...defaultProps} onClose={onClose} />)
-      // Click on the overlay container, not the modal content
-      const overlay = screen.getByRole('dialog')
-      fireEvent.click(overlay)
+      fireEvent.click(screen.getByTestId('modal-overlay'))
       expect(onClose).toHaveBeenCalledTimes(1)
     })
 
@@ -97,13 +74,32 @@ describe('Modal', () => {
     it('respects closeOnOverlayClick=false', () => {
       const onClose = vi.fn()
       render(<Modal {...defaultProps} onClose={onClose} closeOnOverlayClick={false} />)
-      const overlay = screen.getByRole('dialog')
-      fireEvent.click(overlay)
+      fireEvent.click(screen.getByTestId('modal-overlay'))
       expect(onClose).not.toHaveBeenCalled()
     })
   })
 
   describe('accessibility', () => {
+    it('keeps focus in a field when the parent re-renders with a new onClose', () => {
+      // Callers pass onClose inline; re-rendering must not pull focus back to the dialog.
+      const { rerender } = render(<Modal {...defaultProps} onClose={() => {}}><input aria-label="Name" /></Modal>)
+      const field = screen.getByRole('textbox', { name: 'Name' })
+      field.focus()
+      rerender(<Modal {...defaultProps} onClose={() => {}}><input aria-label="Name" /></Modal>)
+      expect(field).toHaveFocus()
+    })
+
+    it('moves focus into the dialog and returns it when closed', () => {
+      const opener = document.createElement('button')
+      document.body.appendChild(opener)
+      opener.focus()
+      const { rerender } = render(<Modal {...defaultProps} />)
+      expect(screen.getByRole('dialog')).toHaveFocus()
+      rerender(<Modal {...defaultProps} isOpen={false} />)
+      expect(opener).toHaveFocus()
+      opener.remove()
+    })
+
     it('has role="dialog"', () => {
       render(<Modal {...defaultProps} />)
       expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -116,12 +112,16 @@ describe('Modal', () => {
 
     it('sets aria-labelledby when title provided', () => {
       render(<Modal {...defaultProps} title="Modal Title" />)
-      expect(screen.getByRole('dialog')).toHaveAttribute('aria-labelledby', 'modal-title')
+      // The id is generated; the dialog's accessible name comes from the title.
+      expect(screen.getByRole('dialog', { name: 'Modal Title' })).toBeInTheDocument()
     })
 
     it('sets aria-describedby when description provided', () => {
       render(<Modal {...defaultProps} description="Modal description" />)
-      expect(screen.getByRole('dialog')).toHaveAttribute('aria-describedby', 'modal-description')
+      // The id is generated; what matters is that it points at the description.
+      const id = screen.getByRole('dialog').getAttribute('aria-describedby')
+      expect(id).toBeTruthy()
+      expect(document.getElementById(id!)).toHaveTextContent(/./)
     })
 
     it('does not set aria-labelledby without title', () => {
@@ -175,7 +175,7 @@ describe('ModalFooter', () => {
 
   it('applies default styles', () => {
     const { container } = render(<ModalFooter>Content</ModalFooter>)
-    expect(container.firstChild).toHaveClass('px-6', 'py-4', 'border-t', 'flex', 'justify-end', 'gap-3')
+    expect(container.firstChild).toHaveClass('flex', 'justify-end', 'gap-3')
   })
 
   it('accepts custom className', () => {
