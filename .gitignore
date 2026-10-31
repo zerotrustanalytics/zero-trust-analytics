@@ -1,5 +1,7 @@
 # Hugo cache and generated files
 /public/
+# Hugo output when built inside hugo/ (CI and Pages build into /public above)
+/hugo/public/
 /resources/
 /.hugo_build.lock
 
