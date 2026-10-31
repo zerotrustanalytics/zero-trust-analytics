@@ -1,5 +1,9 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realTurso from '../../netlify/functions/lib/turso.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -44,8 +48,19 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 // Mock turso database
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
+  ...realTurso,
   getStats: jest.fn(() => Promise.resolve({
     pageviews: 100,
     uniqueVisitors: 50,
@@ -125,11 +140,11 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -144,11 +159,11 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -162,11 +177,11 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -180,11 +195,11 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -198,11 +213,11 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -217,11 +232,11 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -235,11 +250,11 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?siteId=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -251,17 +266,17 @@ describe('Stats Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats?period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toContain('Site ID');
+      expect(data.error).toMatch(/site ?id is required/i);
     });
 
     it('should support custom date ranges', async () => {
@@ -270,11 +285,11 @@ describe('Stats Endpoint', () => {
       const today = new Date().toISOString().split('T')[0];
       const url = new URL(`https://example.com/api/stats?siteId=site_test&startDate=${today}&endDate=${today}`);
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();

@@ -225,9 +225,9 @@ export function validateDateRange(start, end) {
     return { valid: false, error: 'Invalid date format' };
   }
 
-  // End must be after start
-  if (endDate <= startDate) {
-    return { valid: false, error: 'End date must be after start date' };
+  // End may equal start (a single day) but not come before it
+  if (endDate < startDate) {
+    return { valid: false, error: 'End date must not be before start date' };
   }
 
   // Prevent future dates

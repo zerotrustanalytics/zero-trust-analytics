@@ -227,11 +227,6 @@ const NON_ROUTE_FUNCTIONS = new Set([
   'init-db',              // invoked internally at startup
   'migrate-db',
   'migrate-sites-to-turso',
-  // Legacy social-OAuth login — replaced by gatekeep OIDC (Auth.js). Dead in
-  // every self-host mode; denylisted so they can't claim /api/auth/callback/*.
-  'auth-oauth-callback',
-  'auth-google',
-  'auth-github',
   // Raw pageview dump guarded only by a shared secret — a Netlify-era debugging
   // aid with no place on a public origin.
   'debug',

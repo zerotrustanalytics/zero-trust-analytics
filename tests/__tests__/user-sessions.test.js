@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -38,6 +42,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'testuser@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn(() => authResult)
 }));
 
@@ -85,7 +90,7 @@ describe('User Sessions Endpoint', () => {
     it('should return list of user sessions', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/sessions',
         headers: {
@@ -95,7 +100,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -109,7 +114,7 @@ describe('User Sessions Endpoint', () => {
     it('should mask IP addresses for privacy', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/sessions',
         headers: {
@@ -119,7 +124,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -132,7 +137,7 @@ describe('User Sessions Endpoint', () => {
     it('should identify current session', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/sessions',
         headers: {
@@ -142,7 +147,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -158,11 +163,11 @@ describe('User Sessions Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/sessions',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -174,7 +179,7 @@ describe('User Sessions Endpoint', () => {
     it('should revoke a specific session', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/user/sessions?sessionId=sess_2',
         headers: {
@@ -184,7 +189,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -198,7 +203,7 @@ describe('User Sessions Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/user/sessions?sessionId=sess_nonexistent',
         headers: {
@@ -207,7 +212,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -219,7 +224,7 @@ describe('User Sessions Endpoint', () => {
     it('should revoke all sessions except current', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/user/sessions?all=true',
         headers: {
@@ -229,7 +234,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -242,7 +247,7 @@ describe('User Sessions Endpoint', () => {
     it('should return 400 when neither sessionId nor all=true is provided', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/user/sessions',
         headers: {
@@ -251,7 +256,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -265,10 +270,10 @@ describe('User Sessions Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -280,13 +285,13 @@ describe('User Sessions Endpoint', () => {
     it('should reject unsupported methods', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/user/sessions',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -296,7 +301,7 @@ describe('User Sessions Endpoint', () => {
     it('should return CORS headers', async () => {
       const { default: handler } = await import('../../netlify/functions/user-sessions.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/sessions',
         headers: {
@@ -306,7 +311,7 @@ describe('User Sessions Endpoint', () => {
             return null;
           }
         }
-      };
+      });
 
       const response = await handler(req, {});
 

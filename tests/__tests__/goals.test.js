@@ -1,5 +1,9 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realTurso from '../../netlify/functions/lib/turso.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -55,22 +59,33 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
-// Mock turso database for stats
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
+// Mock turso database for stats: the same shape lib/turso.js getStats returns
+// (goals read its summary; custom events are counted separately).
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
+  ...realTurso,
   getStats: jest.fn(() => Promise.resolve({
-    pageviews: 1500,
-    uniqueVisitors: 450,
-    sessions: 500,
-    bounces: 100,
-    bounceRate: 20,
-    avgTimeOnPage: 120,
-    pages: { '/': 800, '/about': 400, '/contact': 300 },
-    referrers: { 'google.com': 600, 'twitter.com': 200 },
-    devices: { desktop: 1000, mobile: 400, tablet: 100 },
-    browsers: { Chrome: 900, Firefox: 400, Safari: 200 },
-    operatingSystems: { Windows: 700, macOS: 500, Linux: 300 },
-    countries: { US: 900, UK: 300, CA: 300 }
-  }))
+    summary: {
+      pageviews: 1500,
+      unique_visitors: 450,
+      sessions: 500,
+      bounce_rate: 20,
+      avg_duration: 120,
+      views_per_visit: 3
+    },
+    daily: [],
+    topPages: [{ name: '/', views: 800, visitors: 300 }]
+  })),
+  countEvents: jest.fn(() => Promise.resolve(42))
 }));
 
 const { __clearAllStores, getStore } = await import('@netlify/blobs');
@@ -108,11 +123,11 @@ describe('Goals Endpoint', () => {
     it('should handle CORS preflight requests', async () => {
       const { default: handler } = await import('../../netlify/functions/goals.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({}),
         url: 'https://example.com/api/goals'
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -132,11 +147,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?siteId=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -185,11 +200,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?siteId=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -209,11 +224,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?siteId=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -225,11 +240,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -243,11 +258,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?siteId=site_other');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -292,11 +307,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?siteId=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -328,11 +343,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?siteId=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -348,7 +363,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -364,7 +379,7 @@ describe('Goals Endpoint', () => {
           comparison: 'gte',
           notifyOnComplete: true
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -385,7 +400,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'content-type': 'application/json' }),
         url: url.toString(),
@@ -395,7 +410,7 @@ describe('Goals Endpoint', () => {
           metric: 'pageviews',
           target: 2000
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -407,7 +422,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -419,7 +434,7 @@ describe('Goals Endpoint', () => {
           metric: 'pageviews',
           target: 2000
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -433,7 +448,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -446,7 +461,7 @@ describe('Goals Endpoint', () => {
           metric: 'pageviews',
           target: 2000
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -460,7 +475,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -473,7 +488,7 @@ describe('Goals Endpoint', () => {
           metric: 'invalid_metric',
           target: 2000
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -487,7 +502,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -501,7 +516,7 @@ describe('Goals Endpoint', () => {
           target: 2000,
           period: 'invalid_period'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -515,7 +530,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -526,7 +541,7 @@ describe('Goals Endpoint', () => {
           siteId: 'site_test',
           name: 'Minimal Goal'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -541,7 +556,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -553,7 +568,7 @@ describe('Goals Endpoint', () => {
           name: 'Low Target Goal',
           target: -100
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -587,7 +602,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -600,7 +615,7 @@ describe('Goals Endpoint', () => {
           target: 2000,
           notifyOnComplete: true
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -618,7 +633,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({ 'content-type': 'application/json' }),
         url: url.toString(),
@@ -626,7 +641,7 @@ describe('Goals Endpoint', () => {
           goalId: 'goal_update',
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -638,7 +653,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -648,7 +663,7 @@ describe('Goals Endpoint', () => {
         json: async () => ({
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -662,7 +677,7 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -673,7 +688,7 @@ describe('Goals Endpoint', () => {
           goalId: 'nonexistent_goal',
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -708,11 +723,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?goalId=goal_delete');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -727,11 +742,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?goalId=goal_delete');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -743,11 +758,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -761,11 +776,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals?goalId=nonexistent_goal');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -781,11 +796,11 @@ describe('Goals Endpoint', () => {
 
       const url = new URL('https://example.com/api/goals');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();

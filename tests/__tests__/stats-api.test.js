@@ -1,5 +1,9 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realTurso from '../../netlify/functions/lib/turso.js';
+import * as realRateLimit from '../../netlify/functions/lib/rate-limit.js';
+import { createHeaders, toRequest } from './helpers.js';
 import crypto from 'crypto';
 
 // Mock crypto.subtle for API key hashing using Node.js crypto
@@ -14,11 +18,13 @@ global.crypto = {
   }
 };
 
-// Mock rate-limit with actual limit enforcement for testing
+// Mock rate-limit with actual limit enforcement for testing. Async like the real
+// checkRateLimit, so a caller that forgets to await it fails here too.
 const rateLimitStore = new Map();
 
 jest.unstable_mockModule('../../netlify/functions/lib/rate-limit.js', () => ({
-  checkRateLimit: jest.fn((identifier, options = {}) => {
+  ...realRateLimit,
+  checkRateLimit: jest.fn(async (identifier, options = {}) => {
     const { limit = 100, windowMs = 60000 } = options;
     const now = Date.now();
 
@@ -104,6 +110,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 
 // Mock turso database with comprehensive stats
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
+  ...realTurso,
   getStats: jest.fn(() => Promise.resolve({
     summary: {
       pageviews: 1250,
@@ -190,11 +197,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=visitors,pageviews');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       if (response.status !== 200) {
@@ -209,11 +216,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=visitors');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -227,11 +234,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=visitors');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer invalid_key_xyz' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -245,11 +252,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'InvalidFormat' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(401);
@@ -262,11 +269,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?period=7d&metrics=visitors');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -280,11 +287,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=invalid_period');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -298,11 +305,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=unauthorized_site&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -318,11 +325,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=realtime');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -336,11 +343,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=day');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -354,11 +361,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -372,11 +379,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=30d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -387,11 +394,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=6mo');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -402,11 +409,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=12mo');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -417,11 +424,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=custom&date_from=2024-12-01&date_to=2024-12-10');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -435,11 +442,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=custom');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -455,11 +462,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=visitors');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -475,11 +482,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=pageviews');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -493,11 +500,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=bounce_rate');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -511,11 +518,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=visit_duration');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -529,11 +536,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=visitors,pageviews,bounce_rate');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -549,11 +556,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -570,11 +577,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&property=page');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -590,11 +597,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&property=source');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -608,11 +615,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&property=country');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -623,11 +630,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&property=device');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -638,11 +645,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&property=browser');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -653,11 +660,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&property=os');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -670,11 +677,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&filters=page==/blog');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -685,11 +692,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&filters=page==/blog/*');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -700,11 +707,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&filters=page==/blog/*;country==US');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -717,11 +724,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d&metrics=visitors,pageviews');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -740,11 +747,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -760,11 +767,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -776,11 +783,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -796,14 +803,14 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({
           authorization: `Bearer ${validApiKey}`,
           'x-forwarded-for': '192.168.1.1'
         }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -820,14 +827,14 @@ describe('Stats API Endpoint', () => {
       // Make requests up to and exceeding the limit
       const requests = [];
       for (let i = 0; i < 102; i++) {
-        const req = {
+        const req = toRequest({
           method: 'GET',
           headers: createHeaders({
             authorization: `Bearer ${validApiKey}`,
             'x-forwarded-for': '192.168.1.100'
           }),
           url: url.toString()
-        };
+        });
         requests.push(handler(req, {}));
       }
 
@@ -848,11 +855,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -869,11 +876,11 @@ describe('Stats API Endpoint', () => {
 
       const url = new URL('https://example.com/api/stats-api?site_id=site_test&period=7d');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: `Bearer ${validApiKey}` }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();

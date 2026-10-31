@@ -1,5 +1,9 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realZeroTrustCore from '../../netlify/functions/lib/zero-trust-core.js';
+import * as realTurso from '../../netlify/functions/lib/turso.js';
+import { createHeaders, toRequest } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -35,11 +39,15 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 
 // Mock turso database
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
-  ingestEvents: jest.fn(() => Promise.resolve({ success: true }))
+  ...realTurso,
+  ingestEvents: jest.fn(() => Promise.resolve({ success: true })),
+  // No earlier session for this visitor: the endpoint starts a new one.
+  findActiveSession: jest.fn(() => Promise.resolve(null))
 }));
 
 // Mock zero-trust-core
 jest.unstable_mockModule('../../netlify/functions/lib/zero-trust-core.js', () => ({
+  ...realZeroTrustCore,
   createZTRecord: jest.fn(({ siteId, eventType, payload }) => ({
     timestamp: new Date().toISOString().replace('T', ' ').split('.')[0],
     site_id: siteId,
@@ -83,10 +91,10 @@ describe('Track Endpoint', () => {
     it('should respond to OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({ origin: 'https://example.com' })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -97,7 +105,7 @@ describe('Track Endpoint', () => {
     it('should allow requests from registered domain', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -108,7 +116,7 @@ describe('Track Endpoint', () => {
           siteId: 'site_test123',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -118,7 +126,7 @@ describe('Track Endpoint', () => {
     it('should block requests from unauthorized domain', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://malicious-site.com',
@@ -129,7 +137,7 @@ describe('Track Endpoint', () => {
           siteId: 'site_test123',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -141,7 +149,7 @@ describe('Track Endpoint', () => {
     it('should track pageview successfully', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -154,7 +162,7 @@ describe('Track Endpoint', () => {
           url: 'https://example.com/home',
           sessionId: 'session_123'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
       const data = await response.json();
@@ -166,7 +174,7 @@ describe('Track Endpoint', () => {
     it('should reject requests without siteId', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -176,7 +184,7 @@ describe('Track Endpoint', () => {
           type: 'pageview',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -188,7 +196,7 @@ describe('Track Endpoint', () => {
     it('should reject requests with invalid siteId', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -199,7 +207,7 @@ describe('Track Endpoint', () => {
           siteId: 'invalid_site_id',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -213,7 +221,7 @@ describe('Track Endpoint', () => {
     it('should track custom events', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -226,7 +234,7 @@ describe('Track Endpoint', () => {
           action: 'signup',
           label: 'newsletter'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
       const data = await response.json();
@@ -238,7 +246,7 @@ describe('Track Endpoint', () => {
     it('should track event values', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -251,7 +259,7 @@ describe('Track Endpoint', () => {
           action: 'purchase',
           value: 99.99
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -263,7 +271,7 @@ describe('Track Endpoint', () => {
     it('should track engagement data', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -277,7 +285,7 @@ describe('Track Endpoint', () => {
           timeOnPage: 120,
           maxScrollDepth: 80
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -289,7 +297,7 @@ describe('Track Endpoint', () => {
     it('should track heartbeat for realtime analytics', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -301,7 +309,7 @@ describe('Track Endpoint', () => {
           sessionId: 'session_123',
           path: '/current-page'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -313,10 +321,10 @@ describe('Track Endpoint', () => {
     it('should reject GET requests', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -350,7 +358,7 @@ describe('Track Endpoint', () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
       for (const botUA of botUserAgents) {
-        const req = {
+        const req = toRequest({
           method: 'POST',
           headers: createHeaders({
             origin: 'https://example.com',
@@ -361,7 +369,7 @@ describe('Track Endpoint', () => {
             siteId: 'site_test123',
             path: '/'
           })
-        };
+        });
 
         const response = await handler(req, { ip: '192.168.1.1' });
         const data = await response.json();
@@ -384,7 +392,7 @@ describe('Track Endpoint', () => {
       ];
 
       for (const userAgent of realUserAgents) {
-        const req = {
+        const req = toRequest({
           method: 'POST',
           headers: createHeaders({
             origin: 'https://example.com',
@@ -395,7 +403,7 @@ describe('Track Endpoint', () => {
             siteId: 'site_test123',
             path: '/'
           })
-        };
+        });
 
         const response = await handler(req, { ip: '192.168.1.1' });
         const data = await response.json();
@@ -408,7 +416,7 @@ describe('Track Endpoint', () => {
     it('should handle missing user agent gracefully', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com'
@@ -419,7 +427,7 @@ describe('Track Endpoint', () => {
           siteId: 'site_test123',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -429,7 +437,8 @@ describe('Track Endpoint', () => {
 
   describe('PII Validation', () => {
     it('should block records containing IP addresses', async () => {
-      const { validateNoPII } = await import('../../netlify/functions/lib/zero-trust-core.js');
+      // The real validator (the module mock stubs it to true for the endpoint tests).
+      const { validateNoPII } = realZeroTrustCore;
 
       const recordWithIPv4 = {
         payload: JSON.stringify({
@@ -442,7 +451,8 @@ describe('Track Endpoint', () => {
     });
 
     it('should block records containing email addresses', async () => {
-      const { validateNoPII } = await import('../../netlify/functions/lib/zero-trust-core.js');
+      // The real validator (the module mock stubs it to true for the endpoint tests).
+      const { validateNoPII } = realZeroTrustCore;
 
       const recordWithEmail = {
         payload: JSON.stringify({
@@ -455,7 +465,8 @@ describe('Track Endpoint', () => {
     });
 
     it('should block records containing phone numbers', async () => {
-      const { validateNoPII } = await import('../../netlify/functions/lib/zero-trust-core.js');
+      // The real validator (the module mock stubs it to true for the endpoint tests).
+      const { validateNoPII } = realZeroTrustCore;
 
       const recordWithPhone = {
         payload: JSON.stringify({
@@ -468,7 +479,8 @@ describe('Track Endpoint', () => {
     });
 
     it('should allow records without PII', async () => {
-      const { validateNoPII } = await import('../../netlify/functions/lib/zero-trust-core.js');
+      // The real validator (the module mock stubs it to true for the endpoint tests).
+      const { validateNoPII } = realZeroTrustCore;
 
       const cleanRecord = {
         timestamp: '2024-01-01 12:00:00',
@@ -500,7 +512,8 @@ describe('Track Endpoint', () => {
     });
 
     it('should allow tracking with safe URL parameters', async () => {
-      const { validateNoPII } = await import('../../netlify/functions/lib/zero-trust-core.js');
+      // The real validator (the module mock stubs it to true for the endpoint tests).
+      const { validateNoPII } = realZeroTrustCore;
 
       const recordWithUTM = {
         payload: JSON.stringify({
@@ -518,7 +531,7 @@ describe('Track Endpoint', () => {
     it('should handle batch event requests', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -533,7 +546,7 @@ describe('Track Endpoint', () => {
             { type: 'event', category: 'click', action: 'button', label: 'cta' }
           ]
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
       const data = await response.json();
@@ -546,7 +559,7 @@ describe('Track Endpoint', () => {
     it('should handle empty batch array', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -557,7 +570,7 @@ describe('Track Endpoint', () => {
           siteId: 'site_test123',
           events: []
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
       const data = await response.json();
@@ -570,7 +583,7 @@ describe('Track Endpoint', () => {
     it('should validate siteId for batch requests', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -582,7 +595,7 @@ describe('Track Endpoint', () => {
             { type: 'pageview', path: '/page1' }
           ]
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
       const data = await response.json();
@@ -594,7 +607,7 @@ describe('Track Endpoint', () => {
     it('should filter bots in batch requests', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -608,7 +621,7 @@ describe('Track Endpoint', () => {
             { type: 'pageview', path: '/page2' }
           ]
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
       const data = await response.json();
@@ -621,7 +634,7 @@ describe('Track Endpoint', () => {
     it('should validate origin for batch requests', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://malicious-site.com',
@@ -634,7 +647,7 @@ describe('Track Endpoint', () => {
             { type: 'pageview', path: '/page1' }
           ]
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -646,7 +659,7 @@ describe('Track Endpoint', () => {
     it('should allow exact domain match', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -657,7 +670,7 @@ describe('Track Endpoint', () => {
           siteId: 'site_test123',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -677,7 +690,7 @@ describe('Track Endpoint', () => {
         createdAt: new Date().toISOString()
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -688,20 +701,22 @@ describe('Track Endpoint', () => {
           siteId: 'site_www',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
       expect(response.status).toBe(200);
     });
 
-    it('should block subdomain mismatch', async () => {
+    it('should block a lookalike domain that only contains the site domain', async () => {
+      // Subdomains of the registered domain are accepted (www., blog., ...); a
+      // different domain that merely ends in the same letters is not.
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
-          origin: 'https://blog.example.com',
+          origin: 'https://example.com.evil.com',
           'user-agent': 'Mozilla/5.0'
         }),
         json: async () => ({
@@ -709,7 +724,7 @@ describe('Track Endpoint', () => {
           siteId: 'site_test123',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 
@@ -730,7 +745,7 @@ describe('Track Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'http://localhost:3000',
@@ -741,7 +756,7 @@ describe('Track Endpoint', () => {
           siteId: 'site_local',
           path: '/'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
 
@@ -755,7 +770,7 @@ describe('Track Endpoint', () => {
 
       // The mock already returns allowed: true
       // In a real test, you'd override the mock
-      const result = checkRateLimit('test-ip', { limit: 1000, windowMs: 60000 });
+      const result = await checkRateLimit('test-ip', { limit: 1000, windowMs: 60000 });
 
       expect(result.allowed).toBe(true);
       expect(result.remaining).toBeDefined();
@@ -766,7 +781,7 @@ describe('Track Endpoint', () => {
     it('should handle malformed JSON gracefully', async () => {
       const { default: handler } = await import('../../netlify/functions/track.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           origin: 'https://example.com',
@@ -775,7 +790,7 @@ describe('Track Endpoint', () => {
         json: async () => {
           throw new Error('Invalid JSON');
         }
-      };
+      });
 
       const response = await handler(req, { ip: '192.168.1.1' });
 

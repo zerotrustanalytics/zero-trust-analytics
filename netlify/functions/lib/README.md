@@ -48,9 +48,9 @@ export default async function handler(req, context) {
 ```
 [2025-12-20T10:30:45.123Z] INFO: User logged in successfully
 {
-  "function": "auth-login",
+  "function": "sites-create",
   "method": "POST",
-  "path": "/api/auth/login",
+  "path": "/api/sites/create",
   "userId": "123",
   "requestId": "req_abc123"
 }
@@ -58,7 +58,7 @@ export default async function handler(req, context) {
 
 **Production (JSON Format):**
 ```json
-{"timestamp":"2025-12-20T10:30:45.123Z","level":"INFO","message":"User logged in successfully","function":"auth-login","method":"POST","path":"/api/auth/login","userId":"123","requestId":"req_abc123"}
+{"timestamp":"2025-12-20T10:30:45.123Z","level":"INFO","message":"Site created","function":"sites-create","method":"POST","path":"/api/sites/create","userId":"123","requestId":"req_abc123"}
 ```
 
 #### Best Practices
@@ -69,7 +69,7 @@ export default async function handler(req, context) {
    - `warn`: Warning messages (rate limits, validation issues, business logic warnings)
    - `error`: Error messages with stack traces
 
-2. **Include context, not details:**
+1. **Include context, not details:**
    ```javascript
    // Good
    logger.info('User created', { userId: user.id, plan: 'pro' });
@@ -78,7 +78,7 @@ export default async function handler(req, context) {
    logger.info('User created', { email: 'user@example.com', password: 'secret' });
    ```
 
-3. **Log business events, not implementation details:**
+1. **Log business events, not implementation details:**
    ```javascript
    // Good
    logger.info('Payment processed successfully', { orderId, amount, currency });
@@ -349,11 +349,9 @@ logger.info('This will show as JSON');
 
 The following critical functions have been updated to use the new architecture:
 
-1. **auth-login.js** - Authentication logging with security context
-2. **auth-register.js** - Registration flow with validation logging
-3. **track.js** - Event tracking with batch processing logs
-4. **stats.js** - Analytics queries with performance logging
-5. **stripe-webhook.js** - Payment webhook processing with detailed event logs
+1. **track.js** - Event tracking with batch processing logs
+2. **stats.js** - Analytics queries with performance logging
+3. **stripe-webhook.js** - Payment webhook processing with detailed event logs
 
 ---
 
@@ -366,9 +364,6 @@ To complete the migration, apply the same pattern to:
 - alerts.js
 - annotations.js
 - api-keys.js
-- auth-2fa.js
-- auth-forgot.js
-- auth-oauth-callback.js
 - errors.js
 - export.js
 - funnels.js

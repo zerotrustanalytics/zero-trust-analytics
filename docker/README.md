@@ -114,19 +114,19 @@ Single shared password protects the dashboard.
 - Best for: Small teams, simple protection
 - Set: `AUTH_MODE=password` and `AUTH_PASSWORD=your-password`
 
-### `AUTH_MODE=jwt`
-Full multi-user system with accounts and login.
-- Best for: Enterprise self-hosting, multiple users
-- Uses built-in JWT auth (no Clerk needed)
-- Endpoints: `/api/auth/register`, `/api/auth/login`
+### `AUTH_MODE=oidc`
+Each person signs in with their own account through gatekeep (or another OpenID Connect provider).
+- Best for: Multiple users, teams
+- Set: `AUTH_MODE=oidc`, `GATEKEEP_ISSUER` and `GATEKEEP_CLIENT_ID`
+- Accounts, passkeys and password resets are handled by the identity provider, not ZTA
 
 ### Features by Mode
 
-| Feature | none | password | jwt |
-|---------|------|----------|-----|
+| Feature | none | password | oidc |
+|---------|------|----------|------|
 | Login required | No | Yes (shared) | Yes (per-user) |
 | Multiple users | No | No | Yes |
-| Password reset | N/A | N/A | Yes |
+| Account recovery | N/A | N/A | Through the identity provider |
 | Audit trail | No | No | Yes |
 
 ---

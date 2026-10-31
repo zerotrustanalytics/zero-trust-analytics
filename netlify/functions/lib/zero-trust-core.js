@@ -181,7 +181,9 @@ function originMatchesDomain(origin, siteDomain) {
   if (!origin || !siteDomain) return false;
   try {
     const originHost = new URL(origin).hostname.toLowerCase();
-    const siteHost = siteDomain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    // Compare hostnames only: the origin's port is dropped by URL.hostname, so
+    // drop any port on the registered domain too (e.g. localhost:3000).
+    const siteHost = siteDomain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/:\d+$/, '');
     const bareSite = siteHost.replace(/^www\./, '');
     return originHost === siteHost ||
            originHost === bareSite ||

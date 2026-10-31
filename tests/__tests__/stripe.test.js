@@ -1,5 +1,8 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import { createHeaders, toRequest } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -34,6 +37,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 
 // Mock auth module
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn((headers) => {
     const authHeader = headers.authorization || headers.Authorization;
     if (authHeader === 'Bearer valid_token') {
@@ -93,6 +97,7 @@ describe('Stripe Endpoints', () => {
       email: 'subscribed@example.com',
       subscription: {
         status: 'active',
+        plan: 'starter',
         customerId: 'cus_xxx',
         subscriptionId: 'sub_xxx'
       }
@@ -112,11 +117,11 @@ describe('Stripe Endpoints', () => {
     it('should create checkout session for non-subscribed user', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -129,11 +134,11 @@ describe('Stripe Endpoints', () => {
     it('should reject checkout for already subscribed user', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer subscribed_token' }),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -145,11 +150,11 @@ describe('Stripe Endpoints', () => {
     it('should reject requests without auth', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({}),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -159,10 +164,10 @@ describe('Stripe Endpoints', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -172,10 +177,10 @@ describe('Stripe Endpoints', () => {
     it('should reject non-POST requests', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -185,11 +190,11 @@ describe('Stripe Endpoints', () => {
     it('should include proper metadata in checkout session', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({})
-      };
+      });
 
       await handler(req, {});
 
@@ -220,11 +225,11 @@ describe('Stripe Endpoints', () => {
         }
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'stripe-signature': 'valid_sig' }),
         text: async () => JSON.stringify({ type: 'checkout.session.completed' })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -247,11 +252,11 @@ describe('Stripe Endpoints', () => {
         }
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'stripe-signature': 'valid_sig' }),
         text: async () => JSON.stringify({ type: 'checkout.session.completed' })
-      };
+      });
 
       await handler(req, {});
 
@@ -271,11 +276,11 @@ describe('Stripe Endpoints', () => {
         throw new Error('Invalid signature');
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'stripe-signature': 'invalid_sig' }),
         text: async () => JSON.stringify({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -297,11 +302,11 @@ describe('Stripe Endpoints', () => {
         }
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'stripe-signature': 'valid_sig' }),
         text: async () => JSON.stringify({ type: 'customer.subscription.updated' })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -322,11 +327,11 @@ describe('Stripe Endpoints', () => {
         }
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'stripe-signature': 'valid_sig' }),
         text: async () => JSON.stringify({ type: 'customer.subscription.deleted' })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -347,11 +352,11 @@ describe('Stripe Endpoints', () => {
         }
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'stripe-signature': 'valid_sig' }),
         text: async () => JSON.stringify({ type: 'invoice.payment_failed' })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -370,11 +375,11 @@ describe('Stripe Endpoints', () => {
         }
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'stripe-signature': 'valid_sig' }),
         text: async () => JSON.stringify({ type: 'unknown.event.type' })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -386,10 +391,10 @@ describe('Stripe Endpoints', () => {
     it('should reject non-POST requests', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -401,11 +406,11 @@ describe('Stripe Endpoints', () => {
     it('should create billing portal session for subscribed user', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-portal.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer subscribed_token' }),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -417,11 +422,11 @@ describe('Stripe Endpoints', () => {
     it('should reject portal access for non-subscribed user', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-portal.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -433,11 +438,11 @@ describe('Stripe Endpoints', () => {
     it('should reject requests without auth', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-portal.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({}),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
 

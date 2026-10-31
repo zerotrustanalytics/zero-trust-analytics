@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -55,6 +56,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 const { __clearAllStores } = await import('@netlify/blobs');
 
 // Mock global fetch for webhook testing
@@ -99,11 +110,11 @@ describe('Webhooks API', () => {
     it('should list webhooks for a site', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/webhooks?siteId=site-1',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -117,11 +128,11 @@ describe('Webhooks API', () => {
     it('should return 400 if siteId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -133,11 +144,11 @@ describe('Webhooks API', () => {
     it('should return 403 if user does not own the site', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/webhooks?siteId=site-999',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -149,11 +160,11 @@ describe('Webhooks API', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/webhooks?siteId=site-1',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       expect(response.status).toBe(401);
@@ -164,7 +175,7 @@ describe('Webhooks API', () => {
     it('should create a webhook with valid URL and events', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -174,7 +185,7 @@ describe('Webhooks API', () => {
           events: ['pageview', 'event'],
           name: 'Test Webhook'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -190,7 +201,7 @@ describe('Webhooks API', () => {
     it('should reject non-HTTPS URLs', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -199,7 +210,7 @@ describe('Webhooks API', () => {
           url: 'http://example.com/webhook',
           events: ['event']
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -211,7 +222,7 @@ describe('Webhooks API', () => {
     it('should reject invalid URLs', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -220,7 +231,7 @@ describe('Webhooks API', () => {
           url: 'not-a-valid-url',
           events: ['event']
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -232,14 +243,14 @@ describe('Webhooks API', () => {
     it('should require siteId and url', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
         json: async () => ({
           events: ['event']
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -251,7 +262,7 @@ describe('Webhooks API', () => {
     it('should generate a webhook secret', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -260,7 +271,7 @@ describe('Webhooks API', () => {
           url: 'https://example.com/webhook',
           events: ['event']
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -274,7 +285,7 @@ describe('Webhooks API', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders({}),
@@ -282,7 +293,7 @@ describe('Webhooks API', () => {
           siteId: 'site-1',
           url: 'https://example.com/webhook'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       expect(response.status).toBe(401);
@@ -291,7 +302,7 @@ describe('Webhooks API', () => {
     it('should reject if user does not own the site', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -299,7 +310,7 @@ describe('Webhooks API', () => {
           siteId: 'site-999',
           url: 'https://example.com/webhook'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -351,14 +362,14 @@ describe('Webhooks API', () => {
     it('should require webhookId', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
         json: async () => ({
           enabled: false
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -370,7 +381,7 @@ describe('Webhooks API', () => {
     it('should return 404 for non-existent webhook', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -378,7 +389,7 @@ describe('Webhooks API', () => {
           webhookId: 'non-existent-webhook',
           enabled: false
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -425,11 +436,11 @@ describe('Webhooks API', () => {
     it('should require webhookId', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -441,11 +452,11 @@ describe('Webhooks API', () => {
     it('should return 404 for non-existent webhook', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'http://localhost/api/webhooks?webhookId=non-existent-webhook',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -459,7 +470,7 @@ describe('Webhooks API', () => {
     it('should accept valid event types', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -468,7 +479,7 @@ describe('Webhooks API', () => {
           url: 'https://example.com/webhook',
           events: ['pageview', 'event', 'goal_completed']
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -480,7 +491,7 @@ describe('Webhooks API', () => {
     it('should default to ["event"] if no events provided', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders),
@@ -488,7 +499,7 @@ describe('Webhooks API', () => {
           siteId: 'site-1',
           url: 'https://example.com/webhook'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -502,11 +513,11 @@ describe('Webhooks API', () => {
     it('should handle OPTIONS request', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
 
@@ -518,11 +529,11 @@ describe('Webhooks API', () => {
     it('should reject PUT requests', async () => {
       const { default: handler } = await import('../../netlify/functions/webhooks.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         url: 'http://localhost/api/webhooks',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();

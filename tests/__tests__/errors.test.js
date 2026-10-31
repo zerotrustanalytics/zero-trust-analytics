@@ -1,9 +1,14 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realRateLimit from '../../netlify/functions/lib/rate-limit.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock rate-limit to always allow requests
 jest.unstable_mockModule('../../netlify/functions/lib/rate-limit.js', () => ({
-  checkRateLimit: jest.fn(() => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
+  ...realRateLimit,
+  checkRateLimit: jest.fn(async () => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
   rateLimitResponse: jest.fn(),
   hashIP: jest.fn((ip) => `hashed_${ip}`)
 }));
@@ -66,6 +71,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 // Mock bcryptjs
 jest.unstable_mockModule('bcryptjs', () => ({
   default: {
@@ -116,10 +131,10 @@ describe('Errors API', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({ origin: 'https://example.com' })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -132,7 +147,7 @@ describe('Errors API', () => {
     it('should include CORS headers in POST response', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({
@@ -148,7 +163,7 @@ describe('Errors API', () => {
             user_agent: 'Mozilla/5.0'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
@@ -159,7 +174,7 @@ describe('Errors API', () => {
     it('should require site_id', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -169,7 +184,7 @@ describe('Errors API', () => {
             url: '/broken-page'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -181,7 +196,7 @@ describe('Errors API', () => {
     it('should require type', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -191,19 +206,19 @@ describe('Errors API', () => {
             url: '/broken-page'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
 
       const body = JSON.parse(await response.text());
-      expect(body.error).toBe('type is required');
+      expect(body.error).toMatch(/^type must be one of /);
     });
 
     it('should require url', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -213,7 +228,7 @@ describe('Errors API', () => {
             type: '404'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -225,7 +240,7 @@ describe('Errors API', () => {
     it('should validate site_id exists', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -236,7 +251,7 @@ describe('Errors API', () => {
             url: '/broken-page'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(404);
@@ -248,7 +263,7 @@ describe('Errors API', () => {
     it('should accept valid 404 error', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -261,7 +276,7 @@ describe('Errors API', () => {
             user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(201);
@@ -274,7 +289,7 @@ describe('Errors API', () => {
     it('should accept 500 error type', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -286,7 +301,7 @@ describe('Errors API', () => {
             referrer: 'https://example.com/page'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(201);
@@ -295,7 +310,7 @@ describe('Errors API', () => {
     it('should accept js_error type', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -308,7 +323,7 @@ describe('Errors API', () => {
             stack: 'at app.js:123:45'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(201);
@@ -325,27 +340,27 @@ describe('Errors API', () => {
       };
 
       // First error
-      const req1 = {
+      const req1 = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
         async json() {
           return errorData;
         }
-      };
+      });
 
       const response1 = await handler(req1, {});
       expect(response1.status).toBe(201);
 
       // Second error (should be deduplicated)
-      const req2 = {
+      const req2 = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
         async json() {
           return errorData;
         }
-      };
+      });
 
       const response2 = await handler(req2, {});
       expect(response2.status).toBe(200);
@@ -357,7 +372,7 @@ describe('Errors API', () => {
     it('should store error metadata', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ 'content-type': 'application/json' }),
@@ -374,7 +389,7 @@ describe('Errors API', () => {
             }
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(201);
@@ -411,14 +426,14 @@ describe('Errors API', () => {
       ];
 
       for (const errorData of errors) {
-        const req = {
+        const req = toRequest({
           method: 'POST',
           url: 'https://example.com/api/errors',
           headers: createHeaders({ 'content-type': 'application/json' }),
           async json() {
             return errorData;
           }
-        };
+        });
         await handler(req, {});
       }
     });
@@ -426,11 +441,11 @@ describe('Errors API', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/errors?siteId=${testSiteId}`,
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(401);
@@ -439,11 +454,11 @@ describe('Errors API', () => {
     it('should require siteId parameter', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://example.com/api/errors',
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -455,11 +470,11 @@ describe('Errors API', () => {
     it('should deny access to sites user does not own', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://example.com/api/errors?siteId=site_other',
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(403);
@@ -471,11 +486,11 @@ describe('Errors API', () => {
     it('should return list of errors for site', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/errors?siteId=${testSiteId}`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -488,11 +503,11 @@ describe('Errors API', () => {
     it('should return error with count and last_seen', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/errors?siteId=${testSiteId}`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -512,11 +527,11 @@ describe('Errors API', () => {
     it('should filter by error type', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/errors?siteId=${testSiteId}&type=404`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -533,11 +548,11 @@ describe('Errors API', () => {
     it('should support pagination with limit', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/errors?siteId=${testSiteId}&limit=2`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -550,11 +565,11 @@ describe('Errors API', () => {
     it('should return errors sorted by last_seen descending', async () => {
       const { default: handler } = await import('../../netlify/functions/errors.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/errors?siteId=${testSiteId}`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -578,7 +593,7 @@ describe('Errors API', () => {
       const validTypes = ['404', '500', '403', '401', 'js_error', 'network_error'];
 
       for (const type of validTypes) {
-        const req = {
+        const req = toRequest({
           method: 'POST',
           url: 'https://example.com/api/errors',
           headers: createHeaders({ 'content-type': 'application/json' }),
@@ -589,7 +604,7 @@ describe('Errors API', () => {
               url: `/test-${type}`
             };
           }
-        };
+        });
 
         const response = await handler(req, {});
         expect(response.status).toBe(201);

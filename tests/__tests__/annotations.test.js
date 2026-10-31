@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -38,6 +42,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'testuser@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn(() => authResult)
 }));
 
@@ -80,13 +85,13 @@ describe('Annotations Endpoint', () => {
     it('should return annotations for a site', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/annotations?siteId=site_123',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -99,13 +104,13 @@ describe('Annotations Endpoint', () => {
     it('should return 400 when siteId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/annotations',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -119,13 +124,13 @@ describe('Annotations Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/annotations?siteId=site_123',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -139,7 +144,7 @@ describe('Annotations Endpoint', () => {
     it('should create a new annotation', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -151,7 +156,7 @@ describe('Annotations Endpoint', () => {
           title: 'New Feature',
           description: 'Released new feature'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -164,7 +169,7 @@ describe('Annotations Endpoint', () => {
     it('should return 400 when siteId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -174,7 +179,7 @@ describe('Annotations Endpoint', () => {
           date: '2024-01-20',
           title: 'New Feature'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -186,7 +191,7 @@ describe('Annotations Endpoint', () => {
     it('should return 400 when date is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -196,7 +201,7 @@ describe('Annotations Endpoint', () => {
           siteId: 'site_123',
           title: 'New Feature'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -208,7 +213,7 @@ describe('Annotations Endpoint', () => {
     it('should return 400 for invalid date format', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -219,7 +224,7 @@ describe('Annotations Endpoint', () => {
           date: '01/20/2024', // Wrong format
           title: 'New Feature'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -233,7 +238,7 @@ describe('Annotations Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -244,7 +249,7 @@ describe('Annotations Endpoint', () => {
           date: '2024-01-20',
           title: 'New Feature'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -254,7 +259,7 @@ describe('Annotations Endpoint', () => {
     it('should use default values for optional fields', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -264,7 +269,7 @@ describe('Annotations Endpoint', () => {
           siteId: 'site_123',
           date: '2024-01-20'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -280,7 +285,7 @@ describe('Annotations Endpoint', () => {
     it('should update an annotation', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -290,7 +295,7 @@ describe('Annotations Endpoint', () => {
           annotationId: 'ann_1',
           title: 'Updated Title'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -302,7 +307,7 @@ describe('Annotations Endpoint', () => {
     it('should return 400 when annotationId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -311,7 +316,7 @@ describe('Annotations Endpoint', () => {
         json: async () => ({
           title: 'Updated Title'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -326,7 +331,7 @@ describe('Annotations Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/annotations',
         headers: {
@@ -336,7 +341,7 @@ describe('Annotations Endpoint', () => {
           annotationId: 'ann_nonexistent',
           title: 'Updated Title'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -348,13 +353,13 @@ describe('Annotations Endpoint', () => {
     it('should delete an annotation', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/annotations?annotationId=ann_1',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -366,13 +371,13 @@ describe('Annotations Endpoint', () => {
     it('should return 400 when annotationId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/annotations',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -386,13 +391,13 @@ describe('Annotations Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/annotations?annotationId=ann_nonexistent',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -406,11 +411,11 @@ describe('Annotations Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/annotations?siteId=site_123',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -420,10 +425,10 @@ describe('Annotations Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -437,13 +442,13 @@ describe('Annotations Endpoint', () => {
     it('should reject unsupported methods', async () => {
       const { default: handler } = await import('../../netlify/functions/annotations.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         url: 'https://zta.io/api/annotations',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 

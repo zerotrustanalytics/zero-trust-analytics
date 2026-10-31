@@ -18,7 +18,12 @@
  *   TURSO_DATABASE_URL="file:../backups/analytics.db" node link-owner-ids.mjs           # report
  *   TURSO_DATABASE_URL="file:../backups/analytics.db" node link-owner-ids.mjs --apply   # write ownerId
  */
-import { createClient } from '@libsql/client';
+import { createRequire } from 'module';
+
+// The libSQL client is a dependency of netlify/functions (the code that owns this
+// database), not of the repo root; load it from there so a clean checkout works.
+const require = createRequire(new URL('../netlify/functions/package.json', import.meta.url));
+const { createClient } = require('@libsql/client');
 
 const url = process.env.TURSO_DATABASE_URL;
 if (!url) {

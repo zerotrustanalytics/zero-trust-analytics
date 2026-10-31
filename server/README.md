@@ -11,7 +11,7 @@ The server wraps all Netlify Functions as Express routes, allowing the applicati
 ```
 ┌─────────────────────────────────────────────┐
 │  Netlify Functions (Cloud)                  │
-│  ├── auth-login.js                          │
+│  ├── sites-create.js                        │
 │  ├── track.js                               │
 │  └── stats.js (etc.)                        │
 └─────────────────────────────────────────────┘
@@ -123,7 +123,7 @@ Each Netlify Function becomes an Express route:
 | Netlify Function | Express Route |
 |------------------|---------------|
 | `track.js` | `POST /api/track` |
-| `auth-login.js` | `POST /api/auth/login` |
+| `sites-create.js` | `POST /api/sites/create` |
 | `stats.js` | `GET /api/stats` |
 | `sites-list.js` | `GET /api/sites/list` |
 

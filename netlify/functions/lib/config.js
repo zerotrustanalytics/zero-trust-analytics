@@ -38,10 +38,10 @@ const REQUIRED_VARS = {
  */
 const OPTIONAL_VARS = {
   AUTH_MODE: {
-    description: 'Authentication mode: oidc (gatekeep/OpenID Connect), jwt (self-hosted multi-user), password (single password), none (no auth)',
+    description: 'Authentication mode: oidc (gatekeep/OpenID Connect), password (single shared password), none (no auth)',
     default: 'oidc',
-    validator: (value) => ['oidc', 'jwt', 'password', 'none'].includes(value),
-    errorMessage: 'AUTH_MODE must be one of: oidc, jwt, password, none'
+    validator: (value) => ['oidc', 'password', 'none'].includes(value),
+    errorMessage: 'AUTH_MODE must be one of: oidc, password, none'
   },
   GATEKEEP_ISSUER: {
     description: 'OIDC issuer URL for AUTH_MODE=oidc (e.g. https://id.gatekeepauth.com). Required when AUTH_MODE=oidc.',
@@ -257,7 +257,7 @@ try {
       JWT_SECRET: 'test-secret-key-at-least-32-chars-long',
       TURSO_DATABASE_URL: 'file:test.db',
       TURSO_AUTH_TOKEN: 'test-token',
-      AUTH_MODE: 'jwt',
+      AUTH_MODE: 'none',
       AUTH_PASSWORD: '',
       SELF_HOSTED: 'false',
       JWT_EXPIRY: '7d',
@@ -299,10 +299,9 @@ export const Config = {
 
   // Auth Mode (for self-hosted)
   auth: {
-    mode: config.AUTH_MODE,                    // 'oidc', 'jwt', 'password', 'none'
+    mode: config.AUTH_MODE,                    // 'oidc', 'password', 'none'
     password: config.AUTH_PASSWORD,            // Shared password for 'password' mode
     isOidc: config.AUTH_MODE === 'oidc',
-    isJwt: config.AUTH_MODE === 'jwt',
     isPassword: config.AUTH_MODE === 'password',
     isNone: config.AUTH_MODE === 'none',
     requiresAuth: config.AUTH_MODE !== 'none', // Does this mode require any auth?

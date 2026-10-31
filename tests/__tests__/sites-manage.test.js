@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -51,6 +52,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 const { __clearAllStores, getStore } = await import('@netlify/blobs');
 
 describe('Sites Management Endpoints', () => {
@@ -89,13 +100,13 @@ describe('Sites Management Endpoints', () => {
     it('should delete a site owned by the user', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-delete.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'site_test123'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -104,36 +115,40 @@ describe('Sites Management Endpoints', () => {
       expect(data.success).toBe(true);
     });
 
-    it('should remove site from storage after deletion', async () => {
+    it('should soft-delete the site and drop it from the user\'s list', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-delete.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'site_test123'
         })
-      };
+      });
 
       await handler(req, {});
 
-      // Verify site was deleted
+      // Deletion is soft: the record stays, marked deleted with an expiry, until
+      // the cleanup job purges it (and its analytics) when the window ends.
       const sitesStore = getStore({ name: 'sites' });
       const site = await sitesStore.get('site_test123', { type: 'json' });
+      expect(site.deleted).toBe(true);
+      expect(new Date(site.expiresAt).getTime()).toBeGreaterThan(Date.now());
 
-      expect(site).toBeNull();
+      const userSites = await sitesStore.get('user_sites_user_123', { type: 'json' });
+      expect(userSites || []).not.toContain('site_test123');
     });
 
     it('should reject requests without auth', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-delete.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({}),
         json: async () => ({
           siteId: 'site_test123'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -143,11 +158,11 @@ describe('Sites Management Endpoints', () => {
     it('should reject requests without siteId', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-delete.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -159,13 +174,13 @@ describe('Sites Management Endpoints', () => {
     it('should reject deleting non-existent site', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-delete.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'nonexistent_site'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -177,13 +192,13 @@ describe('Sites Management Endpoints', () => {
     it('should reject deleting site owned by another user', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-delete.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer other_user_token' }),
         json: async () => ({
           siteId: 'site_test123'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -195,10 +210,10 @@ describe('Sites Management Endpoints', () => {
     it('should reject non-POST requests', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-delete.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -210,14 +225,14 @@ describe('Sites Management Endpoints', () => {
     it('should update site domain', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'site_test123',
           domain: 'newdomain.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -230,14 +245,14 @@ describe('Sites Management Endpoints', () => {
     it('should update site nickname', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'site_test123',
           nickname: 'My Portfolio'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -249,14 +264,14 @@ describe('Sites Management Endpoints', () => {
     it('should normalize domain (strip protocol and trailing slash)', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'site_test123',
           domain: 'https://NEWSITE.COM/'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -269,24 +284,24 @@ describe('Sites Management Endpoints', () => {
       // First set a nickname
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      await handler({
+      await handler(toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'site_test123',
           nickname: 'My Site'
         })
-      }, {});
+      }), {});
 
       // Now clear it
-      const response = await handler({
+      const response = await handler(toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'site_test123',
           nickname: ''
         })
-      }, {});
+      }), {});
 
       const data = await response.json();
 
@@ -297,14 +312,14 @@ describe('Sites Management Endpoints', () => {
     it('should reject requests without auth', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({}),
         json: async () => ({
           siteId: 'site_test123',
           domain: 'newdomain.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -314,13 +329,13 @@ describe('Sites Management Endpoints', () => {
     it('should reject requests without siteId', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           domain: 'newdomain.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -332,14 +347,14 @@ describe('Sites Management Endpoints', () => {
     it('should reject updating non-existent site', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           siteId: 'nonexistent_site',
           domain: 'newdomain.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -351,14 +366,14 @@ describe('Sites Management Endpoints', () => {
     it('should reject updating site owned by another user', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer other_user_token' }),
         json: async () => ({
           siteId: 'site_test123',
           domain: 'hacked.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -370,10 +385,10 @@ describe('Sites Management Endpoints', () => {
     it('should reject non-POST requests', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-update.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' })
-      };
+      });
 
       const response = await handler(req, {});
 
