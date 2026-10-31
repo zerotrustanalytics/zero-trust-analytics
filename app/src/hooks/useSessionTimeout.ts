@@ -73,7 +73,8 @@ export function useSessionTimeout(
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const warningRef = useRef<NodeJS.Timeout | null>(null)
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
-  const lastActivityRef = useRef<number>(Date.now())
+  // Stamped on mount and on every activity by the effects below, not during render.
+  const lastActivityRef = useRef<number>(0)
 
   const [showWarning, setShowWarning] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(0)

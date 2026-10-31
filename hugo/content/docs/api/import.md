@@ -19,7 +19,7 @@ The Import API allows you to:
 
 **Endpoint:** `/.netlify/functions/import`
 
-**Authentication:** Required (JWT token in Authorization header)
+**Authentication:** Required: the signed-in user's gatekeep token as `Authorization: Bearer` (what the dashboard sends). API keys are not accepted here yet.
 
 ---
 
@@ -108,7 +108,7 @@ Direct response from GA4 Data API:
 
 ```bash
 curl -X POST https://yourdomain.com/.netlify/functions/import \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Authorization: Bearer YOUR_GATEKEEP_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "siteId": "site_abc123",
@@ -156,7 +156,7 @@ Retrieve a list of previous imports.
 
 ```bash
 curl -X GET https://yourdomain.com/.netlify/functions/import \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_GATEKEEP_TOKEN"
 ```
 
 ### Response
@@ -194,7 +194,7 @@ Remove imported data from your analytics.
 
 ```bash
 curl -X DELETE "https://yourdomain.com/.netlify/functions/import?importId=import_1702484923_x7k2m9p4q" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_GATEKEEP_TOKEN"
 ```
 
 ### Success Response

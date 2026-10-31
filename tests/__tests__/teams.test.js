@@ -1,9 +1,15 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realRateLimit from '../../netlify/functions/lib/rate-limit.js';
+import * as realCrypto from 'crypto';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock rate-limit to always allow requests
 jest.unstable_mockModule('../../netlify/functions/lib/rate-limit.js', () => ({
-  checkRateLimit: jest.fn(() => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
+  ...realRateLimit,
+  checkRateLimit: jest.fn(async () => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
   rateLimitResponse: jest.fn(),
   hashIP: jest.fn((ip) => `hashed_${ip}`)
 }));
@@ -69,8 +75,19 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 // Mock crypto for random token generation
 jest.unstable_mockModule('crypto', () => ({
+  ...realCrypto,
   default: {
     randomBytes: jest.fn(() => ({
       toString: jest.fn(() => 'mock_random_token')
@@ -85,20 +102,18 @@ describe('Teams Endpoint', () => {
     __clearAllStores();
     process.env.JWT_SECRET = 'test-jwt-secret';
 
-    // Create test users
+    // Create test users. Team owners are on Business (5 members) so invites are
+    // within plan limits; getUserById resolves an id through user_id_map_<id>.
     const usersStore = getStore({ name: 'users' });
-    await usersStore.setJSON('user@example.com', {
-      id: 'user_123',
-      email: 'user@example.com'
-    });
-    await usersStore.setJSON('admin@example.com', {
-      id: 'user_456',
-      email: 'admin@example.com'
-    });
-    await usersStore.setJSON('member@example.com', {
-      id: 'user_789',
-      email: 'member@example.com'
-    });
+    const users = [
+      { id: 'user_123', email: 'user@example.com', plan: 'business' },
+      { id: 'user_456', email: 'admin@example.com', plan: 'business' },
+      { id: 'user_789', email: 'member@example.com' }
+    ];
+    for (const u of users) {
+      await usersStore.setJSON(u.email, u);
+      await usersStore.set(`user_id_map_${u.id}`, u.email);
+    }
 
     // Create test sites
     const sitesStore = getStore({ name: 'sites' });
@@ -114,11 +129,11 @@ describe('Teams Endpoint', () => {
     it('should handle CORS preflight requests', async () => {
       const { default: handler } = await import('../../netlify/functions/teams.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({}),
         url: 'https://example.com/api/teams'
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -138,11 +153,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -168,11 +183,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -223,11 +238,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_2');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -255,11 +270,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_other');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -273,11 +288,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -309,11 +324,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_3');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -330,7 +345,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -341,7 +356,7 @@ describe('Teams Endpoint', () => {
           action: 'create',
           name: 'New Team'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -358,7 +373,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -368,7 +383,7 @@ describe('Teams Endpoint', () => {
         json: async () => ({
           name: 'Another Team'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -383,7 +398,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ 'content-type': 'application/json' }),
         url: url.toString(),
@@ -391,7 +406,7 @@ describe('Teams Endpoint', () => {
           action: 'create',
           name: 'New Team'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -425,7 +440,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -438,7 +453,7 @@ describe('Teams Endpoint', () => {
           email: 'newmember@example.com',
           role: 'viewer'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -450,6 +465,56 @@ describe('Teams Endpoint', () => {
       expect(data.inviteUrl).toContain('accept-invite?token=');
       expect(data.teamName).toBe('Invite Team');
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    });
+
+    it('should refuse invites beyond the owner\'s plan (Free: just the owner)', async () => {
+      const { default: handler } = await import('../../netlify/functions/teams.js');
+
+      // A Free owner: their plan allows one member, themselves.
+      await getStore({ name: 'users' }).setJSON('user@example.com', { id: 'user_123', email: 'user@example.com', plan: 'free' });
+
+      // Create a team
+      const teamsStore = getStore({ name: 'teams' });
+      const team = {
+        id: 'team_invite',
+        name: 'Invite Team',
+        ownerId: 'user_123',
+        createdAt: new Date().toISOString()
+      };
+      await teamsStore.setJSON('team_invite', team);
+
+      // Add owner as member
+      const member = {
+        teamId: 'team_invite',
+        userId: 'user_123',
+        email: 'user@example.com',
+        role: 'owner',
+        joinedAt: new Date().toISOString()
+      };
+      await teamsStore.setJSON('team_members_team_invite', [member]);
+
+      const url = new URL('https://example.com/api/teams');
+
+      const req = toRequest({
+        method: 'POST',
+        headers: createHeaders({
+          authorization: 'Bearer valid_token',
+          'content-type': 'application/json'
+        }),
+        url: url.toString(),
+        json: async () => ({
+          action: 'invite',
+          teamId: 'team_invite',
+          email: 'newmember@example.com',
+          role: 'viewer'
+        })
+      });
+
+      const response = await handler(req, {});
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe('Team member limit reached');
     });
 
     it('should invite a member as team admin', async () => {
@@ -477,7 +542,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -490,7 +555,7 @@ describe('Teams Endpoint', () => {
           email: 'newmember@example.com',
           role: 'viewer'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -524,7 +589,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -537,7 +602,7 @@ describe('Teams Endpoint', () => {
           email: 'newmember@example.com',
           role: 'viewer'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -551,7 +616,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -561,7 +626,7 @@ describe('Teams Endpoint', () => {
         json: async () => ({
           action: 'invite'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -594,7 +659,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -607,7 +672,7 @@ describe('Teams Endpoint', () => {
           email: 'newmember@example.com',
           role: 'invalid_role'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -640,7 +705,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -653,7 +718,7 @@ describe('Teams Endpoint', () => {
           email: 'newmember@example.com',
           role: 'owner'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -686,7 +751,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -698,7 +763,7 @@ describe('Teams Endpoint', () => {
           teamId: 'team_default_role',
           email: 'newmember@example.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -734,7 +799,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -746,7 +811,7 @@ describe('Teams Endpoint', () => {
           teamId: 'team_add_site',
           siteId: 'site_test'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -761,7 +826,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -771,7 +836,7 @@ describe('Teams Endpoint', () => {
         json: async () => ({
           action: 'addSite'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -803,7 +868,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -815,7 +880,7 @@ describe('Teams Endpoint', () => {
           teamId: 'team_site_perm',
           siteId: 'site_other'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -851,7 +916,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -863,7 +928,7 @@ describe('Teams Endpoint', () => {
           teamId: 'team_update',
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -879,7 +944,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -889,7 +954,7 @@ describe('Teams Endpoint', () => {
         json: async () => ({
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -903,7 +968,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({ 'content-type': 'application/json' }),
         url: url.toString(),
@@ -911,7 +976,7 @@ describe('Teams Endpoint', () => {
           teamId: 'team_update',
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -953,7 +1018,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -966,7 +1031,7 @@ describe('Teams Endpoint', () => {
           memberId: 'user_456',
           role: 'admin'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -982,7 +1047,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -993,7 +1058,7 @@ describe('Teams Endpoint', () => {
           action: 'updateRole',
           teamId: 'team_role_update'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1037,11 +1102,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_remove&memberId=user_456');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1056,11 +1121,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_remove&memberId=user_456');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -1072,11 +1137,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?memberId=user_456');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1126,11 +1191,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_revoke&inviteId=invite_revoke');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1167,11 +1232,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_leave&action=leave');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1188,7 +1253,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -1199,7 +1264,7 @@ describe('Teams Endpoint', () => {
           action: 'invalid_action',
           teamId: 'team_test'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1213,7 +1278,7 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -1224,7 +1289,7 @@ describe('Teams Endpoint', () => {
           action: 'invalid_action',
           teamId: 'team_test'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1238,11 +1303,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams?teamId=team_test');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -1256,11 +1321,11 @@ describe('Teams Endpoint', () => {
 
       const url = new URL('https://example.com/api/teams');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();

@@ -106,7 +106,7 @@ describe('UsageBanner', () => {
       render(<UsageBanner />)
 
       expect(screen.getByRole('alert')).toBeInTheDocument()
-      expect(screen.getByText(/You've used 85% of your monthly pageviews/)).toBeInTheDocument()
+      expect(screen.getByText(/You've used 85% of your monthly events/)).toBeInTheDocument()
     })
 
     it('shows plan name in message', () => {
@@ -182,7 +182,7 @@ describe('UsageBanner', () => {
 
       render(<UsageBanner />)
 
-      expect(screen.getByText(/You've used 86% of your monthly pageviews/)).toBeInTheDocument()
+      expect(screen.getByText(/You've used 86% of your monthly events/)).toBeInTheDocument()
     })
   })
 
@@ -206,13 +206,14 @@ describe('UsageBanner', () => {
       render(<UsageBanner />)
 
       expect(screen.getByRole('alert')).toBeInTheDocument()
-      expect(screen.getByText(/Monthly pageview limit exceeded/)).toBeInTheDocument()
+      expect(screen.getByText(/Monthly event limit reached/)).toBeInTheDocument()
     })
 
-    it('shows data collection message', () => {
+    it('says new events are not recorded until reset or upgrade', () => {
       render(<UsageBanner />)
 
-      expect(screen.getByText(/Data is being collected but hidden until you upgrade/)).toBeInTheDocument()
+      // Matches track.js: over the limit, events are dropped (not stored and hidden).
+      expect(screen.getByText(/New events aren't recorded until your allowance resets next month, or until you upgrade/)).toBeInTheDocument()
     })
 
     it('shows Upgrade Now button', () => {
@@ -271,7 +272,7 @@ describe('UsageBanner', () => {
 
       render(<UsageBanner />)
 
-      expect(screen.getByText(/You've used 80% of your monthly pageviews/)).toBeInTheDocument()
+      expect(screen.getByText(/You've used 80% of your monthly events/)).toBeInTheDocument()
     })
 
     it('shows limit banner at exactly 100%', () => {
@@ -287,7 +288,7 @@ describe('UsageBanner', () => {
 
       render(<UsageBanner />)
 
-      expect(screen.getByText(/Monthly pageview limit exceeded/)).toBeInTheDocument()
+      expect(screen.getByText(/Monthly event limit reached/)).toBeInTheDocument()
     })
 
     it('shows limit banner when isWithinLimit is false even under 100%', () => {
@@ -303,7 +304,7 @@ describe('UsageBanner', () => {
 
       render(<UsageBanner />)
 
-      expect(screen.getByText(/Monthly pageview limit exceeded/)).toBeInTheDocument()
+      expect(screen.getByText(/Monthly event limit reached/)).toBeInTheDocument()
     })
 
     it('handles Free plan name', () => {
@@ -335,7 +336,7 @@ describe('UsageBanner', () => {
 
       render(<UsageBanner />)
 
-      expect(screen.getByText(/Your Enterprise plan limit has been reached/)).toBeInTheDocument()
+      expect(screen.getByText(/Your Enterprise plan's limit is reached/)).toBeInTheDocument()
     })
   })
 

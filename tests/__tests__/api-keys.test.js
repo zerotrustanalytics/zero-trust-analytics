@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -38,6 +42,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'testuser@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn(() => authResult)
 }));
 
@@ -78,13 +83,13 @@ describe('API Keys Endpoint', () => {
     it('should return list of API keys for user', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/keys',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -99,11 +104,11 @@ describe('API Keys Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/keys',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -115,7 +120,7 @@ describe('API Keys Endpoint', () => {
     it('should create a new API key', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -125,7 +130,7 @@ describe('API Keys Endpoint', () => {
           name: 'My New Key',
           permissions: ['read', 'write']
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -138,7 +143,7 @@ describe('API Keys Endpoint', () => {
     it('should filter invalid permissions', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -148,7 +153,7 @@ describe('API Keys Endpoint', () => {
           name: 'My Key',
           permissions: ['read', 'invalid_permission', 'write']
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -162,7 +167,7 @@ describe('API Keys Endpoint', () => {
     it('should default to read permission when no valid permissions provided', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -172,7 +177,7 @@ describe('API Keys Endpoint', () => {
           name: 'My Key',
           permissions: ['invalid_only']
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -184,7 +189,7 @@ describe('API Keys Endpoint', () => {
     it('should default to read permission when permissions not provided', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -193,7 +198,7 @@ describe('API Keys Endpoint', () => {
         json: async () => ({
           name: 'My Key'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -205,7 +210,7 @@ describe('API Keys Endpoint', () => {
     it('should accept admin permission', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -215,7 +220,7 @@ describe('API Keys Endpoint', () => {
           name: 'Admin Key',
           permissions: ['admin']
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -229,7 +234,7 @@ describe('API Keys Endpoint', () => {
     it('should update API key name', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -239,7 +244,7 @@ describe('API Keys Endpoint', () => {
           keyId: 'key_1',
           name: 'Updated Key Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -251,7 +256,7 @@ describe('API Keys Endpoint', () => {
     it('should return 400 when keyId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -260,7 +265,7 @@ describe('API Keys Endpoint', () => {
         json: async () => ({
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -272,7 +277,7 @@ describe('API Keys Endpoint', () => {
     it('should return 400 when name is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -281,7 +286,7 @@ describe('API Keys Endpoint', () => {
         json: async () => ({
           keyId: 'key_1'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -295,7 +300,7 @@ describe('API Keys Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/keys',
         headers: {
@@ -305,7 +310,7 @@ describe('API Keys Endpoint', () => {
           keyId: 'key_nonexistent',
           name: 'Updated Name'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -317,13 +322,13 @@ describe('API Keys Endpoint', () => {
     it('should revoke an API key', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/keys?keyId=key_1',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -335,13 +340,13 @@ describe('API Keys Endpoint', () => {
     it('should return 400 when keyId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/keys',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -355,13 +360,13 @@ describe('API Keys Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/keys?keyId=key_nonexistent',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -373,10 +378,10 @@ describe('API Keys Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -390,13 +395,13 @@ describe('API Keys Endpoint', () => {
     it('should reject unsupported methods', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         url: 'https://zta.io/api/keys',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -406,17 +411,19 @@ describe('API Keys Endpoint', () => {
     it('should return CORS headers', async () => {
       const { default: handler } = await import('../../netlify/functions/api-keys.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/keys',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      // Credentialed responses name the allowed origin (ALLOWED_ORIGINS; tests use
+      // http://localhost:3000). '*' is not allowed together with credentials.
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
     });
   });
 });

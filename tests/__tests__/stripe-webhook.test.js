@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -108,13 +109,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -147,13 +148,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -180,13 +181,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -214,13 +215,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -246,13 +247,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -281,13 +282,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -304,13 +305,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'invalid_sig' : null
         },
         text: async () => JSON.stringify({ type: 'test' })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -322,12 +323,12 @@ describe('Stripe Webhook Endpoint', () => {
     it('should reject non-POST requests', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: {
           get: (name) => null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -344,13 +345,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -373,13 +374,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -406,13 +407,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -438,13 +439,13 @@ describe('Stripe Webhook Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
         },
         text: async () => JSON.stringify(mockStripeEvent)
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -491,13 +492,13 @@ describe('Stripe Webhook Endpoint', () => {
 
         const { default: handler } = await import('../../netlify/functions/stripe-webhook.js');
 
-        const req = {
+        const req = toRequest({
           method: 'POST',
           headers: {
             get: (name) => name === 'stripe-signature' ? 'sig_test_123' : null
           },
           text: async () => JSON.stringify(mockStripeEvent)
-        };
+        });
 
         const response = await handler(req, {});
         expect(response.status).toBe(200);

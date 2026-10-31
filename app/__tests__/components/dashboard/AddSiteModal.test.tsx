@@ -1,400 +1,146 @@
-/**
- * AddSiteModal Component Tests
- * Tests for the add/edit site modal component
- */
-
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@/test/utils/test-utils'
-import { AddSiteModal } from '@/components/dashboard/AddSiteModal'
 import userEvent from '@testing-library/user-event'
+import { AddSiteModal } from '@/components/dashboard/AddSiteModal'
+
+// The modal creates the site itself (POST /api/sites/create with the gatekeep
+// token from the mocked useAuth in vitest.setup.tsx) and reports it via onSuccess.
+
+const mockFetch = vi.fn()
+const site = { id: 'site_abc123', domain: 'example.com', name: 'example.com' }
+const created = () => ({ ok: true, json: async () => ({ site }) })
 
 describe('AddSiteModal', () => {
-  const mockOnClose = vi.fn()
-  const mockOnSubmit = vi.fn()
+  const onClose = vi.fn()
+  const onSuccess = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal('fetch', mockFetch)
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
-  describe('Rendering', () => {
-    it('should render modal when open', () => {
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
+  const open = () => render(<AddSiteModal isOpen onClose={onClose} onSuccess={onSuccess} />)
+  const domainField = () => screen.getByLabelText('Domain')
+  const nameField = () => screen.getByLabelText('Site Name (optional)')
+  const submit = () => screen.getByRole('button', { name: 'Add Site' })
 
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
+  describe('rendering', () => {
+    it('renders a labelled dialog with both fields and both buttons', () => {
+      open()
+      expect(screen.getByRole('dialog', { name: 'Add New Site' })).toBeInTheDocument()
+      expect(domainField()).toBeInTheDocument()
+      expect(nameField()).toBeInTheDocument()
+      expect(submit()).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
     })
 
-    it('should not render modal when closed', () => {
-      render(<AddSiteModal isOpen={false} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
+    it('renders nothing when closed', () => {
+      render(<AddSiteModal isOpen={false} onClose={onClose} />)
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
+  })
 
-    it('should render modal title for new site', () => {
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      expect(screen.getByText(/add new site/i)).toBeInTheDocument()
+  describe('validation', () => {
+    it('requires a domain', async () => {
+      const user = userEvent.setup()
+      open()
+      await user.click(submit())
+      expect(screen.getByRole('alert')).toHaveTextContent('Domain is required')
+      expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('should render modal title for editing site', () => {
-      const site = {
-        id: 'site_123',
-        domain: 'example.com',
-        name: 'Example Site'
-      }
-
-      render(
-        <AddSiteModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onSubmit={mockOnSubmit}
-          site={site}
-        />
-      )
-
-      expect(screen.getByText(/edit site/i)).toBeInTheDocument()
-    })
-
-    it('should render domain input field', () => {
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      expect(screen.getByLabelText(/domain/i)).toBeInTheDocument()
-    })
-
-    it('should render name input field', () => {
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      expect(screen.getByLabelText(/site name/i)).toBeInTheDocument()
-    })
-
-    it('should render submit button', () => {
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      expect(screen.getByRole('button', { name: /add site/i })).toBeInTheDocument()
-    })
-
-    it('should render cancel button', () => {
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
-    })
-
-    it('should pre-fill form when editing', () => {
-      const site = {
-        id: 'site_123',
-        domain: 'example.com',
-        name: 'Example Site'
-      }
-
-      render(
-        <AddSiteModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onSubmit={mockOnSubmit}
-          site={site}
-        />
-      )
-
-      expect(screen.getByDisplayValue('example.com')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('Example Site')).toBeInTheDocument()
+    it('rejects something that is not a domain', async () => {
+      const user = userEvent.setup()
+      open()
+      await user.type(domainField(), 'not a domain')
+      await user.click(submit())
+      expect(screen.getByRole('alert')).toHaveTextContent('valid domain')
+      expect(mockFetch).not.toHaveBeenCalled()
     })
   })
 
-  describe('Form Validation', () => {
-    it('should show error when domain is empty', async () => {
+  describe('submitting', () => {
+    it('creates the site with the bearer token, cleaned domain and default name', async () => {
       const user = userEvent.setup()
+      mockFetch.mockResolvedValueOnce(created())
+      open()
+      await user.type(domainField(), 'https://example.com/pricing')
+      await user.click(submit())
 
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, 'My Site')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(screen.getByText(/domain is required/i)).toBeInTheDocument()
-      })
+      await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
+      const [url, init] = mockFetch.mock.calls[0]
+      expect(url).toMatch(/\/api\/sites\/create$/)
+      expect(init.method).toBe('POST')
+      expect(init.headers.Authorization).toBe('Bearer test-token')
+      expect(JSON.parse(init.body)).toEqual({ domain: 'example.com', name: 'example.com' })
     })
 
-    it('should show error when name is empty', async () => {
+    it('sends the name when one is given', async () => {
       const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(screen.getByText(/site name is required/i)).toBeInTheDocument()
-      })
+      mockFetch.mockResolvedValueOnce(created())
+      open()
+      await user.type(domainField(), 'example.com')
+      await user.type(nameField(), 'Marketing site')
+      await user.click(submit())
+      await waitFor(() => expect(mockFetch).toHaveBeenCalled())
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).name).toBe('Marketing site')
     })
 
-    it('should show error for invalid domain format', async () => {
+    it('reports the new site and closes on success', async () => {
       const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'invalid domain')
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, 'My Site')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(screen.getByText(/invalid domain/i)).toBeInTheDocument()
-      })
+      mockFetch.mockResolvedValueOnce(created())
+      open()
+      await user.type(domainField(), 'example.com')
+      await user.click(submit())
+      await waitFor(() => expect(onSuccess).toHaveBeenCalledWith(site))
+      expect(onClose).toHaveBeenCalled()
     })
 
-    it('should clear errors when input is corrected', async () => {
+    it('shows the server error and stays open', async () => {
       const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(screen.getByText(/domain is required/i)).toBeInTheDocument()
-      })
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      await waitFor(() => {
-        expect(screen.queryByText(/domain is required/i)).not.toBeInTheDocument()
-      })
+      mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({ error: 'Site already exists' }) })
+      open()
+      await user.type(domainField(), 'example.com')
+      await user.click(submit())
+      expect(await screen.findByRole('alert')).toHaveTextContent('Site already exists')
+      expect(onSuccess).not.toHaveBeenCalled()
+      expect(onClose).not.toHaveBeenCalled()
     })
 
-    it('should sanitize domain input', async () => {
+    it('disables the form while the request is in flight', async () => {
       const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'https://www.example.com/')
-
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('example.com')).toBeInTheDocument()
-      })
-    })
-
-    it('should trim whitespace from inputs', async () => {
-      const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, '  example.com  ')
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, '  My Site  ')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(mockOnSubmit).toHaveBeenCalledWith(
-          expect.objectContaining({
-            domain: 'example.com',
-            name: 'My Site'
-          })
-        )
-      })
+      let finish: (v: unknown) => void = () => {}
+      mockFetch.mockReturnValueOnce(new Promise((r) => { finish = r }))
+      open()
+      await user.type(domainField(), 'example.com')
+      await user.click(submit())
+      await waitFor(() => expect(submit()).toBeDisabled())
+      expect(domainField()).toBeDisabled()
+      finish(created())
+      await waitFor(() => expect(onSuccess).toHaveBeenCalled())
     })
   })
 
-  describe('Form Submission', () => {
-    it('should submit form with valid data', async () => {
+  describe('closing', () => {
+    it('closes from Cancel, Escape and the backdrop', async () => {
       const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, 'Example Site')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(mockOnSubmit).toHaveBeenCalledWith({
-          domain: 'example.com',
-          name: 'Example Site'
-        })
-      })
-    })
-
-    it('should show loading state during submission', async () => {
-      const user = userEvent.setup()
-      mockOnSubmit.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)))
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, 'Example Site')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      expect(screen.getByText(/adding/i)).toBeInTheDocument()
-      expect(submitButton).toBeDisabled()
-    })
-
-    it('should disable inputs during submission', async () => {
-      const user = userEvent.setup()
-      mockOnSubmit.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)))
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, 'Example Site')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      expect(domainInput).toBeDisabled()
-      expect(nameInput).toBeDisabled()
-    })
-
-    it('should handle submission error', async () => {
-      const user = userEvent.setup()
-      mockOnSubmit.mockRejectedValue(new Error('Failed to create site'))
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, 'Example Site')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(screen.getByText(/failed to create site/i)).toBeInTheDocument()
-      })
-    })
-
-    it('should close modal on successful submission', async () => {
-      const user = userEvent.setup()
-      mockOnSubmit.mockResolvedValue({ success: true })
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      const nameInput = screen.getByLabelText(/site name/i)
-      await user.type(nameInput, 'Example Site')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        expect(mockOnClose).toHaveBeenCalled()
-      })
-    })
-  })
-
-  describe('Modal Interactions', () => {
-    it('should close modal when cancel button is clicked', async () => {
-      const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const cancelButton = screen.getByRole('button', { name: /cancel/i })
-      await user.click(cancelButton)
-
-      expect(mockOnClose).toHaveBeenCalled()
-    })
-
-    it('should close modal when overlay is clicked', async () => {
-      const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const overlay = screen.getByTestId('modal-overlay')
-      await user.click(overlay)
-
-      expect(mockOnClose).toHaveBeenCalled()
-    })
-
-    it('should close modal when Escape key is pressed', async () => {
-      const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
+      open()
+      await user.click(screen.getByRole('button', { name: 'Cancel' }))
       await user.keyboard('{Escape}')
-
-      expect(mockOnClose).toHaveBeenCalled()
+      await user.click(screen.getByTestId('modal-overlay'))
+      expect(onClose).toHaveBeenCalledTimes(3)
     })
 
-    it('should reset form when closed', async () => {
+    it('clears what was typed when closed', async () => {
       const user = userEvent.setup()
-
-      const { rerender } = render(
-        <AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />
-      )
-
-      const domainInput = screen.getByLabelText(/domain/i)
-      await user.type(domainInput, 'example.com')
-
-      rerender(<AddSiteModal isOpen={false} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-      rerender(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      expect(screen.getByLabelText(/domain/i)).toHaveValue('')
-    })
-  })
-
-  describe('Accessibility', () => {
-    it('should trap focus within modal', async () => {
-      const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const cancelButton = screen.getByRole('button', { name: /cancel/i })
-      cancelButton.focus()
-
-      await user.keyboard('{Tab}')
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      expect(submitButton).toHaveFocus()
-    })
-
-    it('should have proper ARIA labels', () => {
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      expect(screen.getByRole('dialog')).toHaveAttribute('aria-labelledby')
-      expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
-    })
-
-    it('should announce errors to screen readers', async () => {
-      const user = userEvent.setup()
-
-      render(<AddSiteModal isOpen={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />)
-
-      const submitButton = screen.getByRole('button', { name: /add site/i })
-      await user.click(submitButton)
-
-      await waitFor(() => {
-        const errorMessage = screen.getByText(/domain is required/i)
-        expect(errorMessage).toHaveAttribute('role', 'alert')
-      })
+      const { rerender } = open()
+      await user.type(domainField(), 'example.com')
+      await user.click(screen.getByRole('button', { name: 'Cancel' }))
+      rerender(<AddSiteModal isOpen onClose={onClose} onSuccess={onSuccess} />)
+      expect(domainField()).toHaveValue('')
     })
   })
 })

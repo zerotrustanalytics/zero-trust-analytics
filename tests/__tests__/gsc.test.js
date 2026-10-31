@@ -3,6 +3,10 @@
  */
 
 import { jest } from '@jest/globals';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import * as realRateLimit from '../../netlify/functions/lib/rate-limit.js';
 
 // Mock dependencies before importing the handler
 jest.unstable_mockModule('@netlify/blobs', () => ({
@@ -15,8 +19,10 @@ jest.unstable_mockModule('@netlify/blobs', () => ({
 }));
 
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn((headers) => {
-    const auth = headers.get('authorization');
+    // Endpoints pass Object.fromEntries(req.headers); accept a Headers object too.
+    const auth = typeof headers.get === 'function' ? headers.get('authorization') : headers.authorization;
     if (!auth || !auth.startsWith('Bearer ')) {
       return { error: 'Unauthorized', status: 401 };
     }
@@ -29,7 +35,8 @@ jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
 }));
 
 jest.unstable_mockModule('../../netlify/functions/lib/rate-limit.js', () => ({
-  checkRateLimit: jest.fn(() => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
+  ...realRateLimit,
+  checkRateLimit: jest.fn(async () => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
   rateLimitResponse: jest.fn(),
   hashIP: jest.fn((ip) => `hashed_${ip}`)
 }));

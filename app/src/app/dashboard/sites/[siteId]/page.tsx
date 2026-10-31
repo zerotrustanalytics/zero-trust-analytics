@@ -791,17 +791,18 @@ export default function SiteDetailsPage() {
   })) || []
 
   // Calculate cumulative totals
-  let cumulativeVisitors = 0
-  let cumulativePageviews = 0
-  const chartData = dailyData.map(d => {
-    cumulativeVisitors += d.visitors
-    cumulativePageviews += d.pageviews
-    return {
-      ...d,
-      cumulativeVisitors,
-      cumulativePageviews,
-    }
-  })
+  const chartData = dailyData.reduce<(typeof dailyData[number] & { cumulativeVisitors: number; cumulativePageviews: number })[]>(
+    (rows, d) => {
+      const prev = rows[rows.length - 1]
+      rows.push({
+        ...d,
+        cumulativeVisitors: (prev?.cumulativeVisitors ?? 0) + d.visitors,
+        cumulativePageviews: (prev?.cumulativePageviews ?? 0) + d.pageviews,
+      })
+      return rows
+    },
+    []
+  )
 
   // Prepare traffic sources with Direct
   const totalReferrerVisitors = stats?.sources?.reduce((sum, s) => sum + s.visitors, 0) || 0

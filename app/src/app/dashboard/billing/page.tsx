@@ -133,7 +133,7 @@ export default function BillingPage() {
 
       const data = await res.json()
       if (data.url) {
-        window.location.href = data.url
+        window.location.assign(data.url)
       }
     } catch (error) {
       console.error('Checkout error:', error)
@@ -156,7 +156,7 @@ export default function BillingPage() {
 
       const data = await res.json()
       if (data.url) {
-        window.location.href = data.url
+        window.location.assign(data.url)
       }
     } catch (error) {
       console.error('Portal error:', error)

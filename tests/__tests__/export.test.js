@@ -1,5 +1,9 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import * as realTurso from '../../netlify/functions/lib/turso.js';
+import { createHeaders, toRequest } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -34,6 +38,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 
 // Mock auth module
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn((headers) => {
     const authHeader = headers.authorization || headers.Authorization;
     if (authHeader === 'Bearer valid_token') {
@@ -48,6 +53,7 @@ jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
 
 // Mock turso database module
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
+  ...realTurso,
   exportData: jest.fn((siteId, startStr, endStr, dataType, limit) => {
     if (dataType === 'pageviews') {
       return Promise.resolve([
@@ -126,11 +132,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -147,11 +153,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123&type=pageviews');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -166,11 +172,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123&type=events');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -185,11 +191,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123&format=csv');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const text = await response.text();
@@ -205,11 +211,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123&format=csv&type=pageviews');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const text = await response.text();
@@ -224,11 +230,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123&format=csv&type=events');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const text = await response.text();
@@ -243,11 +249,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123&format=csv');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -260,11 +266,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -278,11 +284,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -294,11 +300,11 @@ describe('Export Endpoint', () => {
 
       const url = new URL('https://example.com/api/export?siteId=site_test123');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer other_user_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -315,11 +321,11 @@ describe('Export Endpoint', () => {
       for (const period of periods) {
         const url = new URL(`https://example.com/api/export?siteId=site_test123&period=${period}`);
 
-        const req = {
+        const req = toRequest({
           method: 'GET',
           headers: createHeaders({ authorization: 'Bearer valid_token' }),
           url: url.toString()
-        };
+        });
 
         const response = await handler(req, {});
         const data = await response.json();
@@ -332,10 +338,10 @@ describe('Export Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/export.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -346,11 +352,11 @@ describe('Export Endpoint', () => {
     it('should reject non-GET requests', async () => {
       const { default: handler } = await import('../../netlify/functions/export.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
 

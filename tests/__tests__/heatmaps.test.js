@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -51,6 +52,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 const { __clearAllStores, getStore } = await import('@netlify/blobs');
 
 describe('Heatmaps Endpoint', () => {
@@ -85,11 +96,11 @@ describe('Heatmaps Endpoint', () => {
     it('should handle CORS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({}),
         url: 'https://example.com/api/heatmaps'
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -108,7 +119,7 @@ describe('Heatmaps Endpoint', () => {
     it('should reject requests without authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({}),
         url: 'https://example.com/api/heatmaps',
@@ -123,7 +134,7 @@ describe('Heatmaps Endpoint', () => {
             viewportHeight: 1080
           }
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -133,7 +144,7 @@ describe('Heatmaps Endpoint', () => {
     it('should record click data successfully', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps',
@@ -149,7 +160,7 @@ describe('Heatmaps Endpoint', () => {
             viewportHeight: 1080
           }
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -175,7 +186,7 @@ describe('Heatmaps Endpoint', () => {
     it('should record scroll data successfully', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps',
@@ -188,7 +199,7 @@ describe('Heatmaps Endpoint', () => {
             foldPosition: 70
           }
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -211,7 +222,7 @@ describe('Heatmaps Endpoint', () => {
     it('should reject requests with missing required fields', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps',
@@ -220,7 +231,7 @@ describe('Heatmaps Endpoint', () => {
           type: 'click'
           // Missing 'data' field
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -232,7 +243,7 @@ describe('Heatmaps Endpoint', () => {
     it('should reject invalid heatmap type', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps',
@@ -241,7 +252,7 @@ describe('Heatmaps Endpoint', () => {
           type: 'invalid_type',
           data: { path: '/' }
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -253,7 +264,7 @@ describe('Heatmaps Endpoint', () => {
     it('should validate site ownership', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps',
@@ -268,7 +279,7 @@ describe('Heatmaps Endpoint', () => {
             viewportHeight: 1080
           }
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -283,7 +294,7 @@ describe('Heatmaps Endpoint', () => {
       const headers = createHeaders({ authorization: 'Bearer valid_token' });
 
       // Record first click
-      await handler({
+      await handler(toRequest({
         method: 'POST',
         headers,
         url: 'https://example.com/api/heatmaps',
@@ -298,10 +309,10 @@ describe('Heatmaps Endpoint', () => {
             viewportHeight: 1080
           }
         })
-      }, {});
+      }), {});
 
       // Record second click
-      await handler({
+      await handler(toRequest({
         method: 'POST',
         headers,
         url: 'https://example.com/api/heatmaps',
@@ -316,7 +327,7 @@ describe('Heatmaps Endpoint', () => {
             viewportHeight: 768
           }
         })
-      }, {});
+      }), {});
 
       // Verify aggregated data
       const heatmapsStore = getStore({ name: 'heatmaps' });
@@ -366,11 +377,11 @@ describe('Heatmaps Endpoint', () => {
     it('should reject requests without authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: 'https://example.com/api/heatmaps?siteId=site_123'
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -380,11 +391,11 @@ describe('Heatmaps Endpoint', () => {
     it('should require siteId parameter', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -396,11 +407,11 @@ describe('Heatmaps Endpoint', () => {
     it('should validate site ownership for GET requests', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps?siteId=unauthorized_site'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -412,11 +423,11 @@ describe('Heatmaps Endpoint', () => {
     it('should get list of pages with heatmap data', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps?siteId=site_123&type=pages'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -430,11 +441,11 @@ describe('Heatmaps Endpoint', () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
       const today = new Date().toISOString().split('T')[0];
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: `https://example.com/api/heatmaps?siteId=site_123&type=clicks&path=/&startDate=${today}&endDate=${today}`
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -452,11 +463,11 @@ describe('Heatmaps Endpoint', () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
       const today = new Date().toISOString().split('T')[0];
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: `https://example.com/api/heatmaps?siteId=site_123&type=scroll&path=/&startDate=${today}&endDate=${today}`
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -472,11 +483,11 @@ describe('Heatmaps Endpoint', () => {
     it('should require path parameter for click heatmaps', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps?siteId=site_123&type=clicks'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -488,11 +499,11 @@ describe('Heatmaps Endpoint', () => {
     it('should require path parameter for scroll heatmaps', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps?siteId=site_123&type=scroll'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -510,11 +521,11 @@ describe('Heatmaps Endpoint', () => {
       const startDate = pastDate.toISOString().split('T')[0];
       const endDate = pastDate.toISOString().split('T')[0];
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: `https://example.com/api/heatmaps?siteId=site_123&type=clicks&path=/&startDate=${startDate}&endDate=${endDate}`
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -555,11 +566,11 @@ describe('Heatmaps Endpoint', () => {
         viewport: { '1366x768': 1 }
       });
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: `https://example.com/api/heatmaps?siteId=site_123&type=clicks&path=/test&startDate=${yesterdayStr}&endDate=${todayStr}`
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -576,11 +587,11 @@ describe('Heatmaps Endpoint', () => {
     it('should reject unsupported HTTP methods', async () => {
       const { default: handler } = await import('../../netlify/functions/heatmaps.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/heatmaps'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();

@@ -68,13 +68,13 @@ export function UsageBanner() {
           <p className={`text-sm font-medium ${styles.text}`}>
             {isWarning
               ? `You've used ${Math.round(percentUsed)}% of your monthly events (pageviews + custom events)`
-              : `Monthly pageview limit exceeded (${currentPageviews.toLocaleString()} / ${pageviewLimit.toLocaleString()})`
+              : `Monthly event limit reached (${currentPageviews.toLocaleString()} / ${pageviewLimit.toLocaleString()})`
             }
           </p>
           <p className={`text-sm ${styles.text} opacity-80 mt-1`}>
             {isWarning
               ? `Your ${planName} plan is approaching its limit. Upgrade to avoid interruption.`
-              : `Your ${planName} plan limit has been reached across all sites. Analytics data is frozen until you upgrade.`
+              : `Your ${planName} plan's limit is reached across all sites. New events aren't recorded until your allowance resets next month, or until you upgrade. Your existing data is safe.`
             }
           </p>
         </div>

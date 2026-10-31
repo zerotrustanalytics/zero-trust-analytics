@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -55,6 +56,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 const { __clearAllStores } = await import('@netlify/blobs');
 
 describe('Alerts API', () => {
@@ -93,11 +104,11 @@ describe('Alerts API', () => {
     it('should list alerts for a site', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/alerts?siteId=site-1',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -111,11 +122,11 @@ describe('Alerts API', () => {
     it('should return 400 if siteId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -127,11 +138,11 @@ describe('Alerts API', () => {
     it('should return 403 if user does not own the site', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/alerts?siteId=site-999',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -143,11 +154,11 @@ describe('Alerts API', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'http://localhost/api/alerts?siteId=site-1',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       expect(response.status).toBe(401);
@@ -158,7 +169,7 @@ describe('Alerts API', () => {
     it('should create a traffic spike alert', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -172,7 +183,7 @@ describe('Alerts API', () => {
           notifyEmail: true,
           notifyWebhook: false
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -187,7 +198,7 @@ describe('Alerts API', () => {
     it('should create an anomaly detection alert', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -201,7 +212,7 @@ describe('Alerts API', () => {
           notifyEmail: true,
           notifyWebhook: true
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -215,7 +226,7 @@ describe('Alerts API', () => {
     it('should create a comparison alert', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -228,7 +239,7 @@ describe('Alerts API', () => {
           cooldown: 120,
           notifyEmail: true
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -241,7 +252,7 @@ describe('Alerts API', () => {
     it('should require siteId', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -249,7 +260,7 @@ describe('Alerts API', () => {
           name: 'Alert',
           type: 'traffic_spike'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -262,7 +273,7 @@ describe('Alerts API', () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
       // Test with threshold below minimum
-      const req1 = {
+      const req1 = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -270,7 +281,7 @@ describe('Alerts API', () => {
           siteId: 'site-1',
           threshold: 10
         })
-      };
+      });
 
       const response1 = await handler(req1, { ip: '127.0.0.1' });
       const data1 = await response1.json();
@@ -279,7 +290,7 @@ describe('Alerts API', () => {
       expect(data1.alert.threshold).toBe(50); // Should be clamped to minimum
 
       // Test with threshold above maximum
-      const req2 = {
+      const req2 = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -287,7 +298,7 @@ describe('Alerts API', () => {
           siteId: 'site-1',
           threshold: 5000
         })
-      };
+      });
 
       const response2 = await handler(req2, { ip: '127.0.0.1' });
       const data2 = await response2.json();
@@ -300,7 +311,7 @@ describe('Alerts API', () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
       // Test with timeWindow below minimum
-      const req1 = {
+      const req1 = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -308,7 +319,7 @@ describe('Alerts API', () => {
           siteId: 'site-1',
           timeWindow: 5
         })
-      };
+      });
 
       const response1 = await handler(req1, { ip: '127.0.0.1' });
       const data1 = await response1.json();
@@ -317,7 +328,7 @@ describe('Alerts API', () => {
       expect(data1.alert.timeWindow).toBe(15); // Should be clamped to minimum
 
       // Test with timeWindow above maximum
-      const req2 = {
+      const req2 = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -325,7 +336,7 @@ describe('Alerts API', () => {
           siteId: 'site-1',
           timeWindow: 3000
         })
-      };
+      });
 
       const response2 = await handler(req2, { ip: '127.0.0.1' });
       const data2 = await response2.json();
@@ -337,7 +348,7 @@ describe('Alerts API', () => {
     it('should validate notification channels', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -346,7 +357,7 @@ describe('Alerts API', () => {
           notifyEmail: true,
           notifyWebhook: true
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -359,14 +370,14 @@ describe('Alerts API', () => {
     it('should default notifyEmail to true if not specified', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
         json: async () => ({
           siteId: 'site-1'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -378,14 +389,14 @@ describe('Alerts API', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders({}),
         json: async () => ({
           siteId: 'site-1'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       expect(response.status).toBe(401);
@@ -394,14 +405,14 @@ describe('Alerts API', () => {
     it('should reject if user does not own the site', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
         json: async () => ({
           siteId: 'site-999'
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -488,14 +499,14 @@ describe('Alerts API', () => {
     it('should require alertId', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
         json: async () => ({
           enabled: false
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -507,7 +518,7 @@ describe('Alerts API', () => {
     it('should return 404 for non-existent alert', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders),
@@ -515,7 +526,7 @@ describe('Alerts API', () => {
           alertId: 'non-existent-alert',
           enabled: false
         })
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -560,11 +571,11 @@ describe('Alerts API', () => {
     it('should require alertId', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -576,11 +587,11 @@ describe('Alerts API', () => {
     it('should return 404 for non-existent alert', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'http://localhost/api/alerts?alertId=non-existent-alert',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();
@@ -594,11 +605,11 @@ describe('Alerts API', () => {
     it('should handle OPTIONS request', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         url: 'http://localhost/api/alerts',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
 
@@ -610,11 +621,11 @@ describe('Alerts API', () => {
     it('should reject PUT requests', async () => {
       const { default: handler } = await import('../../netlify/functions/alerts.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         url: 'http://localhost/api/alerts',
         headers: createHeaders(validAuthHeaders)
-      };
+      });
 
       const response = await handler(req, { ip: '127.0.0.1' });
       const data = await response.json();

@@ -441,7 +441,7 @@ Content-Type: application/json
 
 ```
 GET /api/stats?siteId=site_abc123&period=7d
-Authorization: Bearer YOUR_JWT_TOKEN
+Authorization: Bearer YOUR_GATEKEEP_TOKEN
 ```
 
 **Response:**
@@ -469,42 +469,14 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 ### Authentication
 
-**Register:**
+Accounts sign in with a passkey through [gatekeep](https://gatekeepauth.com); there is no password login in the API. Programs use an **API key** (dashboard → API Keys) as a Bearer token with the Stats API:
 
 ```
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securepassword123"
-}
+GET /api/stats-api?site_id=site_abc123&period=7d
+Authorization: Bearer zta_live_your_key_here
 ```
 
-**Login:**
-
-```
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securepassword123"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": "user_123",
-    "email": "user@example.com"
-  }
-}
-```
+The other endpoints below are the ones the dashboard calls with the signed-in user's gatekeep token.
 
 ### Sites
 
@@ -512,7 +484,7 @@ Content-Type: application/json
 
 ```
 POST /api/sites/create
-Authorization: Bearer YOUR_JWT_TOKEN
+Authorization: Bearer YOUR_GATEKEEP_TOKEN
 Content-Type: application/json
 
 {
@@ -524,7 +496,7 @@ Content-Type: application/json
 
 ```
 GET /api/sites/list
-Authorization: Bearer YOUR_JWT_TOKEN
+Authorization: Bearer YOUR_GATEKEEP_TOKEN
 ```
 
 ---

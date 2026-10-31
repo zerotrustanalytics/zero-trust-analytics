@@ -29,6 +29,8 @@ export default function RealtimePage() {
   const [sites, setSites] = useState<Site[]>([])
   const [selectedSiteId, setSelectedSiteId] = useState<string>('')
   const [data, setData] = useState<RealtimeData | null>(null)
+  // When the data was fetched; "3m ago" is measured from here, not from Date.now() during render.
+  const [fetchedAt, setFetchedAt] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -89,6 +91,7 @@ export default function RealtimePage() {
       }
 
       const result = await res.json()
+      setFetchedAt(Date.now())
       setData(result)
       setError('')
     } catch {
@@ -119,7 +122,7 @@ export default function RealtimePage() {
     const utcTimestamp = timestamp.includes('Z') || timestamp.includes('+')
       ? timestamp
       : timestamp.replace(' ', 'T') + 'Z'
-    const seconds = Math.floor((Date.now() - new Date(utcTimestamp).getTime()) / 1000)
+    const seconds = Math.floor((fetchedAt - new Date(utcTimestamp).getTime()) / 1000)
 
     if (seconds < 0) return 'just now' // Handle any edge cases
     if (seconds < 60) return `${seconds}s ago`

@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -38,6 +42,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'testuser@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn(() => authResult)
 }));
 
@@ -67,11 +72,13 @@ let mockStatus = {
 
 jest.unstable_mockModule('../../netlify/functions/lib/storage.js', () => ({
   getUser: jest.fn(() => Promise.resolve(mockUser)),
+  // The endpoint looks the caller up by id (gatekeep tokens resolve to an id).
+  getUserById: jest.fn(() => Promise.resolve(mockUser)),
   getUserStatus: jest.fn(() => mockStatus)
 }));
 
 const { __clearAllStores } = await import('@netlify/blobs');
-const { getUser, getUserStatus } = await import('../../netlify/functions/lib/storage.js');
+const { getUser, getUserById, getUserStatus } = await import('../../netlify/functions/lib/storage.js');
 
 describe('User Status Endpoint', () => {
   beforeEach(async () => {
@@ -101,13 +108,13 @@ describe('User Status Endpoint', () => {
     it('should return user status for authenticated user', async () => {
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -123,13 +130,13 @@ describe('User Status Endpoint', () => {
     it('should include subscription info for subscribed users', async () => {
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -153,13 +160,13 @@ describe('User Status Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -181,13 +188,13 @@ describe('User Status Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -209,13 +216,13 @@ describe('User Status Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -225,17 +232,17 @@ describe('User Status Endpoint', () => {
     });
 
     it('should return 404 when user not found', async () => {
-      getUser.mockResolvedValueOnce(null);
+      getUserById.mockResolvedValueOnce(null);
 
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -249,11 +256,11 @@ describe('User Status Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -265,10 +272,10 @@ describe('User Status Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -279,13 +286,13 @@ describe('User Status Endpoint', () => {
     it('should reject non-GET requests', async () => {
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -295,17 +302,19 @@ describe('User Status Endpoint', () => {
     it('should return CORS headers', async () => {
       const { default: handler } = await import('../../netlify/functions/user-status.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/user/status',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      // Credentialed responses name the allowed origin (ALLOWED_ORIGINS; tests use
+      // http://localhost:3000). '*' is not allowed together with credentials.
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
     });
   });
 });

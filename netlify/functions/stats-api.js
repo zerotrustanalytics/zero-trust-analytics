@@ -326,7 +326,9 @@ export default async function handler(req, context) {
 
     // Rate limiting by API key
     const identifier = `api_${validatedKey.id}`;
-    const rateLimitResult = checkRateLimit(identifier, {
+    // checkRateLimit is async: without await, .allowed was undefined and every
+    // request was answered 429.
+    const rateLimitResult = await checkRateLimit(identifier, {
       limit: RATE_LIMIT,
       windowMs: RATE_LIMIT_WINDOW
     });

@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -44,6 +45,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 const { __clearAllStores, getStore } = await import('@netlify/blobs');
 
 describe('Sites Endpoints', () => {
@@ -66,13 +77,13 @@ describe('Sites Endpoints', () => {
     it('should create a new site', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           domain: 'mynewsite.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -86,13 +97,13 @@ describe('Sites Endpoints', () => {
     it('should reject requests without auth', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({}),
         json: async () => ({
           domain: 'example.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -102,29 +113,29 @@ describe('Sites Endpoints', () => {
     it('should reject requests without domain', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toContain('Domain');
+      expect(data.error).toMatch(/domain is required/i);
     });
 
     it('should normalize domain (remove protocol, trailing slash)', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-create.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         json: async () => ({
           domain: 'https://example.com/'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -138,10 +149,10 @@ describe('Sites Endpoints', () => {
     it('should return empty array for user with no sites', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-list.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -157,22 +168,22 @@ describe('Sites Endpoints', () => {
 
       const headers = createHeaders({ authorization: 'Bearer valid_token' });
 
-      await createHandler({
+      await createHandler(toRequest({
         method: 'POST',
         headers,
         json: async () => ({ domain: 'site1.com' })
-      }, {});
+      }), {});
 
-      await createHandler({
+      await createHandler(toRequest({
         method: 'POST',
         headers,
         json: async () => ({ domain: 'site2.com' })
-      }, {});
+      }), {});
 
-      const response = await listHandler({
+      const response = await listHandler(toRequest({
         method: 'GET',
         headers
-      }, {});
+      }), {});
 
       const data = await response.json();
 
@@ -183,10 +194,10 @@ describe('Sites Endpoints', () => {
     it('should reject requests without auth', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-list.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, {});
 

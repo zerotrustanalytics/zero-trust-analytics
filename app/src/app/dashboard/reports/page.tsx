@@ -183,7 +183,7 @@ export default function ReportsPage() {
 
     // Calculate next send date
     const now = new Date()
-    let nextSend = new Date()
+    const nextSend = new Date()
     switch (newReport.frequency) {
       case 'daily':
         nextSend.setDate(now.getDate() + 1)

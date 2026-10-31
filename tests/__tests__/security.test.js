@@ -97,185 +97,6 @@ describe('Security Features', () => {
     });
   });
 
-  describe('JWT Algorithm Enforcement', () => {
-    it('should only use HS256 algorithm for JWT signing', async () => {
-      const { createToken } = await import('../../netlify/functions/lib/auth.js');
-      const jwt = (await import('jsonwebtoken')).default;
-
-      const payload = { email: 'test@example.com', id: 'user-123' };
-      const token = createToken(payload);
-
-      // Decode without verification to check header
-      const decoded = jwt.decode(token, { complete: true });
-      expect(decoded.header.alg).toBe('HS256');
-    });
-
-    it('should reject tokens with "none" algorithm', async () => {
-      const { verifyToken } = await import('../../netlify/functions/lib/auth.js');
-      const jwt = (await import('jsonwebtoken')).default;
-
-      // Create a token with "none" algorithm (security vulnerability attempt)
-      const noneAlgToken = jwt.sign(
-        { email: 'attacker@example.com' },
-        '',
-        { algorithm: 'none' }
-      );
-
-      const result = verifyToken(noneAlgToken);
-      expect(result).toBeNull(); // Should reject tokens with "none" algorithm
-    });
-
-    it('should enforce algorithm in verification', async () => {
-      const { verifyToken } = await import('../../netlify/functions/lib/auth.js');
-
-      // Valid token with correct algorithm
-      const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.invalid';
-
-      // This should fail because signature is invalid
-      const result = verifyToken(validToken);
-      expect(result).toBeNull();
-    });
-
-    it('should require JWT_SECRET for token operations', async () => {
-      // Note: In the current test environment, JWT_SECRET is set in jest.setup.js
-      // This test validates that the functions check for JWT_SECRET
-      const { createToken, verifyToken } = await import('../../netlify/functions/lib/auth.js');
-
-      // With JWT_SECRET present, operations should work
-      const token = createToken({ email: 'test@example.com' });
-      expect(token).toBeDefined();
-
-      const decoded = verifyToken(token);
-      expect(decoded).toBeDefined();
-      expect(decoded.email).toBe('test@example.com');
-    });
-
-    it('should detect expired tokens', async () => {
-      const { verifyToken } = await import('../../netlify/functions/lib/auth.js');
-      const jwt = (await import('jsonwebtoken')).default;
-
-      // Create an expired token
-      const expiredToken = jwt.sign(
-        { email: 'test@example.com' },
-        process.env.JWT_SECRET,
-        { expiresIn: '-1h', algorithm: 'HS256' }
-      );
-
-      const result = verifyToken(expiredToken);
-
-      // The verifyToken function returns an object with expired: true when token is expired
-      if (result && result.expired) {
-        expect(result.expired).toBe(true);
-        expect(result.expiredAt).toBeDefined();
-      } else {
-        // If using mocked jwt, it might return null
-        expect(result).toBeNull();
-      }
-    });
-
-    it('should extract token from Authorization header correctly', async () => {
-      const { getTokenFromHeader } = await import('../../netlify/functions/lib/auth.js');
-
-      // Valid Bearer token
-      const headers1 = { authorization: 'Bearer valid-token-123' };
-      expect(getTokenFromHeader(headers1)).toBe('valid-token-123');
-
-      // Case insensitive
-      const headers2 = { Authorization: 'Bearer another-token' };
-      expect(getTokenFromHeader(headers2)).toBe('another-token');
-
-      // Missing Bearer prefix
-      const headers3 = { authorization: 'valid-token-123' };
-      expect(getTokenFromHeader(headers3)).toBeNull();
-
-      // Wrong prefix
-      const headers4 = { authorization: 'Basic dXNlcjpwYXNz' };
-      expect(getTokenFromHeader(headers4)).toBeNull();
-
-      // No authorization header
-      const headers5 = {};
-      expect(getTokenFromHeader(headers5)).toBeNull();
-
-      // Malformed header
-      const headers6 = { authorization: 'Bearer' };
-      expect(getTokenFromHeader(headers6)).toBeNull();
-
-      // Multiple parts (should be rejected)
-      const headers7 = { authorization: 'Bearer token extra-part' };
-      expect(getTokenFromHeader(headers7)).toBeNull();
-    });
-  });
-
-  describe('Password Strength Validation', () => {
-    it('should hash passwords with bcrypt', async () => {
-      const { hashPassword, verifyPassword } = await import('../../netlify/functions/lib/auth.js');
-
-      const password = 'SecurePassword123!';
-      const hash = await hashPassword(password);
-
-      expect(hash).toBeDefined();
-      expect(hash).not.toBe(password);
-      expect(hash.length).toBeGreaterThan(50); // bcrypt hashes are long
-
-      // Verify correct password
-      const isValid = await verifyPassword(password, hash);
-      expect(isValid).toBe(true);
-
-      // Verify wrong password
-      const isInvalid = await verifyPassword('WrongPassword', hash);
-      expect(isInvalid).toBe(false);
-    });
-
-    it('should reject weak passwords during registration', async () => {
-      // This test would check password strength validation in auth-register
-      // Note: Implementation may vary based on actual password validation rules
-      const weakPasswords = [
-        '123',           // Too short
-        'password',      // Common password
-        'abc123',        // Too simple
-        '1234567'        // Only numbers
-      ];
-
-      // This validates the concept - actual implementation would test the registration endpoint
-      for (const password of weakPasswords) {
-        expect(password.length).toBeLessThanOrEqual(8);
-      }
-    });
-
-    it('should accept strong passwords', async () => {
-      const { hashPassword } = await import('../../netlify/functions/lib/auth.js');
-
-      const strongPasswords = [
-        'MySecureP@ssw0rd',
-        'Tr0ng!P@ssword123',
-        'C0mpl3x&Secure!Pass',
-        'S3cur3P@ssw0rd!2024'
-      ];
-
-      for (const password of strongPasswords) {
-        const hash = await hashPassword(password);
-        expect(hash).toBeDefined();
-        expect(hash.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('should use proper bcrypt salt rounds', async () => {
-      const { hashPassword } = await import('../../netlify/functions/lib/auth.js');
-      const bcrypt = (await import('bcryptjs')).default;
-
-      const password = 'TestPassword123';
-      const hash = await hashPassword(password);
-
-      // bcrypt hashes start with $2a$ or $2b$ followed by cost factor
-      expect(hash).toMatch(/^\$2[ab]\$/);
-
-      // Extract cost factor (should be 10 based on implementation)
-      const costMatch = hash.match(/^\$2[ab]\$(\d+)\$/);
-      expect(costMatch).toBeTruthy();
-      expect(parseInt(costMatch[1])).toBe(10);
-    });
-  });
-
   describe('Rate Limiting Behavior', () => {
     beforeEach(async () => {
       // Clear rate limit store before each test
@@ -291,7 +112,7 @@ describe('Security Features', () => {
 
       // First 10 requests should be allowed
       for (let i = 0; i < 10; i++) {
-        const result = checkRateLimit(identifier, options);
+        const result = await checkRateLimit(identifier, options);
         expect(result.allowed).toBe(true);
         expect(result.remaining).toBe(10 - i - 1);
       }
@@ -305,11 +126,11 @@ describe('Security Features', () => {
 
       // Use up the rate limit
       for (let i = 0; i < 5; i++) {
-        checkRateLimit(identifier, options);
+        await checkRateLimit(identifier, options);
       }
 
       // 6th request should be blocked
-      const result = checkRateLimit(identifier, options);
+      const result = await checkRateLimit(identifier, options);
       expect(result.allowed).toBe(false);
       expect(result.remaining).toBe(0);
       expect(result.retryAfter).toBeGreaterThan(0);
@@ -323,18 +144,18 @@ describe('Security Features', () => {
 
       // Use up the rate limit
       for (let i = 0; i < 3; i++) {
-        checkRateLimit(identifier, options);
+        await checkRateLimit(identifier, options);
       }
 
       // Should be blocked
-      let result = checkRateLimit(identifier, options);
+      let result = await checkRateLimit(identifier, options);
       expect(result.allowed).toBe(false);
 
       // Wait for window to expire
       await new Promise(resolve => setTimeout(resolve, 150));
 
       // Should be allowed again
-      result = checkRateLimit(identifier, options);
+      result = await checkRateLimit(identifier, options);
       expect(result.allowed).toBe(true);
     });
 
@@ -344,15 +165,15 @@ describe('Security Features', () => {
       const options = { limit: 2, windowMs: 60000 };
 
       // Use up limit for identifier1
-      checkRateLimit('identifier1', options);
-      checkRateLimit('identifier1', options);
+      await checkRateLimit('identifier1', options);
+      await checkRateLimit('identifier1', options);
 
       // identifier1 should be blocked
-      let result1 = checkRateLimit('identifier1', options);
+      let result1 = await checkRateLimit('identifier1', options);
       expect(result1.allowed).toBe(false);
 
       // identifier2 should still be allowed
-      let result2 = checkRateLimit('identifier2', options);
+      let result2 = await checkRateLimit('identifier2', options);
       expect(result2.allowed).toBe(true);
     });
 
@@ -361,7 +182,7 @@ describe('Security Features', () => {
 
       const identifier = 'test-ip-4';
       const limit = 100;
-      const result = checkRateLimit(identifier, { limit, windowMs: 60000 });
+      const result = await checkRateLimit(identifier, { limit, windowMs: 60000 });
 
       const headers = rateLimitHeaders(result, limit);
 
@@ -377,8 +198,8 @@ describe('Security Features', () => {
       const options = { limit: 1, windowMs: 60000 };
 
       // Use up limit
-      checkRateLimit(identifier, options);
-      const result = checkRateLimit(identifier, options);
+      await checkRateLimit(identifier, options);
+      const result = await checkRateLimit(identifier, options);
 
       const response = rateLimitResponse(result);
       const data = await response.json();
@@ -420,7 +241,7 @@ describe('Security Features', () => {
       const identifier = 'test-ip-6';
 
       // Call without options to use defaults
-      const result = checkRateLimit(identifier);
+      const result = await checkRateLimit(identifier);
 
       expect(result.allowed).toBe(true);
       // Default limit is 100
@@ -471,60 +292,4 @@ describe('Security Features', () => {
     });
   });
 
-  describe('Authentication Request Middleware', () => {
-    it('should authenticate valid requests', async () => {
-      const { authenticateRequest, createToken } = await import('../../netlify/functions/lib/auth.js');
-
-      const token = createToken({ email: 'test@example.com', id: 'user-123' });
-      const headers = { authorization: `Bearer ${token}` };
-
-      const result = authenticateRequest(headers);
-
-      expect(result.error).toBeUndefined();
-      expect(result.user).toBeDefined();
-      expect(result.user.email).toBe('test@example.com');
-    });
-
-    it('should reject requests without token', async () => {
-      const { authenticateRequest } = await import('../../netlify/functions/lib/auth.js');
-
-      const headers = {};
-      const result = authenticateRequest(headers);
-
-      expect(result.error).toBe('No token provided');
-      expect(result.status).toBe(401);
-    });
-
-    it('should reject requests with invalid token', async () => {
-      const { authenticateRequest } = await import('../../netlify/functions/lib/auth.js');
-
-      const headers = { authorization: 'Bearer invalid-token-xyz' };
-      const result = authenticateRequest(headers);
-
-      expect(result.error).toBe('Invalid token');
-      expect(result.status).toBe(401);
-    });
-
-    it('should detect expired tokens in auth middleware', async () => {
-      const { authenticateRequest } = await import('../../netlify/functions/lib/auth.js');
-      const jwt = (await import('jsonwebtoken')).default;
-
-      const expiredToken = jwt.sign(
-        { email: 'test@example.com' },
-        process.env.JWT_SECRET,
-        { expiresIn: '-1h', algorithm: 'HS256' }
-      );
-
-      const headers = { authorization: `Bearer ${expiredToken}` };
-      const result = authenticateRequest(headers);
-
-      // Should return an error
-      expect(result.error).toBeDefined();
-      expect(result.status).toBe(401);
-
-      // Check for either expired or invalid token error
-      const isExpiredOrInvalid = result.error.includes('expired') || result.error.includes('Invalid');
-      expect(isExpiredOrInvalid).toBe(true);
-    });
-  });
 });

@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -38,6 +42,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'invitee@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn(() => authResult)
 }));
 
@@ -81,11 +86,11 @@ describe('Invite Endpoint', () => {
     it('should return invite details for valid token', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/invite?token=valid_token',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -101,11 +106,11 @@ describe('Invite Endpoint', () => {
     it('should return 400 when token is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/invite',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -119,11 +124,11 @@ describe('Invite Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/invite?token=invalid_token',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -137,7 +142,7 @@ describe('Invite Endpoint', () => {
     it('should accept invite successfully', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/invite',
         headers: {
@@ -147,7 +152,7 @@ describe('Invite Endpoint', () => {
           token: 'invite_token',
           action: 'accept'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -161,7 +166,7 @@ describe('Invite Endpoint', () => {
     it('should accept invite when action is not specified (default)', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/invite',
         headers: {
@@ -170,7 +175,7 @@ describe('Invite Endpoint', () => {
         json: async () => ({
           token: 'invite_token'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -183,14 +188,14 @@ describe('Invite Endpoint', () => {
     it('should return 400 when token is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/invite',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         },
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -204,7 +209,7 @@ describe('Invite Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/invite',
         headers: {
@@ -214,7 +219,7 @@ describe('Invite Endpoint', () => {
           token: 'invite_token',
           action: 'accept'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -228,7 +233,7 @@ describe('Invite Endpoint', () => {
     it('should decline invite successfully', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/invite',
         headers: {
@@ -238,7 +243,7 @@ describe('Invite Endpoint', () => {
           token: 'invite_token',
           action: 'decline'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -253,7 +258,7 @@ describe('Invite Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/invite',
         headers: {
@@ -263,7 +268,7 @@ describe('Invite Endpoint', () => {
           token: 'invite_token',
           action: 'decline'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -279,12 +284,12 @@ describe('Invite Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/invite',
         headers: { get: () => null },
         json: async () => ({ token: 'invite_token' })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -294,10 +299,10 @@ describe('Invite Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -309,11 +314,11 @@ describe('Invite Endpoint', () => {
     it('should reject unsupported methods', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/invite',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -323,11 +328,11 @@ describe('Invite Endpoint', () => {
     it('should return CORS headers on success', async () => {
       const { default: handler } = await import('../../netlify/functions/invite.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/invite?token=valid_token',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 

@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realTurso from '../../netlify/functions/lib/turso.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -64,6 +68,7 @@ const mockStats = {
 };
 
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
+  ...realTurso,
   getStats: jest.fn(() => Promise.resolve(mockStats))
 }));
 
@@ -85,11 +90,11 @@ describe('Public Stats Endpoint', () => {
     it('should return stats for valid share token', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=7d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -108,11 +113,11 @@ describe('Public Stats Endpoint', () => {
     it('should return 400 when token is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -126,11 +131,11 @@ describe('Public Stats Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=invalid_token',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -144,11 +149,11 @@ describe('Public Stats Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=365d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -160,11 +165,11 @@ describe('Public Stats Endpoint', () => {
     it('should use default period of 7d when not specified', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -178,11 +183,11 @@ describe('Public Stats Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=24h',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -194,11 +199,11 @@ describe('Public Stats Endpoint', () => {
     it('should support 30d period', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=30d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -212,11 +217,11 @@ describe('Public Stats Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=90d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -230,11 +235,11 @@ describe('Public Stats Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=365d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -246,11 +251,11 @@ describe('Public Stats Endpoint', () => {
     it('should include allowedPeriods in response', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=7d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -264,11 +269,11 @@ describe('Public Stats Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=7d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -279,11 +284,11 @@ describe('Public Stats Endpoint', () => {
     it('should include cache headers', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token&period=7d',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -296,10 +301,10 @@ describe('Public Stats Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -310,11 +315,11 @@ describe('Public Stats Endpoint', () => {
     it('should reject non-GET requests', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/public/stats',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -324,11 +329,11 @@ describe('Public Stats Endpoint', () => {
     it('should return CORS headers', async () => {
       const { default: handler } = await import('../../netlify/functions/public-stats.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/public/stats?token=valid_token',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 

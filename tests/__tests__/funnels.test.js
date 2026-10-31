@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -45,6 +46,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
     })
   }
 }));
+
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
 
 // Mock bcryptjs
 jest.unstable_mockModule('bcryptjs', () => ({
@@ -96,10 +107,10 @@ describe('Funnels API', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({ origin: 'https://example.com' })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -113,14 +124,14 @@ describe('Funnels API', () => {
     it('should include CORS headers in GET response', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/funnels?siteId=${testSiteId}`,
         headers: createHeaders({
           authorization: `Bearer ${authToken}`,
           origin: 'https://example.com'
         })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
@@ -131,11 +142,11 @@ describe('Funnels API', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/funnels?siteId=${testSiteId}`,
         headers: createHeaders({})
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(401);
@@ -147,11 +158,11 @@ describe('Funnels API', () => {
     it('should reject invalid auth token', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/funnels?siteId=${testSiteId}`,
         headers: createHeaders({ authorization: 'Bearer invalid_token' })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(401);
@@ -162,11 +173,11 @@ describe('Funnels API', () => {
     it('should require siteId parameter', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -178,11 +189,11 @@ describe('Funnels API', () => {
     it('should deny access to sites user does not own', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://example.com/api/funnels?siteId=site_other',
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(403);
@@ -194,11 +205,11 @@ describe('Funnels API', () => {
     it('should return empty array when no funnels exist', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/funnels?siteId=${testSiteId}`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -234,11 +245,11 @@ describe('Funnels API', () => {
       expect(createResponse.status).toBe(201);
 
       // Now list funnels
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/funnels?siteId=${testSiteId}`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -254,11 +265,11 @@ describe('Funnels API', () => {
     it('should accept date range parameters', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: `https://example.com/api/funnels?siteId=${testSiteId}&startDate=2024-01-01&endDate=2024-01-31`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -272,7 +283,7 @@ describe('Funnels API', () => {
     it('should require siteId', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({
@@ -288,7 +299,7 @@ describe('Funnels API', () => {
             ]
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -300,7 +311,7 @@ describe('Funnels API', () => {
     it('should require at least 2 steps', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({
@@ -316,7 +327,7 @@ describe('Funnels API', () => {
             ]
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -328,7 +339,7 @@ describe('Funnels API', () => {
     it('should reject if steps array is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({
@@ -341,7 +352,7 @@ describe('Funnels API', () => {
             name: 'Invalid Funnel'
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -353,7 +364,7 @@ describe('Funnels API', () => {
     it('should create funnel with valid data', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({
@@ -371,7 +382,7 @@ describe('Funnels API', () => {
             ]
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(201);
@@ -388,7 +399,7 @@ describe('Funnels API', () => {
     it('should deny access to sites user does not own', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({
@@ -405,7 +416,7 @@ describe('Funnels API', () => {
             ]
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(403);
@@ -449,11 +460,11 @@ describe('Funnels API', () => {
     it('should require funnelId parameter', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(400);
@@ -465,11 +476,11 @@ describe('Funnels API', () => {
     it('should delete funnel successfully', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: `https://example.com/api/funnels?funnelId=${createdFunnelId}`,
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(200);
@@ -481,11 +492,11 @@ describe('Funnels API', () => {
     it('should return 404 for non-existent funnel', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://example.com/api/funnels?funnelId=funnel_nonexistent',
         headers: createHeaders({ authorization: `Bearer ${authToken}` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(404);
@@ -518,11 +529,11 @@ describe('Funnels API', () => {
 
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: `https://example.com/api/funnels?funnelId=${createdFunnelId}`,
         headers: createHeaders({ authorization: `Bearer other_token` })
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(404);
@@ -542,7 +553,7 @@ describe('Funnels API', () => {
         name: `Step ${i + 1}`
       }));
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({
@@ -556,7 +567,7 @@ describe('Funnels API', () => {
             steps
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(201);
@@ -568,7 +579,7 @@ describe('Funnels API', () => {
     it('should accept event-type steps', async () => {
       const { default: handler } = await import('../../netlify/functions/funnels.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://example.com/api/funnels',
         headers: createHeaders({
@@ -586,7 +597,7 @@ describe('Funnels API', () => {
             ]
           };
         }
-      };
+      });
 
       const response = await handler(req, {});
       expect(response.status).toBe(201);

@@ -19,7 +19,7 @@ The GSC integration allows you to:
 
 **Endpoint:** `/.netlify/functions/gsc`
 
-**Authentication:** Required (JWT token in Authorization header)
+**Authentication:** Required: the signed-in user's gatekeep token as `Authorization: Bearer` (what the dashboard sends). API keys are not accepted here yet.
 
 ---
 
@@ -127,7 +127,7 @@ Get search performance metrics over time.
 
 ```bash
 curl "https://yourdomain.com/.netlify/functions/gsc?action=performance&siteUrl=https://example.com&startDate=2024-12-01&endDate=2024-12-13" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_GATEKEEP_TOKEN"
 ```
 
 ### Response
@@ -183,7 +183,7 @@ Get top search queries driving traffic to your site.
 
 ```bash
 curl "https://yourdomain.com/.netlify/functions/gsc?action=queries&siteUrl=https://example.com&limit=10" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_GATEKEEP_TOKEN"
 ```
 
 ### Response
@@ -233,7 +233,7 @@ Get top-performing pages in search results.
 
 ```bash
 curl "https://yourdomain.com/.netlify/functions/gsc?action=pages&siteUrl=https://example.com&limit=10" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_GATEKEEP_TOKEN"
 ```
 
 ### Response

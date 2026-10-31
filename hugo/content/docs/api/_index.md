@@ -13,38 +13,24 @@ The Zero Trust Analytics API provides programmatic access to your analytics data
 
 ## Authentication
 
-Most API endpoints require authentication using JWT (JSON Web Tokens). See the [Authentication](/docs/api/authentication/) guide for details on obtaining and using tokens.
+Programs authenticate with an **API key** sent as a Bearer token. Create one in the dashboard under **API Keys**; see [Authentication](/docs/api/authentication/) for details.
 
 ```bash
-curl https://app.ztas.io/api/stats?siteId=site_abc123 \
-  -H "Authorization: Bearer YOUR_TOKEN"
+curl "https://app.ztas.io/api/stats-api?site_id=site_abc123&period=7d" \
+  -H "Authorization: Bearer zta_live_your_key_here"
 ```
 
 ## Quick Start
 
-1. **Get your credentials** - Log in to get a JWT token
-2. **Make your first request** - Fetch analytics data for your site
-3. **Explore the API** - Check out the endpoint documentation below
-
-### Example: Fetch Analytics
-
-```bash
-# Get JWT token
-TOKEN=$(curl -X POST https://app.ztas.io/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "you@example.com", "password": "your-password"}' \
-  | jq -r '.token')
-
-# Fetch analytics data
-curl "https://app.ztas.io/api/stats?siteId=site_abc123&period=7d" \
-  -H "Authorization: Bearer $TOKEN"
-```
+1. **Create an API key** - Dashboard → API Keys → Create API Key (copy it; it is shown once)
+2. **Make your first request** - Fetch a week of visitors and pageviews with the [Stats API](/docs/api/stats-api/)
+3. **Explore the API** - The other endpoints below are the ones the dashboard uses
 
 ## API Endpoints
 
 ### Core Analytics
 
-- [**Authentication**](/docs/api/authentication/) - Login, password reset, and token management
+- [**Authentication**](/docs/api/authentication/) - API keys, and how the dashboard signs in
 - [**Stats**](/docs/api/stats/) - Get aggregated analytics data
 - [**Track**](/docs/api/track/) - Send pageview and event data
 - [**Export**](/docs/api/export/) - Export analytics data
@@ -120,7 +106,7 @@ All API endpoints return JSON responses with consistent formatting:
 ### Security
 
 1. **Use HTTPS** - Always use HTTPS for API requests
-2. **Protect your tokens** - Never expose JWT tokens in client-side code or URLs
+2. **Protect your API keys** - Keep them server-side; never put them in browser code or URLs
 3. **Rotate API keys** - Regularly rotate API keys and revoke unused ones
 4. **Limit scope** - Only request data for resources you own
 

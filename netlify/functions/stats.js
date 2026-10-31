@@ -141,7 +141,10 @@ export default async function handler(req, context) {
       // Additional validation for custom date range
       const dateRangeValidation = validateDateRangeInData({ startDate: customStart, endDate: customEnd });
       startDate = dateRangeValidation.startDate || new Date(customStart);
-      endDate = dateRangeValidation.endDate || new Date(customEnd);
+      endDate = new Date(dateRangeValidation.endDate || customEnd);
+      // A date-only end means through the end of that day (UTC); as midnight it
+      // would drop that whole day from the timestamp-based session query.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(customEnd)) endDate.setUTCHours(23, 59, 59, 999);
 
       // Cap custom end date if over limit
       if (usageLimitReached && dataFrozenAt) {

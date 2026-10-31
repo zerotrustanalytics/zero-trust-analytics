@@ -1,5 +1,10 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realZeroTrustCore from '../../netlify/functions/lib/zero-trust-core.js';
+import * as realTurso from '../../netlify/functions/lib/turso.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -44,8 +49,19 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 // Mock turso database
 jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
+  ...realTurso,
   getRealtime: jest.fn(() => Promise.resolve({
     active_visitors: 5,
     pageviews_last_5min: 10,
@@ -63,6 +79,7 @@ jest.unstable_mockModule('../../netlify/functions/lib/turso.js', () => ({
 
 // Mock zero-trust-core
 jest.unstable_mockModule('../../netlify/functions/lib/zero-trust-core.js', () => ({
+  ...realZeroTrustCore,
   createZTRecord: jest.fn(({ siteId, eventType, payload }) => ({
     timestamp: new Date().toISOString().replace('T', ' ').split('.')[0],
     site_id: siteId,
@@ -133,11 +150,11 @@ describe('Realtime Endpoint', () => {
 
       const url = new URL('https://example.com/api/realtime?siteId=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -164,11 +181,11 @@ describe('Realtime Endpoint', () => {
 
       const url = new URL('https://example.com/api/realtime?siteId=site_empty');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -184,11 +201,11 @@ describe('Realtime Endpoint', () => {
 
       const url = new URL('https://example.com/api/realtime?siteId=site_test');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -200,11 +217,11 @@ describe('Realtime Endpoint', () => {
 
       const url = new URL('https://example.com/api/realtime');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: url.toString()
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();

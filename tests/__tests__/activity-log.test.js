@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -38,6 +42,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'testuser@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn(() => authResult)
 }));
 
@@ -76,13 +81,13 @@ describe('Activity Log Endpoint', () => {
     it('should return activity log for authenticated user', async () => {
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/activity',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -97,13 +102,13 @@ describe('Activity Log Endpoint', () => {
     it('should format activity messages', async () => {
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/activity',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -114,13 +119,13 @@ describe('Activity Log Endpoint', () => {
     it('should support limit and offset parameters', async () => {
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/activity?limit=10&offset=5',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       await handler(req, {});
 
@@ -130,13 +135,13 @@ describe('Activity Log Endpoint', () => {
     it('should use default limit and offset when not provided', async () => {
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/activity',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       await handler(req, {});
 
@@ -148,13 +153,13 @@ describe('Activity Log Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/activity',
         headers: {
           get: () => null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -164,10 +169,10 @@ describe('Activity Log Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -178,12 +183,12 @@ describe('Activity Log Endpoint', () => {
     it('should reject non-GET requests', async () => {
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -193,13 +198,13 @@ describe('Activity Log Endpoint', () => {
     it('should return CORS headers', async () => {
       const { default: handler } = await import('../../netlify/functions/activity-log.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/activity',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 

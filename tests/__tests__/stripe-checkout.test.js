@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -59,6 +63,7 @@ jest.unstable_mockModule('stripe', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'testuser@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn((headers) => {
     if (authResult.error) {
       return authResult;
@@ -97,6 +102,7 @@ describe('Stripe Checkout Endpoint', () => {
       passwordHash: 'hashed',
       subscription: {
         status: 'active',
+        plan: 'starter',
         customerId: 'cus_456',
         subscriptionId: 'sub_456'
       },
@@ -108,22 +114,13 @@ describe('Stripe Checkout Endpoint', () => {
     it('should create checkout session and return URL', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: new Map([
           ['authorization', 'Bearer valid_token'],
           ['content-type', 'application/json']
         ])
-      };
-      req.headers.get = (name) => req.headers.get(name.toLowerCase()) || null;
-      req.headers[Symbol.iterator] = function* () {
-        for (const [key, value] of this.entries()) {
-          yield [key, value];
-        }
-      };
-      req.headers.entries = function () {
-        return this[Symbol.iterator]();
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -137,21 +134,12 @@ describe('Stripe Checkout Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: new Map([
           ['content-type', 'application/json']
         ])
-      };
-      req.headers.get = (name) => req.headers.get(name.toLowerCase()) || null;
-      req.headers[Symbol.iterator] = function* () {
-        for (const [key, value] of this.entries()) {
-          yield [key, value];
-        }
-      };
-      req.headers.entries = function () {
-        return this[Symbol.iterator]();
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -165,22 +153,13 @@ describe('Stripe Checkout Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: new Map([
           ['authorization', 'Bearer valid_token'],
           ['content-type', 'application/json']
         ])
-      };
-      req.headers.get = (name) => req.headers.get(name.toLowerCase()) || null;
-      req.headers[Symbol.iterator] = function* () {
-        for (const [key, value] of this.entries()) {
-          yield [key, value];
-        }
-      };
-      req.headers.entries = function () {
-        return this[Symbol.iterator]();
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -194,39 +173,31 @@ describe('Stripe Checkout Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: new Map([
           ['authorization', 'Bearer valid_token'],
           ['content-type', 'application/json']
         ])
-      };
-      req.headers.get = (name) => req.headers.get(name.toLowerCase()) || null;
-      req.headers[Symbol.iterator] = function* () {
-        for (const [key, value] of this.entries()) {
-          yield [key, value];
-        }
-      };
-      req.headers.entries = function () {
-        return this[Symbol.iterator]();
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      expect(data.error).toContain('Failed to create checkout session');
+      // Stripe's own message stays in the logs; clients get the generic one.
+      expect(data.error).toBe('An unexpected error occurred');
     });
 
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: {
           get: (name) => null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -237,12 +208,12 @@ describe('Stripe Checkout Endpoint', () => {
     it('should reject non-POST requests', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: {
           get: (name) => null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -252,26 +223,18 @@ describe('Stripe Checkout Endpoint', () => {
     it('should return CORS headers', async () => {
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: new Map([
           ['authorization', 'Bearer valid_token'],
           ['content-type', 'application/json']
         ])
-      };
-      req.headers.get = (name) => req.headers.get(name.toLowerCase()) || null;
-      req.headers[Symbol.iterator] = function* () {
-        for (const [key, value] of this.entries()) {
-          yield [key, value];
-        }
-      };
-      req.headers.entries = function () {
-        return this[Symbol.iterator]();
-      };
+      });
 
       const response = await handler(req, {});
 
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      // Credentialed responses name the allowed origin; '*' can't be used with credentials.
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
     });
 
     it('should allow checkout for user with canceled subscription', async () => {
@@ -288,22 +251,13 @@ describe('Stripe Checkout Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: new Map([
           ['authorization', 'Bearer valid_token'],
           ['content-type', 'application/json']
         ])
-      };
-      req.headers.get = (name) => req.headers.get(name.toLowerCase()) || null;
-      req.headers[Symbol.iterator] = function* () {
-        for (const [key, value] of this.entries()) {
-          yield [key, value];
-        }
-      };
-      req.headers.entries = function () {
-        return this[Symbol.iterator]();
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -325,22 +279,13 @@ describe('Stripe Checkout Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/stripe-checkout.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: new Map([
           ['authorization', 'Bearer valid_token'],
           ['content-type', 'application/json']
         ])
-      };
-      req.headers.get = (name) => req.headers.get(name.toLowerCase()) || null;
-      req.headers[Symbol.iterator] = function* () {
-        for (const [key, value] of this.entries()) {
-          yield [key, value];
-        }
-      };
-      req.headers.entries = function () {
-        return this[Symbol.iterator]();
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();

@@ -37,16 +37,6 @@ function AcceptInviteContent() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
-  useEffect(() => {
-    if (!token) {
-      setError('No invite token provided')
-      setLoading(false)
-      return
-    }
-
-    fetchInviteDetails()
-  }, [token])
-
   async function fetchInviteDetails() {
     try {
       const res = await fetch(`${apiUrl}/api/invite?token=${token}`)
@@ -64,6 +54,16 @@ function AcceptInviteContent() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!token) {
+      setError('No invite token provided')
+      setLoading(false)
+      return
+    }
+
+    fetchInviteDetails()
+  }, [token])
 
   async function handleAccept() {
     if (!token) return

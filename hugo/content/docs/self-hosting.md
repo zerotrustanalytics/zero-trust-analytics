@@ -251,8 +251,10 @@ AUTH_MODE=none
 AUTH_MODE=password
 AUTH_PASSWORD=your-shared-password
 
-# Multi-user with accounts
-AUTH_MODE=jwt
+# Multi-user: sign-in through gatekeep (or another OpenID Connect provider)
+AUTH_MODE=oidc
+GATEKEEP_ISSUER=https://id.gatekeepauth.com
+GATEKEEP_CLIENT_ID=your-client-id
 ```
 
 With `AUTH_MODE=none` or `password`, email reports are disabled (no scheduler in self-hosted mode).

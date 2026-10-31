@@ -1,9 +1,14 @@
 import { jest } from '@jest/globals';
-import { createHeaders } from './helpers.js';
+import * as realAuth from '../../netlify/functions/lib/http.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realRateLimit from '../../netlify/functions/lib/rate-limit.js';
+import { createHeaders, toRequest, bearerAuth } from './helpers.js';
 
 // Mock rate-limit to always allow requests
 jest.unstable_mockModule('../../netlify/functions/lib/rate-limit.js', () => ({
-  checkRateLimit: jest.fn(() => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
+  ...realRateLimit,
+  checkRateLimit: jest.fn(async () => ({ allowed: true, remaining: 100, resetTime: Date.now() + 60000, retryAfter: 0 })),
   rateLimitResponse: jest.fn(),
   hashIP: jest.fn((ip) => `hashed_${ip}`)
 }));
@@ -64,6 +69,16 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }));
 
+// Sign-in: the endpoints' authenticateRequest decides the caller from the Bearer
+// token using the jsonwebtoken verify stub above (this suite's token -> user table).
+jest.unstable_mockModule('../../netlify/functions/lib/auth.js', async () => {
+  const { default: jwt } = await import('jsonwebtoken');
+  return {
+    ...realAuth,
+    authenticateRequest: jest.fn((headers) => bearerAuth(headers, (token) => jwt.verify(token))),
+  };
+});
+
 const { getStore } = await import('@netlify/blobs');
 
 describe('Import Endpoint', () => {
@@ -86,11 +101,11 @@ describe('Import Endpoint', () => {
     it('should handle CORS preflight requests', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: createHeaders({}),
         url: 'https://example.com/api/import'
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -104,11 +119,11 @@ describe('Import Endpoint', () => {
     it('should return empty import history for new user', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/import'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -122,11 +137,11 @@ describe('Import Endpoint', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         headers: createHeaders({}),
         url: 'https://example.com/api/import'
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -143,7 +158,7 @@ describe('Import Endpoint', () => {
 20241202,200,120,95
 20241203,175,110,88`;
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -156,7 +171,7 @@ describe('Import Endpoint', () => {
           data: csvData,
           source: 'google-analytics'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -178,7 +193,7 @@ describe('Import Endpoint', () => {
         { date: '20241202', pageviews: 200, sessions: 120 }
       ];
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -190,7 +205,7 @@ describe('Import Endpoint', () => {
           format: 'json',
           data: jsonData
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -218,7 +233,7 @@ describe('Import Endpoint', () => {
         ]
       };
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -230,7 +245,7 @@ describe('Import Endpoint', () => {
           format: 'ga4-api',
           data: ga4Data
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -243,7 +258,7 @@ describe('Import Endpoint', () => {
     it('should require siteId', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -254,7 +269,7 @@ describe('Import Endpoint', () => {
           format: 'csv',
           data: 'date,pageviews\n20241201,100'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -266,7 +281,7 @@ describe('Import Endpoint', () => {
     it('should require data', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -277,7 +292,7 @@ describe('Import Endpoint', () => {
           siteId: 'site_test123',
           format: 'csv'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -289,7 +304,7 @@ describe('Import Endpoint', () => {
     it('should reject invalid format', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -301,7 +316,7 @@ describe('Import Endpoint', () => {
           format: 'invalid_format',
           data: 'some data'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -322,7 +337,7 @@ describe('Import Endpoint', () => {
         createdAt: new Date().toISOString()
       });
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -334,7 +349,7 @@ describe('Import Endpoint', () => {
           format: 'csv',
           data: 'date,pageviews\n20241201,100'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -346,7 +361,7 @@ describe('Import Endpoint', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({}),
         url: 'https://example.com/api/import',
@@ -355,7 +370,7 @@ describe('Import Endpoint', () => {
           format: 'csv',
           data: 'date,pageviews\n20241201,100'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -366,7 +381,7 @@ describe('Import Endpoint', () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
       // First import
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -378,7 +393,7 @@ describe('Import Endpoint', () => {
           format: 'csv',
           data: 'date,pageviews\n20241201,100'
         })
-      };
+      });
 
       await handler(req, {});
 
@@ -441,11 +456,11 @@ describe('Import Endpoint', () => {
     it('should require importId', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/import'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -457,11 +472,11 @@ describe('Import Endpoint', () => {
     it('should return 404 for non-existent import', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/import?importId=nonexistent_123'
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -473,11 +488,11 @@ describe('Import Endpoint', () => {
     it('should require authentication', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         headers: createHeaders({}),
         url: 'https://example.com/api/import?importId=some_id'
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -493,7 +508,7 @@ describe('Import Endpoint', () => {
 20241201,"/blog/hello,world",150
 20241202,"/about ""us""",200`;
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -505,7 +520,7 @@ describe('Import Endpoint', () => {
           format: 'csv',
           data: csvData
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -522,7 +537,7 @@ describe('Import Endpoint', () => {
 20241201,150
 20241215,200`;
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -534,7 +549,7 @@ describe('Import Endpoint', () => {
           format: 'csv',
           data: csvData
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -564,7 +579,7 @@ describe('Import Endpoint', () => {
         }
       ];
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -576,7 +591,7 @@ describe('Import Endpoint', () => {
           format: 'json',
           data: jsonData
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -610,7 +625,7 @@ describe('Import Endpoint', () => {
         }
       ];
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -622,7 +637,7 @@ describe('Import Endpoint', () => {
           format: 'json',
           data: jsonData
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -644,7 +659,7 @@ describe('Import Endpoint', () => {
     it('should reject invalid CSV format', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         headers: createHeaders({
           authorization: 'Bearer valid_token',
@@ -656,7 +671,7 @@ describe('Import Endpoint', () => {
           format: 'csv',
           data: 'just one line with no data'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -668,11 +683,11 @@ describe('Import Endpoint', () => {
     it('should reject method not allowed', async () => {
       const { default: handler } = await import('../../netlify/functions/import.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PUT',
         headers: createHeaders({ authorization: 'Bearer valid_token' }),
         url: 'https://example.com/api/import'
-      };
+      });
 
       const response = await handler(req, {});
 

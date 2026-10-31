@@ -1,4 +1,8 @@
 import { jest } from '@jest/globals';
+import { toRequest } from './helpers.js';
+// Real modules, loaded before the mocks below are registered: mocks spread them
+// and override only what each test controls, so new exports don't break the suite.
+import * as realAuth from '../../netlify/functions/lib/http.js';
 
 // Mock @netlify/blobs
 jest.unstable_mockModule('@netlify/blobs', () => {
@@ -38,6 +42,7 @@ jest.unstable_mockModule('@netlify/blobs', () => {
 // Mock auth library
 let authResult = { user: { id: 'user_123', email: 'testuser@example.com' } };
 jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
+  ...realAuth,
   authenticateRequest: jest.fn(() => authResult)
 }));
 
@@ -79,13 +84,13 @@ describe('Sites Share Endpoint', () => {
     it('should return shares for a site', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/sites/share?siteId=site_123',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -98,13 +103,13 @@ describe('Sites Share Endpoint', () => {
     it('should return 400 when siteId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/sites/share',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -118,13 +123,13 @@ describe('Sites Share Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/sites/share?siteId=site_123',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -138,7 +143,7 @@ describe('Sites Share Endpoint', () => {
     it('should create a new share', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
@@ -147,7 +152,7 @@ describe('Sites Share Endpoint', () => {
         json: async () => ({
           siteId: 'site_123'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -161,7 +166,7 @@ describe('Sites Share Endpoint', () => {
     it('should create share with expiration', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
@@ -171,7 +176,7 @@ describe('Sites Share Endpoint', () => {
           siteId: 'site_123',
           expiresIn: '7d'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -183,7 +188,7 @@ describe('Sites Share Endpoint', () => {
     it('should support 1d expiration', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
@@ -193,7 +198,7 @@ describe('Sites Share Endpoint', () => {
           siteId: 'site_123',
           expiresIn: '1d'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -203,7 +208,7 @@ describe('Sites Share Endpoint', () => {
     it('should support 30d expiration', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
@@ -213,7 +218,7 @@ describe('Sites Share Endpoint', () => {
           siteId: 'site_123',
           expiresIn: '30d'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -223,7 +228,7 @@ describe('Sites Share Endpoint', () => {
     it('should support 90d expiration', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
@@ -233,7 +238,7 @@ describe('Sites Share Endpoint', () => {
           siteId: 'site_123',
           expiresIn: '90d'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -243,7 +248,7 @@ describe('Sites Share Endpoint', () => {
     it('should create share with password', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
@@ -253,7 +258,7 @@ describe('Sites Share Endpoint', () => {
           siteId: 'site_123',
           password: 'secret123'
         })
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -265,14 +270,14 @@ describe('Sites Share Endpoint', () => {
     it('should return 400 when siteId is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         },
         json: async () => ({})
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -286,7 +291,7 @@ describe('Sites Share Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'POST',
         url: 'https://zta.io/api/sites/share',
         headers: {
@@ -295,7 +300,7 @@ describe('Sites Share Endpoint', () => {
         json: async () => ({
           siteId: 'site_123'
         })
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -307,13 +312,13 @@ describe('Sites Share Endpoint', () => {
     it('should delete a share', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/sites/share?token=share_1',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -325,13 +330,13 @@ describe('Sites Share Endpoint', () => {
     it('should return 400 when token is missing', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/sites/share',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
       const data = await response.json();
@@ -345,13 +350,13 @@ describe('Sites Share Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'DELETE',
         url: 'https://zta.io/api/sites/share?token=nonexistent',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -365,11 +370,11 @@ describe('Sites Share Endpoint', () => {
 
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/sites/share?siteId=site_123',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -379,10 +384,10 @@ describe('Sites Share Endpoint', () => {
     it('should handle OPTIONS preflight request', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'OPTIONS',
         headers: { get: () => null }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -395,13 +400,13 @@ describe('Sites Share Endpoint', () => {
     it('should reject unsupported methods', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'PATCH',
         url: 'https://zta.io/api/sites/share',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
@@ -411,17 +416,19 @@ describe('Sites Share Endpoint', () => {
     it('should return CORS headers', async () => {
       const { default: handler } = await import('../../netlify/functions/sites-share.js');
 
-      const req = {
+      const req = toRequest({
         method: 'GET',
         url: 'https://zta.io/api/sites/share?siteId=site_123',
         headers: {
           get: (name) => name === 'authorization' ? 'Bearer valid_token' : null
         }
-      };
+      });
 
       const response = await handler(req, {});
 
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      // Credentialed responses name the allowed origin (ALLOWED_ORIGINS; tests use
+      // http://localhost:3000). '*' is not allowed together with credentials.
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
     });
   });
 });
