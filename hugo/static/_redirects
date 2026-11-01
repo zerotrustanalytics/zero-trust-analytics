@@ -13,6 +13,11 @@
 /dashboard     https://app.ztas.io/dashboard       301
 /dashboard/*   https://app.ztas.io/dashboard/:splat 301
 
+# The live demo is hidden for now (content/demo/_index.md); 302 because it
+# will come back.
+/demo          /                                   302
+/demo/         /                                   302
+
 # The API moved to app.ztas.io. 308 keeps the method and body (POST stays
 # POST), so old integrations and cached trackers still reach it. Clients that
 # send an Authorization header should call app.ztas.io directly: many drop
