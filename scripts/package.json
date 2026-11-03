@@ -13,5 +13,13 @@
   "dependencies": {
     "@libsql/client": "^0.17.0",
     "@netlify/blobs": "^10.5.0"
+  },
+  "overrides": {
+    "@fastify/busboy@^3": "^3.2.2",
+    "@opentelemetry/propagator-jaeger@^1": "^2.9.0",
+    "image-size@^2": "^2.0.3",
+    "tmp@^0.2": "^0.2.6",
+    "ws@^8": "^8.21.0",
+    "uuid@^13": "^13.0.1"
   }
 }
