@@ -119,11 +119,8 @@ ZTA.trackEvent('ecommerce', 'purchase', 'Pro Plan', 99.99);
 // Track page view manually (useful for SPAs)
 ZTA.trackPageView();
 
-// With custom data
-ZTA.trackPageView({
-  section: 'dashboard',
-  user_type: 'premium'
-});
+// With a custom path
+ZTA.trackPageView('/custom/path');
 ```
 
 ---
@@ -165,12 +162,12 @@ ZTA.init('site-123', {
 });
 ```
 
-### ZTA.trackPageView(customData)
+### ZTA.trackPageView(path)
 Track a page view.
 
 ```javascript
 ZTA.trackPageView();
-ZTA.trackPageView({ section: 'blog' });
+ZTA.trackPageView('/custom/path');
 ```
 
 ### ZTA.track(eventName, properties)

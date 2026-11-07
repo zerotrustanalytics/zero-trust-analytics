@@ -360,7 +360,7 @@ ZTA.init('site_abc123', {
 });
 ```
 
-### `ZTA.trackPageView(customData)`
+### `ZTA.trackPageView(path)`
 
 Track a page view:
 
@@ -369,10 +369,7 @@ Track a page view:
 ZTA.trackPageView();
 
 // With custom data
-ZTA.trackPageView({
-  category: 'blog',
-  author: 'john'
-});
+ZTA.trackPageView('/custom/path');
 ```
 
 ### `ZTA.trackEvent(eventName, eventData)`

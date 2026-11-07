@@ -32,15 +32,9 @@ Only `chat_opened` is needed to get started. The report shows whatever it receiv
 
 ## Sending events
 
-On sensitive sites, a page's address can reveal what someone needs. Report a fixed path so it isn't
-attached to the event:
-
-```javascript
-zta.track('chat_model_answer', { category: 'need', label: 'faq', value: 240, path: '/chat' })
-```
-
-To avoid loading the script at all, call the [Track Endpoint](/docs/api/track/) directly from your
-registered domain:
+On sensitive sites, a page's address can reveal what someone needs. The safest choice is to call the
+[Track Endpoint](/docs/api/track/) directly from your registered domain, without loading the script, and
+report a fixed path. Only the events you send are recorded:
 
 ```javascript
 fetch('https://app.ztas.io/api/track', {
@@ -50,4 +44,18 @@ fetch('https://app.ztas.io/api/track', {
   keepalive: true,
   body: JSON.stringify({ type: 'event', siteId: 'YOUR_SITE_ID', path: '/chat', action: 'chat_opened' })
 })
+```
+
+If you load the script, a `path` on an event covers only that event. Events from the same visitor can be
+linked, so the page views and other automatic events would still reveal real addresses. To avoid that, set
+all of these on the script tag, and pass a fixed `path` to every `ZTA.track()` call:
+
+```html
+<script defer src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"
+  data-auto-track="false" data-track-engagement="false"
+  data-track-outbound="false" data-track-downloads="false" data-track-forms="false"></script>
+```
+
+```javascript
+ZTA.track('chat_opened', { category: 'chat', path: '/chat' })
 ```

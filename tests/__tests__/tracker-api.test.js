@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { describe, expect, it } from '@jest/globals';
+
+// CI runs Jest from netlify/functions, so paths can't be relative to the working directory.
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 /** Runs a tracker source file against a minimal fake browser and returns its global. */
 function load(file) {
@@ -22,7 +27,7 @@ function load(file) {
     sent.push(...JSON.parse(options.body).events);
     return Promise.resolve({ ok: true });
   };
-  vm.runInNewContext(readFileSync(file, 'utf8'), {
+  vm.runInNewContext(readFileSync(path.join(repoRoot, file), 'utf8'), {
     window, document, fetch, URLSearchParams, URL, setTimeout: () => 0, clearTimeout: () => {}, console, history: {},
     navigator: window.navigator, location: window.location,
   });
@@ -30,11 +35,10 @@ function load(file) {
 }
 
 describe.each(['src/analytics.js', 'src/analytics.core.js'])('%s', (file) => {
-  it('exposes the documented zta global and trackPageview alias', () => {
+  it('does not define window.zta, which would wake up guarded snippets on existing sites', () => {
     const { window } = load(file);
-    expect(window.zta).toBe(window.ZTA);
-    expect(typeof window.zta.track).toBe('function');
-    expect(window.zta.trackPageview).toBe(window.zta.trackPageView);
+    expect(window.zta).toBeUndefined();
+    expect(typeof window.ZTA.track).toBe('function');
   });
 });
 
@@ -48,15 +52,29 @@ describe('src/analytics.js', () => {
 
   it('uses the page path by default and lets callers replace it', () => {
     const loaded = init();
-    loaded.window.zta.track('a');
-    loaded.window.zta.track('b', { path: '/chat' });
-    loaded.window.zta.trackPageview('/custom/path');
+    loaded.window.ZTA.track('a');
+    loaded.window.ZTA.track('b', { path: '/chat' });
+    loaded.window.ZTA.trackPageView('/custom/path');
     expect(queued(loaded).map((e) => e.path)).toEqual(['/category/private', '/chat', '/custom/path']);
+  });
+
+  it('ignores a page view argument that is not a path', () => {
+    const loaded = init();
+    loaded.window.ZTA.trackPageView({ section: 'blog' });
+    loaded.window.ZTA.trackPageView({ type: 'popstate' });
+    expect(queued(loaded).map((e) => e.path)).toEqual(['/category/private', '/category/private']);
+  });
+
+  it('reports engagement against the page view path it was given', () => {
+    const loaded = init();
+    loaded.window.ZTA.trackPageView('/chat');
+    loaded.window.ZTA.trackEngagement();
+    expect(queued(loaded).at(-1)).toMatchObject({ type: 'engagement', path: '/chat' });
   });
 
   it('keeps a value of zero', () => {
     const loaded = init();
-    loaded.window.zta.track('results', { value: 0 });
+    loaded.window.ZTA.track('results', { value: 0 });
     expect(queued(loaded)[0].value).toBe(0);
   });
 

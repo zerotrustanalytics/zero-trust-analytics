@@ -2293,8 +2293,8 @@ Thank you for your patience.
      <script>
        // Manually trigger event
        setTimeout(() => {
-         if (window.zta) {
-           window.zta.track('test_event', { test: true });
+         if (window.ZTA) {
+           window.ZTA.track('test_event', { test: true });
          }
        }, 1000);
      </script>

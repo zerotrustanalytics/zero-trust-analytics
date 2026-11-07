@@ -1,7 +1,6 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { UpgradePrompt } from './PlanContext'
 import type { Breakdown } from '@/lib/site-events'
 import type { EventsPeriod } from '@/lib/use-site-events'
 
@@ -19,11 +18,13 @@ interface PageProps {
   loading: boolean
   error: string
   locked: boolean
+  /** Some events didn't fit in the report. */
+  truncated?: boolean
   children: ReactNode
 }
 
 /** Header, period picker and loading / error / upgrade states shared by the event reports. */
-export function EventsPage({ title, description, period, onPeriod, loading, error, locked, children }: PageProps) {
+export function EventsPage({ title, description, period, onPeriod, loading, error, locked, truncated, children }: PageProps) {
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
@@ -45,13 +46,22 @@ export function EventsPage({ title, description, period, onPeriod, loading, erro
         </label>
       </div>
       {locked ? (
-        <UpgradePrompt feature="custom events" />
+        <p className="text-muted-foreground">
+          Custom events aren’t included in your plan. <a className="underline" href="/dashboard/billing">See plans</a>
+        </p>
       ) : error ? (
         <p role="alert" className="text-red-600">{error}</p>
       ) : loading ? (
         <p role="status" className="text-muted-foreground">Loading…</p>
       ) : (
-        children
+        <>
+          {truncated && (
+            <p role="note" className="mb-4 text-sm text-muted-foreground">
+              Showing the 500 most common events. Less common ones aren’t included, so totals may be low.
+            </p>
+          )}
+          {children}
+        </>
       )}
     </div>
   )

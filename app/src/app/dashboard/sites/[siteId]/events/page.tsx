@@ -15,12 +15,13 @@ export default function SiteEventsPage() {
   return (
     <EventsPage
       title="Events"
-      description="Everything your site sends with zta.track()."
+      description="Everything your site sends with ZTA.track()."
       period={period}
       onPeriod={setPeriod}
       loading={loading}
       error={error}
       locked={locked}
+      truncated={data?.truncated}
     >
       {events.length === 0 ? (
         <p className="text-muted-foreground">

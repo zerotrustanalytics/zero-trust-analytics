@@ -77,7 +77,7 @@ If you want full control over what gets tracked, disable auto-tracking:
 </script>
 ```
 
-Then manually call `zta.trackPageview()` when you want to track a view. This only stops automatic page
+Then manually call `ZTA.trackPageView()` when you want to track a view. This only stops automatic page
 views. To send only the events you choose, also set `data-track-outbound`, `data-track-downloads`,
 `data-track-forms` and `data-track-engagement` to `false`.
 
@@ -94,4 +94,4 @@ For single-page applications that handle their own routing:
 </script>
 ```
 
-In SPA mode, call `zta.trackPageview()` after each route change. See the [SPA Support](/docs/spa-support) guide for framework-specific examples.
+In SPA mode, page views are recorded on each route change automatically, so don't also call `ZTA.trackPageView()`. See the [SPA Support](/docs/spa-support) guide.

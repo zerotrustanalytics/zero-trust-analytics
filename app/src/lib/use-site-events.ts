@@ -19,11 +19,11 @@ interface State extends Result {
 }
 
 /** Loads /api/events for a site, and registers the site with the sidebar. */
-export function useSiteEvents(siteId: string, period: EventsPeriod): State {
+export function useSiteEvents(siteId: string, period: EventsPeriod, prefix = ''): State {
   const { getToken } = useAuth()
   const { setActiveSite } = useSiteContext()
   // Results remember what they're for, so a change of site or period shows as loading.
-  const request = `${siteId}|${period}`
+  const request = `${siteId}|${period}|${prefix}`
   const [result, setResult] = useState<(Result & { request: string }) | null>(null)
 
   useEffect(() => {
@@ -55,11 +55,18 @@ export function useSiteEvents(siteId: string, period: EventsPeriod): State {
       try {
         const token = await getToken()
         const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
-        const res = await fetch(`${apiUrl}/api/events?siteId=${encodeURIComponent(siteId)}&period=${period}`, {
+        const query = `siteId=${encodeURIComponent(siteId)}&period=${period}${prefix ? `&prefix=${prefix}` : ''}`
+        const res = await fetch(`${apiUrl}/api/events?${query}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (cancelled) return
-        if (res.status === 403) return setResult({ request, data: null, error: '', locked: true })
+        if (res.status === 403) {
+          const body = await res.json().catch(() => null)
+          if (cancelled) return
+          return body?.code === 'PLAN_REQUIRED'
+            ? setResult({ request, data: null, error: '', locked: true })
+            : setResult({ request, data: null, error: 'You don’t have access to this site.', locked: false })
+        }
         if (!res.ok) throw new Error()
         const data: SiteEvents = await res.json()
         if (!cancelled) setResult({ request, data, error: '', locked: false })
@@ -70,7 +77,7 @@ export function useSiteEvents(siteId: string, period: EventsPeriod): State {
     return () => {
       cancelled = true
     }
-  }, [getToken, siteId, period, request])
+  }, [getToken, siteId, period, prefix, request])
 
   if (result?.request !== request) return { data: null, loading: true, error: '', locked: false }
   return { data: result.data, loading: false, error: result.error, locked: result.locked }

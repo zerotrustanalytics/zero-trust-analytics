@@ -101,7 +101,8 @@
     var params = new URLSearchParams(window.location.search);
     send({
       type: 'pageview',
-      path: path || window.location.pathname,
+      // A string replaces the current path; older callers pass objects or events.
+      path: typeof path === 'string' && path ? path : window.location.pathname,
       referrer: getReferrer(),
       utm: {
         source: params.get('utm_source'),
@@ -123,7 +124,7 @@
       action: eventName,
       label: properties.label || null,
       value: properties.value !== undefined ? properties.value : (properties.amount || null),
-      path: properties.path || window.location.pathname
+      path: typeof properties.path === 'string' && properties.path ? properties.path : window.location.pathname
     });
   };
 
@@ -259,10 +260,7 @@
   // Expose for manual re-scanning (useful for SPAs)
   ZTA.scanTrackElements = setupAutoTrack;
 
-  // The docs use the lowercase names.
-  ZTA.trackPageview = ZTA.trackPageView;
   window.ZTA = ZTA;
-  window.zta = ZTA;
 
   // Auto-init
   var script = document.currentScript || (function() {

@@ -131,11 +131,15 @@
   };
 
   // Track a page view
+  // An optional string replaces the current path, and engagement then reports
+  // it too. Anything else (older callers pass objects or events) is ignored.
   ZTA.trackPageView = function(path) {
+    var pagePath = typeof path === 'string' && path ? path : window.location.pathname;
+    ZTA.page.path = pagePath;
     ZTA.page.viewsThisLoad++;
     ZTA.send({
       type: 'pageview',
-      path: path || window.location.pathname,
+      path: pagePath,
       referrer: ZTA.getReferrer(),
       utm: ZTA.getUTMParams()
     });
@@ -167,7 +171,7 @@
       action: eventName,
       label: properties.label || null,
       value: properties.value !== undefined ? properties.value : (properties.amount || null),
-      path: properties.path || window.location.pathname
+      path: typeof properties.path === 'string' && properties.path ? properties.path : window.location.pathname
     });
     ZTA.log('Tracked event:', eventName, properties);
   };
@@ -432,10 +436,8 @@
     }
   };
 
-  // Expose globally. The docs use the lowercase names.
-  ZTA.trackPageview = ZTA.trackPageView;
+  // Expose globally
   window.ZTA = ZTA;
-  window.zta = ZTA;
 
   // Auto-init if data attributes present
   var script = document.currentScript || (function() {

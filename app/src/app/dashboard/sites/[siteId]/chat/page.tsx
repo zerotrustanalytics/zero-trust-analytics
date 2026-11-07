@@ -10,7 +10,7 @@ import { useSiteEvents, type EventsPeriod } from '@/lib/use-site-events'
 export default function SiteChatPage() {
   const siteId = useParams().siteId as string
   const [period, setPeriod] = useState<EventsPeriod>('7d')
-  const { data, loading, error, locked } = useSiteEvents(siteId, period)
+  const { data, loading, error, locked } = useSiteEvents(siteId, period, 'chat_')
   const chat = useMemo(() => summarizeChat(data?.events ?? []), [data])
 
   return (
@@ -22,6 +22,7 @@ export default function SiteChatPage() {
       loading={loading}
       error={error}
       locked={locked}
+      truncated={data?.truncated}
     >
       {!chat.hasData ? (
         <p className="text-muted-foreground">
@@ -30,7 +31,7 @@ export default function SiteChatPage() {
       ) : (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard label="Chats opened" value={chat.opened.toLocaleString()} detail={`${chat.visitors.toLocaleString()} daily visitors`} />
+            <MetricCard label="Chats opened" value={chat.opened.toLocaleString()} detail={`At least ${chat.visitors.toLocaleString()} visitors`} />
             <MetricCard label="Understood" value={formatPercent(chat.understoodRate)} detail={`${chat.notUnderstood.toLocaleString()} not understood`} />
             <MetricCard label="Average answer time" value={formatMs(chat.avgAnswerMs)} detail={`Slowest ${formatMs(chat.maxAnswerMs)}`} />
             <MetricCard label="Model load time" value={formatMs(chat.avgLoadMs)} detail={`${chat.loadFailures.toLocaleString()} of ${chat.loads.toLocaleString()} loads failed`} />

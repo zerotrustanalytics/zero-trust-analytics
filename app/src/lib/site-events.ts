@@ -10,15 +10,10 @@ export interface EventGroup {
   maxValue: number | null
 }
 
-export interface DailyEventCount {
-  date: string
-  name: string
-  count: number
-}
-
 export interface SiteEvents {
   events: EventGroup[]
-  daily: DailyEventCount[]
+  /** More groups exist than the report returned. */
+  truncated: boolean
 }
 
 export interface Breakdown {
@@ -85,7 +80,8 @@ export function summarizeChat(events: EventGroup[]): ChatSummary {
   return {
     hasData: events.some((e) => e.name.startsWith('chat_')),
     opened: sum(opened),
-    visitors: opened.reduce((total, g) => total + g.visitors, 0),
+    // Distinct counts can't be added across groups, so this is the largest group's.
+    visitors: opened.reduce((largest, g) => Math.max(largest, g.visitors), 0),
     understoodRate: attempts ? sum(needs) / attempts : null,
     notUnderstood: sum(notUnderstood),
     crisisRule: sum(named('chat_crisis_rule')),
