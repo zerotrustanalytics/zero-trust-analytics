@@ -48,7 +48,8 @@ fetch('https://app.ztas.io/api/track', {
 
 If you load the script, a `path` on an event covers only that event. Events from the same visitor can be
 linked, so the page views and other automatic events would still reveal real addresses. To avoid that, set
-all of these on the script tag, and pass a fixed `path` to every `ZTA.track()` call:
+all of these on the script tag, pass a fixed `path` to every `ZTA.track()` call, and don't use
+`data-zta-track` attributes, which always send the real path:
 
 ```html
 <script defer src="https://ztas.io/js/analytics.js" data-site-id="YOUR_SITE_ID"

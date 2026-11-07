@@ -89,6 +89,10 @@ function MyApp({ Component, pageProps }) {
       }
     }
 
+    // routeChangeComplete doesn't fire for the first page, so with data-auto-track="false"
+    // record it here. Leave this out if automatic page views are on.
+    handleRouteChange()
+
     router.events.on('routeChangeComplete', handleRouteChange)
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange)
@@ -138,7 +142,7 @@ export class AppComponent {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
-        if ((window as any).zta) {
+        if ((window as any).ZTA) {
           (window as any).ZTA.trackPageView()
         }
       })
@@ -158,7 +162,7 @@ If you're seeing duplicate pageviews, the automatic detection might be conflicti
 
 ### Script not available
 
-The `zta` object might not be available immediately. Wrap calls in a check:
+The `ZTA` object might not be available immediately. Wrap calls in a check:
 
 ```javascript
 if (window.ZTA) {

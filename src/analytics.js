@@ -53,6 +53,7 @@
     ZTA.config.trackEngagement = options.trackEngagement !== false;
 
     ZTA.page.path = window.location.pathname;
+    ZTA.page.realPath = ZTA.page.path;
     ZTA.page.startTime = Date.now();
 
     if (options.autoTrack !== false) {
@@ -136,6 +137,7 @@
   ZTA.trackPageView = function(path) {
     var pagePath = typeof path === 'string' && path ? path : window.location.pathname;
     ZTA.page.path = pagePath;
+    ZTA.page.realPath = window.location.pathname;
     ZTA.page.viewsThisLoad++;
     ZTA.send({
       type: 'pageview',
@@ -170,7 +172,7 @@
       category: properties.category || 'custom',
       action: eventName,
       label: properties.label || null,
-      value: properties.value !== undefined ? properties.value : (properties.amount || null),
+      value: properties.value !== undefined && properties.value !== null && properties.value !== '' ? properties.value : (properties.amount || null),
       path: typeof properties.path === 'string' && properties.path ? properties.path : window.location.pathname
     });
     ZTA.log('Tracked event:', eventName, properties);
@@ -416,12 +418,14 @@
   // Handle route change in SPA
   ZTA.onRouteChange = function() {
     var path = window.location.pathname;
-    if (path === ZTA.page.path) return;
+    // Compared with the real path: page.path may be a custom one that was reported instead.
+    if (path === ZTA.page.realPath) return;
 
     // Engagement for the page being left
     ZTA.trackEngagement();
 
     ZTA.page.path = path;
+    ZTA.page.realPath = path;
     ZTA.page.startTime = Date.now();
     ZTA.page.engagementSent = false;
     ZTA.page.scrollMilestones = { 25: false, 50: false, 75: false, 100: false };

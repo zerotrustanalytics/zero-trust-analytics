@@ -123,7 +123,7 @@
       category: properties.category || 'custom',
       action: eventName,
       label: properties.label || null,
-      value: properties.value !== undefined ? properties.value : (properties.amount || null),
+      value: properties.value !== undefined && properties.value !== null && properties.value !== '' ? properties.value : (properties.amount || null),
       path: typeof properties.path === 'string' && properties.path ? properties.path : window.location.pathname
     });
   };

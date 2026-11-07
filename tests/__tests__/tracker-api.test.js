@@ -78,6 +78,30 @@ describe('src/analytics.js', () => {
     expect(queued(loaded)[0].value).toBe(0);
   });
 
+  it('falls back to amount when value is empty, and otherwise keeps value', () => {
+    const loaded = init();
+    for (const value of [null, '', undefined]) loaded.window.ZTA.track('buy', { value, amount: 9 });
+    loaded.window.ZTA.track('buy', { value: 5, amount: 9 });
+    expect(queued(loaded).map((e) => e.value)).toEqual([9, 9, 9, 5]);
+  });
+
+  it('does not report the real path when history updates on a page with a custom path', () => {
+    const loaded = init();
+    loaded.window.ZTA.trackPageView('/chat');
+    const before = queued(loaded).length;
+    loaded.window.ZTA.onRouteChange();
+    expect(queued(loaded).length).toBe(before);
+    expect(queued(loaded).map((e) => e.path)).not.toContain('/category/private');
+  });
+
+  it('reports a real navigation after a custom path', () => {
+    const loaded = init();
+    loaded.window.ZTA.trackPageView('/chat');
+    loaded.window.location.pathname = '/next';
+    loaded.window.ZTA.onRouteChange();
+    expect(queued(loaded).at(-1)).toMatchObject({ type: 'pageview', path: '/next' });
+  });
+
   it('reports engagement unless it is turned off', () => {
     const on = init();
     on.window.ZTA.trackEngagement();

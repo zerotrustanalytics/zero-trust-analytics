@@ -81,6 +81,7 @@ export function summarizeChat(events: EventGroup[]): ChatSummary {
     hasData: events.some((e) => e.name.startsWith('chat_')),
     opened: sum(opened),
     // Distinct counts can't be added across groups, so this is the largest group's.
+    // Visitor hashes rotate daily, so over several days one person can count more than once.
     visitors: opened.reduce((largest, g) => Math.max(largest, g.visitors), 0),
     understoodRate: attempts ? sum(needs) / attempts : null,
     notUnderstood: sum(notUnderstood),

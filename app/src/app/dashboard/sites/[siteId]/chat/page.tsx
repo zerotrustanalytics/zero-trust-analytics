@@ -31,7 +31,7 @@ export default function SiteChatPage() {
       ) : (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard label="Chats opened" value={chat.opened.toLocaleString()} detail={`At least ${chat.visitors.toLocaleString()} visitors`} />
+            <MetricCard label="Chats opened" value={chat.opened.toLocaleString()} detail={`Up to ${chat.visitors.toLocaleString()} daily visitors`} />
             <MetricCard label="Understood" value={formatPercent(chat.understoodRate)} detail={`${chat.notUnderstood.toLocaleString()} not understood`} />
             <MetricCard label="Average answer time" value={formatMs(chat.avgAnswerMs)} detail={`Slowest ${formatMs(chat.maxAnswerMs)}`} />
             <MetricCard label="Model load time" value={formatMs(chat.avgLoadMs)} detail={`${chat.loadFailures.toLocaleString()} of ${chat.loads.toLocaleString()} loads failed`} />
