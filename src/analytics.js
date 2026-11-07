@@ -50,6 +50,7 @@
     ZTA.config.trackOutboundLinks = options.trackOutboundLinks !== false;
     ZTA.config.trackFileDownloads = options.trackFileDownloads !== false;
     ZTA.config.trackFormSubmissions = options.trackFormSubmissions !== false;
+    ZTA.config.trackEngagement = options.trackEngagement !== false;
 
     ZTA.page.path = window.location.pathname;
     ZTA.page.startTime = Date.now();
@@ -62,7 +63,9 @@
       ZTA.setupSPATracking();
     }
 
-    ZTA.setupEngagementTracking();
+    if (ZTA.config.trackEngagement) {
+      ZTA.setupEngagementTracking();
+    }
 
     if (ZTA.config.trackScrollMilestones) {
       ZTA.setupScrollTracking();
@@ -128,11 +131,15 @@
   };
 
   // Track a page view
-  ZTA.trackPageView = function() {
+  // An optional string replaces the current path, and engagement then reports
+  // it too. Anything else (older callers pass objects or events) is ignored.
+  ZTA.trackPageView = function(path) {
+    var pagePath = typeof path === 'string' && path ? path : window.location.pathname;
+    ZTA.page.path = pagePath;
     ZTA.page.viewsThisLoad++;
     ZTA.send({
       type: 'pageview',
-      path: window.location.pathname,
+      path: pagePath,
       referrer: ZTA.getReferrer(),
       utm: ZTA.getUTMParams()
     });
@@ -153,7 +160,9 @@
   // Simple event tracking API
   // Usage: ZTA.track('signup')
   //        ZTA.track('purchase', { label: 'Pro Plan', value: 99 })
-  // Only `label` and `value` (or `amount`) are recorded.
+  //        ZTA.track('search', { category: 'help', path: '/search' })
+  // Records `category`, `label` and `value` (or `amount`). `path` replaces the
+  // current page's path, for pages whose address shouldn't go with the event.
   ZTA.track = function(eventName, properties) {
     properties = properties || {};
     ZTA.send({
@@ -161,14 +170,15 @@
       category: properties.category || 'custom',
       action: eventName,
       label: properties.label || null,
-      value: properties.value || properties.amount || null,
-      path: window.location.pathname
+      value: properties.value !== undefined ? properties.value : (properties.amount || null),
+      path: typeof properties.path === 'string' && properties.path ? properties.path : window.location.pathname
     });
     ZTA.log('Tracked event:', eventName, properties);
   };
 
   // Track time on page (called when the page is left or hidden)
   ZTA.trackEngagement = function() {
+    if (ZTA.config.trackEngagement === false) return;
     // Prevent double-sending (pagehide + visibilitychange can both fire)
     if (ZTA.page.engagementSent) return;
     ZTA.page.engagementSent = true;
@@ -452,7 +462,8 @@
           trackScrollMilestones: script.getAttribute('data-track-scroll') === 'true',
           trackOutboundLinks: script.getAttribute('data-track-outbound') !== 'false',
           trackFileDownloads: script.getAttribute('data-track-downloads') !== 'false',
-          trackFormSubmissions: script.getAttribute('data-track-forms') !== 'false'
+          trackFormSubmissions: script.getAttribute('data-track-forms') !== 'false',
+          trackEngagement: script.getAttribute('data-track-engagement') !== 'false'
         });
       } catch (e) {
         // Analytics must never break the host page.

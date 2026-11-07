@@ -11,10 +11,10 @@ Custom events let you track specific user interactions beyond pageviews. Track b
 
 ## Basic Usage
 
-Call `zta.track()` to send a custom event:
+Call `ZTA.track()` to send a custom event:
 
 ```javascript
-zta.track('signup_click')
+ZTA.track('signup_click')
 ```
 
 ## Event with Properties
@@ -22,7 +22,7 @@ zta.track('signup_click')
 Add context with the second parameter:
 
 ```javascript
-zta.track('purchase', {
+ZTA.track('purchase', {
   category: 'ecommerce',
   label: 'Premium Plan',
   value: 29
@@ -67,6 +67,20 @@ Use data attributes for cleaner HTML - no JavaScript required:
 </a>
 ```
 
+## Replacing the Page Path
+
+Events record the current page's path. Where that address could reveal something private, pass a fixed
+`path` instead:
+
+```javascript
+ZTA.track('search', { category: 'help', path: '/search' })
+```
+
+## Viewing Events
+
+Open your site in the dashboard and choose **Events**. Events named `chat_*` also get a
+[Chat Widget](/docs/chat-widgets/) report.
+
 ## JavaScript Tracking
 
 For dynamic scenarios, use the JavaScript API:
@@ -74,7 +88,7 @@ For dynamic scenarios, use the JavaScript API:
 ### Button Click
 
 ```html
-<button onclick="zta.track('cta_click', {label: 'hero_signup'})">
+<button onclick="ZTA.track('cta_click', {label: 'hero_signup'})">
   Get Started
 </button>
 ```
@@ -83,7 +97,7 @@ For dynamic scenarios, use the JavaScript API:
 
 ```javascript
 document.querySelector('form').addEventListener('submit', function() {
-  zta.track('form_submit', {
+  ZTA.track('form_submit', {
     category: 'lead_gen',
     label: 'contact_form'
   })
@@ -94,7 +108,7 @@ document.querySelector('form').addEventListener('submit', function() {
 
 ```html
 <a href="/files/whitepaper.pdf"
-   onclick="zta.track('download', {label: 'whitepaper.pdf'})">
+   onclick="ZTA.track('download', {label: 'whitepaper.pdf'})">
   Download Whitepaper
 </a>
 ```
@@ -102,7 +116,7 @@ document.querySelector('form').addEventListener('submit', function() {
 ### Purchase
 
 ```javascript
-zta.track('purchase', {
+ZTA.track('purchase', {
   category: 'ecommerce',
   label: 'Pro Plan - Monthly',
   value: 29
@@ -119,7 +133,7 @@ Tracked automatically! We capture 25%, 50%, 75%, and 100% scroll milestones.
 document.querySelectorAll('a[href^="http"]').forEach(link => {
   if (!link.href.includes(window.location.hostname)) {
     link.addEventListener('click', () => {
-      zta.track('outbound_click', {
+      ZTA.track('outbound_click', {
         label: link.href
       })
     })

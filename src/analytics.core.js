@@ -97,11 +97,12 @@
     if (cfg.debug) console.log('[ZTA] Initialized:', siteId);
   };
 
-  ZTA.trackPageView = function() {
+  ZTA.trackPageView = function(path) {
     var params = new URLSearchParams(window.location.search);
     send({
       type: 'pageview',
-      path: window.location.pathname,
+      // A string replaces the current path; older callers pass objects or events.
+      path: typeof path === 'string' && path ? path : window.location.pathname,
       referrer: getReferrer(),
       utm: {
         source: params.get('utm_source'),
@@ -113,7 +114,8 @@
     });
   };
 
-  // Only `label` and `value` (or `amount`) are recorded.
+  // Records `category`, `label` and `value` (or `amount`). `path` replaces the
+  // current page's path, for pages whose address shouldn't go with the event.
   ZTA.track = function(eventName, properties) {
     properties = properties || {};
     send({
@@ -121,8 +123,8 @@
       category: properties.category || 'custom',
       action: eventName,
       label: properties.label || null,
-      value: properties.value || properties.amount || null,
-      path: window.location.pathname
+      value: properties.value !== undefined ? properties.value : (properties.amount || null),
+      path: typeof properties.path === 'string' && properties.path ? properties.path : window.location.pathname
     });
   };
 

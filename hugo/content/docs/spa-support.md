@@ -11,14 +11,18 @@ Our tracking script automatically detects single-page application navigation usi
 
 ## Manual Page Tracking
 
+Use one approach, not both. With `data-spa="true"`, every route change is already recorded, so calling
+`ZTA.trackPageView()` as well counts each page twice. For manual tracking, set `data-auto-track="false"`
+and leave `data-spa` off.
+
 If automatic detection doesn't work for your setup, manually track page views:
 
 ```javascript
 // Call after each route change
-zta.trackPageview()
+ZTA.trackPageView()
 
 // Optionally specify a custom path
-zta.trackPageview('/custom/path')
+ZTA.trackPageView('/custom/path')
 ```
 
 ## React Router
@@ -32,8 +36,8 @@ function App() {
 
   useEffect(() => {
     // Track page view on route change
-    if (window.zta) {
-      window.zta.trackPageview()
+    if (window.ZTA) {
+      window.ZTA.trackPageView()
     }
   }, [location])
 
@@ -55,8 +59,8 @@ export default function RootLayout({ children }) {
   const pathname = usePathname()
 
   useEffect(() => {
-    if (window.zta) {
-      window.zta.trackPageview()
+    if (window.ZTA) {
+      window.ZTA.trackPageView()
     }
   }, [pathname])
 
@@ -80,8 +84,8 @@ function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     const handleRouteChange = () => {
-      if (window.zta) {
-        window.zta.trackPageview()
+      if (window.ZTA) {
+        window.ZTA.trackPageView()
       }
     }
 
@@ -109,8 +113,8 @@ const router = createRouter({
 })
 
 router.afterEach(() => {
-  if (window.zta) {
-    window.zta.trackPageview()
+  if (window.ZTA) {
+    window.ZTA.trackPageView()
   }
 })
 
@@ -135,7 +139,7 @@ export class AppComponent {
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
         if ((window as any).zta) {
-          (window as any).zta.trackPageview()
+          (window as any).ZTA.trackPageView()
         }
       })
   }
@@ -150,14 +154,14 @@ Make sure the script is loaded before navigation occurs. Add it to the `<head>` 
 
 ### Double pageviews
 
-If you're seeing duplicate pageviews, the automatic detection might be conflicting with manual tracking. Remove manual `trackPageview()` calls.
+If you're seeing duplicate pageviews, the automatic detection might be conflicting with manual tracking. Remove manual `trackPageView()` calls.
 
 ### Script not available
 
 The `zta` object might not be available immediately. Wrap calls in a check:
 
 ```javascript
-if (window.zta) {
-  window.zta.trackPageview()
+if (window.ZTA) {
+  window.ZTA.trackPageView()
 }
 ```

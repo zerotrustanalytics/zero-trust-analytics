@@ -533,6 +533,54 @@ async function countEvents(siteId, startDate, endDate) {
   return Number(result.rows[0]?.n || 0);
 }
 
+const CUSTOM_EVENT_GROUP_LIMIT = 500;
+
+/**
+ * Custom events in [startDate, endDate], grouped for reporting. Category, label
+ * and value live in the payload's event_data, a JSON string written at ingest.
+ * `prefix` limits this to names starting with it, so unrelated events can't push
+ * a report's own events past the limit. `truncated` says whether any were cut.
+ */
+async function getCustomEvents(siteId, startDate, endDate, prefix = '') {
+  const pattern = `${prefix.replace(/[\\%_]/g, '\\$&')}%`;
+  const result = await turso.execute({
+    sql: `WITH events AS (
+            SELECT event_type AS name, identity_hash,
+                   json_extract(payload, '$.event_data') AS event_data
+            FROM pageviews
+            WHERE site_id = ? AND timestamp >= ? AND timestamp <= ?
+              AND event_type NOT IN ('pageview', 'engagement', 'heartbeat')
+              AND event_type LIKE ? ESCAPE '\\'
+          )
+          SELECT name,
+                 COALESCE(json_extract(event_data, '$.category'), '') AS category,
+                 COALESCE(json_extract(event_data, '$.label'), '') AS label,
+                 COUNT(*) AS count,
+                 COUNT(DISTINCT identity_hash) AS visitors,
+                 AVG(json_extract(event_data, '$.value')) AS avgValue,
+                 MAX(json_extract(event_data, '$.value')) AS maxValue
+          FROM events
+          GROUP BY 1, 2, 3
+          ORDER BY count DESC, name
+          LIMIT ?`,
+    args: [siteId, startDate, endDate, pattern, CUSTOM_EVENT_GROUP_LIMIT + 1]
+  });
+  const number = (v) => (v === null || v === undefined ? null : Number(v));
+  const rows = normalizeRows(result.rows);
+  return {
+    truncated: rows.length > CUSTOM_EVENT_GROUP_LIMIT,
+    events: rows.slice(0, CUSTOM_EVENT_GROUP_LIMIT).map((row) => ({
+      name: row.name,
+      category: row.category,
+      label: row.label,
+      count: Number(row.count),
+      visitors: Number(row.visitors),
+      avgValue: number(row.avgValue),
+      maxValue: number(row.maxValue)
+    }))
+  };
+}
+
 async function getStats(siteId, startDate, endDate) {
   const [
     dailyStats,
@@ -1160,6 +1208,7 @@ export {
   listSitesWithEvents,
   getStatsCached as getStats,
   countEvents,
+  getCustomEvents,
   getRealtimeCached as getRealtime,
   exportData,
   debugGetCount,
