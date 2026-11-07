@@ -533,6 +533,58 @@ async function countEvents(siteId, startDate, endDate) {
   return Number(result.rows[0]?.n || 0);
 }
 
+/**
+ * Custom events in [startDate, endDate], grouped for reporting. Category, label
+ * and value live in the payload's event_data, a JSON string written at ingest.
+ */
+async function getCustomEvents(siteId, startDate, endDate) {
+  const inRange = `site_id = ? AND timestamp >= ? AND timestamp <= ? AND event_type NOT IN ('pageview', 'engagement')`;
+  const args = [siteId, startDate, endDate];
+  const [groups, daily] = await Promise.all([
+    turso.execute({
+      sql: `WITH events AS (
+              SELECT event_type AS name, identity_hash,
+                     json_extract(payload, '$.event_data') AS event_data
+              FROM pageviews
+              WHERE ${inRange}
+            )
+            SELECT name,
+                   COALESCE(json_extract(event_data, '$.category'), '') AS category,
+                   COALESCE(json_extract(event_data, '$.label'), '') AS label,
+                   COUNT(*) AS count,
+                   COUNT(DISTINCT identity_hash) AS visitors,
+                   AVG(json_extract(event_data, '$.value')) AS avgValue,
+                   MAX(json_extract(event_data, '$.value')) AS maxValue
+            FROM events
+            GROUP BY 1, 2, 3
+            ORDER BY count DESC, name
+            LIMIT 500`,
+      args
+    }),
+    turso.execute({
+      sql: `SELECT substr(timestamp, 1, 10) AS date, event_type AS name, COUNT(*) AS count
+            FROM pageviews
+            WHERE ${inRange}
+            GROUP BY 1, 2
+            ORDER BY 1`,
+      args
+    })
+  ]);
+  const number = (v) => (v === null || v === undefined ? null : Number(v));
+  return {
+    events: normalizeRows(groups.rows).map((row) => ({
+      name: row.name,
+      category: row.category,
+      label: row.label,
+      count: Number(row.count),
+      visitors: Number(row.visitors),
+      avgValue: number(row.avgValue),
+      maxValue: number(row.maxValue)
+    })),
+    daily: normalizeRows(daily.rows).map((row) => ({ date: row.date, name: row.name, count: Number(row.count) }))
+  };
+}
+
 async function getStats(siteId, startDate, endDate) {
   const [
     dailyStats,
@@ -1160,6 +1212,7 @@ export {
   listSitesWithEvents,
   getStatsCached as getStats,
   countEvents,
+  getCustomEvents,
   getRealtimeCached as getRealtime,
   exportData,
   debugGetCount,

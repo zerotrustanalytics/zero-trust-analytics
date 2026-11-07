@@ -67,6 +67,20 @@ Use data attributes for cleaner HTML - no JavaScript required:
 </a>
 ```
 
+## Replacing the Page Path
+
+Events record the current page's path. Where that address could reveal something private, pass a fixed
+`path` instead:
+
+```javascript
+zta.track('search', { category: 'help', path: '/search' })
+```
+
+## Viewing Events
+
+Open your site in the dashboard and choose **Events**. Events named `chat_*` also get a
+[Chat Widget](/docs/chat-widgets/) report.
+
 ## JavaScript Tracking
 
 For dynamic scenarios, use the JavaScript API:

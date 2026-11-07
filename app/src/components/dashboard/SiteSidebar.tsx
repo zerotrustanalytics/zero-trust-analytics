@@ -51,6 +51,26 @@ export function SiteSidebar() {
             </svg>
           ),
         },
+        {
+          kind: 'link',
+          label: 'Events',
+          href: `${siteBase}/events`,
+          icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          ),
+        },
+        {
+          kind: 'link',
+          label: 'Chat widget',
+          href: `${siteBase}/chat`,
+          icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h8M8 14h5m-9 6V6a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H8l-4 2z" />
+            </svg>
+          ),
+        },
       ],
     },
     {

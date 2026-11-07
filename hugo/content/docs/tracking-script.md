@@ -31,6 +31,7 @@ The tracking script supports several configuration options via `data-*` attribut
 | `data-track-outbound` | No | `true` | Track outbound link clicks |
 | `data-track-downloads` | No | `true` | Track file downloads |
 | `data-track-forms` | No | `true` | Track form submissions |
+| `data-track-engagement` | No | `true` | Report time on page when a visitor leaves |
 
 The script sets no cookies and stores nothing on the visitor's device. Visitors
 and sessions are derived server-side from a daily-rotating, one-way hash.
@@ -76,7 +77,9 @@ If you want full control over what gets tracked, disable auto-tracking:
 </script>
 ```
 
-Then manually call `zta.trackPageview()` when you want to track a view.
+Then manually call `zta.trackPageview()` when you want to track a view. This only stops automatic page
+views. To send only the events you choose, also set `data-track-outbound`, `data-track-downloads`,
+`data-track-forms` and `data-track-engagement` to `false`.
 
 ## SPA Mode
 
