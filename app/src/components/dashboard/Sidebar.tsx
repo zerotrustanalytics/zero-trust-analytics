@@ -244,20 +244,11 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* Footer with Clerk UserButton */}
+        {/* Footer: account menu (email, Sign out) */}
         <footer className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className={clsx('flex items-center', collapsed ? 'justify-center' : 'gap-3 px-4')}>
-            <UserButton
-              afterSignOutUrl="https://ztas.io"
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8"
-                }
-              }}
-            />
-            {!collapsed && (
-              <span className="text-sm text-muted-foreground">Account</span>
-            )}
+          <div className={clsx('flex items-center', collapsed ? 'justify-center' : 'px-4')}>
+            {/* gatekeep only returns to this app after sign-out, so land on its home page. */}
+            <UserButton afterSignOutUrl="/" label={collapsed ? undefined : 'Account'} />
           </div>
         </footer>
       </div>

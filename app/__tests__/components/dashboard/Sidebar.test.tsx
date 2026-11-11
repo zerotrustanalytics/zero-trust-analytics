@@ -23,9 +23,9 @@ vi.mock('next/link', () => ({
 
 // Mock the gatekeep UserButton
 vi.mock('@/lib/gatekeep-auth', () => ({
-  UserButton: ({ afterSignOutUrl }: { afterSignOutUrl: string }) => (
+  UserButton: ({ afterSignOutUrl, label }: { afterSignOutUrl: string; label?: string }) => (
     <button data-testid="user-button" data-signout-url={afterSignOutUrl}>
-      User
+      {label ?? 'User'}
     </button>
   )
 }))
@@ -348,11 +348,11 @@ describe('Sidebar', () => {
       expect(screen.getByTestId('user-button')).toBeInTheDocument()
     })
 
-    it('configures correct sign out URL', () => {
+    it('returns to the app after sign out (gatekeep only redirects to its own origin)', () => {
       render(<Sidebar />)
 
       const userButton = screen.getByTestId('user-button')
-      expect(userButton).toHaveAttribute('data-signout-url', 'https://ztas.io')
+      expect(userButton).toHaveAttribute('data-signout-url', '/')
     })
 
     it('shows Account label when expanded', () => {

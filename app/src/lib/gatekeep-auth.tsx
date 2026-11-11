@@ -69,7 +69,8 @@ export const GATEKEEP_URL = process.env.NEXT_PUBLIC_GATEKEEP_ISSUER || 'https://
 export async function signOutEverywhere(afterUrl = '/') {
   await naSignOut({ redirect: false })
   const back = new URL(afterUrl, window.location.origin).toString()
-  window.location.href = `${GATEKEEP_URL}/logout?post_logout_redirect_uri=${encodeURIComponent(back)}`
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- gatekeep is another site
+  window.location.assign(`${GATEKEEP_URL}/logout?post_logout_redirect_uri=${encodeURIComponent(back)}`)
 }
 
 const signOutGatekeep = () => signOutEverywhere()
@@ -259,7 +260,12 @@ export function SignUp({ afterSignUpUrl }: { afterSignUpUrl?: string; [k: string
 
 // --- user menu (Clerk <UserButton/>) --------------------------------------
 
-export function UserButton({ afterSignOutUrl = '/' }: { afterSignOutUrl?: string; [k: string]: unknown }) {
+/**
+ * The account menu: an avatar (plus `label`, when given) that opens a menu with
+ * the user's email and Sign out. The menu opens up and to the right, since it
+ * sits at the bottom of the left-hand sidebar.
+ */
+export function UserButton({ afterSignOutUrl = '/', label }: { afterSignOutUrl?: string; label?: string; [k: string]: unknown }) {
   const { data } = useSession()
   const [open, setOpen] = React.useState(false)
   const email = data?.user?.email ?? ''
@@ -271,12 +277,16 @@ export function UserButton({ afterSignOutUrl = '/' }: { afterSignOutUrl?: string
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label="Account menu"
-        className="w-8 h-8 rounded-full bg-primary text-on-accent border-[1.5px] border-line flex items-center justify-center text-sm font-display font-semibold"
+        aria-expanded={open}
+        className="flex items-center gap-3 rounded-full"
       >
-        {initial}
+        <span className="w-8 h-8 rounded-full bg-primary text-on-accent border-[1.5px] border-line flex items-center justify-center text-sm font-display font-semibold">
+          {initial}
+        </span>
+        {label && <span className="text-sm text-muted-foreground">{label}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 bottom-10 w-48 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg p-2 z-50">
+        <div className="absolute left-0 bottom-10 w-56 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg p-2 z-50">
           {email && (
             <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 truncate">{email}</div>
           )}

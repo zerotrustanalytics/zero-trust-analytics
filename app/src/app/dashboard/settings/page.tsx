@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button, Input, Card, Alert, Modal, ModalFooter } from '@/components/ui'
 import { useAuth, useUser, GATEKEEP_URL } from '@/lib/gatekeep-auth'
@@ -20,10 +20,10 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false)
   // Sign-in, passkeys and devices are managed on the user's gatekeep account
   // page, which links back here.
-  const [accountUrl, setAccountUrl] = useState(`${GATEKEEP_URL}/account`)
-  useEffect(() => {
-    setAccountUrl(`${GATEKEEP_URL}/account?return_to=${encodeURIComponent(window.location.href)}`)
-  }, [])
+  const openAccount = () => {
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- gatekeep is another site
+    window.location.assign(`${GATEKEEP_URL}/account?return_to=${encodeURIComponent(window.location.href)}`)
+  }
 
   const authHeaders = async (): Promise<Record<string, string>> => {
     const token = await getToken()
@@ -101,9 +101,14 @@ export default function SettingsPage() {
               You sign in with a passkey through gatekeep. There is no password to change. Add or
               remove passkeys and devices in your gatekeep account.
             </p>
-            <a href={accountUrl}>
-              <Button variant="outline">Manage passkeys</Button>
-            </a>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" onClick={openAccount}>
+                Manage passkeys
+              </Button>
+              <Button variant="outline" onClick={() => signOut()}>
+                Sign out
+              </Button>
+            </div>
           </>
         )}
       </Card>
