@@ -1,14 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button, Input, Card, Alert, Modal, ModalFooter } from '@/components/ui'
-import { useAuth, useUser } from '@/lib/gatekeep-auth'
+import { useAuth, useUser, GATEKEEP_URL } from '@/lib/gatekeep-auth'
 import { isSelfHostedMode } from '@/components/auth/AuthProvider'
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
-// Sign-in, passkeys and devices are managed by gatekeep, not by ZTA.
-const gatekeepUrl = process.env.NEXT_PUBLIC_GATEKEEP_ISSUER ?? 'https://id.gatekeepauth.com'
 
 export default function SettingsPage() {
   const { getToken, signOut } = useAuth()
@@ -20,6 +18,12 @@ export default function SettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [confirmEmail, setConfirmEmail] = useState('')
   const [deleting, setDeleting] = useState(false)
+  // Sign-in, passkeys and devices are managed on the user's gatekeep account
+  // page, which links back here.
+  const [accountUrl, setAccountUrl] = useState(`${GATEKEEP_URL}/account`)
+  useEffect(() => {
+    setAccountUrl(`${GATEKEEP_URL}/account?return_to=${encodeURIComponent(window.location.href)}`)
+  }, [])
 
   const authHeaders = async (): Promise<Record<string, string>> => {
     const token = await getToken()
@@ -57,8 +61,13 @@ export default function SettingsPage() {
         body: JSON.stringify({ confirmEmail: email, confirmDelete: 'DELETE_MY_ACCOUNT' }),
       })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Deletion failed')
-      await signOut()
-      window.location.href = 'https://ztas.io'
+      if (isSelfHostedMode) {
+        window.location.href = 'https://ztas.io'
+      } else {
+        // Ends the gatekeep session too, so the deleted account isn't silently
+        // signed back in; gatekeep only returns to this app's own origin.
+        await signOut()
+      }
     } catch (err) {
       setDeleteOpen(false)
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Deletion failed' })
@@ -92,7 +101,7 @@ export default function SettingsPage() {
               You sign in with a passkey through gatekeep. There is no password to change. Add or
               remove passkeys and devices in your gatekeep account.
             </p>
-            <a href={gatekeepUrl} target="_blank" rel="noopener noreferrer">
+            <a href={accountUrl}>
               <Button variant="outline">Manage passkeys</Button>
             </a>
           </>

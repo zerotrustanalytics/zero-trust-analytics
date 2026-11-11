@@ -55,7 +55,24 @@ async function freshIdToken(cached: Session | null): Promise<string | null> {
 }
 
 const localGetToken = async () => LOCAL_TOKEN
-const signOutGatekeep = () => naSignOut()
+
+/** gatekeep's public URL, for links users follow in the browser (account page, sign-out). */
+export const GATEKEEP_URL = process.env.NEXT_PUBLIC_GATEKEEP_ISSUER || 'https://id.gatekeepauth.com'
+
+/**
+ * Signs out of ZTA and of gatekeep. Ending only ZTA's session isn't enough:
+ * gatekeep would still remember this browser and sign the next "Sign in"
+ * straight back into the same account, so nobody could switch accounts.
+ * gatekeep's /logout ends its session, then sends the browser to `afterUrl`
+ * (it must be on this app's origin, which gatekeep knows from the redirect URI).
+ */
+export async function signOutEverywhere(afterUrl = '/') {
+  await naSignOut({ redirect: false })
+  const back = new URL(afterUrl, window.location.origin).toString()
+  window.location.href = `${GATEKEEP_URL}/logout?post_logout_redirect_uri=${encodeURIComponent(back)}`
+}
+
+const signOutGatekeep = () => signOutEverywhere()
 const signOutLocal = () => Promise.resolve()
 
 export function useAuth() {
@@ -265,7 +282,7 @@ export function UserButton({ afterSignOutUrl = '/' }: { afterSignOutUrl?: string
           )}
           <button
             type="button"
-            onClick={() => naSignOut({ callbackUrl: afterSignOutUrl })}
+            onClick={() => signOutEverywhere(afterSignOutUrl)}
             className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Sign out
