@@ -2,7 +2,7 @@ import { authenticateRequest, corsPreflightResponse, successResponse, Errors, ge
 import { getUser, getUserById } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
 import { Config } from './lib/config.js';
-import { getBilling, ensureMigrated, ztaCheckoutExtra } from './lib/billing.js';
+import { getBilling, ensureMigrated } from './lib/billing.js';
 import { billingErrorResponse, notConfigured } from './lib/billing-http.js';
 import { keyPart } from '../../vendor/launchkit/store.js';
 
@@ -94,9 +94,8 @@ export default async function handler(req, context) {
     let url;
     try {
       url = await billing.checkout(customerEmail, {
-        planId: selectedPlan,
+        plan: selectedPlan,
         customerEmail,
-        extra: ztaCheckoutExtra(customerEmail, selectedPlan),
         successUrl: `${base}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${base}/dashboard/billing?canceled=true`
       });
