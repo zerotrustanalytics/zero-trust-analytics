@@ -13,7 +13,7 @@ import { createBillingFromConfig } from '../../../vendor/launchkit/billing-confi
 import { keyPart } from '../../../vendor/launchkit/store.js';
 import { getStore } from './blob-store.js';
 import { getUser } from './storage.js';
-import billingConfig from '../../../billing.config.mjs';
+import fullConfig, { configFor } from '../../../billing.config.mjs';
 
 export const BILLING_STORE = 'billing';
 const USERS_STORE = 'users';
@@ -29,8 +29,8 @@ export function blobKv(name = BILLING_STORE) {
   };
 }
 
-/** The plan ids billing sells (from billing.config.mjs). */
-export const ztaPlanIds = () => Object.keys(billingConfig.plans);
+/** The plan ids billing sells (from billing.config.mjs): those with a price id set. */
+export const ztaPlanIds = (source = process.env) => Object.keys(configFor(source).plans);
 
 // Legacy `user.subscription.status` values the rest of the app reads.
 const legacyStatus = (s) => (s === 'trialing' ? 'active' : s);
@@ -92,7 +92,7 @@ export function userAccounts(kv) {
 /** Build ZTA's billing from billing.config.mjs. Everything injectable so tests run against a fake Stripe and a memory store. */
 export function createZtaBilling({ kv = blobKv(), provider, env = process.env, webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim(), bindingSecret = process.env.BILLING_BINDING_SECRET?.trim(), now } = {}) {
   const accounts = userAccounts(kv);
-  const billing = createBillingFromConfig(billingConfig, {
+  const billing = createBillingFromConfig(configFor(env), {   // only plans whose STRIPE_PRICE_* is set are sold
     store: kv,
     env,
     ...(provider ? { provider } : {}),

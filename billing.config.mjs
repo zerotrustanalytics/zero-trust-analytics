@@ -11,21 +11,24 @@
  */
 import { defineBilling, env } from './vendor/launchkit/billing-config.js';
 
-const tier = (name, amount, priceEnv) => ({
-  name,
-  productName: `Zero Trust Analytics ${name}`,
-  price: { monthly: { amount, id: env(priceEnv) } },
-});
+const TIERS = [['starter', 'Starter', 9], ['growth', 'Growth', 19], ['business', 'Business', 49], ['scale', 'Scale', 99]];
+const priceEnv = (id) => `STRIPE_PRICE_${id.toUpperCase()}`;
 
-export default defineBilling({
-  plans: {
-    starter: tier('Starter', 9, 'STRIPE_PRICE_STARTER'),
-    growth: tier('Growth', 19, 'STRIPE_PRICE_GROWTH'),
-    business: tier('Business', 49, 'STRIPE_PRICE_BUSINESS'),
-    scale: tier('Scale', 99, 'STRIPE_PRICE_SCALE'),
-  },
+/**
+ * The definition, optionally limited to the plans whose price env is set in `source`. The default export has every plan, which is
+ * what `billing:sync` / `billing:doctor` read (doctor warns about an unset price var). At runtime lib/billing.js passes process.env
+ * so a plan with no price is simply not sold, as before, instead of failing billing for every plan.
+ */
+export const configFor = (source) => defineBilling({
+  plans: Object.fromEntries(TIERS.filter(([id]) => !source || source[priceEnv(id)]).map(([id, name, amount]) => [id, {
+    name,
+    productName: `Zero Trust Analytics ${name}`,
+    price: { monthly: { amount, id: env(priceEnv(id)) } },
+  }])),
   portal: false, // sync leaves the Stripe portal configuration alone; stripe-portal.js opens sessions as before
   webhook: { path: '/api/stripe/webhook' },
   // What the old checkout sent besides billing's own fields: card only, and who and what as session metadata.
   checkout: { extra: ({ orgId, plan }) => ({ payment_method_types: ['card'], metadata: { email: orgId, plan } }) },
 });
+
+export default configFor();

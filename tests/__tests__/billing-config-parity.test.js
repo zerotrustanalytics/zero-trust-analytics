@@ -9,7 +9,7 @@ import { jest } from '@jest/globals';
  */
 import { createBilling, createStripeRest, signWebhook } from '../../vendor/launchkit/billing.js';
 import { createBillingFromConfig } from '../../vendor/launchkit/billing-config.js';
-import billingConfig from '../../billing.config.mjs';
+import billingConfig, { configFor } from '../../billing.config.mjs';
 
 const WH = 'whsec_' + 'w'.repeat(40);
 const BIND = 'b'.repeat(48);
@@ -164,5 +164,23 @@ describe('billing.config.mjs changes nothing the old createBilling setup did', (
     expect(Object.keys(billingConfig.plans)).toEqual(['starter', 'growth', 'business', 'scale']);
     expect(Object.fromEntries(Object.entries(billingConfig.plans).map(([k, p]) => [k, p.price.monthly]))).toEqual({ starter: 9, growth: 19, business: 49, scale: 99 });
     expect(Object.keys(billingConfig.items)).toEqual([]);
+  });
+
+  it('a plan whose STRIPE_PRICE_* is unset is left out, as before; the other plans still check out', async () => {
+    const env = { ...ENV, STRIPE_PRICE_GROWTH: '' };
+    // old: ztaPlans() kept only tiers with a price
+    const oldPlans = Object.keys(legacyPlans(env)).filter((k) => env[`STRIPE_PRICE_${k.toUpperCase()}`]);
+    const def = configFor(env);
+    expect(Object.keys(def.plans)).toEqual(oldPlans);
+    expect(Object.keys(def.plans)).toEqual(['starter', 'business', 'scale']);
+    expect(Object.keys(billingConfig.plans)).toContain('growth'); // the default export (sync / doctor) still names every plan
+    const f = fakeStripeFetch();
+    const billing = createBillingFromConfig(def, { store: memoryKv(), env, fetch: f.fetch, webhookSecret: WH, bindingSecret: BIND, ...hooksOf([]) });
+    const args = (plan) => ({ plan, customerEmail: EMAIL, successUrl: 'https://zta.test/ok', cancelUrl: 'https://zta.test/no' });
+    for (const plan of ['starter', 'business', 'scale']) {
+      await billing.checkout(EMAIL, args(plan));
+      expect(Object.fromEntries(lastCheckout(f).form)['line_items[0][price]']).toBe(`price_zta_${plan}`);
+    }
+    await expect(billing.checkout(EMAIL, args('growth'))).rejects.toThrow();
   });
 });
