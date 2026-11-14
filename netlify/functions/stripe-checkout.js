@@ -1,11 +1,10 @@
-import Stripe from 'stripe';
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
 import { getUser, getUserById } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
-import { handleError } from './lib/error-handler.js';
 import { Config } from './lib/config.js';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { getBilling, ensureMigrated } from './lib/billing.js';
+import { billingErrorResponse, notConfigured } from './lib/billing-http.js';
+import { keyPart } from '../../vendor/launchkit/store.js';
 
 export default async function handler(req, context) {
   const logger = createFunctionLogger('stripe-checkout', req, context);
@@ -73,40 +72,45 @@ export default async function handler(req, context) {
       return Errors.badRequest('Email address required for checkout. Please update your profile.');
     }
 
-    // Check if already subscribed - but allow if they want to change plans
-    // (Stripe will handle canceling old subscription when new one is created)
-    if (user?.subscription && user.subscription.status === 'active' && user.subscription.plan === selectedPlan) {
+    const ctx = getBilling();
+    if (!ctx) return notConfigured(origin);
+    const { billing, kv } = ctx;
+    await ensureMigrated(ctx);
+
+    // Already on this plan: say so. (A different plan is changed in the billing portal; launchkit refuses a second
+    // live subscription, which is what stops a customer paying for two.)
+    const current = await billing.status(customerEmail);
+    if (['active', 'trialing'].includes(current.status) && current.plan === selectedPlan) {
       logger.warn('Checkout failed - already subscribed to this plan', { userId: user?.id, plan: selectedPlan });
       return Errors.badRequest('Already subscribed to this plan. Use the billing portal to manage your subscription.');
     }
 
+    // So a first-time (gatekeep/Clerk) customer's webhook can create their user record with their own id.
+    if (auth.user.id) await kv.set(`profiles/${keyPart(customerEmail)}`, { userId: auth.user.id });
+
     logger.info('Creating Stripe checkout session', { userId: auth.user.id, plan: selectedPlan, email: customerEmail });
 
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      customer_email: customerEmail,
-      line_items: [
-        {
-          price: planConfig.stripePriceId,
-          quantity: 1
-        }
-      ],
-      success_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/billing?success=true`,
-      cancel_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/billing?canceled=true`,
-      metadata: {
-        userId: auth.user.id,
-        email: customerEmail,
-        plan: selectedPlan
+    const base = process.env.URL || 'https://app.ztas.io';
+    let url;
+    try {
+      url = await billing.checkout(customerEmail, {
+        planId: selectedPlan,
+        customerEmail,
+        successUrl: `${base}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${base}/dashboard/billing?canceled=true`
+      });
+    } catch (err) {
+      if (err.code === 'already-subscribed') {
+        return Errors.badRequest('You already have a subscription. Use the billing portal to change your plan.');
       }
-    });
+      throw err;
+    }
 
-    logger.info('Stripe checkout session created successfully', { userId: auth.user.id, sessionId: session.id });
-    return successResponse({ url: session.url }, 200, origin);
+    logger.info('Stripe checkout session created successfully', { userId: auth.user.id });
+    return successResponse({ url }, 200, origin);
   } catch (err) {
     logger.error('Stripe checkout failed', err, { userId: auth.user.id });
-    return handleError(err, logger, origin);
+    return billingErrorResponse(err, logger, origin);
   }
 }
 

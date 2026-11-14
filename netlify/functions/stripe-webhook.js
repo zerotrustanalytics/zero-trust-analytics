@@ -1,301 +1,40 @@
-import Stripe from 'stripe';
-import { getStore } from './lib/blob-store.js';
-import { getUser, updateUser, getUserByCustomerId } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
-import { handleError, ValidationError, ExternalServiceError } from './lib/error-handler.js';
+import { getBilling, ensureMigrated } from './lib/billing.js';
+import { BillingError } from '../../vendor/launchkit/billing.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
-
-// Create or update user for Stripe subscription
-async function upsertUserForSubscription(email, userId, plan, subscription) {
-  const users = getStore({ name: 'users', consistency: 'strong' });
-
-  console.log('[webhook] upsertUserForSubscription called', { email, userId, plan });
-
-  // Try to get existing user
-  let user = await users.get(email, { type: 'json' });
-  console.log('[webhook] Existing user lookup', { email, found: !!user, existingPlan: user?.plan, existingId: user?.id });
-
-  if (user) {
-    // Update existing user
-    const updated = {
-      ...user,
-      plan,
-      subscription
-    };
-    await users.setJSON(email, updated);
-    console.log('[webhook] Updated existing user', { email, newPlan: plan });
-
-    // Create userId -> email mapping for lookups (even for existing users)
-    if (userId) {
-      const mapKey = `user_id_map_${userId}`;
-      await users.set(mapKey, email);
-      console.log('[webhook] Created userId mapping', { mapKey, email });
-    }
-
-    return { user: updated, created: false };
-  }
-
-  // Create new user (Clerk user who never existed in our DB)
-  const newUser = {
-    id: userId || 'user_' + Date.now(),
-    email,
-    createdAt: new Date().toISOString(),
-    plan,
-    subscription,
-    provider: 'clerk'
-  };
-  await users.setJSON(email, newUser);
-
-  // Create userId -> email mapping for lookups
-  if (userId) {
-    await users.set(`user_id_map_${userId}`, email);
-  }
-
-  return { user: newUser, created: true };
-}
+const json = (body, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 export default async function handler(req, context) {
   const logger = createFunctionLogger('stripe-webhook', req, context);
 
   if (req.method !== 'POST') {
     logger.warn('Invalid HTTP method', { method: req.method });
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return json({ error: 'Method not allowed' }, 405);
   }
 
-  const sig = req.headers.get('stripe-signature');
-  // Use arrayBuffer then decode to ensure raw body is preserved
-  const buffer = await req.arrayBuffer();
-  const body = new TextDecoder('utf-8').decode(buffer);
-
-  logger.info('Webhook debug', {
-    hasSignature: !!sig,
-    signaturePrefix: sig?.substring(0, 20),
-    hasSecret: !!webhookSecret,
-    secretPrefix: webhookSecret?.substring(0, 10),
-    secretLength: webhookSecret?.length,
-    bodyLength: body?.length,
-    bodyStart: body?.substring(0, 50)
-  });
-
-  let event;
-
-  // Validate webhook secret is configured
-  if (!webhookSecret) {
-    logger.error('STRIPE_WEBHOOK_SECRET not configured');
-    return new Response(JSON.stringify({ error: 'Webhook not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  if (!sig) {
-    logger.error('Missing stripe-signature header');
-    return new Response(JSON.stringify({ error: 'Missing signature' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  const ctx = getBilling();
+  if (!ctx || !process.env.STRIPE_WEBHOOK_SECRET?.trim()) {
+    logger.error('Stripe billing is not configured (STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET)');
+    return json({ error: 'Webhook not configured' }, 500);
   }
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    logger.info('Stripe webhook signature verified', {
-      eventType: event.type,
-      eventId: event.id
-    });
+    // The signature covers the exact bytes: read the body raw, before anything parses it.
+    const raw = new Uint8Array(await req.arrayBuffer());
+    await ensureMigrated(ctx);
+    const out = await ctx.billing.handleWebhook(raw, req.headers.get('stripe-signature'));
+    logger.info('Webhook processed', { eventType: out.type, handled: out.handled, duplicate: !!out.duplicate, ignored: out.ignored });
+    return json({ received: true });
   } catch (err) {
-    logger.error('Webhook signature verification failed', {
-      error: err.message,
-      signaturePrefix: sig?.substring(0, 20),
-      hint: 'Ensure STRIPE_WEBHOOK_SECRET matches the webhook endpoint secret in Stripe dashboard'
-    });
-    return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  try {
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        const email = session.customer_email || session.metadata?.email;
-        const plan = session.metadata?.plan || 'starter';
-        const userId = session.metadata?.userId;
-
-        logger.info('Processing checkout.session.completed', {
-          sessionId: session.id,
-          customerId: session.customer,
-          hasEmail: !!email,
-          userId,
-          plan
-        });
-
-        if (email) {
-          const subscription = {
-            status: 'active',
-            customerId: session.customer,
-            subscriptionId: session.subscription,
-            plan: plan,
-            createdAt: new Date().toISOString()
-          };
-
-          const { user, created } = await upsertUserForSubscription(email, userId, plan, subscription);
-
-          logger.info('User subscription activated', {
-            customerId: session.customer,
-            email,
-            plan,
-            userCreated: created,
-            userId: user.id
-          });
-        } else {
-          logger.warn('Checkout completed but no email found', {
-            sessionId: session.id
-          });
-        }
-        break;
-      }
-
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        const user = await getUserByCustomerId(subscription.customer);
-
-        logger.info('Processing customer.subscription.updated', {
-          subscriptionId: subscription.id,
-          customerId: subscription.customer,
-          status: subscription.status,
-          userFound: !!user
-        });
-
-        if (user) {
-          // Map Stripe subscription status to our status
-          const statusMap = {
-            'active': 'active',
-            'past_due': 'past_due',
-            'canceled': 'canceled',
-            'unpaid': 'unpaid',
-            'trialing': 'active',
-            'incomplete': 'incomplete',
-            'incomplete_expired': 'expired',
-            'paused': 'paused'
-          };
-
-          const mappedStatus = statusMap[subscription.status] || subscription.status;
-
-          await updateUser(user.email, {
-            subscription: {
-              ...user.subscription,
-              status: mappedStatus,
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-              cancelAtPeriodEnd: subscription.cancel_at_period_end,
-              updatedAt: new Date().toISOString()
-            }
-          });
-
-          logger.info('Subscription updated successfully', {
-            userId: user.id,
-            customerId: subscription.customer,
-            newStatus: mappedStatus,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end
-          });
-        } else {
-          logger.warn('Subscription update received but user not found', {
-            customerId: subscription.customer
-          });
-        }
-        break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        const user = await getUserByCustomerId(subscription.customer);
-
-        logger.info('Processing customer.subscription.deleted', {
-          subscriptionId: subscription.id,
-          customerId: subscription.customer,
-          userFound: !!user
-        });
-
-        if (user) {
-          await updateUser(user.email, {
-            plan: 'free', // Downgrade to free plan
-            subscription: {
-              ...user.subscription,
-              status: 'canceled',
-              canceledAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          });
-
-          logger.info('Subscription canceled and plan downgraded to free', {
-            userId: user.id,
-            customerId: subscription.customer
-          });
-        } else {
-          logger.warn('Subscription deletion received but user not found', {
-            customerId: subscription.customer
-          });
-        }
-        break;
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object;
-        const user = await getUserByCustomerId(invoice.customer);
-
-        logger.warn('Processing invoice.payment_failed', {
-          invoiceId: invoice.id,
-          customerId: invoice.customer,
-          userFound: !!user,
-          attemptCount: invoice.attempt_count
-        });
-
-        if (user) {
-          await updateUser(user.email, {
-            subscription: {
-              ...user.subscription,
-              status: 'past_due',
-              lastPaymentError: invoice.last_finalization_error?.message || 'Payment failed',
-              updatedAt: new Date().toISOString()
-            }
-          });
-
-          logger.warn('User subscription marked as past_due', {
-            userId: user.id,
-            customerId: invoice.customer,
-            errorMessage: invoice.last_finalization_error?.message
-          });
-        } else {
-          logger.warn('Payment failed but user not found', {
-            customerId: invoice.customer
-          });
-        }
-        break;
-      }
-
-      default:
-        logger.debug('Unhandled webhook event type', {
-          eventType: event.type,
-          eventId: event.id
-        });
+    if (err instanceof BillingError) {
+      // Bad signature, stale timestamp, bad payload: Stripe sees the 4xx; our own configuration trouble is a 5xx.
+      logger.error('Webhook rejected', { code: err.code });
+      return json({ error: err.status >= 500 ? 'Webhook error' : err.code === 'bad-signature' || err.code === 'stale-timestamp' ? 'Invalid signature' : err.message }, err.status || 400);
     }
-
-    logger.info('Webhook processed successfully', {
-      eventType: event.type,
-      eventId: event.id
-    });
-
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (err) {
-    return handleError(err, logger, null);
+    // Anything else (store or Stripe trouble): 500, so Stripe retries the event.
+    logger.error('Webhook failed', err);
+    return json({ error: 'Webhook processing failed' }, 500);
   }
 }
 

@@ -1,10 +1,7 @@
-import Stripe from 'stripe';
 import { authenticateRequest, corsPreflightResponse, successResponse, Errors, getSecurityHeaders } from './lib/auth.js';
-import { getUser } from './lib/storage.js';
 import { createFunctionLogger } from './lib/logger.js';
-import { handleError } from './lib/error-handler.js';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { getBilling, ensureMigrated } from './lib/billing.js';
+import { billingErrorResponse, notConfigured } from './lib/billing-http.js';
 
 export default async function handler(req, context) {
   const logger = createFunctionLogger('stripe-portal', req, context);
@@ -32,27 +29,32 @@ export default async function handler(req, context) {
   }
 
   try {
-    const userEmail = auth.user.email;
-    const user = userEmail ? await getUser(userEmail) : null;
+    const ctx = getBilling();
+    if (!ctx) return notConfigured(origin);
+    await ensureMigrated(ctx);
 
-    if (!user || !user.subscription || !user.subscription.customerId) {
-      logger.warn('Portal access failed - no active subscription', { userId: user?.id, hasUser: !!user });
+    const userEmail = auth.user.email;
+    let url = null;
+    if (userEmail) {
+      try {
+        url = await ctx.billing.portal(userEmail, {
+          returnUrl: `${process.env.URL || 'https://app.ztas.io'}/dashboard/`
+        });
+      } catch (err) {
+        if (err.code !== 'no-customer') throw err;
+      }
+    }
+
+    if (!url) {
+      logger.warn('Portal access failed - no active subscription', { userId: auth.user.id });
       return Errors.badRequest('No active subscription');
     }
 
-    logger.info('Creating Stripe portal session', { userId: user.id, customerId: user.subscription.customerId });
-
-    // Create billing portal session
-    const session = await stripe.billingPortal.sessions.create({
-      customer: user.subscription.customerId,
-      return_url: `${process.env.URL || 'https://app.ztas.io'}/dashboard/`
-    });
-
-    logger.info('Stripe portal session created successfully', { userId: user.id });
-    return successResponse({ url: session.url }, 200, origin);
+    logger.info('Stripe portal session created successfully', { userId: auth.user.id });
+    return successResponse({ url }, 200, origin);
   } catch (err) {
     logger.error('Stripe portal failed', err, { userId: auth.user.id });
-    return handleError(err, logger, origin);
+    return billingErrorResponse(err, logger, origin);
   }
 }
 
