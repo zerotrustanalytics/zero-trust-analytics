@@ -57,6 +57,7 @@ jest.unstable_mockModule('../../netlify/functions/lib/auth.js', () => ({
 const SECRET = 'whsec_' + 'a'.repeat(32);
 process.env.STRIPE_SECRET_KEY = 'sk_test_fake';
 process.env.STRIPE_WEBHOOK_SECRET = SECRET;
+process.env.BILLING_BINDING_SECRET = "b".repeat(40);
 process.env.URL = 'https://zta.test';
 
 const { __clearAllStores } = await import('@netlify/blobs');
@@ -381,13 +382,13 @@ describe('billing over launchkit', () => {
       await seed();
       const kv = billingLib.blobKv();
       const before = JSON.stringify(await getUser('old@example.com'));
-      expect((await migrateUsers({ kv })).sort()).toEqual(['lapsed@example.com', 'old@example.com']);
+      expect((await migrateUsers({ billing: getBilling().billing })).sort()).toEqual(['lapsed@example.com', 'old@example.com']);
       expect(await kv.get('orgs/old@example.com')).toMatchObject({ orgId: 'old@example.com', customerId: 'cus_old', subscriptionId: 'sub_old', plan: 'growth', status: 'active' });
       expect(await kv.get('customers/cus_old')).toBe('old@example.com');
       expect(await kv.get('orgs/lapsed@example.com')).toMatchObject({ status: 'canceled' });
       expect(await kv.get('orgs/never@example.com')).toBeNull();
       expect(JSON.stringify(await getUser('old@example.com'))).toBe(before);
-      expect(await migrateUsers({ kv })).toEqual([]);
+      expect(await migrateUsers({ billing: getBilling().billing })).toEqual([]);
       expect(await getBilling().billing.status('old@example.com')).toMatchObject({ plan: 'growth', status: 'active' });
     });
 

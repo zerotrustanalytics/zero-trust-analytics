@@ -40,39 +40,38 @@ export function ztaPlans(tiers = Config.pricing.tiers) {
 const legacyStatus = (s) => (s === 'trialing' ? 'active' : s);
 
 /**
- * The "seats" side of launchkit, for an account with no seats: whether it exists, and where billing writes the
- * result. Writes `plan` and `subscription` on the user record in the shape the app already reads, creating the
- * user the way the old webhook did (a gatekeep/Clerk user who never existed in our DB).
+ * The user record is the app's entitlement. `mirrorUser` writes `plan` and `subscription` on it in the shape the app
+ * already reads, creating the user the way the old webhook did (a gatekeep/Clerk user who never existed in our DB).
+ * Billing calls it (`entitlements.onChange`) after the new state is stored, when plan, status or the cancel flag change.
  */
 export function userAccounts(kv) {
   const users = () => getStore({ name: USERS_STORE, consistency: 'strong' });
   return {
-    async getOrg(email) {
-      if (typeof email !== 'string' || !email.includes('@')) return null;
-      const user = await getUser(email);
-      return { id: email, status: user?.subscription?.status ?? null };
+    /** Whether this account id is an email we could bill. */
+    async exists(email) {
+      return typeof email === 'string' && email.includes('@');
     },
-    async updateOrg(email, patch) {
-      const rec = await kv.get(`orgs/${keyPart(email)}`); // billing wrote this just before calling us
-      const status = legacyStatus(patch.status);
+    async mirrorUser({ orgId: email, customerRef, subscriptionRef, plan: planId, status: state, after }) {
+      // An incomplete checkout (billing's `none`) has paid nothing yet.
+      const status = legacyStatus(state === 'none' ? 'incomplete' : state);
       const now = new Date().toISOString();
       const existing = await getUser(email);
       const prev = existing?.subscription || {};
       const subscription = {
         ...prev,
         status,
-        customerId: patch.billing?.customerId ?? prev.customerId ?? null,
-        subscriptionId: patch.billing?.subscriptionId ?? prev.subscriptionId ?? null,
-        plan: patch.plan ?? prev.plan,
+        customerId: customerRef ?? prev.customerId ?? null,
+        subscriptionId: subscriptionRef ?? prev.subscriptionId ?? null,
+        plan: planId ?? prev.plan,
         createdAt: prev.createdAt || now,
         updatedAt: now,
-        ...(rec?.currentPeriodEnd ? { currentPeriodEnd: new Date(rec.currentPeriodEnd).toISOString() } : {}),
-        ...(rec ? { cancelAtPeriodEnd: !!rec.cancelAtPeriodEnd } : {}),
+        ...(after.currentPeriodEnd ? { currentPeriodEnd: new Date(after.currentPeriodEnd).toISOString() } : {}),
+        cancelAtPeriodEnd: !!after.cancelAtPeriodEnd,
         ...(status === 'canceled' ? { canceledAt: prev.canceledAt || now } : {}),
       };
       // Canceled drops the account to free; every other state keeps the plan it is on.
       // (An incomplete checkout has paid nothing yet, so it leaves the plan alone.)
-      const plan = status === 'canceled' ? 'free' : status === 'incomplete' ? (existing?.plan ?? 'free') : (patch.plan ?? existing?.plan);
+      const plan = status === 'canceled' ? 'free' : status === 'incomplete' ? (existing?.plan ?? 'free') : (planId ?? existing?.plan);
 
       if (existing) {
         await users().setJSON(email, { ...existing, plan, subscription });
@@ -85,37 +84,30 @@ export function userAccounts(kv) {
       if (profile?.userId) await users().set(`user_id_map_${profile.userId}`, email);
       return created;
     },
+    /** A renewal changes only the period end, which `onChange` does not report: keep the user record's copy current. */
+    async renewUser(email, periodEnd) {
+      const user = await getUser(email);
+      if (!user?.subscription || !periodEnd) return;
+      await users().setJSON(email, { ...user, subscription: { ...user.subscription, currentPeriodEnd: new Date(periodEnd).toISOString(), updatedAt: new Date().toISOString() } });
+    },
   };
 }
 
-/** Card-only checkout with the same metadata the old code sent, added on the way to Stripe. */
-export function withZtaCheckout(raw, plans) {
-  const byPrice = Object.fromEntries(Object.entries(plans).map(([id, p]) => [p.priceId, id]));
-  return {
-    createCheckoutSession(p, o) {
-      const plan = byPrice[p.line_items?.[0]?.price];
-      return raw.createCheckoutSession({
-        ...p,
-        payment_method_types: ['card'],
-        metadata: { ...(p.metadata || {}), email: p.client_reference_id, ...(plan ? { plan } : {}) },
-      }, o);
-    },
-    createPortalSession: (p, o) => raw.createPortalSession(p, o),
-    retrieveSubscription: (id) => raw.retrieveSubscription(id),
-    retrieveCheckoutSession: (id) => raw.retrieveCheckoutSession(id),
-  };
-}
+/** What the old checkout sent besides billing's own fields: card only, and who and what, as session metadata. Pass as `checkout({ extra })`. */
+export const ztaCheckoutExtra = (email, planId) => ({ payment_method_types: ['card'], metadata: { email, plan: planId } });
 
 /** Build ZTA's billing. Everything injectable so tests run against a fake Stripe and a memory store. */
-export function createZtaBilling({ kv = blobKv(), stripe, secretKey = process.env.STRIPE_SECRET_KEY, webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim(), plans = ztaPlans(), now } = {}) {
-  const raw = stripe || createStripeRest({ secretKey });
+export function createZtaBilling({ kv = blobKv(), stripe, secretKey = process.env.STRIPE_SECRET_KEY, webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim(), bindingSecret = process.env.BILLING_BINDING_SECRET?.trim(), plans = ztaPlans(), now } = {}) {
   const accounts = userAccounts(kv);
   const billing = createBilling({
     store: kv,
-    stripe: withZtaCheckout(raw, plans),
-    seats: accounts,
+    stripe: stripe || createStripeRest({ secretKey }),
+    orgExists: (email) => accounts.exists(email),
     plans,
+    entitlements: { onChange: (change) => accounts.mirrorUser(change) },
+    onPeriod: ({ orgId, period }) => accounts.renewUser(orgId, period.end),
     webhookSecret: webhookSecret || null,
+    bindingSecret: bindingSecret || null,   // >= 32 chars: billing signs the account into each checkout it creates
     ...(now ? { now } : {}),
   });
   return { billing, kv, accounts };
@@ -136,37 +128,34 @@ export function resetBilling() { shared = null; migrating = null; }
 
 /**
  * Every user's old `subscription` ({ customerId, subscriptionId, plan, status }) becomes launchkit's record for
- * that account, so existing customers keep their subscription and the next Stripe event finds them. Idempotent:
- * an account that already has a billing record is left alone, and the users' own records are never changed.
+ * that account (through `billing.adopt`), so existing customers keep their subscription and the next Stripe event
+ * finds them. Idempotent: an account that already has billing state is left alone, and the users' own records are
+ * never changed. The cancel-at-period-end flag is not carried: the next Stripe event restores it.
  */
-export async function migrateUsers({ kv = blobKv(), usersStore = getStore({ name: USERS_STORE, consistency: 'strong' }), now = () => Date.now() } = {}) {
+export async function migrateUsers({ billing, usersStore = getStore({ name: USERS_STORE, consistency: 'strong' }), plans = ztaPlans() } = {}) {
   const migrated = [];
   const { blobs } = await usersStore.list();
+  const fallbackPlan = Object.keys(plans)[0];
   for (const { key: email } of blobs) {
     if (!email.includes('@')) continue; // user_id_map_* and friends
     let user;
     try { user = await usersStore.get(email, { type: 'json' }); } catch { continue; }
     const old = user?.subscription;
     if (!old || (!old.customerId && !old.subscriptionId)) continue;
-    if (await kv.get(`orgs/${keyPart(email)}`)) continue;
+    const have = await billing.status(email);
+    if (have.status !== 'none' || have.plan) continue;   // billing already knows this account
 
     const live = ['active', 'trialing', 'past_due'].includes(old.status);
     const status = !old.subscriptionId || old.status === 'incomplete' ? 'none' : live ? old.status : 'canceled';
-    await kv.set(`orgs/${keyPart(email)}`, {
-      orgId: email,
-      customerId: old.customerId ?? null,
-      subscriptionId: old.subscriptionId ?? null,
-      subCreated: null,
-      plan: old.subscriptionId ? (old.plan || user.plan || null) : null,
+    // adopt wants a plan; one with no subscription (status none) never counts as subscribed.
+    const wanted = old.plan || user.plan;
+    await billing.adopt(email, {
+      customerRef: old.customerId ?? null,
+      subscriptionRef: old.subscriptionId ?? null,
+      planId: plans[wanted] ? wanted : fallbackPlan,
       status,
-      seats: old.subscriptionId ? null : 0,
-      currentPeriodEnd: old.currentPeriodEnd ? Date.parse(old.currentPeriodEnd) || null : null,
-      cancelAtPeriodEnd: !!old.cancelAtPeriodEnd && status !== 'canceled',
-      pastDueSince: status === 'past_due' ? (Date.parse(old.updatedAt) || now()) : null,
-      stamp: 0,
-      migrated: now(),
+      periodEnd: old.currentPeriodEnd ? Date.parse(old.currentPeriodEnd) || null : null,
     });
-    if (old.customerId && !(await kv.get(`customers/${keyPart(old.customerId)}`))) await kv.set(`customers/${keyPart(old.customerId)}`, email);
     migrated.push(email);
   }
   return migrated;
@@ -179,7 +168,7 @@ export function ensureMigrated(billingCtx = getBilling()) {
   if (!migrating) {
     migrating = (async () => {
       if (await billingCtx.kv.get('meta/users-migrated')) return [];
-      const done = await migrateUsers({ kv: billingCtx.kv });
+      const done = await migrateUsers({ billing: billingCtx.billing });
       await billingCtx.kv.set('meta/users-migrated', { at: Date.now(), count: done.length });
       return done;
     })().catch((e) => { migrating = null; throw e; });
