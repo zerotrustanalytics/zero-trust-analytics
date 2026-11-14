@@ -580,7 +580,7 @@ In Netlify Dashboard > Site Settings > Environment Variables:
 | `STRIPE_SECRET_KEY` | Stripe API secret key | `sk_live_...` |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | `whsec_...` |
 | `BILLING_BINDING_SECRET` | 32+ random characters; billing signs the account into each checkout it creates (launchkit v1.3). Optional | `openssl rand -hex 32` |
-| `STRIPE_PRICE_ID` | Your Stripe price ID | `price_...` |
+| `STRIPE_PRICE_STARTER`, `_GROWTH`, `_BUSINESS`, `_SCALE` | The Stripe price id of each paid plan ($9 / $19 / $49 / $99 per month) | `price_...` |
 
 Generate secrets with:
 
@@ -593,6 +593,23 @@ openssl rand -hex 32
 ```bash
 netlify deploy --prod
 ```
+
+### Billing config
+
+Plans, amounts, where each Stripe price id comes from (the `STRIPE_PRICE_*` variables above), what a checkout carries (card only,
+`metadata: { email, plan }`) and the webhook path live in one file: [`billing.config.mjs`](billing.config.mjs). The user-record
+mirror, renewals and the `orgExists` check are app code in `netlify/functions/lib/billing.js`. Plan limits stay in `lib/config.js`.
+
+Edit the config, then check it against Stripe with the **test** key, using the launchkit CLI (`LAUNCHKIT_CLI`, default `../../launchkit/bin/launchkit.js`):
+
+```bash
+npm run billing:doctor                                # offline: config + env
+npm run billing:sync -- --adopt-only --dry-run        # FIRST RUN, always: GETs only. Expect 0 create, 0 archive, 0 drift
+npm run billing:sync                                  # only after the dry run looks right
+```
+
+**The first real run must be `--adopt-only --dry-run`**: the live prices were made by hand, and adopt-only finds each one by its id and
+never creates or archives anything. The real Stripe account has not yet been checked this way.
 
 ### 6. Update Analytics Script URL
 
