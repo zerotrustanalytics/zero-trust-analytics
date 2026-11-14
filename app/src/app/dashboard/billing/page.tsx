@@ -92,7 +92,26 @@ export default function BillingPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Back from Stripe Checkout: ask the server to confirm the session with Stripe, so the new plan shows now
+    // even if the webhook hasn't landed yet. (The URL's word is never trusted; the server asks Stripe.)
+    async function confirmCheckout() {
+      const sessionId = new URLSearchParams(window.location.search).get('session_id')
+      if (!sessionId) return
+      try {
+        const token = await getToken()
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
+        await fetch(`${apiUrl}/api/stripe/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ sessionId }),
+        })
+      } catch (err) {
+        console.error('Checkout confirm error:', err)
+      }
+    }
+
     async function fetchUsage() {
+      await confirmCheckout()
       try {
         const token = await getToken()
         const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
