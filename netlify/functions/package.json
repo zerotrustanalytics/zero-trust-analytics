@@ -15,8 +15,7 @@
     "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2",
     "otpauth": "^9.4.1",
-    "resend": "^6.6.0",
-    "stripe": "^20.1.0"
+    "resend": "^6.6.0"
   },
   "devDependencies": {
     "jest": "^29.7.0"

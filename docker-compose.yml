@@ -60,6 +60,7 @@ services:
       # Stripe (optional - for paid subscriptions)
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      BILLING_BINDING_SECRET: ${BILLING_BINDING_SECRET:-}
       STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
 
       # Email Service (choose one)

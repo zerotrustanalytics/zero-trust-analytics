@@ -579,6 +579,7 @@ In Netlify Dashboard > Site Settings > Environment Variables:
 | `JWT_SECRET` | Random string for auth tokens | `x9k2m5n8p1q4...` |
 | `STRIPE_SECRET_KEY` | Stripe API secret key | `sk_live_...` |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | `whsec_...` |
+| `BILLING_BINDING_SECRET` | 32+ random characters; billing signs the account into each checkout it creates (launchkit v1.3). Optional | `openssl rand -hex 32` |
 | `STRIPE_PRICE_ID` | Your Stripe price ID | `price_...` |
 
 Generate secrets with:

@@ -78,6 +78,7 @@ COPY --from=node-deps --chown=nodejs:nodejs /app/server/node_modules ./server/no
 # Copy application code
 COPY --chown=nodejs:nodejs netlify/functions ./netlify/functions
 COPY --chown=nodejs:nodejs server ./server
+COPY --chown=nodejs:nodejs vendor ./vendor
 
 # Create data directory for the local libSQL/SQLite database
 RUN mkdir -p /app/data && chown -R nodejs:nodejs /app/data
