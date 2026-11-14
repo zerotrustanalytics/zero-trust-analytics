@@ -10,6 +10,8 @@
 import { randomId, sha256, safeEqual, toHex, requireSecret } from './crypto.js';
 import { keyPart } from './store.js';
 
+const HIDDEN = new Set(['priceId', 'variantId', 'ref', 'productId', 'lookupKey', 'match', 'inlinePrice', 'lineItems', 'display']);
+
 export class BillingError extends Error {
   constructor(message, code, status = 400) {
     super(message);
@@ -122,8 +124,13 @@ export function formEncode(params, prefix = '', out = new URLSearchParams()) {
   return out;
 }
 
+/** The Stripe events billing acts on: a webhook endpoint must subscribe to exactly these (`launchkit billing sync` registers them). */
+export const STRIPE_WEBHOOK_EVENTS = Object.freeze(['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted', 'invoice.paid', 'invoice.payment_failed']);
+/** The Lemon Squeezy events billing acts on. */
+export const LEMONSQUEEZY_WEBHOOK_EVENTS = Object.freeze(['order_created', 'subscription_created', 'subscription_updated', 'subscription_cancelled', 'subscription_resumed', 'subscription_expired', 'subscription_paused', 'subscription_unpaused', 'subscription_payment_success', 'subscription_payment_failed', 'subscription_payment_recovered']);
+
 /** A tiny Stripe adapter over fetch. No SDK. The key is only ever sent in the Authorization header. */
-export function createStripeRest({ secretKey, webhookOnly = false, fetch: fetchImpl = globalThis.fetch, baseUrl = 'https://api.stripe.com', apiVersion = null, timeoutMs = 20_000 } = {}) {
+export function createStripeRest({ secretKey, webhookOnly = false, fetch: fetchImpl = globalThis.fetch, baseUrl = 'https://api.stripe.com', apiVersion = null, timeoutMs = 20_000, portalConfiguration = null } = {}) {
   // Webhook-only (Payment Links, no secret key): verify, parse and apply; every API call throws not-configured.
   // An explicit flag is required: a missing key without it stays an error, so a lost env var is not silently a mode.
   if (webhookOnly) return stripeProvider(undefined);
@@ -159,7 +166,7 @@ export function createStripeRest({ secretKey, webhookOnly = false, fetch: fetchI
 
   const adapter = {
     createCheckoutSession: (params, { idempotencyKey } = {}) => request('POST', '/v1/checkout/sessions', params, idempotencyKey),
-    createPortalSession: (params, { idempotencyKey } = {}) => request('POST', '/v1/billing_portal/sessions', params, idempotencyKey),
+    createPortalSession: (params, { idempotencyKey } = {}) => request('POST', '/v1/billing_portal/sessions', portalConfiguration ? { configuration: portalConfiguration, ...params } : params, idempotencyKey),
     retrieveSubscription: (id) => request('GET', `/v1/subscriptions/${encodeURIComponent(id)}`),
     retrieveCheckoutSession: (id) => request('GET', `/v1/checkout/sessions/${encodeURIComponent(id)}`),
     listPrices: (params) => request('GET', '/v1/prices', params),
@@ -207,8 +214,10 @@ function stripeSnapshot(sub) {
     ref: n === 0 && planRefMeta ? planRefMeta : priceIdOf(i),
     productRef: idOf(i.price?.product) ?? null,
     lookupKey: i.price?.lookup_key ?? null,
+    interval: i.price?.recurring?.interval ?? null,
     metered,
     quantity: i.quantity ?? (metered ? 0 : 1),
+    metadata: sub.metadata ?? {}, // the subscription's metadata, for a plan's `match(item)` (an inline-priced checkout stamps its plan here)
     periodStart: sub.current_period_start ?? i.current_period_start ?? null,
     periodEnd: sub.current_period_end ?? i.current_period_end ?? null,
     };
@@ -613,8 +622,8 @@ export function createBilling({
   const defById = new Map(defs.map((d) => [d.id, d]));
   const itemByRef = new Map();
   for (const [id, it] of Object.entries(items)) {
-    if (!refOf(it)) throw new BillingError(`Item "${id}" needs a ref (priceId or variantId).`, 'invalid');
-    itemByRef.set(refOf(it), id);
+    if (!refOf(it) && !arr(it.lookupKey).length) throw new BillingError(`Item "${id}" needs a ref (priceId, variantId or lookupKey).`, 'invalid');
+    if (refOf(it)) itemByRef.set(refOf(it), id);
   }
 
   // lookup keys resolve through the provider once per process
@@ -1341,6 +1350,24 @@ export function createBilling({
       if (!ours) throw new BillingError('That checkout belongs to another organization.', 'wrong-org', 403);
       const r = await applyOrder(order, nowSec(), { alsoKey: sessionId, org: orgId, trusted: pending.some((e) => e.id === sessionId) });
       return { status: await api.status(orgId), applied: r.handled || !!r.duplicate };
+    },
+
+    /** What can be bought, for a pricing UI: `{ plans: [{ id, …}], items: [{ id, …}] }` with every provider ref, matcher
+     *  and inline price removed (those are server config). Other fields (name, seats, perSeat, credits…) pass through. */
+    catalog() {
+      const strip = ([id, p]) => {
+        const out = { id };
+        for (const [k, v] of Object.entries(p)) if (!HIDDEN.has(k) && typeof v !== 'function') out[k] = v;
+        const seat = (p.lineItems ?? []).find((l) => l.role === 'seat');
+        if (seat) {
+          out.perSeat ??= true;
+          if (seat.min != null) out.minSeats ??= seat.min;
+          if (typeof seat.max === 'number') out.maxSeats ??= seat.max;
+        }
+        if (typeof out.maxSeats === 'function') delete out.maxSeats;
+        return { ...out, ...(isPlain(p.display) ? p.display : {}), id };
+      };
+      return { plans: Object.entries(plans).map(strip), items: Object.entries(items).map(strip) };
     },
 
     async status(orgId, { detail = false } = {}) {

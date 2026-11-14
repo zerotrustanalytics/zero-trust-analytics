@@ -1,2 +1,1 @@
-launchkit feat/billing-v1.3 @ 75dc067962ac2c5a24a0c69be5ee5e61134ed41d
-billing.js, crypto.js, store.js copied unchanged from src/. Do not edit here: fix in launchkit and re-copy.
+launchkit feat/billing-config @ ff7b833 (billing.js, crypto.js, store.js, billing-config.js, billing-http.js and their .d.ts copied unchanged from src/. Do not edit here: fix in launchkit and re-copy.)
