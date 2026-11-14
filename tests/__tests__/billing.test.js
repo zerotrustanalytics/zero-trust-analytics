@@ -45,7 +45,8 @@ const fakeStripe = {
   },
   async retrieveCheckoutSession(id) { return structuredClone(fake.sessions.get(id)); },
 };
-jest.unstable_mockModule('../../vendor/launchkit/billing.js', () => ({ ...realBilling, createStripeRest: () => fakeStripe }));
+jest.unstable_mockModule('../../vendor/launchkit/billing.js', () => ({ ...realBilling, // billing-config builds its provider from createStripeRest: hand it the fake wrapped as a provider (the same wrap createBilling({ stripe }) does)
+  createStripeRest: () => realBilling.stripeProvider(fakeStripe) }));
 
 // ---- auth
 let authResult = { user: { id: 'user_123', email: 'buyer@example.com' } };

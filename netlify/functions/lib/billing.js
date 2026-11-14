@@ -2,18 +2,18 @@
  * BILLING (launchkit/billing over ZTA)
  * ====================================
  * The Stripe work itself (checkout, portal, verified + idempotent webhook, pull sync) is launchkit/billing,
- * vendored unchanged in vendor/launchkit. This file is the thin layer: ZTA's plans, a store for launchkit,
- * and the adapter that keeps the user record (`user.plan`, `user.subscription`) in step with the subscription.
+ * vendored unchanged in vendor/launchkit. ZTA's plans, prices and checkout extras live in billing.config.mjs (repo root).
+ * This file is the thin layer: a store for launchkit, and the adapter that keeps the user record (`user.plan`, `user.subscription`) in step with the subscription.
  *
  * The user record stays the app's entitlement: getUserStatus() and the plan limits read it exactly as before.
  * Billing's own state lives in the `billing` blob store (orgs/, customers/, events/, sessions/, pending/, ...).
  * The "org" for billing is the user's email, which is how users are keyed.
  */
-import { createBilling, createStripeRest } from '../../../vendor/launchkit/billing.js';
+import { createBillingFromConfig } from '../../../vendor/launchkit/billing-config.js';
 import { keyPart } from '../../../vendor/launchkit/store.js';
 import { getStore } from './blob-store.js';
-import { Config } from './config.js';
 import { getUser } from './storage.js';
+import fullConfig, { configFor } from '../../../billing.config.mjs';
 
 export const BILLING_STORE = 'billing';
 const USERS_STORE = 'users';
@@ -29,12 +29,8 @@ export function blobKv(name = BILLING_STORE) {
   };
 }
 
-/** Plans for launchkit: every paid tier that has a Stripe price. No seats: ZTA plans are priced on events. */
-export function ztaPlans(tiers = Config.pricing.tiers) {
-  const plans = {};
-  for (const [id, t] of Object.entries(tiers)) if (t.stripePriceId) plans[id] = { priceId: t.stripePriceId, name: t.name };
-  return plans;
-}
+/** The plan ids billing sells (from billing.config.mjs): those with a price id set. */
+export const ztaPlanIds = (source = process.env) => Object.keys(configFor(source).plans);
 
 // Legacy `user.subscription.status` values the rest of the app reads.
 const legacyStatus = (s) => (s === 'trialing' ? 'active' : s);
@@ -93,21 +89,18 @@ export function userAccounts(kv) {
   };
 }
 
-/** What the old checkout sent besides billing's own fields: card only, and who and what, as session metadata. Pass as `checkout({ extra })`. */
-export const ztaCheckoutExtra = (email, planId) => ({ payment_method_types: ['card'], metadata: { email, plan: planId } });
-
-/** Build ZTA's billing. Everything injectable so tests run against a fake Stripe and a memory store. */
-export function createZtaBilling({ kv = blobKv(), stripe, secretKey = process.env.STRIPE_SECRET_KEY, webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim(), bindingSecret = process.env.BILLING_BINDING_SECRET?.trim(), plans = ztaPlans(), now } = {}) {
+/** Build ZTA's billing from billing.config.mjs. Everything injectable so tests run against a fake Stripe and a memory store. */
+export function createZtaBilling({ kv = blobKv(), provider, env = process.env, webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim(), bindingSecret = process.env.BILLING_BINDING_SECRET?.trim(), now } = {}) {
   const accounts = userAccounts(kv);
-  const billing = createBilling({
+  const billing = createBillingFromConfig(configFor(env), {   // only plans whose STRIPE_PRICE_* is set are sold
     store: kv,
-    stripe: stripe || createStripeRest({ secretKey }),
+    env,
+    ...(provider ? { provider } : {}),
     orgExists: (email) => accounts.exists(email),
-    plans,
     entitlements: { onChange: (change) => accounts.mirrorUser(change) },
     onPeriod: ({ orgId, period }) => accounts.renewUser(orgId, period.end),
-    webhookSecret: webhookSecret || null,
-    bindingSecret: bindingSecret || null,   // >= 32 chars: billing signs the account into each checkout it creates
+    webhookSecret: webhookSecret || undefined,
+    bindingSecret: bindingSecret || undefined,   // >= 32 chars: billing signs the account into each checkout it creates
     ...(now ? { now } : {}),
   });
   return { billing, kv, accounts };
@@ -132,10 +125,10 @@ export function resetBilling() { shared = null; migrating = null; }
  * finds them. Idempotent: an account that already has billing state is left alone, and the users' own records are
  * never changed. The cancel-at-period-end flag is not carried: the next Stripe event restores it.
  */
-export async function migrateUsers({ billing, usersStore = getStore({ name: USERS_STORE, consistency: 'strong' }), plans = ztaPlans() } = {}) {
+export async function migrateUsers({ billing, usersStore = getStore({ name: USERS_STORE, consistency: 'strong' }), plans = ztaPlanIds() } = {}) {
   const migrated = [];
   const { blobs } = await usersStore.list();
-  const fallbackPlan = Object.keys(plans)[0];
+  const fallbackPlan = plans[0];
   for (const { key: email } of blobs) {
     if (!email.includes('@')) continue; // user_id_map_* and friends
     let user;
@@ -152,7 +145,7 @@ export async function migrateUsers({ billing, usersStore = getStore({ name: USER
     await billing.adopt(email, {
       customerRef: old.customerId ?? null,
       subscriptionRef: old.subscriptionId ?? null,
-      planId: plans[wanted] ? wanted : fallbackPlan,
+      planId: plans.includes(wanted) ? wanted : fallbackPlan,
       status,
       periodEnd: old.currentPeriodEnd ? Date.parse(old.currentPeriodEnd) || null : null,
     });
