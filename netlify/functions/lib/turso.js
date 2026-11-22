@@ -587,7 +587,9 @@ async function getStats(siteId, startDate, endDate) {
     pageStats,
     dimensionStats,
     utmStats,
-    sessionStats
+    sessionStats,
+    pageFlowStats,
+    engagementStats
   ] = await Promise.all([
     // 1. Daily rollups (already aggregated)
     turso.execute({
@@ -630,17 +632,68 @@ async function getStats(siteId, startDate, endDate) {
       args: [siteId, startDate.split(' ')[0], endDate.split(' ')[0]]
     }),
 
-    // 5. Session/bounce calculation (only query that touches pageviews, but optimized)
+    // 5. Sessions, bounces and visit duration, from raw events. A visit lasts
+    // the longer of its summed engagement time (what the tracker measured)
+    // and the span between its first and last pageview (covers visits whose
+    // engagement events never arrived).
     turso.execute({
-      sql: `SELECT COUNT(DISTINCT session_hash) as total_sessions,
-                   SUM(CASE WHEN pv_count = 1 THEN 1 ELSE 0 END) as bounced_sessions
-            FROM (
-              SELECT session_hash, COUNT(*) as pv_count
+      sql: `WITH sess AS (
+              SELECT session_hash, COUNT(*) AS pv_count,
+                     (julianday(MAX(timestamp)) - julianday(MIN(timestamp))) * 86400 AS span
               FROM pageviews
               WHERE site_id = ? AND event_type = 'pageview'
                 AND timestamp >= ? AND timestamp <= ?
               GROUP BY session_hash
-            )`,
+            ),
+            eng AS (
+              SELECT session_hash, SUM(meta_duration) AS engaged
+              FROM pageviews
+              WHERE site_id = ? AND event_type = 'engagement'
+                AND timestamp >= ? AND timestamp <= ?
+              GROUP BY session_hash
+            )
+            SELECT COUNT(*) AS total_sessions,
+                   SUM(CASE WHEN pv_count = 1 THEN 1 ELSE 0 END) AS bounced_sessions,
+                   AVG(MAX(COALESCE(eng.engaged, 0), sess.span)) AS avg_duration
+            FROM sess LEFT JOIN eng ON eng.session_hash = sess.session_hash`,
+      args: [siteId, startDate, endDate, siteId, startDate, endDate]
+    }),
+
+    // 6. Entry and exit pages, from raw pageviews: a session's first pageview
+    // is its entry, its last is its exit. `gap` is the time until the
+    // session's next pageview, the fallback time-on-page when no engagement
+    // event was recorded.
+    turso.execute({
+      sql: `WITH pv AS (
+              SELECT identity_hash, page_path, timestamp,
+                     ROW_NUMBER() OVER w AS pos,
+                     COUNT(*) OVER (PARTITION BY session_hash) AS session_views,
+                     (julianday(LEAD(timestamp) OVER w) - julianday(timestamp)) * 86400 AS gap
+              FROM pageviews
+              WHERE site_id = ? AND event_type = 'pageview'
+                AND timestamp >= ? AND timestamp <= ? AND page_path IS NOT NULL
+              WINDOW w AS (PARTITION BY session_hash ORDER BY timestamp, id)
+            )
+            SELECT page_path,
+                   COUNT(*) AS views,
+                   SUM(CASE WHEN pos = 1 THEN 1 ELSE 0 END) AS entries,
+                   COUNT(DISTINCT CASE WHEN pos = 1 THEN identity_hash END) AS entry_visitors,
+                   SUM(CASE WHEN pos = session_views THEN 1 ELSE 0 END) AS exits,
+                   COUNT(DISTINCT CASE WHEN pos = session_views THEN identity_hash END) AS exit_visitors,
+                   SUM(gap) AS gap_total,
+                   COUNT(gap) AS gap_count
+            FROM pv
+            GROUP BY page_path`,
+      args: [siteId, startDate, endDate]
+    }),
+
+    // 7. Time on page as measured by the tracker's engagement events.
+    turso.execute({
+      sql: `SELECT page_path, SUM(meta_duration) AS total, COUNT(*) AS n
+            FROM pageviews
+            WHERE site_id = ? AND event_type = 'engagement'
+              AND timestamp >= ? AND timestamp <= ? AND page_path IS NOT NULL
+            GROUP BY page_path`,
       args: [siteId, startDate, endDate]
     })
   ]);
@@ -650,7 +703,20 @@ async function getStats(siteId, startDate, endDate) {
   const pages = normalizeRows(pageStats.rows);
   const dimensions = normalizeRows(dimensionStats.rows);
   const utms = normalizeRows(utmStats.rows);
-  const sessions = normalizeRows(sessionStats.rows)[0] || { total_sessions: 0, bounced_sessions: 0 };
+  const sessions = normalizeRows(sessionStats.rows)[0] || { total_sessions: 0, bounced_sessions: 0, avg_duration: 0 };
+  const flow = normalizeRows(pageFlowStats.rows);
+
+  // Average seconds on each page: the tracker's engagement time where it
+  // reported any, else the time until the session's next pageview.
+  const engagedByPage = new Map(normalizeRows(engagementStats.rows).map(r => [r.page_path, r]));
+  const pageDuration = new Map(flow.map(p => {
+    const engaged = engagedByPage.get(p.page_path);
+    if (engaged && engaged.n > 0) return [p.page_path, Math.round(engaged.total / engaged.n)];
+    return [p.page_path, p.gap_count > 0 ? Math.round(p.gap_total / p.gap_count) : 0];
+  }));
+  for (const [path, engaged] of engagedByPage) {
+    if (!pageDuration.has(path) && engaged.n > 0) pageDuration.set(path, Math.round(engaged.total / engaged.n));
+  }
 
   // Calculate totals from daily rollups
   const totals = daily.reduce((acc, day) => ({
@@ -689,14 +755,32 @@ async function getStats(siteId, startDate, endDate) {
       unique_visitors: totals.unique_visitors,
       sessions: totalSessions,
       bounce_rate: totalSessions > 0 ? Math.round((bouncedSessions / totalSessions) * 100) : 0,
-      avg_duration: totals.pageviews > 0 ? Math.round(totals.total_duration / totals.pageviews) : 0,
+      // Average visit (session) length in seconds.
+      avg_duration: Math.round(sessions.avg_duration || 0),
       views_per_visit: totalSessions > 0 ? Math.round((totals.pageviews / totalSessions) * 10) / 10 : 0
     },
     daily,
-    // New array format
-    topPages: pages.map(p => ({ name: p.page_path, views: p.views, visitors: p.visitors, duration: p.duration || 0 })),
-    entryPages: pages.filter(p => p.entries > 0).map(p => ({ name: p.page_path, visits: p.entries, visitors: p.visitors })),
-    exitPages: pages.filter(p => p.exits > 0).map(p => ({ name: p.page_path, exits: p.exits, visitors: p.visitors })),
+    // New array format. `duration` is average seconds on the page.
+    topPages: pages.map(p => ({
+      name: p.page_path, views: p.views, visitors: p.visitors, duration: pageDuration.get(p.page_path) || 0
+    })),
+    // `views` = entrances (sessions that started on the page).
+    entryPages: flow.filter(p => p.entries > 0)
+      .sort((a, b) => b.entries - a.entries || a.page_path.localeCompare(b.page_path))
+      .slice(0, 100)
+      .map(p => ({
+        name: p.page_path, views: p.entries, entries: p.entries, visitors: p.entry_visitors,
+        duration: pageDuration.get(p.page_path) || 0
+      })),
+    // `views` = all pageviews of the page; exitRate = exits / views.
+    exitPages: flow.filter(p => p.exits > 0)
+      .sort((a, b) => b.exits - a.exits || a.page_path.localeCompare(b.page_path))
+      .slice(0, 100)
+      .map(p => ({
+        name: p.page_path, views: p.views, exits: p.exits, visitors: p.exit_visitors,
+        exitRate: Math.round((p.exits / p.views) * 1000) / 10,
+        duration: pageDuration.get(p.page_path) || 0
+      })),
     // Dimensions
     sources: dimensionsByType.referrer || [],
     devicesList: dimensionsByType.device || [],

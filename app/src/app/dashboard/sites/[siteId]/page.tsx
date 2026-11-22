@@ -403,7 +403,7 @@ function exportToCSV(stats: Stats | null, site: Site | null, period: string) {
   // Entry Pages
   if (stats.entryPages?.length) {
     rows.push(['Entry Pages'])
-    rows.push(['Page', 'Visitors', 'Views'])
+    rows.push(['Page', 'Visitors', 'Entrances'])
     stats.entryPages.forEach(p => {
       rows.push([p.name, String(p.visitors), String(p.views)])
     })
@@ -413,9 +413,9 @@ function exportToCSV(stats: Stats | null, site: Site | null, period: string) {
   // Exit Pages
   if (stats.exitPages?.length) {
     rows.push(['Exit Pages'])
-    rows.push(['Page', 'Visitors', 'Views'])
+    rows.push(['Page', 'Visitors', 'Exits', 'Exit Rate'])
     stats.exitPages.forEach(p => {
-      rows.push([p.name, String(p.visitors), String(p.views)])
+      rows.push([p.name, String(p.visitors), String(p.exits || 0), `${p.exitRate || 0}%`])
     })
     rows.push([])
   }
@@ -1060,7 +1060,7 @@ export default function SiteDetailsPage() {
             <tr className="text-xs text-muted-foreground border-b border-gray-100 dark:border-gray-700">
               <th className="pb-2 text-left font-medium">Page</th>
               <th className="pb-2 text-right font-medium">Visitors</th>
-              <th className="pb-2 text-right font-medium">{activeTab === 'exit' ? 'Exits' : 'Views'}</th>
+              <th className="pb-2 text-right font-medium">{activeTab === 'exit' ? 'Exits' : activeTab === 'entry' ? 'Entrances' : 'Views'}</th>
               {activeTab === 'exit' && <th className="pb-2 text-right font-medium">Exit Rate</th>}
               <th className="pb-2 text-right font-medium">Avg. Duration</th>
             </tr>
