@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/gatekeep-auth'
 interface UsageData {
   usage: {
     current: { pageviews: number; visitors: number; events: number; month?: string }
+    used?: number
     limit: number
     percentUsed: number
     remaining: number

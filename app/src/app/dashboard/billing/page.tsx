@@ -23,6 +23,7 @@ interface UsageData {
       visitors: number
       events: number
     }
+    used?: number
     limit: number
     percentUsed: number
     remaining: number
@@ -167,6 +168,10 @@ export default function BillingPage() {
 
   const currentPlan = usageData?.plan.tier || 'free'
   const formatNumber = (num: number | null | undefined) => (num ?? 0).toLocaleString()
+  // The quota meters pageviews + custom events; fall back for older API responses.
+  const meteredUsed = usageData
+    ? usageData.usage.used ?? (usageData.usage.current.pageviews + usageData.usage.current.events)
+    : 0
   // Unlimited is Infinity on the server, which JSON serializes as null.
   const isUnlimited = (n: number | null | undefined) => n == null || n === Infinity
   const formatLimit = (n: number | null | undefined) => (isUnlimited(n) ? 'Unlimited' : formatNumber(n))
@@ -219,8 +224,8 @@ export default function BillingPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <p className="text-sm text-muted-foreground">Pageviews</p>
-              <p className="text-2xl font-bold">{formatNumber(usageData.usage.current.pageviews)}</p>
+              <p className="text-sm text-muted-foreground">Events (pageviews + custom)</p>
+              <p className="text-2xl font-bold">{formatNumber(meteredUsed)}</p>
               <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${
@@ -234,7 +239,7 @@ export default function BillingPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatNumber(usageData.usage.current.pageviews)} / {formatLimit(usageData.usage.limit)}
+                {formatNumber(meteredUsed)} / {formatLimit(usageData.usage.limit)}
               </p>
             </div>
             <div>
@@ -290,7 +295,7 @@ export default function BillingPage() {
               <span className="font-medium">Usage limit exceeded</span>
             </div>
             <p className="text-sm text-red-600 dark:text-red-300 mt-1">
-              You&apos;ve exceeded your monthly pageview limit. New pageviews are not being tracked.
+              You&apos;ve reached your monthly event limit. New events are not being recorded.
               Upgrade your plan to continue tracking.
             </p>
           </div>

@@ -10,8 +10,9 @@ export function UsageBanner() {
   if (loading || !usageData) return null
 
   const { percentUsed, isWithinLimit, current, limit } = usageData.usage
-  const currentPageviews = current?.pageviews || 0
-  const pageviewLimit = limit || 0
+  // The quota meters pageviews + custom events; fall back for older API responses.
+  const used = usageData.usage.used ?? ((current?.pageviews || 0) + (current?.events || 0))
+  const eventLimit = limit || 0
   const { name: planName } = usageData.plan
 
   // Determine which banner to show
@@ -68,7 +69,7 @@ export function UsageBanner() {
           <p className={`text-sm font-medium ${styles.text}`}>
             {isWarning
               ? `You've used ${Math.round(percentUsed)}% of your monthly events (pageviews + custom events)`
-              : `Monthly event limit reached (${currentPageviews.toLocaleString()} / ${pageviewLimit.toLocaleString()})`
+              : `Monthly event limit reached (${used.toLocaleString()} / ${eventLimit.toLocaleString()})`
             }
           </p>
           <p className={`text-sm ${styles.text} opacity-80 mt-1`}>

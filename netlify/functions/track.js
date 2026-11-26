@@ -1,5 +1,5 @@
 import { createZTRecord, createSessionHash, scrubPII, originMatchesDomain, validateNoPII } from './lib/zero-trust-core.js';
-import { ingestEvents, checkUsageLimit, incrementUsageBatch, findActiveSession } from './lib/turso.js';
+import { ingestEvents, checkUsageLimit, incrementUsageBatch, isMeteredEvent, findActiveSession } from './lib/turso.js';
 import { getSite, getUserById, matchConversionRule } from './lib/storage.js';
 import { hashIP } from './lib/rate-limit.js';
 import { createFunctionLogger } from './lib/logger.js';
@@ -434,7 +434,9 @@ async function handleBatch(req, context, origin, siteId, events, logger, clientS
     // Increment usage for the site owner (batched for performance)
     if (usageCheck.ownerId) {
       const pageviewCount = records.filter(r => r.event_type === 'pageview').length;
-      const eventCount = records.filter(r => r.event_type !== 'pageview').length;
+      // Engagement beacons are automatic (one per page load, for time-on-site and
+      // bounce) — they ride along with pageviews and aren't billable events.
+      const eventCount = records.filter(r => isMeteredEvent(r.event_type)).length;
 
       // Fire and forget - don't block tracking response
       if (pageviewCount > 0) {

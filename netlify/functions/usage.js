@@ -163,6 +163,8 @@ export default async function handler(req, context) {
           visitors: currentUsage.visitors,
           events: currentUsage.events
         },
+        // What the quota actually meters: pageviews + custom events.
+        used: usedTotal,
         limit: planLimits.monthlyPageviews,
         percentUsed: limitCheck.percentUsed,
         remaining: limitCheck.remaining,

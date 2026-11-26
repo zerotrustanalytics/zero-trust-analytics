@@ -18,6 +18,7 @@
  * POST /api/admin/usage/support-log - Log support time
  * POST /api/admin/usage/init - Initialize schema
  * POST /api/admin/usage/backfill - Backfill daily_usage from pageviews
+ * POST /api/admin/usage/recount-monthly - Rebuild monthly_usage quota counters from pageviews
  * POST /api/admin/usage/wipe-usage - Wipe daily_usage table only
  * POST /api/admin/usage/wipe-pageviews - DANGER: Wipe ALL data (pageviews + usage)
  * POST /api/admin/usage/delete-site - Delete a site and all its data
@@ -30,7 +31,7 @@ import { createFunctionLogger } from './lib/logger.js';
 import { handleError } from './lib/error-handler.js';
 import { timingSafeStringEqual } from './lib/auth.js';
 import { getCacheMetrics, resetCacheMetrics } from './lib/cache.js';
-import { turso } from './lib/turso.js';
+import { turso, recountMonthlyUsage } from './lib/turso.js';
 import { getStore } from './lib/blob-store.js';
 import { getUserById } from './lib/storage.js';
 import {
@@ -300,6 +301,28 @@ async function handlePost(path, req, logger) {
         return jsonResponse({
           error: 'Backfill failed'
         }, 500);
+      }
+    }
+
+    case '/recount-monthly': {
+      // Rebuild monthly_usage (the quota counter track.js enforces) for one
+      // month from the stored events. Body: { month?: 'YYYY-MM' } (default: now).
+      const month = body.month;
+      if (month !== undefined && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+        return jsonResponse({ error: 'month must be YYYY-MM' }, 400);
+      }
+      logger.info('Recounting monthly usage', { month: month || 'current' });
+      try {
+        const sitesStore = getStore({ name: 'sites', consistency: 'strong' });
+        const result = await recountMonthlyUsage(async (siteId) => {
+          const site = await sitesStore.get(siteId, { type: 'json' }).catch(() => null);
+          return site?.userId || null;
+        }, month);
+        logger.info('Monthly recount completed', { month: result.month, updated: result.updated.length, skipped: result.skipped.length });
+        return jsonResponse(result);
+      } catch (err) {
+        logger.error('Monthly recount failed', err);
+        return jsonResponse({ error: 'Recount failed' }, 500);
       }
     }
 
