@@ -985,6 +985,7 @@ export default function SiteDetailsPage() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
                   contentStyle={chart.tooltip}
+                  itemStyle={chart.tooltipItem}
                   formatter={(value: number) => [
                     value.toLocaleString(),
                     showCumulative

@@ -209,6 +209,35 @@ describe('UsageBanner', () => {
       expect(screen.getByText(/Monthly event limit reached/)).toBeInTheDocument()
     })
 
+    it('shows metered total (pageviews + events), not just pageviews', () => {
+      mockUseUsage.mockReturnValue({
+        usageData: {
+          usage: {
+            current: { pageviews: 1886, visitors: 700, events: 3200 },
+            used: 5086,
+            limit: 5000,
+            percentUsed: 102,
+            remaining: 0,
+            isWithinLimit: false
+          },
+          plan: defaultUsageData.plan
+        },
+        loading: false,
+        bannerDismissed: false,
+        dismissBanner: vi.fn()
+      })
+      render(<UsageBanner />)
+
+      expect(screen.getByText(/Monthly event limit reached \(5,086 \/ 5,000\)/)).toBeInTheDocument()
+    })
+
+    it('falls back to pageviews + events when the API omits used', () => {
+      render(<UsageBanner />)
+
+      // defaultUsageData: 8000 pageviews + 1000 events
+      expect(screen.getByText(/Monthly event limit reached \(9,000 \//)).toBeInTheDocument()
+    })
+
     it('says new events are not recorded until reset or upgrade', () => {
       render(<UsageBanner />)
 

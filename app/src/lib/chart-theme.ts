@@ -19,6 +19,11 @@ export const chart = {
     color: 'var(--code-fg)',
     fontFamily: '"DM Sans", system-ui, sans-serif',
   },
+  // Recharts colours each tooltip row with its series stroke by default, which
+  // vanishes on the dark tooltip for dark series (plum). Pass as itemStyle.
+  tooltipItem: {
+    color: 'var(--code-fg)',
+  },
   // Multi-series (e.g. one line per site): distinct in hue AND lightness.
   series: [
     'var(--c-cur)',

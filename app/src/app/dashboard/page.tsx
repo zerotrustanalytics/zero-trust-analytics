@@ -350,6 +350,7 @@ export default function DashboardPage() {
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
                   <Tooltip
                     contentStyle={chart.tooltip}
+                    itemStyle={chart.tooltipItem}
                   />
                   <Line type="monotone" dataKey="visitors" stroke={chart.primary} strokeWidth={2} dot={{ fill: chart.primary, r: 3 }} name="Visitors" />
                   <Line type="monotone" dataKey="pageviews" stroke={chart.secondary} strokeWidth={2} dot={{ fill: chart.secondary, r: 3 }} name="Page Views" />
@@ -360,6 +361,7 @@ export default function DashboardPage() {
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: chart.axis, fontSize: 11 }} dx={-10} tickFormatter={(v) => v.toLocaleString()} />
                   <Tooltip
                     contentStyle={chart.tooltip}
+                    itemStyle={chart.tooltipItem}
                   />
                   {siteStats.map((site, index) => (
                     <Line

@@ -1188,6 +1188,55 @@ async function incrementUsageBatch(teamId, siteId, type = 'pageview', count = 1)
   });
 }
 
+// Event types that never count as billable "events" on the monthly quota:
+// pageviews are metered separately, and engagement/heartbeat beacons are sent
+// automatically alongside pageviews. Keep in step with usage-metrics backfill.
+const UNMETERED_EVENT_TYPES = ['pageview', 'engagement', 'heartbeat'];
+
+function isMeteredEvent(eventType) {
+  return !UNMETERED_EVENT_TYPES.includes(eventType);
+}
+
+/**
+ * Rebuild monthly_usage pageviews/events for one month from the pageviews
+ * table, which holds every event actually stored. Fixes counters that were
+ * over-metered. resolveOwner(siteId) returns the owner's user id (the team_id
+ * column); sites it can't resolve are left untouched and listed as skipped.
+ */
+async function recountMonthlyUsage(resolveOwner, month = null) {
+  const targetMonth = month || getCurrentMonth();
+  const [year, monthNum] = targetMonth.split('-').map(Number);
+  const start = `${targetMonth}-01`;
+  const end = `${year + (monthNum === 12 ? 1 : 0)}-${String(monthNum === 12 ? 1 : monthNum + 1).padStart(2, '0')}-01`;
+  const unmetered = UNMETERED_EVENT_TYPES.map(() => '?').join(', ');
+
+  const result = await turso.execute({
+    sql: `SELECT site_id,
+            SUM(CASE WHEN event_type = 'pageview' THEN 1 ELSE 0 END) AS pageviews,
+            SUM(CASE WHEN event_type NOT IN (${unmetered}) THEN 1 ELSE 0 END) AS events
+          FROM pageviews WHERE timestamp >= ? AND timestamp < ?
+          GROUP BY site_id`,
+    args: [...UNMETERED_EVENT_TYPES, start, end]
+  });
+
+  const now = new Date().toISOString();
+  const updated = [];
+  const skipped = [];
+  for (const row of normalizeRows(result.rows)) {
+    const teamId = await resolveOwner(row.site_id);
+    if (!teamId) { skipped.push(row.site_id); continue; }
+    const pageviews = row.pageviews || 0;
+    const events = row.events || 0;
+    await turso.execute({
+      sql: `INSERT INTO monthly_usage (team_id, site_id, month, pageviews, events, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(team_id, site_id, month) DO UPDATE SET pageviews = ?, events = ?, updated_at = ?`,
+      args: [teamId, row.site_id, targetMonth, pageviews, events, now, pageviews, events, now]
+    });
+    updated.push({ siteId: row.site_id, teamId, pageviews, events });
+  }
+  return { month: targetMonth, updated, skipped };
+}
+
 async function getTeamUsage(teamId, month = null) {
   const targetMonth = month || getCurrentMonth();
   const result = await turso.execute({
@@ -1318,6 +1367,8 @@ export {
   getCurrentMonth,
   incrementUsage,
   incrementUsageBatch,
+  isMeteredEvent,
+  recountMonthlyUsage,
   getTeamUsage,
   getTeamUsageBySite,
   getTeamUsageHistory,
